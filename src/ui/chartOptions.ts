@@ -33,18 +33,40 @@ export const DEFAULT_MIX_VISIBILITY: MixVisibility = Object.fromEntries(
 ) as MixVisibility;
 
 const dayLabels = (hours: SimHour[]) => hours.map((h) => new Date(h.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' }));
+const dateKey = (hour: SimHour) => hour.time.slice(0, 10);
+const dateParts = (date: string) => ({ month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) });
+
+const averageBucket = (bucket: SimHour[], numericKeys: (keyof SimHour)[]): SimHour => {
+  const row: Record<string, string | number> = { time: `${dateKey(bucket[0])}T00:00:00Z` };
+  for (const key of numericKeys) row[key] = bucket.reduce((sum, hour) => sum + Number(hour[key]), 0) / bucket.length;
+  return row as unknown as SimHour;
+};
+
+const dayOfMonthOrderedDailyAverages = (hours: SimHour[], numericKeys: (keyof SimHour)[]) => {
+  const buckets = new Map<string, SimHour[]>();
+  for (const hour of hours) {
+    const date = dateKey(hour);
+    buckets.set(date, [...(buckets.get(date) ?? []), hour]);
+  }
+  return [...buckets.entries()]
+    .map(([, bucket]) => averageBucket(bucket, numericKeys))
+    .sort((a, b) => {
+      const left = dateParts(dateKey(a));
+      const right = dateParts(dateKey(b));
+      return left.day - right.day || left.month - right.month;
+    });
+};
+
 const compressHours = (hours: SimHour[], maxPoints = 365) => {
   if (hours.length <= maxPoints) return hours;
-  const step = Math.ceil(hours.length / maxPoints);
   const numericKeys = Object.keys(hours[0]).filter((key) => key !== 'time') as (keyof SimHour)[];
+  const uniqueDates = new Set(hours.map(dateKey));
+  if (uniqueDates.size >= 360) return dayOfMonthOrderedDailyAverages(hours, numericKeys);
+  const step = Math.ceil(hours.length / maxPoints);
   const compressed: SimHour[] = [];
   for (let start = 0; start < hours.length; start += step) {
     const bucket = hours.slice(start, start + step);
-    const row: Record<string, string | number> = { time: bucket[0].time };
-    for (const key of numericKeys) {
-      row[key] = bucket.reduce((sum, hour) => sum + Number(hour[key]), 0) / bucket.length;
-    }
-    compressed.push(row as unknown as SimHour);
+    compressed.push(averageBucket(bucket, numericKeys));
   }
   return compressed;
 };

@@ -199,8 +199,8 @@ export function App() {
   };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
-      <section className="flex min-w-0 flex-col gap-3">
+    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <section className="flex min-w-0 flex-col gap-3 lg:order-last">
         {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
           <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
             <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
@@ -252,7 +252,7 @@ export function App() {
         </>}
       </section>
 
-      <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+      <aside className={cx(panel, 'lg:order-first lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
         <div className="border-b border-zinc-200 px-4 py-3">
           <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
         </div>
