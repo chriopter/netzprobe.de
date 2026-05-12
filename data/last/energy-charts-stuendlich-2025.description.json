@@ -1,0 +1,25 @@
+{
+  "id": "last.energy-charts.stuendlich.2025",
+  "domain": "last",
+  "title": "Historisch 2025",
+  "file": "last/energy-charts-stuendlich-2025.json",
+  "doc": "last/energy-charts-stuendlich-2025.md",
+  "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "MW",
+  "short": "Feste Basislast des Szenarios: historische deutsche Last 2025 aus Energy-Charts.",
+  "description": "Fixer Verbrauch aus historischer deutscher Last 2025. Das Szenario kann in der UI per Radio-Button übernommen werden.",
+  "fields": [
+    { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
+    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
+    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quelle und Verarbeitung." },
+    { "name": "sourceUrl", "unit": "URL", "description": "Energy-Charts-API-Abruf für Deutschland und 2025." },
+    { "name": "unit", "unit": "Text", "description": "Einheit der Stundenwerte: MW." },
+    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+    { "name": "hours[].loadMW", "unit": "MW", "description": "Aus 15-Minuten-Werten gemittelte elektrische Last in Deutschland." },
+    { "name": "sumTWh", "unit": "TWh", "description": "Jahressumme der Last: Summe der Stundenwerte / 1.000.000." },
+    { "name": "sumNote", "unit": "Text", "description": "Kurznotiz zur Summenberechnung." }
+  ],
+  "caveats": []
+}

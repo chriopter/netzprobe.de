@@ -1,0 +1,25 @@
+{
+  "id": "modell.einspeisefaktoren.stuendlich.2025",
+  "domain": "modell",
+  "title": "Einspeisefaktoren 2025",
+  "file": "modell/einspeisefaktoren-stuendlich-2025.json",
+  "doc": "modell/einspeisefaktoren-stuendlich-2025.md",
+  "scripts": ["modell/generate-feed-in-factors.mjs"],
+  "source": "Energy-Charts public_power und installed_power APIs",
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "dimensionslos",
+  "short": "Aus beobachteter PV-/Wind-Einspeisung und installierter Leistung abgeleitete Faktoren.",
+  "description": "Modellannahme für PV und Wind: tatsächliche Einspeisung 2025 geteilt durch installierte Leistung. Abregelung wird nicht zurückgerechnet.",
+  "fields": [
+    { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
+    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
+    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der verwendeten Energy-Charts-Quellen." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "API-Abrufe für Einspeisung und installierte Leistung." },
+    { "name": "notes", "unit": "Liste", "description": "Hinweise zur Ableitung und Begrenzung." },
+    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+    { "name": "hours[].solarIrradiance", "unit": "Faktor", "description": "PV-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." },
+    { "name": "hours[].wind100m", "unit": "Faktor", "description": "Wind-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." }
+  ],
+  "caveats": ["Keine Rohwetterdaten.", "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung unterschätzen."]
+}

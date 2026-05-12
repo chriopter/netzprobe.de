@@ -2,199 +2,26 @@
   {
     "id": "last.energy-charts.stuendlich.2025",
     "domain": "last",
-    "title": "Historisch 2025",
-    "file": "last/energy-charts-stuendlich-2025.json",
-    "doc": "last/energy-charts-stuendlich-2025.md",
-    "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
-    "period": "2025",
-    "resolution": "stündlich",
-    "unit": "MW",
-    "short": "Feste Basislast des Szenarios: historische deutsche Last 2025 aus Energy-Charts.",
-    "description": "Fixer Verbrauch aus historischer deutscher Last 2025. Das Szenario kann in der UI per Radio-Button übernommen werden.",
-    "fields": [
-      { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
-      { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
-      { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quelle und Verarbeitung." },
-      { "name": "sourceUrl", "unit": "URL", "description": "Energy-Charts-API-Abruf für Deutschland und 2025." },
-      { "name": "unit", "unit": "Text", "description": "Einheit der Stundenwerte: MW." },
-      { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
-      { "name": "hours[].loadMW", "unit": "MW", "description": "Aus 15-Minuten-Werten gemittelte elektrische Last in Deutschland." },
-      { "name": "sumTWh", "unit": "TWh", "description": "Jahressumme der Last: Summe der Stundenwerte / 1.000.000." },
-      { "name": "sumNote", "unit": "Text", "description": "Kurznotiz zur Summenberechnung." }
-    ],
-    "caveats": []
+    "description": "last/energy-charts-stuendlich-2025.description.json"
   },
   {
     "id": "last.pkw-elektrifizierung",
     "domain": "last",
-    "title": "PKW Elektrifizierung",
-    "file": "last/pkw-elektrifizierung.json",
-    "doc": "last/pkw-elektrifizierung.md",
-    "source": "Destatis Pkw-Fahrleistung 2023: https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
-    "period": "2023",
-    "resolution": "Jahr",
-    "unit": "Mio. km, kWh/100 km, TWh",
-    "short": "Zusatzlast aus zusätzlich elektrifizierten Pkw-Kilometern.",
-    "description": "Ziel-Pkw-Kilometer minus bereits elektrisch gefahrene Pkw-Kilometer 2023 werden mit 20 kWh/100 km in zusätzliche Stromlast umgerechnet.",
-    "overview": [
-      { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt elektrifizierte Pkw-Kilometer." },
-      { "label": "Referenz", "value": "472,2 Mrd. Pkw-km privater Haushalte 2023 laut Destatis-Mitteilung." },
-      { "label": "Abzug", "value": "23,8 Mrd. km werden als bereits 2023 elektrisch gefahren abgezogen." },
-      { "label": "Verbrauch", "value": "20 kWh/100 km als pauschaler Flottenwert ab Netz inklusive grober Ladeverluste." },
-      { "label": "Default", "value": "472.200 Mio. km Ziel = 448.400 Mio. km Zusatz = 89,7 TWh/Jahr." },
-      { "label": "Verteilung", "value": "Gleichmäßig auf alle 8.760 Stunden verteilt; kein Ladeprofil." }
-    ],
-    "fields": [
-      { "name": "id", "unit": "Text", "description": "Technische Kennung." },
-      { "name": "title", "unit": "Text", "description": "Name des Zusatzlast-Szenarios." },
-      { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quellen." },
-      { "name": "sourceUrls", "unit": "Liste", "description": "Quellen für Referenzkilometer, Fahrleistung und BEV-Bestand." },
-      { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
-      { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte 2023." },
-      { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Abgezogene bereits elektrisch gefahrene Pkw-km 2023." },
-      { "name": "defaultTargetMillionKm", "unit": "Mio. km", "description": "Standardwert des Sliders." },
-      { "name": "maxTargetMillionKm", "unit": "Mio. km", "description": "Oberes Slider-Ende." },
-      { "name": "stepMillionKm", "unit": "Mio. km", "description": "Slider-Schrittweite." },
-      { "name": "kwhPer100Km", "unit": "kWh/100 km", "description": "Pauschaler BEV-Flottenverbrauch ab Netz." },
-      { "name": "distribution", "unit": "Text", "description": "Zeitliche Verteilung der Zusatzlast." },
-      { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
-    ],
-    "caveats": ["Kein Ladeprofil.", "PHEV-Stromkilometer sind nicht separat herausgerechnet.", "Der Abzug bereits elektrischer Kilometer ist eine dokumentierte Modellannahme."],
-    "sections": [
-      {
-        "title": "Erwägungsgründe",
-        "items": [
-          "Zulassungsdaten allein reichen nicht: sie zeigen Bestand oder Neuzulassungen, aber nicht reale Jahresfahrleistung und Ladeverluste.",
-          "20 kWh/100 km ist ein vorsichtiger Flottenwert für gemischte Pkw-Nutzung ab Netz.",
-          "Die Referenzkilometer stammen aus realer Fahrleistung privater Haushalte, nicht aus Fahrzeugbestand.",
-          "Bereits elektrische Kilometer 2023 werden abgezogen, damit nur zusätzliche Elektrifizierung als neue Last zählt.",
-          "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
-        ]
-      },
-      {
-        "title": "Grenzen",
-        "items": [
-          "Kein Tages-, Wochen- oder Saisonprofil fürs Laden.",
-          "Keine Unterscheidung nach Fahrzeugklasse, Temperatur, Geschwindigkeit oder Ladeort.",
-          "Nicht alle Pkw-Kilometer Deutschlands sind zwingend private Haushalte; die Quelle wird deshalb als transparente Referenz genutzt."
-        ]
-      }
-    ]
+    "description": "last/pkw-elektrifizierung.description.json"
   },
   {
     "id": "erzeugung.energy-charts.stuendlich.2025",
     "domain": "erzeugung",
-    "title": "Historisch 2025",
-    "file": "erzeugung/energy-charts-stuendlich-2025.json",
-    "doc": "erzeugung/energy-charts-stuendlich-2025.md",
-    "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
-    "period": "2025",
-    "resolution": "stündlich",
-    "unit": "MW",
-    "short": "Historische öffentliche Stromerzeugung 2025 nach Energieträgern und Handelssaldo.",
-    "description": "Fixe historische öffentliche Erzeugung 2025. Das Szenario kann in der UI per Radio-Button übernommen werden.",
-    "fields": [
-      { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
-      { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
-      { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quelle und Verarbeitung." },
-      { "name": "sourceUrl", "unit": "URL", "description": "Energy-Charts-API-Abruf für Deutschland und 2025." },
-      { "name": "unit", "unit": "Text", "description": "Einheit der Stundenwerte: MW." },
-      { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
-      { "name": "hours[].pvMW", "unit": "MW", "description": "Photovoltaik-Einspeisung." },
-      { "name": "hours[].windOnMW", "unit": "MW", "description": "Wind Onshore." },
-      { "name": "hours[].windOffMW", "unit": "MW", "description": "Wind Offshore." },
-      { "name": "hours[].gasMW", "unit": "MW", "description": "Gaserzeugung." },
-      { "name": "hours[].coalMW", "unit": "MW", "description": "Kohleerzeugung." },
-      { "name": "hours[].hydroMW", "unit": "MW", "description": "Wasserkraft." },
-      { "name": "hours[].biomassMW", "unit": "MW", "description": "Biomasse." },
-      { "name": "hours[].wasteMW", "unit": "MW", "description": "Abfall." },
-      { "name": "hours[].oilMW", "unit": "MW", "description": "Öl." },
-      { "name": "hours[].geothermalMW", "unit": "MW", "description": "Geothermie." },
-      { "name": "hours[].otherMW", "unit": "MW", "description": "Sonstige Erzeugung." },
-      { "name": "hours[].importExportMW", "unit": "MW", "description": "Handelssaldo; positive Werte stehen für Import, negative für Export." },
-      { "name": "sumTWh", "unit": "TWh", "description": "Erzeugungssumme ohne Handelssaldo." },
-      { "name": "sumPartsTWh", "unit": "Objekt", "description": "Jahressummen je Energieträger." },
-      { "name": "sumImportTWh", "unit": "TWh", "description": "Summe positiver Handelssaldo-Werte." },
-      { "name": "sumExportTWh", "unit": "TWh", "description": "Summe negativer Handelssaldo-Werte als Exportbetrag." },
-      { "name": "sumSharesPct", "unit": "%", "description": "Anteile der Energieträger an der Erzeugungssumme." },
-      { "name": "sumNote", "unit": "Text", "description": "Kurznotiz zur Summenberechnung." }
-    ],
-    "caveats": ["Nur öffentliche Stromerzeugung; private/industrielle Eigenversorgung ist nicht vollständig enthalten."]
+    "description": "erzeugung/energy-charts-stuendlich-2025.description.json"
   },
   {
     "id": "modell.kernmodell",
     "domain": "modell",
-    "title": "Kernmodell",
-    "file": "modell/kernmodell.json",
-    "doc": "modell/kernmodell.md",
-    "source": "Eigene stündliche Bilanzrechnung im Browser.",
-    "period": "laufend",
-    "resolution": "stündlich",
-    "unit": "GW, GWh, TWh",
-    "short": "Stündliche Bilanz aus fixer Last, fixer historischer Erzeugung, Zusatzlast, Unterdeckung und Abregelung.",
-    "description": "Kernmodell der Simulation: pro Stunde werden fixe Last, fixe historische Erzeugung und additive Lastannahmen bilanziert. Es gibt keinen Dispatch, keinen Speicherdispatch und keinen zusätzlichen Import.",
-    "overview": [
-      { "label": "Verwendung", "value": "Rechnet die stündliche Netzbilanz und daraus Jahreskennzahlen." },
-      { "label": "Zeitschritt", "value": "1 Stunde" },
-      { "label": "Erzeugung", "value": "Historisch fix; zusätzliche Last erhöht die Erzeugung nicht." },
-      { "label": "Ausgleich", "value": "Defizit wird Unterdeckung; Überschuss wird Abregelung." },
-      { "label": "Code", "value": "src/simulation/engine.ts" }
-    ],
-    "fields": [
-      { "name": "id", "unit": "Text", "description": "Technische Kennung." },
-      { "name": "title", "unit": "Text", "description": "Name des Modellbausteins." },
-      { "name": "source", "unit": "Text", "description": "Ursprung der Modelllogik." },
-      { "name": "code", "unit": "Pfad", "description": "Zentrale Implementierung." },
-      { "name": "timeStep", "unit": "Text", "description": "Zeitliche Auflösung." },
-      { "name": "generationMode", "unit": "Text", "description": "Behandlung der Erzeugung." },
-      { "name": "balanceMode", "unit": "Text", "description": "Behandlung von Defizit und Überschuss." },
-      { "name": "notes", "unit": "Liste", "description": "Kurznotizen zur Rechenlogik." }
-    ],
-    "sections": [
-      {
-        "title": "Rechenfolge",
-        "items": [
-          "Last aus historischem Verbrauch plus aktiven Zusatzlasten bestimmen.",
-          "Historische Erzeugung aus den beobachteten Energy-Charts-Reihen übernehmen.",
-          "Erzeugung minus Last bilanzieren.",
-          "Defizite als Unterdeckung zählen.",
-          "Überschüsse als Abregelung zählen.",
-          "Jahreskennzahlen aus den Stundenwerten summieren."
-        ]
-      },
-      {
-        "title": "Grenzen",
-        "items": [
-          "Kein Kraftwerksdispatch für Zusatzlasten.",
-          "Kein Speicherdispatch und kein zusätzlicher Import.",
-          "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
-        ]
-      }
-    ]
+    "description": "modell/kernmodell.description.json"
   },
   {
     "id": "modell.einspeisefaktoren.stuendlich.2025",
     "domain": "modell",
-    "title": "Einspeisefaktoren 2025",
-    "file": "modell/einspeisefaktoren-stuendlich-2025.json",
-    "doc": "modell/einspeisefaktoren-stuendlich-2025.md",
-    "scripts": ["modell/generate-feed-in-factors.mjs"],
-    "source": "Energy-Charts public_power und installed_power APIs",
-    "period": "2025",
-    "resolution": "stündlich",
-    "unit": "dimensionslos",
-    "short": "Aus beobachteter PV-/Wind-Einspeisung und installierter Leistung abgeleitete Faktoren.",
-    "description": "Modellannahme für PV und Wind: tatsächliche Einspeisung 2025 geteilt durch installierte Leistung. Abregelung wird nicht zurückgerechnet.",
-    "fields": [
-      { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
-      { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
-      { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der verwendeten Energy-Charts-Quellen." },
-      { "name": "sourceUrls", "unit": "Liste", "description": "API-Abrufe für Einspeisung und installierte Leistung." },
-      { "name": "notes", "unit": "Liste", "description": "Hinweise zur Ableitung und Begrenzung." },
-      { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
-      { "name": "hours[].solarIrradiance", "unit": "Faktor", "description": "PV-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." },
-      { "name": "hours[].wind100m", "unit": "Faktor", "description": "Wind-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." }
-    ],
-    "caveats": ["Keine Rohwetterdaten.", "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung unterschätzen."]
+    "description": "modell/einspeisefaktoren-stuendlich-2025.description.json"
   }
 ]

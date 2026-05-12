@@ -1,0 +1,51 @@
+{
+  "id": "modell.kernmodell",
+  "domain": "modell",
+  "title": "Kernmodell",
+  "file": "modell/kernmodell.json",
+  "doc": "modell/kernmodell.md",
+  "source": "Eigene stündliche Bilanzrechnung im Browser.",
+  "period": "laufend",
+  "resolution": "stündlich",
+  "unit": "GW, GWh, TWh",
+  "short": "Stündliche Bilanz aus fixer Last, fixer historischer Erzeugung, Zusatzlast, Unterdeckung und Abregelung.",
+  "description": "Kernmodell der Simulation: pro Stunde werden fixe Last, fixe historische Erzeugung und additive Lastannahmen bilanziert. Es gibt keinen Dispatch, keinen Speicherdispatch und keinen zusätzlichen Import.",
+  "overview": [
+    { "label": "Verwendung", "value": "Rechnet die stündliche Netzbilanz und daraus Jahreskennzahlen." },
+    { "label": "Zeitschritt", "value": "1 Stunde" },
+    { "label": "Erzeugung", "value": "Historisch fix; zusätzliche Last erhöht die Erzeugung nicht." },
+    { "label": "Ausgleich", "value": "Defizit wird Unterdeckung; Überschuss wird Abregelung." },
+    { "label": "Code", "value": "src/simulation/engine.ts" }
+  ],
+  "fields": [
+    { "name": "id", "unit": "Text", "description": "Technische Kennung." },
+    { "name": "title", "unit": "Text", "description": "Name des Modellbausteins." },
+    { "name": "source", "unit": "Text", "description": "Ursprung der Modelllogik." },
+    { "name": "code", "unit": "Pfad", "description": "Zentrale Implementierung." },
+    { "name": "timeStep", "unit": "Text", "description": "Zeitliche Auflösung." },
+    { "name": "generationMode", "unit": "Text", "description": "Behandlung der Erzeugung." },
+    { "name": "balanceMode", "unit": "Text", "description": "Behandlung von Defizit und Überschuss." },
+    { "name": "notes", "unit": "Liste", "description": "Kurznotizen zur Rechenlogik." }
+  ],
+  "sections": [
+    {
+      "title": "Rechenfolge",
+      "items": [
+        "Last aus historischem Verbrauch plus aktiven Zusatzlasten bestimmen.",
+        "Historische Erzeugung aus den beobachteten Energy-Charts-Reihen übernehmen.",
+        "Erzeugung minus Last bilanzieren.",
+        "Defizite als Unterdeckung zählen.",
+        "Überschüsse als Abregelung zählen.",
+        "Jahreskennzahlen aus den Stundenwerten summieren."
+      ]
+    },
+    {
+      "title": "Grenzen",
+      "items": [
+        "Kein Kraftwerksdispatch für Zusatzlasten.",
+        "Kein Speicherdispatch und kein zusätzlicher Import.",
+        "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
+      ]
+    }
+  ]
+}
