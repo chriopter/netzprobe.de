@@ -1,8 +1,8 @@
 # AGENTS.md
 
-- Code, Dateinamen, Typen, Tests und technische Bezeichner: Englisch.
-- UI, sichtbare Texte und README: Deutsch.
-- Klein halten: einfache React/Vite-Struktur, reine Simulationslogik getrennt von UI.
-- Entwicklung starten: `npm install`, dann `npm run dev`.
-- Vor Commit: `npm test` und `npm run build`.
-- Veröffentlichung: `npm run build`, danach `dist/` statisch ausliefern.
+- Code, filenames, types, tests, and technical identifiers stay in English.
+- User-facing UI text and the README stay in German.
+- Keep the app small: simple React/Vite structure, simulation logic separate from UI.
+- Start development with `npm install`, then `npm run dev`.
+- Before committing, run `npm test` and `npm run build`.
+- Release by running `npm run build` and serving `dist/` as static files.
