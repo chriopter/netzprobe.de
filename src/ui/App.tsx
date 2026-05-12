@@ -6,6 +6,7 @@ import type { DataSet } from '../data/types';
 import { baselineScenario, scenarioPresets } from '../scenarios/baseline';
 import type { Scenario } from '../scenarios/types';
 import { runSimulation } from '../simulation/engine';
+import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt, fmt0, gw, pct, twh } from './format';
 
 function useChart(id: string, option: echarts.EChartsOption | undefined) {
@@ -40,16 +41,9 @@ export function App() {
   const result = useMemo(() => data ? runSimulation(data.hours, scenario) : null, [data, scenario]);
   const sliced = useMemo(() => result?.hours.slice(range[0], range[1]) ?? [], [result, range]);
 
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? ({
-    backgroundColor: 'transparent', tooltip: { trigger: 'axis', valueFormatter: (v) => `${fmt.format(Number(v))} GW` }, legend: { textStyle: { color: '#aab0bd' }, top: 0 }, grid: { left: 42, right: 24, top: 48, bottom: 34 }, xAxis: { type: 'category', data: sliced.map(h => new Date(h.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' })), axisLabel: { color: '#8a8f98' } }, yAxis: { type: 'value', axisLabel: { color: '#8a8f98', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.07)' } } },
-    series: [
-      ['Solar', 'solarGW', '#facc15'], ['Wind an Land', 'windOnGW', '#38bdf8'], ['Wind See', 'windOffGW', '#60a5fa'], ['Bio/Wasser', 'biomassGW', '#34d399'], ['Gas', 'gasGW', '#fb923c'], ['Kohle', 'coalGW', '#ef4444'], ['Import', 'importGW', '#a78bfa'], ['Last', 'loadGW', '#f7f8f8']
-    ].map(([name, key, color]) => ({ name, type: key === 'loadGW' ? 'line' : 'line', stack: key === 'loadGW' ? undefined : 'supply', showSymbol: false, smooth: true, areaStyle: key === 'loadGW' ? undefined : { opacity: .22 }, lineStyle: { width: key === 'loadGW' ? 2.2 : 1.5 }, itemStyle: { color }, data: sliced.map(h => Number((h as any)[key])) }))
-  }) : undefined, [sliced]);
+  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced) : undefined, [sliced]);
 
-  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? ({
-    backgroundColor: 'transparent', tooltip: { trigger: 'axis' }, grid: { left: 44, right: 20, top: 20, bottom: 32 }, xAxis: { type: 'category', data: sliced.map(h => new Date(h.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' })), axisLabel: { color: '#8a8f98' } }, yAxis: { type: 'value', axisLabel: { color: '#8a8f98', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.07)' } } }, series: [{ name: 'Batterie', type: 'line', smooth: true, showSymbol: false, itemStyle: { color: '#10b981' }, data: sliced.map(h => h.batteryGWh) }, { name: 'H₂', type: 'line', smooth: true, showSymbol: false, itemStyle: { color: '#22d3ee' }, data: sliced.map(h => h.h2GWh) }]
-  }) : undefined, [sliced]);
+  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
   useChart('mix-chart', mixOption); useChart('storage-chart', storageOption);
 
   const update = (path: string, value: number) => setScenario(prev => {
@@ -66,8 +60,8 @@ export function App() {
   return <main>
     <section className="hero">
       <div className="pill"><Activity size={14}/> Keine Anmeldung · statisch hostbar · Simulation im Browser</div>
-      <h1>Stromlabor Deutschland</h1>
-      <p>Ein klares, schnelles Simulationsbrett für Strommix, Speicher, Dunkelflaute und CO₂-Faktor. KISS: Daten rein, Szenario schieben, Ergebnis sehen.</p>
+      <h1>Netzprobe</h1>
+      <p>Eine klare, schnelle Netzprobe für Strommix, Speicher, Dunkelflaute und CO₂-Faktor. KISS: Daten rein, Szenario schieben, Ergebnis sehen.</p>
       <div className="hero-actions"><button onClick={share}>Szenario-Link kopieren</button><a href="/data/de-2025-hourly.json" download><Download size={16}/> Daten</a></div>
     </section>
 

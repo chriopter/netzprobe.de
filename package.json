@@ -1,9 +1,9 @@
 {
-  "name": "stromlabor-deutschland",
+  "name": "netzprobe",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "KISS-Stromsimulation Deutschland: statisch hostbar, Simulation im Browser.",
+  "description": "KISS-Netzprobe Deutschland: statisch hostbar, Simulation im Browser.",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
