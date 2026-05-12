@@ -20,7 +20,7 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
   let co2 = 0;
   for (let i = 0; i < input.length; i++) {
     const row = input[i];
-    const historicalLoadGW = scenario.demand.historicalLoad ? (row.loadMW / 1000) * (scenario.demand.basePct / 100) : 0;
+    const historicalLoadGW = scenario.demand.historicalLoad ? row.loadMW / 1000 : 0;
     const bevLoadGW = scenario.demand.bev ? (scenario.demand.bevPct / 100) * LOAD_100_BEV_GW : 0;
     const heatPumpLoadGW = scenario.demand.heatPump ? (scenario.demand.heatPumpPct / 100) * LOAD_100_HEATPUMP_WINTER_GW * heatPumpSeason(i) : 0;
     const loadGW = historicalLoadGW + bevLoadGW + heatPumpLoadGW;
@@ -66,6 +66,7 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
   const demandTWh = sum(h => h.loadGW);
   const renewableTWh = sum(h => h.solarGW + h.windOnGW + h.windOffGW + h.biomassGW + h.hydroGW + h.geothermalGW);
   const loadSheddingTWh = sum(h => h.loadSheddingGW);
-  const co2Intensity = co2 / Math.max(1e-9, out.reduce((s,h)=>s+h.loadGW,0));
-  return { hours: out, summary: { totalDemandTWh: demandTWh, renewableSharePct: 100 * renewableTWh / Math.max(1e-9, demandTWh), co2IntensityGPerKWh: co2Intensity, curtailmentTWh: sum(h => h.curtailmentGW), importTWh: sum(h => h.importGW), exportTWh: sum(h => h.exportGW), loadSheddingTWh, securityStatus: loadSheddingTWh > 1 ? 'kritisch' : loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil' } };
+  const co2Intensity = demandTWh > 0 ? co2 / out.reduce((s,h)=>s+h.loadGW,0) : 0;
+  const renewableSharePct = demandTWh > 0 ? 100 * renewableTWh / demandTWh : 0;
+  return { hours: out, summary: { totalDemandTWh: demandTWh, renewableSharePct, co2IntensityGPerKWh: co2Intensity, curtailmentTWh: sum(h => h.curtailmentGW), importTWh: sum(h => h.importGW), exportTWh: sum(h => h.exportGW), loadSheddingTWh, securityStatus: loadSheddingTWh > 1 ? 'kritisch' : loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil' } };
 }

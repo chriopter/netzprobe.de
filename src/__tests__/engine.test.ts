@@ -13,7 +13,7 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, bev: false, heatPump: false, basePct: 100, bevPct: 10, heatPumpPct: 10 },
+  demand: { historicalLoad: true, bev: false, heatPump: false, bevPct: 10, heatPumpPct: 10 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -52,6 +52,8 @@ describe('simulation engine', () => {
     const heatPump = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true } });
 
     expect(noHistorical.summary.totalDemandTWh).toBe(0);
+    expect(noHistorical.summary.co2IntensityGPerKWh).toBe(0);
+    expect(noHistorical.summary.renewableSharePct).toBe(0);
     expect(bev.summary.totalDemandTWh).toBeGreaterThan(historical.summary.totalDemandTWh);
     expect(heatPump.summary.totalDemandTWh).toBeGreaterThan(historical.summary.totalDemandTWh);
   });

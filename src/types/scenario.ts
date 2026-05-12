@@ -6,7 +6,6 @@ export type Scenario = {
     historicalLoad: boolean;
     bev: boolean;
     heatPump: boolean;
-    basePct: number;
     bevPct: number;
     heatPumpPct: number;
   };
