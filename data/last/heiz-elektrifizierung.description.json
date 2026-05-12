@@ -1,18 +1,18 @@
 {
-  "id": "last.waermepumpen-elektrifizierung",
+  "id": "last.heiz-elektrifizierung",
   "domain": "last",
-  "title": "Wärmepumpen",
-  "file": "last/waermepumpen-elektrifizierung.json",
-  "source": "Dokumentierte Modellannahmen für privaten Raumwärmebedarf und bestehende Wärmepumpenwärme.",
+  "title": "Heiz Elektrifizierung",
+  "file": "last/heiz-elektrifizierung.json",
+  "source": "Dokumentierte Modellannahmen für privaten Raumwärmebedarf und bereits elektrisch gedeckte Heizwärme.",
   "period": "2026",
   "resolution": "Jahr, über Gradtagszahlen auf Stunden verteilt",
   "unit": "TWh Wärme, TWh Strom, JAZ",
-  "short": "Zusatzlast aus zusätzlich per Wärmepumpe gedecktem Raumwärmebedarf.",
-  "description": "Der Zielwert beschreibt elektrifizierte Raumwärme. Bereits per Wärmepumpe gedeckte Wärme wird abgezogen; der Rest wird über eine Jahresarbeitszahl in Stromlast umgerechnet.",
+  "short": "Zusatzlast aus zusätzlich elektrifiziertem Raumwärmebedarf.",
+  "description": "Der Zielwert beschreibt elektrifizierte Raumwärme. Bereits elektrisch gedeckte Heizwärme wird abgezogen; der Rest wird über eine Jahresarbeitszahl in Stromlast umgerechnet.",
   "overview": [
-    { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt den per Wärmepumpe gedeckten Raumwärmebedarf ab dem bereits elektrifizierten Mindestwert." },
+    { "label": "Verwendung", "value": "Checkbox aktiviert das Szenario; Slider setzt den elektrisch gedeckten Raumwärmebedarf ab dem bereits elektrifizierten Mindestwert." },
     { "label": "Referenz", "value": "450 TWh Raumwärmebedarf privater Haushalte als Modellwert aus 625 TWh Endenergie und 72 % Raumwärmeanteil." },
-    { "label": "Abzug", "value": "40 TWh Wärme werden als bereits per Wärmepumpe gedeckt abgezogen." },
+    { "label": "Abzug", "value": "40 TWh Wärme werden als bereits elektrisch gedeckte Heizwärme abgezogen." },
     { "label": "Effizienz", "value": "Jahresarbeitszahl 3,5: 3,5 kWh Wärme je 1 kWh Strom." },
     { "label": "Default", "value": "450 TWh Zielwärme = 410 TWh zusätzliche Wärme = 117,1 TWh zusätzlicher Strom." },
     { "label": "Verteilung", "value": "Tägliches Gradtagszahl-Profil aus last/gradtage-2025.json; innerhalb des Tages flach auf 24 Stunden verteilt." }
@@ -24,7 +24,7 @@
     { "name": "sourceUrls", "unit": "Liste", "description": "Quellen-URLs; leer, solange die Werte als Modellannahmen geführt werden." },
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr der Annahmen." },
     { "name": "referenceHeatDemandTWh", "unit": "TWh Wärme", "description": "Gesamter Raumwärmebedarf der privaten Haushalte." },
-    { "name": "alreadyHeatPumpHeatTWh", "unit": "TWh Wärme", "description": "Abgezogene bereits per Wärmepumpe gedeckte Wärme und Mindestwert des Sliders." },
+    { "name": "alreadyHeatPumpHeatTWh", "unit": "TWh Wärme", "description": "Abgezogene bereits elektrisch gedeckte Heizwärme und Mindestwert des Sliders." },
     { "name": "defaultTargetHeatTWh", "unit": "TWh Wärme", "description": "Standardwert des Sliders." },
     { "name": "maxTargetHeatTWh", "unit": "TWh Wärme", "description": "Oberes Slider-Ende." },
     { "name": "stepHeatTWh", "unit": "TWh Wärme", "description": "Slider-Schrittweite." },
@@ -38,8 +38,8 @@
     {
       "title": "Erwägungsgründe",
       "items": [
-        "Der Regler beschreibt Wärmebedarf, weil Haushalte Wärme nachfragen und die Stromlast erst aus der Effizienz der Wärmepumpe entsteht.",
-        "Bereits per Wärmepumpe gedeckte Wärme wird abgezogen, damit das Szenario nur zusätzliche Elektrifizierung zählt.",
+        "Der Regler beschreibt Wärmebedarf, weil Haushalte Wärme nachfragen und die Stromlast erst aus der Effizienz des Heizsystems entsteht.",
+        "Bereits elektrisch gedeckte Heizwärme wird abgezogen, damit das Szenario nur zusätzliche Elektrifizierung zählt.",
         "Die Jahresarbeitszahl 3,5 liegt bewusst zwischen einfachen Bestandsannahmen und sehr guten Neuanlagen.",
         "Das Gradtagszahl-Profil konzentriert die Last auf Heiztage statt auf eine glatte Cosinus-Kurve.",
         "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."

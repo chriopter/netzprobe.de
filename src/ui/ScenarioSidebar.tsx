@@ -73,7 +73,7 @@ export function ScenarioSidebar({
         docId={datasetIds.loadHistorical2025}
       >
         {data && <BevPkwControl data={data} scenario={scenario} onChecked={onBevPkwKmChange} onMillionKm={onBevPkwMillionKmChange}/>}
-        {data && <HeatPumpControl data={data} scenario={scenario} onChecked={onHeatPumpChange} onTargetHeat={onHeatPumpTargetHeatTWhChange}/>}
+        {data && <HeatingElectrificationControl data={data} scenario={scenario} onChecked={onHeatPumpChange} onTargetHeat={onHeatPumpTargetHeatTWhChange}/>}
       </ScenarioChoiceSection>
 
       <ScenarioChoiceSection
@@ -155,7 +155,7 @@ function BevPkwControl({ data, scenario, onChecked, onMillionKm }: { data: DataS
   </div>;
 }
 
-function HeatPumpControl({ data, scenario, onChecked, onTargetHeat }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void }) {
+function HeatingElectrificationControl({ data, scenario, onChecked, onTargetHeat }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void }) {
   const model = data.heatPumpElectrification;
   const heatTWh = scenario.demand.heatPumpTargetHeatTWh;
   const share = heatTWh / model.referenceHeatDemandTWh * 100;
@@ -165,8 +165,8 @@ function HeatPumpControl({ data, scenario, onChecked, onTargetHeat }: { data: Da
       <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand.heatPump} onChange={event => onChecked(event.target.checked)} />
       <span className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate">Wärmepumpen</span>
-          <DataInfoLink id={datasetIds.heatPump} label="Wärmepumpen erklären"/>
+          <span className="truncate">Heiz Elektrifizierung</span>
+          <DataInfoLink id={datasetIds.heatPump} label="Heiz Elektrifizierung erklären"/>
         </span>
         <span className="truncate text-xs text-zinc-500">{twh(heatPumpAdditionalElectricityTWh(heatTWh, model))} Strom · JAZ {model.seasonalCop.toLocaleString('de-DE')}</span>
       </span>

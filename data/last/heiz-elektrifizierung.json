@@ -1,0 +1,16 @@
+{
+  "id": "heat-pump-electrification",
+  "title": "Heiz Elektrifizierung",
+  "source": "Modellannahme für privaten Raumwärmebedarf Deutschland: 450 TWh Wärmebedarf, davon 40 TWh bereits elektrisch gedeckte Heizwärme.",
+  "sourceUrls": [],
+  "referenceYear": 2026,
+  "referenceHeatDemandTWh": 450,
+  "alreadyHeatPumpHeatTWh": 40,
+  "defaultTargetHeatTWh": 450,
+  "maxTargetHeatTWh": 675,
+  "stepHeatTWh": 5,
+  "seasonalCop": 3.5,
+  "distribution": "heating-degree-days",
+  "degreeDayProfileFile": "last/gradtage-2025.json",
+  "note": "Zusatzlast = max(0, Ziel-Raumwärme - bereits elektrisch gedeckte Heizwärme) / Jahresarbeitszahl. Die Stundenverteilung folgt dem Gradtagszahl-Profil; Direktstromheizungen sind nicht enthalten."
+}

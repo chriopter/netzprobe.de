@@ -4,9 +4,9 @@ import type { BevPkwElectrificationLoad, HeatPumpElectrificationLoad, HourlyInpu
 import type { Scenario } from '../types/scenario';
 
 const sampleHours: HourlyInput[] = [
-  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [8, 7, 10, 9, 12, 11], observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
-  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220, 260, 180, 160, 240, 230], wind100m: [6, 6, 7, 7, 9, 10], observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
-  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [3, 4, 5, 4, 7, 8], observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
+  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [8, 7, 10, 9, 12, 11], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
+  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220, 260, 180, 160, 240, 230], wind100m: [6, 6, 7, 7, 9, 10], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
+  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [3, 4, 5, 4, 7, 8], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
 ];
 
 const baselineScenario: Scenario = {
@@ -37,7 +37,7 @@ const bevPkwElectrification: BevPkwElectrificationLoad = {
 
 const heatPumpElectrification: HeatPumpElectrificationLoad = {
   id: 'heat-pump-electrification',
-  title: 'Wärmepumpen',
+  title: 'Heiz Elektrifizierung',
   source: 'Test',
   sourceUrls: [],
   referenceYear: 2026,
@@ -47,7 +47,8 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
   maxTargetHeatTWh: 675,
   stepHeatTWh: 5,
   seasonalCop: 3.5,
-  distribution: 'winter-weighted',
+  distribution: 'heating-degree-days',
+  degreeDayProfileFile: 'last/gradtage-2025.json',
   note: 'Test',
 };
 
@@ -101,6 +102,15 @@ describe('simulation engine', () => {
 
     expect(bevLoad.summary.loadSheddingTWh).toBe(0);
     expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(89.68 * sampleHours.length / 8760, 6);
+  });
+
+  it('distributes heat pump load by heating degree day weights', () => {
+    const historical = simulate(baselineScenario);
+    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 450 } });
+    const expectedTWh = (450 - 40) / 3.5 * sampleHours.length / (365 * 24);
+
+    expect(heatPumpLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
+    expect(heatPumpLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);
   });
 
   it('keeps historical generation fixed when additive demand changes', () => {

@@ -1,0 +1,1852 @@
+{
+  "source": "Modellprofil aus monatlichen Temperaturannahmen Deutschland 2025: Heizgrenze 15 C, Innenreferenz 20 C.",
+  "generatedAt": "2026-05-12T20:32:26.132Z",
+  "unit": "K*d, Anteil",
+  "sumNote": "weight summiert über alle Tage auf 1; stündliche Wärmelast verteilt jeden Tagesanteil flach auf 24 Stunden.",
+  "parameters": {
+    "year": 2025,
+    "heatingLimitC": 15,
+    "indoorReferenceC": 20,
+    "monthlyMeanTemperatureC": [
+      1,
+      2,
+      5,
+      9,
+      13,
+      16,
+      18,
+      18,
+      14,
+      10,
+      5,
+      2
+    ]
+  },
+  "hours": [
+    {
+      "date": "2025-01-01",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-02",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-03",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-04",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-05",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-06",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-07",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-08",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-09",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-10",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-11",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-12",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-13",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-14",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-15",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-16",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-17",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-18",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-19",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-20",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-21",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-22",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-23",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-24",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-25",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-26",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-27",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-28",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-29",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-30",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-01-31",
+      "heatingDegreeDay": 19,
+      "weight": 0.005273383292
+    },
+    {
+      "date": "2025-02-01",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-02",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-03",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-04",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-05",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-06",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-07",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-08",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-09",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-10",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-11",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-12",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-13",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-14",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-15",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-16",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-17",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-18",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-19",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-20",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-21",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-22",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-23",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-24",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-25",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-26",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-27",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-02-28",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-03-01",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-02",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-03",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-04",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-05",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-06",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-07",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-08",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-09",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-10",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-11",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-12",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-13",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-14",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-15",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-16",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-17",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-18",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-19",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-20",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-21",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-22",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-23",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-24",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-25",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-26",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-27",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-28",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-29",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-30",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-03-31",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-04-01",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-02",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-03",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-04",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-05",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-06",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-07",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-08",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-09",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-10",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-11",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-12",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-13",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-14",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-15",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-16",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-17",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-18",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-19",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-20",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-21",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-22",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-23",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-24",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-25",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-26",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-27",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-28",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-29",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-04-30",
+      "heatingDegreeDay": 11,
+      "weight": 0.003053011379
+    },
+    {
+      "date": "2025-05-01",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-02",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-03",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-04",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-05",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-06",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-07",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-08",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-09",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-10",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-11",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-12",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-13",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-14",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-15",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-16",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-17",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-18",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-19",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-20",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-21",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-22",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-23",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-24",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-25",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-26",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-27",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-28",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-29",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-30",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-05-31",
+      "heatingDegreeDay": 7,
+      "weight": 0.001942825423
+    },
+    {
+      "date": "2025-06-01",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-02",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-03",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-04",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-05",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-06",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-07",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-08",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-09",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-10",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-11",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-12",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-13",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-14",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-15",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-16",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-17",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-18",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-19",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-20",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-21",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-22",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-23",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-24",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-25",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-26",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-27",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-28",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-29",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-06-30",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-01",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-02",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-03",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-04",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-05",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-06",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-07",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-08",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-09",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-10",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-11",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-12",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-13",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-14",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-15",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-16",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-17",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-18",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-19",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-20",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-21",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-22",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-23",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-24",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-25",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-26",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-27",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-28",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-29",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-30",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-07-31",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-01",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-02",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-03",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-04",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-05",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-06",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-07",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-08",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-09",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-10",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-11",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-12",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-13",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-14",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-15",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-16",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-17",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-18",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-19",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-20",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-21",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-22",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-23",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-24",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-25",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-26",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-27",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-28",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-29",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-30",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-08-31",
+      "heatingDegreeDay": 0,
+      "weight": 0
+    },
+    {
+      "date": "2025-09-01",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-02",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-03",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-04",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-05",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-06",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-07",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-08",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-09",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-10",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-11",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-12",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-13",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-14",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-15",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-16",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-17",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-18",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-19",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-20",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-21",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-22",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-23",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-24",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-25",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-26",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-27",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-28",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-29",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-09-30",
+      "heatingDegreeDay": 6,
+      "weight": 0.001665278934
+    },
+    {
+      "date": "2025-10-01",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-02",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-03",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-04",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-05",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-06",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-07",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-08",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-09",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-10",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-11",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-12",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-13",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-14",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-15",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-16",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-17",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-18",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-19",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-20",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-21",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-22",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-23",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-24",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-25",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-26",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-27",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-28",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-29",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-30",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-10-31",
+      "heatingDegreeDay": 10,
+      "weight": 0.00277546489
+    },
+    {
+      "date": "2025-11-01",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-02",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-03",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-04",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-05",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-06",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-07",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-08",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-09",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-10",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-11",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-12",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-13",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-14",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-15",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-16",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-17",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-18",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-19",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-20",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-21",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-22",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-23",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-24",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-25",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-26",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-27",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-28",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-29",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-11-30",
+      "heatingDegreeDay": 15,
+      "weight": 0.004163197336
+    },
+    {
+      "date": "2025-12-01",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-02",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-03",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-04",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-05",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-06",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-07",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-08",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-09",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-10",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-11",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-12",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-13",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-14",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-15",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-16",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-17",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-18",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-19",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-20",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-21",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-22",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-23",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-24",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-25",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-26",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-27",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-28",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-29",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-30",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836803
+    },
+    {
+      "date": "2025-12-31",
+      "heatingDegreeDay": 18,
+      "weight": 0.004995836785
+    }
+  ]
+}

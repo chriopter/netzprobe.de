@@ -10,9 +10,9 @@
     "description": "last/pkw-elektrifizierung.description.json"
   },
   {
-    "id": "last.waermepumpen-elektrifizierung",
+    "id": "last.heiz-elektrifizierung",
     "domain": "last",
-    "description": "last/waermepumpen-elektrifizierung.description.json"
+    "description": "last/heiz-elektrifizierung.description.json"
   },
   {
     "id": "last.gradtage.2025",

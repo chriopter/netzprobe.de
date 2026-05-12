@@ -4,10 +4,21 @@ const dataUrl = (file: string) => `${import.meta.env.BASE_URL}data/${file}`;
 
 const loadUrl = dataUrl('last/energy-charts-stuendlich-2025.json');
 const bevPkwElectrificationUrl = dataUrl('last/pkw-elektrifizierung.json');
-const heatPumpElectrificationUrl = dataUrl('last/waermepumpen-elektrifizierung.json');
+const heatPumpElectrificationUrl = dataUrl('last/heiz-elektrifizierung.json');
 const heatingDegreeDaysUrl = dataUrl('last/gradtage-2025.json');
 const generationUrl = dataUrl('erzeugung/energy-charts-stuendlich-2025.json');
 const factorsUrl = dataUrl('modell/einspeisefaktoren-stuendlich-2025.json');
+const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Europe/Berlin',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+function berlinDate(isoTime: string) {
+  const parts = Object.fromEntries(berlinDateFormatter.formatToParts(new Date(isoTime)).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 
 export async function loadJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
@@ -32,7 +43,7 @@ export async function loadDefaultData(): Promise<DataSet> {
   const hours = loadData.hours.map((loadHour) => {
     const generation = generationByTime.get(loadHour.time);
     const factors = factorsByTime.get(loadHour.time);
-    const date = loadHour.time.slice(0, 10);
+    const date = berlinDate(loadHour.time);
     const heatingDegreeDay = heatingDegreeDayByDate.get(date);
     if (!generation || !factors || !heatingDegreeDay) throw new Error(`Unvollständige Daten für ${loadHour.time}`);
     const { time: _generationTime, ...observed } = generation;
