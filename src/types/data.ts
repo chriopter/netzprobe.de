@@ -4,6 +4,7 @@ export type ObservedPower = {
   windOffMW: number;
   gasMW: number;
   coalMW: number;
+  otherMW?: number;
   importExportMW: number;
 };
 
