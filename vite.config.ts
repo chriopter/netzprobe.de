@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 const dataDir = resolve(rootDir, 'data');
@@ -26,7 +27,7 @@ function topLevelData(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), topLevelData()],
+  plugins: [react(), tailwindcss(), topLevelData()],
   server: { port: 5177 },
   preview: { port: 4177 },
   build: { chunkSizeWarningLimit: 1500 },
