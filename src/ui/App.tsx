@@ -5,7 +5,7 @@ import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
-import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
+import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
@@ -157,6 +157,8 @@ export function App() {
   const [customEnd, setCustomEnd] = useState('2025-12-31');
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [isTuning, setIsTuning] = useState(false);
+  const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
+  const [openMixGroups, setOpenMixGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -179,7 +181,7 @@ export function App() {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced) : undefined, [sliced]);
+  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility) : undefined, [sliced, mixVisibility]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
   useChart('mix-chart', mixOption);
@@ -237,6 +239,13 @@ export function App() {
           </div>
 
           <ChartPanel title="Energiemix vs. Last" meta={`${formatDate(selectedPeriod.start)} – ${formatDate(selectedPeriod.end)}`}>
+            <MixLegend
+              visibility={mixVisibility}
+              openGroups={openMixGroups}
+              onToggleGroup={(groupId, checked) => setMixVisibility(prev => setGroupVisibility(prev, groupId, checked))}
+              onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
+              onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
+            />
             <div id="mix-chart" className="h-[340px] w-full sm:h-[420px]"/>
           </ChartPanel>
 
@@ -267,6 +276,50 @@ function ChartPanel({ title, meta, children }: { title: string; meta: string; ch
     </div>
     {children}
   </section>;
+}
+
+function setGroupVisibility(visibility: MixVisibility, groupId: string, checked: boolean) {
+  const group = MIX_GROUPS.find(item => item.id === groupId);
+  if (!group) return visibility;
+  const next = { ...visibility };
+  for (const leaf of group.leaves) next[leaf.key] = checked;
+  return next;
+}
+
+function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onToggleOpen }: { visibility: MixVisibility; openGroups: Record<string, boolean>; onToggleGroup: (groupId: string, checked: boolean) => void; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleOpen: (groupId: string) => void }) {
+  return <div className="mb-3 grid gap-2 rounded-xl border border-white/10 bg-black/15 p-2 text-xs">
+    <div className="flex flex-wrap gap-2">
+      {MIX_GROUPS.map(group => {
+        const active = group.leaves.filter(leaf => visibility[leaf.key]).length;
+        const checked = active === group.leaves.length;
+        const partial = active > 0 && !checked;
+        return <div key={group.id} className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
+          <div className="flex items-center gap-2">
+            <input
+              className="accent-indigo-300"
+              type="checkbox"
+              checked={checked}
+              ref={(el) => { if (el) el.indeterminate = partial; }}
+              onChange={event => onToggleGroup(group.id, event.target.checked)}
+            />
+            <button className="flex items-center gap-1 text-left text-zinc-200 hover:text-white" type="button" onClick={() => onToggleOpen(group.id)}>
+              <span aria-hidden style={{ color: group.color }}>●</span>
+              <span>{group.label}</span>
+              <span className="text-zinc-500">{openGroups[group.id] ? '▾' : '▸'}</span>
+            </button>
+          </div>
+          {openGroups[group.id] && <div className="mt-1 grid gap-1 pl-6 text-zinc-400">
+            {group.leaves.map(leaf => <label key={leaf.key} className="flex items-center gap-2 hover:text-zinc-200">
+              <input className="accent-indigo-300" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
+              <span aria-hidden style={{ color: leaf.color }}>●</span>
+              <span>{leaf.label}</span>
+            </label>)}
+          </div>}
+        </div>;
+      })}
+    </div>
+    <span className="text-zinc-500">Flächen sind gruppiert; Tooltip zeigt die Einzelwerte.</span>
+  </div>;
 }
 
 function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: string; value: string; subValue?: string; tone?: string }) {

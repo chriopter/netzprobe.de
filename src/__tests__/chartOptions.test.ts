@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { buildMixChartOption } from '../ui/chartOptions';
+import { DEFAULT_MIX_VISIBILITY, buildMixChartOption } from '../ui/chartOptions';
 import type { SimHour } from '../simulation/engine';
 
 const hour = (loadSheddingGW: number): SimHour => ({
   time: '2025-01-01T00:00:00Z',
   loadGW: 80,
-  solarGW: 0,
-  windOnGW: 0,
-  windOffGW: 0,
-  biomassGW: 0,
-  hydroGW: 0,
-  wasteGW: 0,
-  oilGW: 0,
-  geothermalGW: 0,
-  otherGW: 0,
+  solarGW: 7,
+  windOnGW: 11,
+  windOffGW: 3,
+  biomassGW: 2,
+  hydroGW: 1,
+  wasteGW: 0.5,
+  oilGW: 0.25,
+  geothermalGW: 0.1,
+  otherGW: 0.15,
   coalGW: 10,
-  gasGW: 10,
+  gasGW: 6,
   nuclearGW: 0,
   importGW: 0,
   exportGW: 0,
@@ -25,28 +25,29 @@ const hour = (loadSheddingGW: number): SimHour => ({
   loadSheddingGW,
   batteryGWh: 0,
   h2GWh: 0,
-  supplyGW: 20,
+  supplyGW: 40,
   balanceGW: 0,
   co2Tonnes: 0,
 });
 
 describe('mix chart options', () => {
-  it('orders the supply stack like Energy-Charts from firm lower layers to solar top layer', () => {
+  it('orders combined supply groups from firm lower layers to solar top layer', () => {
     const option = buildMixChartOption([hour(0)]);
     const series = option.series as Array<Record<string, unknown>>;
-    expect(series.slice(0, 11).map((s) => s.name)).toEqual([
-      'Wasser',
-      'Biomasse',
-      'Kohle',
-      'Öl',
-      'Geo',
-      'Sonstige',
-      'Müll',
-      'Gas',
-      'Wind See',
-      'Wind an Land',
+    expect(series.slice(0, 4).map((s) => s.name)).toEqual([
+      'CO₂-freie Grundlast',
+      'Fossil',
+      'Wind',
       'Solar',
     ]);
+  });
+
+  it('keeps plotted areas combined while summing visible leaves', () => {
+    const visibility = { ...DEFAULT_MIX_VISIBILITY, coalGW: false };
+    const option = buildMixChartOption([hour(0)], visibility);
+    const series = option.series as Array<Record<string, unknown>>;
+    const fossil = series.find((s) => s.name === 'Fossil');
+    expect(fossil?.data).toEqual([6.9]);
   });
 
   it('marks uncovered load as a red area series', () => {
