@@ -1,0 +1,79 @@
+[
+  {
+    "id": "last.energy-charts.2025.stuendlich",
+    "domain": "last",
+    "title": "Historische Last 2025",
+    "file": "last/energy-charts-2025-stuendlich.json",
+    "doc": "last/energy-charts-2025-stuendlich.md",
+    "source": "Energy-Charts",
+    "period": "2025",
+    "resolution": "stündlich",
+    "unit": "MW",
+    "short": "Stündliche deutsche Stromlast 2025 aus Energy-Charts.",
+    "description": "Historische deutsche Stromlast 2025, aus Energy-Charts-15-Minuten-Werten auf Stunden gemittelt.",
+    "fields": [
+      { "name": "time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+      { "name": "loadMW", "unit": "MW", "description": "Gemittelte elektrische Last in Deutschland." }
+    ],
+    "caveats": ["BEV und Wärmepumpen sind darin nicht separat ausgewiesen; sie sind optionale Zusatzlasten im Modell."]
+  },
+  {
+    "id": "erzeugung.energy-charts.2025.stuendlich",
+    "domain": "erzeugung",
+    "title": "Historische Erzeugung 2025",
+    "file": "erzeugung/energy-charts-2025-stuendlich.json",
+    "doc": "erzeugung/energy-charts-2025-stuendlich.md",
+    "source": "Energy-Charts",
+    "period": "2025",
+    "resolution": "stündlich",
+    "unit": "MW",
+    "short": "Stündliche öffentliche Erzeugung 2025 nach Energieträgern samt Import/Export.",
+    "description": "Historische öffentliche Erzeugung Deutschlands 2025 nach Energieträgern sowie Stromhandel, aus Energy-Charts stündlich gemittelt.",
+    "fields": [
+      { "name": "time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+      { "name": "pvMW", "unit": "MW", "description": "Solarstrom-Einspeisung." },
+      { "name": "windOnMW", "unit": "MW", "description": "Wind Onshore." },
+      { "name": "windOffMW", "unit": "MW", "description": "Wind Offshore." },
+      { "name": "gasMW/coalMW/hydroMW/biomassMW/...", "unit": "MW", "description": "Weitere öffentliche Erzeugung nach Energieträgern." },
+      { "name": "importExportMW", "unit": "MW", "description": "Saldo aus Import und Export; positive Werte werden im Modell als Import nutzbar." }
+    ],
+    "caveats": ["Nur öffentliche Stromerzeugung; private/industrielle Eigenversorgung ist nicht vollständig enthalten."]
+  },
+  {
+    "id": "modell.faktoren.2025.stuendlich",
+    "domain": "modell",
+    "title": "Modellfaktoren 2025",
+    "file": "modell/faktoren-2025-stuendlich.json",
+    "doc": "modell/faktoren-2025-stuendlich.md",
+    "source": "Energy-Charts abgeleitet",
+    "period": "2025",
+    "resolution": "stündlich",
+    "unit": "dimensionslos",
+    "short": "Abgeleitete Solar- und Wind-Verfügbarkeiten für Ausbauvarianten.",
+    "description": "Aus historischer Erzeugung und installierter Leistung abgeleitete Faktoren, mit denen andere PV- und Wind-Ausbauwerte simuliert werden.",
+    "fields": [
+      { "name": "time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+      { "name": "solarIrradiance", "unit": "0..1", "description": "Abgeleitete PV-Verfügbarkeit je Stunde." },
+      { "name": "wind100m", "unit": "0..1", "description": "Abgeleitete Wind-Verfügbarkeit je Stunde." }
+    ],
+    "caveats": ["Keine Rohwetterdaten; die Faktoren sind aus beobachteter Einspeisung zurückgerechnet."]
+  },
+  {
+    "id": "quellen.2025",
+    "domain": "quellen",
+    "title": "Quellen 2025",
+    "file": "quellen/2025.json",
+    "doc": "quellen/2025.md",
+    "source": "Projektmetadaten",
+    "period": "2025",
+    "resolution": "Notizen",
+    "unit": "—",
+    "short": "Quellen- und Plausibilitätsnotizen zu den 2025er Datendateien.",
+    "description": "Sammelt verwendete URLs, Ableitungsnotizen und Plausibilitätsstand für die öffentlichen Datendateien.",
+    "fields": [
+      { "name": "sources", "unit": "Liste", "description": "Verwendete Quellen mit URL und Notiz." },
+      { "name": "files", "unit": "Objekt", "description": "Zuordnung der fachlichen Datendateien." }
+    ],
+    "caveats": ["Metadatei, kein Simulationszeitreihen-Datensatz."]
+  }
+]

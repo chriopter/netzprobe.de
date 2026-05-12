@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { AlertTriangle, Gauge, Info, X, Zap } from 'lucide-react';
-import { loadDefaultData } from '../loaders/defaultData';
+import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
@@ -11,6 +11,21 @@ import { fmt0, gw, pct, twh } from './format';
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+type DatasetDoc = {
+  id: string;
+  domain: string;
+  title: string;
+  file: string;
+  doc: string;
+  source: string;
+  period: string;
+  resolution: string;
+  unit: string;
+  short: string;
+  description: string;
+  fields: Array<{ name: string; unit: string; description: string }>;
+  caveats?: string[];
+};
 
 const chartModeStorageKey = 'netzprobe.chartMode';
 
@@ -22,12 +37,8 @@ function storedChartMode(): ChartMode {
   }
 }
 
-const dataFaq = [
-  ['last_energy-charts-2025-stuendlich.json', 'Historische deutsche Stromlast 2025 aus Energy-Charts, von 15-Minuten-Werten auf Stunden gemittelt.'],
-  ['erzeugung_energy-charts-2025-stuendlich.json', 'Historische öffentliche Erzeugung 2025 nach Energieträgern samt Import/Export aus Energy-Charts.'],
-  ['modellfaktoren_2025-stuendlich.json', 'Aus Energy-Charts abgeleitete stündliche Solar- und Wind-Modellfaktoren für die Simulation.'],
-  ['quellen_2025.json', 'Quellen- und Plausibilitätsnotizen zu den verwendeten 2025er Datendateien.'],
-] as const;
+const manifestUrl = `${import.meta.env.BASE_URL}data/manifest.json`;
+const dataWikiUrl = (id: string) => `${import.meta.env.BASE_URL}?view=daten&dataset=${encodeURIComponent(id)}`;
 
 const defaultScenario: Scenario = {
   id: 'eigenes-szenario',
@@ -177,6 +188,22 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   return result;
 }
 
+function useDatasetDocs() {
+  const [docs, setDocs] = useState<DatasetDoc[]>([]);
+  useEffect(() => {
+    loadJson<DatasetDoc[]>(manifestUrl).then(setDocs).catch(console.error);
+  }, []);
+  return docs;
+}
+
+function isDataWikiView() {
+  try {
+    return new URL(window.location.href).searchParams.get('view') === 'daten';
+  } catch {
+    return false;
+  }
+}
+
 function generationMeta(data: DataSet | null) {
   const generation = data?.generationSumTWh ? twh(data.generationSumTWh) : '—';
   const imported = data?.importSumTWh ? twh(data.importSumTWh) : '—';
@@ -184,6 +211,12 @@ function generationMeta(data: DataSet | null) {
 }
 
 export function App() {
+  const datasetDocs = useDatasetDocs();
+  const [dataWikiView] = useState(isDataWikiView);
+  return dataWikiView ? <DataHandbook docs={datasetDocs}/> : <Dashboard datasetDocs={datasetDocs}/>;
+}
+
+function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
@@ -300,6 +333,7 @@ export function App() {
           <DemandSection
             loadMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}
             scenario={scenario}
+            loadDocId="last.energy-charts.2025.stuendlich"
             onPreset={() => setScenario(defaultScenario)}
             onToggle={toggleScenario}
             onChange={update}
@@ -307,7 +341,7 @@ export function App() {
             onTuneEnd={() => setIsTuning(false)}
           />
 
-          <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
+          <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} sourceDocId="erzeugung.energy-charts.2025.stuendlich" note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Onshore", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind Offshore", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
@@ -330,9 +364,84 @@ export function App() {
           </> : <span className="text-sm text-zinc-500">Lade Ergebnisse …</span>}
         </div>
       </aside>
-      {faqOpen && <DataFaq onClose={() => setFaqOpen(false)}/>} 
+      {faqOpen && <DataFaq docs={datasetDocs} onClose={() => setFaqOpen(false)}/>} 
     </div>
   </main>;
+}
+
+function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
+  const params = new URL(window.location.href).searchParams;
+  const selectedId = params.get('dataset') ?? docs[0]?.id;
+  const selected = docs.find(doc => doc.id === selectedId) ?? docs[0];
+  const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
+    (acc[doc.domain] ??= []).push(doc);
+    return acc;
+  }, {});
+
+  return <main className="min-h-screen bg-zinc-50 px-3 py-3 text-zinc-950 sm:px-4 lg:px-6">
+    <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:sticky lg:top-3 lg:h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
+        <a href={import.meta.env.BASE_URL} className="mb-4 inline-flex text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950">← Netzprobe</a>
+        <h1 className="text-2xl font-semibold tracking-[-0.05em]">Datenhandbuch</h1>
+        <p className="mt-1 text-sm leading-5 text-zinc-500">Alle Datensätze aus <code>/data</code>, direkt neben ihren Rohdateien dokumentiert.</p>
+        <nav className="mt-5 grid gap-4">
+          {Object.entries(grouped).map(([domain, items]) => <section key={domain}>
+            <h2 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{domain}</h2>
+            <div className="grid gap-1">
+              {items.map(doc => <a key={doc.id} href={dataWikiUrl(doc.id)} className={cx('rounded-lg px-3 py-2 text-sm transition', selected?.id === doc.id ? 'bg-zinc-950 text-white' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950')}>
+                {doc.title}
+              </a>)}
+            </div>
+          </section>)}
+        </nav>
+      </aside>
+      <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:p-7">
+        {!selected ? <p className="text-zinc-500">Lade Datenhandbuch …</p> : <>
+          <div className="border-b border-zinc-100 pb-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{selected.domain}</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-[-0.06em]">{selected.title}</h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600">{selected.description}</p>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Fact label="Quelle" value={selected.source}/>
+            <Fact label="Zeitraum" value={selected.period}/>
+            <Fact label="Auflösung" value={selected.resolution}/>
+            <Fact label="Einheit" value={selected.unit}/>
+          </div>
+          <section className="mt-7">
+            <h2 className="text-lg font-medium tracking-[-0.03em]">Dateien</h2>
+            <div className="mt-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 text-sm">
+              <code className="break-all text-zinc-800">data/{selected.file}</code>
+              <code className="break-all text-zinc-500">data/{selected.doc}</code>
+            </div>
+          </section>
+          <section className="mt-7">
+            <h2 className="text-lg font-medium tracking-[-0.03em]">Felder</h2>
+            <div className="mt-3 overflow-hidden rounded-xl border border-zinc-200">
+              {selected.fields.map(field => <div key={field.name} className="grid gap-1 border-b border-zinc-100 p-3 last:border-b-0 sm:grid-cols-[190px_100px_1fr]">
+                <code className="text-sm text-zinc-900">{field.name}</code>
+                <span className="text-xs text-zinc-500">{field.unit}</span>
+                <span className="text-sm leading-5 text-zinc-600">{field.description}</span>
+              </div>)}
+            </div>
+          </section>
+          {!!selected.caveats?.length && <section className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <h2 className="text-sm font-semibold text-amber-900">Hinweise</h2>
+            <ul className="mt-2 grid gap-1 text-sm leading-6 text-amber-900/80">
+              {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
+            </ul>
+          </section>}
+        </>}
+      </article>
+    </div>
+  </main>;
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">{label}</span>
+    <strong className="mt-1 block text-sm font-medium text-zinc-950">{value}</strong>
+  </div>;
 }
 
 function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
@@ -348,7 +457,20 @@ function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode:
   </div>;
 }
 
-function DataFaq({ onClose }: { onClose: () => void }) {
+function DataInfoLink({ id, label = 'Daten erklären' }: { id: string; label?: string }) {
+  return <a
+    href={dataWikiUrl(id)}
+    target="_blank"
+    rel="noreferrer"
+    aria-label={label}
+    className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 transition hover:border-zinc-300 hover:text-zinc-950"
+    onClick={event => event.stopPropagation()}
+  >
+    <Info className="h-3 w-3"/>
+  </a>;
+}
+
+function DataFaq({ docs, onClose }: { docs: DatasetDoc[]; onClose: () => void }) {
   return <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/20 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="data-faq-title" onClick={onClose}>
     <section className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,.18)]" onClick={event => event.stopPropagation()}>
       <div className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-3">
@@ -361,10 +483,10 @@ function DataFaq({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <dl className="mt-3 grid gap-3">
-        {dataFaq.map(([file, text]) => <div key={file} className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
-          <dt className="font-mono text-[11px] text-zinc-700">{file}</dt>
-          <dd className="mt-1 text-sm leading-5 text-zinc-600">{text}</dd>
-        </div>)}
+        {(docs.length ? docs : []).map(doc => <a key={doc.id} className="block rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3 transition hover:border-zinc-300 hover:bg-white" href={dataWikiUrl(doc.id)} target="_blank" rel="noreferrer">
+          <dt className="font-mono text-[11px] text-zinc-700">{doc.file}</dt>
+          <dd className="mt-1 text-sm leading-5 text-zinc-600">{doc.short}</dd>
+        </a>)}
       </dl>
       <a className="mt-3 inline-flex text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">Datendateien auf GitHub ansehen</a>
     </section>
@@ -415,12 +537,15 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, children }: { title: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; onPreset: () => void; children: ReactNode }) {
+function ControlSection({ title, sourceLabel, sourceMeta, sourceDocId, note, onPreset, children }: { title: string; sourceLabel: string; sourceMeta?: ReactNode; sourceDocId?: string; note?: string; onPreset: () => void; children: ReactNode }) {
   return <section className={cx(sectionBox, 'p-3')}>
     <div className="grid gap-2">
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{title}</span>
       <button className="grid gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-left text-sm text-zinc-950 transition hover:border-zinc-300 hover:bg-white" type="button" onClick={onPreset}>
-        <span>{sourceLabel}</span>
+        <span className="flex items-center justify-between gap-2">
+          <span>{sourceLabel}</span>
+          {sourceDocId && <DataInfoLink id={sourceDocId} label={`${sourceLabel} erklären`}/>} 
+        </span>
         {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
       </button>
     </div>
@@ -462,7 +587,7 @@ function Control({ rows, onChange, onTuneStart, onTuneEnd, disabled = false }: {
   </div>;
 }
 
-function DemandSection({ loadMeta, scenario, onPreset, onToggle, onChange, onTuneStart, onTuneEnd }: { loadMeta?: string; scenario: Scenario; onPreset: () => void; onToggle: (path: string, value: boolean) => void; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
+function DemandSection({ loadMeta, scenario, loadDocId, onPreset, onToggle, onChange, onTuneStart, onTuneEnd }: { loadMeta?: string; scenario: Scenario; loadDocId?: string; onPreset: () => void; onToggle: (path: string, value: boolean) => void; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
   return <section className={cx(sectionBox, 'p-3')}>
     <div className="flex items-center justify-between gap-3">
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Last</span>
@@ -472,6 +597,7 @@ function DemandSection({ loadMeta, scenario, onPreset, onToggle, onChange, onTun
       <DemandItem
         label="Energy-Charts 2025"
         meta={loadMeta ?? 'Historische Last'}
+        docId={loadDocId}
         checked={scenario.demand.historicalLoad}
         onChecked={(checked) => onToggle('demand.historicalLoad', checked)}
       />
@@ -495,12 +621,15 @@ function DemandSection({ loadMeta, scenario, onPreset, onToggle, onChange, onTun
   </section>;
 }
 
-function DemandItem({ label, meta, checked, onChecked, children }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void; children?: ReactNode }) {
+function DemandItem({ label, meta, checked, onChecked, docId, children }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void; docId?: string; children?: ReactNode }) {
   return <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
     <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-950">
       <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={checked} onChange={event => onChecked(event.target.checked)} />
-      <span className="grid gap-0.5">
-        <span>{label}</span>
+      <span className="grid flex-1 gap-0.5">
+        <span className="flex items-center justify-between gap-2">
+          <span>{label}</span>
+          {docId && <DataInfoLink id={docId} label={`${label} erklären`}/>} 
+        </span>
         <span className="text-xs text-zinc-500">{meta}</span>
       </span>
     </label>

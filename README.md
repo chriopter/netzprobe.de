@@ -10,9 +10,9 @@ Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation l
 
 ## Anspruch
 
-KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Präfix-Dateien. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
+KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Fachordnern und Datenhandbuch. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
 
-`modellfaktoren_*` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für andere PV-/Wind-Leistungen.
+`data/modell/faktoren-2025-stuendlich.json` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für andere PV-/Wind-Leistungen.
 
 ## Vorsicht
 
