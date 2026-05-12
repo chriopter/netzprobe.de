@@ -238,7 +238,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
           {result ? <>
             <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
             <Kpi icon={<Gauge/>} label="CO₂ / EE" value="offen" subValue={pct(result.summary.renewableSharePct)}/>
-            <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
+            <Kpi icon={<AlertTriangle/>} label="Import" value={twh(result.summary.importTWh)} subValue="Unterdeckung aufgefüllt" tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
             <section className="grid gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
               <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
               <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
@@ -298,11 +298,22 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 }
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
+  const contextItems = [
+    { label: 'Import', color: '#dc2626', active: true },
+    { label: 'Last', color: '#111827', active: true },
+  ];
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="mt-3 flex flex-wrap gap-1.5 border-t border-zinc-100 pt-3 text-xs">
-    {leaves.map(leaf => {
-      const active = visibility[leaf.key];
-      return <button
+  return <div className="mt-3 grid gap-2 border-t border-zinc-100 pt-3 text-xs">
+    <div className="flex flex-wrap gap-1.5">
+      {contextItems.map(item => <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-zinc-800 shadow-sm">
+        <span aria-hidden className="text-[10px]" style={{ color: item.active ? item.color : '#d4d4d8' }}>●</span>
+        <span>{item.label}</span>
+      </span>)}
+    </div>
+    <div className="flex flex-wrap gap-1.5">
+      {leaves.map(leaf => {
+        const active = visibility[leaf.key];
+        return <button
         key={leaf.key}
         type="button"
         aria-pressed={active}
@@ -315,7 +326,8 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
         <span aria-hidden className="text-[10px]" style={{ color: active ? leaf.color : '#d4d4d8' }}>●</span>
         <span>{leaf.label}</span>
       </button>;
-    })}
+      })}
+    </div>
   </div>;
 }
 

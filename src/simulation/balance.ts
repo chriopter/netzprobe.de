@@ -16,10 +16,11 @@ export function balanceHour(supplyGW: number, loadGW: number, storage: StorageSt
   const historicalCoverageGW = supplyGW + historicalImportGW + dataBoundaryResidualGW;
   const mismatch = historicalCoverageGW - loadGW - historicalExportGW;
   const curtailmentGW = Math.max(0, mismatch);
-  const loadSheddingGW = Math.max(0, -mismatch);
+  const automaticImportGW = Math.max(0, -mismatch);
+  const loadSheddingGW = 0;
 
   return {
-    importGW: historicalImportGW,
+    importGW: historicalImportGW + automaticImportGW,
     exportGW: historicalExportGW,
     storageChargeGW: 0,
     storageDischargeGW: 0,
@@ -27,6 +28,6 @@ export function balanceHour(supplyGW: number, loadGW: number, storage: StorageSt
     loadSheddingGW,
     batteryGWh: storage.batteryGWh,
     h2GWh: storage.h2GWh,
-    balanceGW: historicalCoverageGW + loadSheddingGW - loadGW - historicalExportGW - curtailmentGW,
+    balanceGW: historicalCoverageGW + automaticImportGW - loadGW - historicalExportGW - curtailmentGW,
   };
 }

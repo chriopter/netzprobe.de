@@ -61,6 +61,17 @@ describe('mix chart options', () => {
     expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
   });
 
+  it('plots import as a red fill in the production chart', () => {
+    const sample = { ...hour(0), importGW: 2, exportGW: 1, dataBoundaryResidualGW: -0.5 };
+    const option = buildMixChartOption([sample], DEFAULT_MIX_VISIBILITY, 'linie');
+    const series = option.series as Array<Record<string, unknown>>;
+    const imported = series.find((s) => s.name === 'Import');
+
+    expect(series.map((s) => s.name)).toContain('Import');
+    expect(series.map((s) => s.name)).toContain('Kohle');
+    expect(imported?.itemStyle).toMatchObject({ color: '#dc2626' });
+  });
+
   it('renders the main mix as a radial polar chart by default and can switch back to line mode', () => {
     const radial = buildMixChartOption([hour(0)]);
     const linear = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'linie');
@@ -119,16 +130,17 @@ describe('mix chart options', () => {
     expect(series.find((s) => s.name === 'Batterie')?.coordinateSystem).toBeUndefined();
   });
 
-  it('marks uncovered load as a red area series', () => {
-    const option = buildMixChartOption([hour(0), hour(12)]);
+  it('shows import as the combined balance fill area', () => {
+    const option = buildMixChartOption([{ ...hour(0), importGW: 2 }, { ...hour(0), importGW: 12 }], DEFAULT_MIX_VISIBILITY, 'linie');
     const series = option.series as Array<Record<string, unknown>>;
-    const underdecked = series.find((s) => s.name === 'Unterdeckung');
+    const imported = series.find((s) => s.name === 'Import');
 
-    expect(underdecked).toBeDefined();
-    expect(underdecked?.type).toBe('line');
-    expect(underdecked?.data).toEqual([0, 12]);
-    expect(underdecked?.stack).toBe('supply');
-    expect(underdecked?.areaStyle).toMatchObject({ opacity: expect.any(Number) });
-    expect(underdecked?.itemStyle).toMatchObject({ color: '#dc2626' });
+    expect(imported).toBeDefined();
+    expect(imported?.type).toBe('line');
+    expect(imported?.data).toEqual([2, 12]);
+    expect(imported?.stack).toBe('supply');
+    expect(imported?.areaStyle).toMatchObject({ opacity: expect.any(Number) });
+    expect(imported?.itemStyle).toMatchObject({ color: '#dc2626' });
+    expect(series.find((s) => s.name === 'Unterdeckung')).toBeUndefined();
   });
 });

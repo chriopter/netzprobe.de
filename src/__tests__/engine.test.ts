@@ -41,7 +41,7 @@ describe('simulation engine', () => {
     expect(result.hours).toHaveLength(sampleHours.length);
     for (const hour of result.hours) {
       expect(Math.abs(hour.balanceGW)).toBeLessThan(1e-6);
-      expect(hour.supplyGW + hour.importGW + hour.dataBoundaryResidualGW + hour.storageDischargeGW + hour.loadSheddingGW)
+      expect(hour.supplyGW + hour.importGW + hour.dataBoundaryResidualGW + hour.storageDischargeGW)
         .toBeCloseTo(hour.loadGW + hour.exportGW + hour.storageChargeGW + hour.curtailmentGW, 6);
     }
   });
@@ -75,6 +75,14 @@ describe('simulation engine', () => {
 
     expect(result.summary.loadSheddingTWh).toBe(0);
     expect(result.summary.curtailmentTWh).toBe(0);
+  });
+
+  it('fills additive load with additional import instead of separate load shedding', () => {
+    const historical = runSimulation(sampleHours, baselineScenario, bevPkwElectrification);
+    const bevLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true, bevPkwMillionKm: 472_200 } }, bevPkwElectrification);
+
+    expect(bevLoad.summary.loadSheddingTWh).toBe(0);
+    expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(89.68 * sampleHours.length / 8760, 6);
   });
 
   it('keeps historical generation fixed when additive demand changes', () => {

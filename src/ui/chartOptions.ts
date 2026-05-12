@@ -165,11 +165,10 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
           const detail = active.map(leaf => `<span style="color:${leaf.color}">●</span> ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
           lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
         }
-        lines.push(`<span style="color:#a78bfa">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
-        if (hour.dataBoundaryResidualGW !== 0) lines.push(`<span style="color:#64748b">●</span> Abgrenzungsrest: <b>${fmt.format(hour.dataBoundaryResidualGW)} GW</b>`);
+        lines.push(`<span style="color:#dc2626">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
         if (hour.exportGW > 0) lines.push(`<span style="color:#94a3b8">●</span> Export: <b>${fmt.format(hour.exportGW)} GW</b>`);
+        if (hour.dataBoundaryResidualGW !== 0) lines.push(`<span style="color:#64748b">●</span> Abgrenzungsrest: <b>${fmt.format(hour.dataBoundaryResidualGW)} GW</b>`);
         lines.push(`<span style="color:#111827">●</span> Last: <b>${fmt.format(hour.loadGW)} GW</b>`);
-        if (hour.loadSheddingGW > 0) lines.push(`<span style="color:#dc2626">●</span> Unterdeckung: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
         return lines.join('<br/>');
       },
     },
@@ -177,8 +176,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     ...coordinate,
     series: [
       ...supplySeries,
-      areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW), mode),
-      areaSeries('Abgrenzungsrest', '#64748b', chartHours.map((h) => Math.max(0, h.dataBoundaryResidualGW)), mode),
+      areaSeries('Import', '#dc2626', chartHours.map((h) => h.importGW), mode),
       {
         name: 'Last',
         type: 'line' as const,
@@ -188,19 +186,6 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         lineStyle: { width: 2.2 },
         itemStyle: { color: '#111827' },
         data: chartHours.map((h) => h.loadGW),
-      },
-      {
-        name: 'Unterdeckung',
-        type: 'line' as const,
-        ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
-        showSymbol: false,
-        smooth: false,
-        z: 9,
-        stack: 'supply',
-        areaStyle: { opacity: .45 },
-        lineStyle: { width: 0 },
-        itemStyle: { color: '#dc2626' },
-        data: chartHours.map((h) => h.loadSheddingGW),
       },
     ],
   };

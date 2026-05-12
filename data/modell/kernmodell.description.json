@@ -8,14 +8,14 @@
   "resolution": "stündlich",
   "unit": "GW, GWh, TWh",
   "short": "Stündliche Bilanz aus fixer Last, historischer Erzeugung, historischem Handelssaldo, Abgrenzungsrest und Zusatzlast.",
-  "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert; es gibt keinen Dispatch, keinen Speicherdispatch und keinen zusätzlichen Import.",
+  "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert und automatisch als zusätzlicher Import aufgefüllt; es gibt keinen Kraftwerks- oder Speicherdispatch.",
   "overview": [
     { "label": "Verwendung", "value": "Rechnet die stündliche Netzbilanz und daraus Jahreskennzahlen." },
     { "label": "Zeitschritt", "value": "1 Stunde" },
     { "label": "Erzeugung", "value": "Historisch fix; zusätzliche Last erhöht die Erzeugung nicht." },
     { "label": "Import/Export", "value": "Historischer Handelssaldo aus Energy-Charts wird stündlich übernommen." },
     { "label": "Abgrenzungsrest", "value": "Stündlich aus Last + Export - öffentliche Erzeugung - Import abgeleitet, damit 2025 exakt auf null kommt." },
-    { "label": "Zusatzlast", "value": "Zusatzlast wird nach der historischen Bilanz addiert und kann Unterdeckung erzeugen." },
+    { "label": "Zusatzlast", "value": "Zusatzlast wird nach der historischen Bilanz addiert und als zusätzlicher Import aufgefüllt." },
     { "label": "Code", "value": "src/simulation/engine.ts" }
   ],
   "fields": [
@@ -37,7 +37,7 @@
         "Historischen Import/Export aus dem Handelssaldo übernehmen.",
         "Abgrenzungsrest berechnen, sodass Last 2025 stündlich gedeckt ist.",
         "Aktive Zusatzlasten danach addieren.",
-        "Restdefizite der Zusatzlast als Unterdeckung zählen.",
+        "Restdefizite der Zusatzlast als zusätzlichen Import auffüllen.",
         "Jahreskennzahlen aus den Stundenwerten summieren."
       ]
     },
@@ -45,7 +45,8 @@
       "title": "Grenzen",
       "items": [
         "Kein Kraftwerksdispatch für Zusatzlasten.",
-        "Kein Speicherdispatch und kein zusätzlicher Import.",
+        "Kein Speicherdispatch.",
+        "Zusätzlicher Import ist automatische Auffüllung der Restlücke, kein Kraftwerksdispatch.",
         "Der Abgrenzungsrest ist keine Erzeugung und keine Zukunftsannahme, sondern die historische Restgröße aus unterschiedlichen Datenabgrenzungen.",
         "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
       ]
