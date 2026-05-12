@@ -1,0 +1,73 @@
+{
+  "items": [
+    {
+      "id": "supply-demo",
+      "name": "Demo-Netz",
+      "values": {
+        "renewables": {
+          "pvGW": 100,
+          "windOnGW": 100,
+          "windOffGW": 10
+        },
+        "fossil": {
+          "coalGW": 10,
+          "gasGW": 10,
+          "nuclearGW": 0
+        },
+        "storage": {
+          "batteryPowerGW": 10,
+          "batteryEnergyGWh": 100,
+          "h2PowerGW": 10,
+          "h2EnergyGWh": 100,
+          "importLimitGW": 10
+        }
+      }
+    },
+    {
+      "id": "supply-renewable",
+      "name": "Mehr Erneuerbare",
+      "values": {
+        "renewables": {
+          "pvGW": 160,
+          "windOnGW": 140,
+          "windOffGW": 30
+        },
+        "fossil": {
+          "coalGW": 5,
+          "gasGW": 20,
+          "nuclearGW": 0
+        },
+        "storage": {
+          "batteryPowerGW": 30,
+          "batteryEnergyGWh": 200,
+          "h2PowerGW": 20,
+          "h2EnergyGWh": 400,
+          "importLimitGW": 15
+        }
+      }
+    },
+    {
+      "id": "supply-reserve",
+      "name": "Mehr Reserve",
+      "values": {
+        "renewables": {
+          "pvGW": 100,
+          "windOnGW": 100,
+          "windOffGW": 10
+        },
+        "fossil": {
+          "coalGW": 20,
+          "gasGW": 40,
+          "nuclearGW": 0
+        },
+        "storage": {
+          "batteryPowerGW": 20,
+          "batteryEnergyGWh": 150,
+          "h2PowerGW": 20,
+          "h2EnergyGWh": 300,
+          "importLimitGW": 25
+        }
+      }
+    }
+  ]
+}

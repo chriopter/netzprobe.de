@@ -1,5 +1,5 @@
 import type { HourlyInput } from '../types/data';
-import type { Scenario } from '../../scenarios/types';
+import type { Scenario } from '../types/scenario';
 import { runSimulation, type SimulationResult } from './engine';
 
 type InitMessage = { type: 'init'; requestId: number; input: HourlyInput[]; scenario: Scenario };

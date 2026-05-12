@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../simulation/engine';
-import { baselineScenario } from '../../scenarios/baseline';
 import type { HourlyInput } from '../types/data';
+import type { Scenario } from '../types/scenario';
 
 const sampleHours: HourlyInput[] = [
   { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [8, 7, 10, 9, 12, 11], observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
   { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220, 260, 180, 160, 240, 230], wind100m: [6, 6, 7, 7, 9, 10], observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
   { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [3, 4, 5, 4, 7, 8], observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
 ];
+
+const baselineScenario: Scenario = {
+  id: 'demo-fakewerte',
+  name: 'Demo-Fakewerte',
+  description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
+  demand: { basePct: 100, bevPct: 10, heatPumpPct: 10 },
+  renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
+  fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
+  storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
+};
 
 describe('simulation engine', () => {
   it('balances every hour with supply, imports, storage, curtailment or load shedding', () => {

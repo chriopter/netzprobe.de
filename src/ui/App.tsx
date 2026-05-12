@@ -2,30 +2,16 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { AlertTriangle, Banknote, Gauge, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
+import { composeScenario, loadScenarioPresets } from '../loaders/scenarios';
 import type { DataSet } from '../types/data';
-import { baselineScenario } from '../../scenarios/baseline';
-import type { Scenario } from '../../scenarios/types';
+import type { DemandScenario, Scenario, ScenarioPresets, SupplyScenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
 import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
-type DemandScenario = { id: string; name: string; values: Scenario['demand'] };
-type SupplyScenario = { id: string; name: string; values: Pick<Scenario, 'renewables' | 'fossil' | 'storage'> };
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
-
-const demandScenarios: DemandScenario[] = [
-  { id: 'demand-demo', name: 'Demo-Nachfrage', values: { basePct: 100, bevPct: 10, heatPumpPct: 10 } },
-  { id: 'demand-low', name: 'Niedrige Nachfrage', values: { basePct: 90, bevPct: 10, heatPumpPct: 10 } },
-  { id: 'demand-high', name: 'Hohe Nachfrage', values: { basePct: 110, bevPct: 30, heatPumpPct: 30 } },
-];
-
-const supplyScenarios: SupplyScenario[] = [
-  { id: 'supply-demo', name: 'Demo-Netz', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 }, storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 } } },
-  { id: 'supply-renewable', name: 'Mehr Erneuerbare', values: { renewables: { pvGW: 160, windOnGW: 140, windOffGW: 30 }, fossil: { coalGW: 5, gasGW: 20, nuclearGW: 0 }, storage: { batteryPowerGW: 30, batteryEnergyGWh: 200, h2PowerGW: 20, h2EnergyGWh: 400, importLimitGW: 15 } } },
-  { id: 'supply-reserve', name: 'Mehr Reserve', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 20, gasGW: 40, nuclearGW: 0 }, storage: { batteryPowerGW: 20, batteryEnergyGWh: 150, h2PowerGW: 20, h2EnergyGWh: 300, importLimitGW: 25 } } },
-];
 
 const shell = 'min-h-screen px-3 py-3 sm:px-4 lg:px-6';
 const panel = 'rounded-2xl border border-white/10 bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,.04),0_18px_60px_rgba(0,0,0,.28)]';
@@ -94,11 +80,11 @@ function isEqual(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function matchingDemandId(demand: Scenario['demand']) {
+function matchingDemandId(demand: Scenario['demand'], demandScenarios: DemandScenario[]) {
   return demandScenarios.find(preset => isEqual(preset.values, demand))?.id ?? 'custom';
 }
 
-function matchingSupplyId(scenario: Scenario) {
+function matchingSupplyId(scenario: Scenario, supplyScenarios: SupplyScenario[]) {
   return supplyScenarios.find(preset => isEqual(preset.values.renewables, scenario.renewables) && isEqual(preset.values.fossil, scenario.fossil) && isEqual(preset.values.storage, scenario.storage))?.id ?? 'custom';
 }
 
@@ -119,7 +105,7 @@ function periodDates(preset: PeriodPreset, start: string, end: string) {
   return { start, end: end < start ? start : end };
 }
 
-function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
+function useWorkerSimulation(data: DataSet | null, scenario: Scenario | null) {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
@@ -141,15 +127,15 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !data) return;
+    if (!worker || !data || !scenario) return;
     hasDataRef.current = true;
     const requestId = ++requestRef.current;
     worker.postMessage({ type: 'init', requestId, input: data.hours, scenario });
-  }, [data]);
+  }, [data, scenario]);
 
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !hasDataRef.current) return;
+    if (!worker || !hasDataRef.current || !scenario) return;
     const timer = window.setTimeout(() => {
       const requestId = ++requestRef.current;
       worker.postMessage({ type: 'run', requestId, scenario });
@@ -162,7 +148,8 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? baselineScenario);
+  const [scenarioPresets, setScenarioPresets] = useState<ScenarioPresets | null>(null);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('21d');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-01-21');
@@ -171,9 +158,15 @@ export function App() {
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
+    loadScenarioPresets().then((presets) => {
+      setScenarioPresets(presets);
+      setScenario(scenarioFromUrl() ?? composeScenario(presets.demand[0], presets.supply[0]));
+    }).catch(console.error);
   }, []);
 
   const result = useWorkerSimulation(data, scenario);
+  const demandScenarios = scenarioPresets?.demand ?? [];
+  const supplyScenarios = scenarioPresets?.supply ?? [];
   useEffect(() => {
     if (!result || chartResult === result || isTuning) return;
     if (!chartResult) {
@@ -196,14 +189,14 @@ export function App() {
   useChart('mix-chart', mixOption);
   useChart('storage-chart', storageOption);
 
-  const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
+  const update = (path: string, value: number) => setScenario(prev => prev ? setScenarioValue(prev, path, value) : prev);
   const selectDemand = (id: string) => {
     const preset = demandScenarios.find(item => item.id === id);
-    if (preset) setScenario(prev => setDemandScenario(prev, preset.values));
+    if (preset) setScenario(prev => prev ? setDemandScenario(prev, preset.values) : prev);
   };
   const selectSupply = (id: string) => {
     const preset = supplyScenarios.find(item => item.id === id);
-    if (preset) setScenario(prev => setSupplyScenario(prev, preset.values));
+    if (preset) setScenario(prev => prev ? setSupplyScenario(prev, preset.values) : prev);
   };
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
@@ -214,6 +207,10 @@ export function App() {
     setPeriodPreset('custom');
     setCustomEnd(date < customStart ? customStart : date);
   };
+
+  if (!scenario || !scenarioPresets) {
+    return <main className={shell}><div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div></main>;
+  }
 
   return <main className={shell}>
     <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -227,7 +224,7 @@ export function App() {
 
           <ScenarioSelect
             title="Nachfrage"
-            value={matchingDemandId(scenario.demand)}
+            value={scenario ? matchingDemandId(scenario.demand, demandScenarios) : ''}
             presets={demandScenarios}
             onSelect={selectDemand}
           >
@@ -236,7 +233,7 @@ export function App() {
 
           <ScenarioSelect
             title="Netz & Erzeugung"
-            value={matchingSupplyId(scenario)}
+            value={scenario ? matchingSupplyId(scenario, supplyScenarios) : ''}
             presets={supplyScenarios}
             onSelect={selectSupply}
           >
@@ -282,7 +279,7 @@ export function App() {
             </div>
           </div>
           <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
-            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer">GitHub</a>.
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
           </footer>
         </>}
       </section>
