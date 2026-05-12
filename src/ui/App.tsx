@@ -139,7 +139,10 @@ function generationMeta(data: DataSet | null) {
   if (!data?.generationSharesPct) return undefined;
   const generation = data.generationSumTWh ? twh(data.generationSumTWh) : '—';
   const imported = data.importSumTWh ? twh(data.importSumTWh) : '—';
-  return `Erzeugung ${generation} (${pct(data.generationSharesPct.generationPct ?? 0)}), Import ${imported} (${pct(data.generationSharesPct.importPct ?? 0)})`;
+  return <>
+    <span>{generation} Erzeugung · {imported} Import</span>
+    <span>{pct(data.generationSharesPct.generationPct ?? 0)} Erzeugung · {pct(data.generationSharesPct.importPct ?? 0)} Import</span>
+  </>;
 }
 
 export function App() {
@@ -272,7 +275,7 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, children }: { title: string; sourceValue: string; sourceLabel: string; sourceMeta?: string; note?: string; children: ReactNode }) {
+function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, children }: { title: string; sourceValue: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; children: ReactNode }) {
   return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
     <div className="grid gap-2">
       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
@@ -280,7 +283,7 @@ function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, chi
         <input className="mt-0.5 accent-indigo-300" type="radio" name={`${title}-quelle`} value={sourceValue} checked readOnly />
         <span className="grid gap-0.5">
           <span>{sourceLabel}</span>
-          {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
+          {sourceMeta && <span className="grid gap-0.5 text-xs text-zinc-500">{sourceMeta}</span>}
         </span>
       </label>
     </div>
