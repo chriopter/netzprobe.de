@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { Activity, BatteryCharging, CloudSun, Download, Gauge, ShieldCheck, Zap } from 'lucide-react';
+import { Activity, BatteryCharging, CloudSun, Gauge, ShieldCheck, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import { baselineScenario, scenarioPresets } from '../../scenarios/baseline';
@@ -22,12 +22,6 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
   }, [id, option]);
 }
 
-function scenarioToUrl(s: Scenario) {
-  const packed = btoa(unescape(encodeURIComponent(JSON.stringify(s))));
-  const url = new URL(window.location.href);
-  url.searchParams.set('s', packed);
-  return url.toString();
-}
 function scenarioFromUrl(): Scenario | null {
   try { const raw = new URL(window.location.href).searchParams.get('s'); return raw ? JSON.parse(decodeURIComponent(escape(atob(raw)))) : null; } catch { return null; }
 }
@@ -55,14 +49,12 @@ export function App() {
     return next;
   });
   const reset = (s: Scenario) => setScenario(structuredClone(s));
-  const share = async () => navigator.clipboard?.writeText(scenarioToUrl(scenario));
 
   return <main>
     <section className="hero">
       <div className="pill"><Activity size={14}/> Keine Anmeldung · statisch hostbar · Simulation im Browser</div>
       <h1>Netzprobe</h1>
       <p>Eine klare, schnelle Netzprobe für Strommix, Speicher, Dunkelflaute und CO₂-Faktor. KISS: Daten rein, Szenario schieben, Ergebnis sehen.</p>
-      <div className="hero-actions"><button onClick={share}>Szenario-Link kopieren</button><a href="/data/de-2025-hourly.json" download><Download size={16}/> Daten</a></div>
     </section>
 
     <section className="layout">
@@ -87,7 +79,9 @@ export function App() {
           <div className="panel chart-card"><div className="card-head"><h2>Speicherfüllstand</h2><span>Batterie und H₂</span></div><div id="storage-chart" className="chart small"/></div>
           <div className="panel range"><label>Zeitraum: erste {Math.round((range[1]-range[0])/24)} Tage</label><input type="range" min={7} max={365} value={Math.round((range[1]-range[0])/24)} onChange={e => setRange([0, Number(e.target.value)*24])}/></div>
           <div className="panel notes"><h2>Plausibilität</h2><p>Konstanten wurden grob gegen Energy-Charts/Fraunhofer ISE, Bundesnetzagentur, UBA, SMARD, DWD und ERA5 eingeordnet. Ergebnis: Größenordnungen sind für 2025 plausibel; Batterie-Leistung konservativ, PV/Wind eher Anfang-2025.</p></div>
-          <footer className="footer">Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.</footer>
+          <footer className="footer">
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+          </footer>
         </>}
       </section>
     </section>
