@@ -38,25 +38,28 @@ function cx(...classes: Array<string | false | null | undefined>) {
 
 function useChart(id: string, option: echarts.EChartsOption | undefined) {
   const chartRef = useRef<echarts.ECharts | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => () => {
+    cleanupRef.current?.();
+    chartRef.current?.dispose();
+    chartRef.current = null;
+    cleanupRef.current = null;
+  }, []);
 
   useEffect(() => {
+    if (!option) return;
     const el = document.getElementById(id);
     if (!el) return;
-    const chart = echarts.init(el, 'dark');
-    chartRef.current = chart;
-    const resize = () => chart.resize();
-    window.addEventListener('resize', resize);
-    return () => {
-      window.removeEventListener('resize', resize);
-      chart.dispose();
-      chartRef.current = null;
-    };
-  }, [id]);
-
-  useEffect(() => {
-    if (!option || !chartRef.current) return;
+    if (!chartRef.current) {
+      const chart = echarts.init(el, 'dark');
+      const resize = () => chart.resize();
+      window.addEventListener('resize', resize);
+      chartRef.current = chart;
+      cleanupRef.current = () => window.removeEventListener('resize', resize);
+    }
     chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true });
-  }, [option]);
+  }, [id, option]);
 }
 
 function scenarioFromUrl(): Scenario | null {
