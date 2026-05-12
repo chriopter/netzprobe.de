@@ -9,7 +9,7 @@ export type MixGroup = { id: string; label: string; color: string; leaves: Array
 export const MIX_GROUPS: MixGroup[] = [
   { id: 'base', label: 'CO₂-freie Grundlast', color: '#2563eb', leaves: [
     { key: 'hydroGW', label: 'Wasser', color: '#4338ca' },
-    { key: 'biomassGW', label: 'Biomasse', color: '#16a34a' },
+    { key: 'biomassGW', label: 'Bio', color: '#16a34a' },
     { key: 'geothermalGW', label: 'Geo', color: '#3730a3' },
   ] },
   { id: 'fossil', label: 'Fossil', color: '#fb923c', leaves: [
@@ -20,8 +20,8 @@ export const MIX_GROUPS: MixGroup[] = [
     { key: 'gasGW', label: 'Gas', color: '#fb923c' },
   ] },
   { id: 'wind', label: 'Wind', color: '#c5d8bc', leaves: [
-    { key: 'windOffGW', label: 'Wind See', color: '#8aa37f' },
-    { key: 'windOnGW', label: 'Wind an Land', color: '#c5d8bc' },
+    { key: 'windOffGW', label: 'Wind Offshore', color: '#8aa37f' },
+    { key: 'windOnGW', label: 'Wind Onshore', color: '#c5d8bc' },
   ] },
   { id: 'solar', label: 'Solar', color: '#facc15', leaves: [
     { key: 'solarGW', label: 'Solar', color: '#facc15' },

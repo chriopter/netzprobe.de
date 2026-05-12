@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { AlertTriangle, Gauge, Zap } from 'lucide-react';
+import { AlertTriangle, Gauge, Info, X, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
@@ -11,6 +11,13 @@ import { fmt0, gw, pct, twh } from './format';
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+
+const dataFaq = [
+  ['last_energy-charts-2025-stuendlich.json', 'Historische deutsche Stromlast 2025 aus Energy-Charts, von 15-Minuten-Werten auf Stunden gemittelt.'],
+  ['erzeugung_energy-charts-2025-stuendlich.json', 'Historische öffentliche Erzeugung 2025 nach Energieträgern samt Import/Export aus Energy-Charts.'],
+  ['modellfaktoren_2025-stuendlich.json', 'Aus Energy-Charts abgeleitete stündliche Solar- und Wind-Modellfaktoren für die Simulation.'],
+  ['quellen_2025.json', 'Quellen- und Plausibilitätsnotizen zu den verwendeten 2025er Datendateien.'],
+] as const;
 
 const defaultScenario: Scenario = {
   id: 'eigenes-szenario',
@@ -175,6 +182,7 @@ export function App() {
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
+  const [faqOpen, setFaqOpen] = useState(false);
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -242,7 +250,17 @@ export function App() {
 
       <aside className={cx(panel, 'lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
         <div className="border-b border-zinc-200/80 px-4 py-3">
-          <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
+            <button
+              type="button"
+              aria-label="Daten-FAQ öffnen"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-950"
+              onClick={() => setFaqOpen(true)}
+            >
+              <Info className="h-3.5 w-3.5"/>
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4 p-4">
@@ -268,7 +286,7 @@ export function App() {
           />
 
           <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
-            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Onshore", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind Offshore", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
         </div>
@@ -290,8 +308,32 @@ export function App() {
           </> : <span className="text-sm text-zinc-500">Lade Ergebnisse …</span>}
         </div>
       </aside>
+      {faqOpen && <DataFaq onClose={() => setFaqOpen(false)}/>} 
     </div>
   </main>;
+}
+
+function DataFaq({ onClose }: { onClose: () => void }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/20 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="data-faq-title" onClick={onClose}>
+    <section className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,.18)]" onClick={event => event.stopPropagation()}>
+      <div className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-3">
+        <div>
+          <h2 id="data-faq-title" className="text-lg font-medium tracking-[-0.03em] text-zinc-950">Daten-FAQ</h2>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">Kurzfassung der Dateien in <code>/data</code>.</p>
+        </div>
+        <button type="button" aria-label="Daten-FAQ schließen" className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950" onClick={onClose}>
+          <X className="h-3.5 w-3.5"/>
+        </button>
+      </div>
+      <dl className="mt-3 grid gap-3">
+        {dataFaq.map(([file, text]) => <div key={file} className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
+          <dt className="font-mono text-[11px] text-zinc-700">{file}</dt>
+          <dd className="mt-1 text-sm leading-5 text-zinc-600">{text}</dd>
+        </div>)}
+      </dl>
+      <a className="mt-3 inline-flex text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">Datendateien auf GitHub ansehen</a>
+    </section>
+  </div>;
 }
 
 function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {

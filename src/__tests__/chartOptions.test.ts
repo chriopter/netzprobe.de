@@ -38,15 +38,15 @@ describe('mix chart options', () => {
     const series = option.series as Array<Record<string, unknown>>;
     expect(series.slice(0, 11).map((s) => s.name)).toEqual([
       'Wasser',
-      'Biomasse',
+      'Bio',
       'Geo',
       'Kohle',
       'Öl',
       'Sonstige',
       'Müll',
       'Gas',
-      'Wind See',
-      'Wind an Land',
+      'Wind Offshore',
+      'Wind Onshore',
       'Solar',
     ]);
   });
