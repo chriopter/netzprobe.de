@@ -199,26 +199,24 @@ export function App() {
   };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-      <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-zinc-200 px-4 py-3">
-          <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
-        </div>
-
-        <div className="space-y-3 p-4">
-          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}>
-            <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-          </ControlSection>
-
-          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
-            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-          </ControlSection>
-        </div>
-      </aside>
-
+    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
       <section className="flex min-w-0 flex-col gap-3">
-        {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-700')}>Lade Daten …</div> : <>
+        {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
+          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
+            <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+              <h2 className="text-base font-medium tracking-[-0.02em]">Energiemix vs. Last</h2>
+              <span className={cx(muted, 'text-xs sm:text-sm')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+            </div>
+            <MixLegend
+              visibility={mixVisibility}
+              openGroups={openMixGroups}
+              onToggleGroup={(groupId, checked) => setMixVisibility(prev => setGroupVisibility(prev, groupId, checked))}
+              onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
+              onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
+            />
+            <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
+          </ChartPanel>
+
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
@@ -238,17 +236,6 @@ export function App() {
             />
           </div>
 
-          <ChartPanel title="Energiemix vs. Last" meta={`${formatDate(selectedPeriod.start)} – ${formatDate(selectedPeriod.end)}`}>
-            <MixLegend
-              visibility={mixVisibility}
-              openGroups={openMixGroups}
-              onToggleGroup={(groupId, checked) => setMixVisibility(prev => setGroupVisibility(prev, groupId, checked))}
-              onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
-              onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
-            />
-            <div id="mix-chart" className="h-[680px] w-full sm:h-[840px]"/>
-          </ChartPanel>
-
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
             <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
               <div id="storage-chart" className="h-[240px] w-full"/>
@@ -264,16 +251,33 @@ export function App() {
           </footer>
         </>}
       </section>
+
+      <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
+        </div>
+
+        <div className="space-y-3 p-4">
+          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}>
+            <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+          </ControlSection>
+
+          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
+            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+          </ControlSection>
+        </div>
+      </aside>
     </div>
   </main>;
 }
 
-function ChartPanel({ title, meta, children }: { title: string; meta: string; children: ReactNode }) {
-  return <section className={cx(panel, 'min-w-0 p-4')}>
-    <div className="mb-3 flex items-center justify-between gap-3">
+function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
+  return <section className={cx(panel, 'min-w-0 p-4', className)}>
+    {title && <div className="mb-3 flex items-center justify-between gap-3">
       <h2 className="text-base font-medium tracking-[-0.02em]">{title}</h2>
-      <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>
-    </div>
+      {meta && <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>}
+    </div>}
     {children}
   </section>;
 }
@@ -318,7 +322,7 @@ function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onTogg
         </div>;
       })}
     </div>
-    <span className="text-zinc-500">Flächen sind gruppiert; Tooltip zeigt die Einzelwerte.</span>
+    <span className="text-zinc-500">Gruppen steuern die sichtbaren Einzelflächen im Graph.</span>
   </div>;
 }
 
