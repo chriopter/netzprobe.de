@@ -8,6 +8,20 @@ Live: https://chriopter.github.io/netzprobe/
 
 Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation läuft im Browser, rechenlastige Läufe im Web Worker. Kein Backend, keine Datenbank, keine Anmeldung.
 
+## Entwicklung
+
+Abhängigkeiten installieren:
+
+```bash
+npm install
+```
+
+Dev-Server starten:
+
+```bash
+npm run dev
+```
+
 ## Anspruch
 
 KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Fachordnern und Datenhandbuch. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
