@@ -4,6 +4,7 @@ export type DatasetDoc = {
   title: string;
   file: string;
   doc: string;
+  scripts?: string[];
   source: string;
   period: string;
   resolution: string;

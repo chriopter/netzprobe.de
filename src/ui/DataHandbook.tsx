@@ -85,6 +85,14 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
             </a>
           </dd>
         </div>
+        {!!selected.scripts?.length && <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+          <dt className="font-medium text-zinc-950">Skript</dt>
+          <dd className="grid gap-1">
+            {selected.scripts.map(script => <a key={script} href={`${import.meta.env.BASE_URL}data/${script}`} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+              <code>data/{script}</code>
+            </a>)}
+          </dd>
+        </div>}
         <InfoLine label="Quelle" value={selected.source}/>
       </dl>
     </section>

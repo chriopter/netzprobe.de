@@ -8,7 +8,7 @@ export type ChartMode = 'sunburst' | 'linie';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 export const MIX_GROUPS: MixGroup[] = [
-  { id: 'base', label: 'CO₂-freie Grundlast', color: '#2563eb', leaves: [
+  { id: 'base', label: 'Grundlast', color: '#2563eb', leaves: [
     { key: 'hydroGW', label: 'Wasser', color: '#4338ca' },
     { key: 'biomassGW', label: 'Bio', color: '#16a34a' },
     { key: 'geothermalGW', label: 'Geo', color: '#3730a3' },
