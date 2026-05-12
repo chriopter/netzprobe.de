@@ -75,10 +75,18 @@ const compressHours = (hours: SimHour[], maxPoints = 365) => {
 
 const isFullYearCompressed = (hours: SimHour[], chartHours: SimHour[]) => hours.length > chartHours.length && new Set(hours.map(dateKey)).size >= 360;
 const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const shortMonthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const xAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
   if (!isFullYearCompressed(hours, chartHours)) return dayLabels(chartHours);
   const slots = new Map<number, string>();
   monthNames.forEach((label, index) => slots.set(Math.round(index * (chartHours.length - 1) / (monthNames.length - 1)), label));
+  return chartHours.map((_, index) => slots.get(index) ?? '');
+};
+
+const angleAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
+  if (!isFullYearCompressed(hours, chartHours)) return dayLabels(chartHours);
+  const slots = new Map<number, string>();
+  shortMonthNames.forEach((label, index) => slots.set(Math.min(chartHours.length - 1, Math.round((index + 0.5) * chartHours.length / shortMonthNames.length)), label));
   return chartHours.map((_, index) => slots.get(index) ?? '');
 };
 
@@ -92,19 +100,19 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
 
 const angleAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
   type: 'category' as const,
-  data: xAxisLabels(hours, chartHours),
+  data: angleAxisLabels(hours, chartHours),
   boundaryGap: false,
   startAngle: 90,
   clockwise: true,
   axisTick: { show: false },
-  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: 10, margin: 8 },
+  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: 10, margin: 18 },
   axisLine: { lineStyle: { color: '#e4e4e7' } },
   splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
 });
 
 const radiusAxis = (unit = 'GW') => ({
   type: 'value' as const,
-  axisLabel: { color: '#71717a', formatter: `{value} ${unit}` },
+  axisLabel: { show: false, color: '#71717a', formatter: `{value} ${unit}` },
   axisLine: { show: false },
   axisTick: { show: false },
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
@@ -134,7 +142,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   const chartHours = compressHours(hours);
   const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
   const coordinate = mode === 'sunburst'
-    ? { polar: { center: ['50%', '51%'], radius: ['8%', '78%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
+    ? { polar: { center: ['50%', '52%'], radius: ['12%', '70%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
     : { grid: { left: 44, right: 20, top: 10, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GW') };
   return {
     backgroundColor: 'transparent',
@@ -198,7 +206,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
 export function buildStorageChartOption(hours: SimHour[], mode: ChartMode = 'sunburst'): EChartsOption {
   const chartHours = compressHours(hours);
   const coordinate = mode === 'sunburst'
-    ? { polar: { center: ['50%', '51%'], radius: ['10%', '78%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GWh') }
+    ? { polar: { center: ['50%', '52%'], radius: ['14%', '70%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GWh') }
     : { grid: { left: 46, right: 20, top: 18, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GWh') };
   const line = (name: string, color: string, data: number[]) => ({
     name,

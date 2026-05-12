@@ -432,21 +432,21 @@ function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, childr
 }
 
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
-  return <section className={cx(sectionBox, 'grid gap-3 p-3')}>
-    <div className="flex items-center justify-between gap-3">
+  return <section className={cx(sectionBox, 'grid gap-2 p-3')}>
+    <div className="flex items-center justify-between gap-2">
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Zeitraum</h2>
-      <span className="text-xs text-zinc-500">{formatDate(start)} – {formatDate(end)}</span>
+      <span className="whitespace-nowrap text-[11px] text-zinc-500">{formatDate(start)}–{formatDate(end)}</span>
     </div>
-    <select className={field} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
+    <select className={cx(field, 'h-8 text-xs')} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
       <option value="21d">21 Tage</option>
       <option value="90d">90 Tage</option>
       <option value="year">Ganzes Jahr</option>
       <option value="custom">Custom</option>
     </select>
-    <div className="grid gap-2">
-      <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customStart : start} onChange={event => onStart(event.target.value)}/>
-      <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customEnd : end} onChange={event => onEnd(event.target.value)}/>
-    </div>
+    {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
+      <input aria-label="Startdatum" className={cx(field, 'h-8 px-2 text-xs')} type="date" min="2025-01-01" max="2025-12-31" value={customStart} onChange={event => onStart(event.target.value)}/>
+      <input aria-label="Enddatum" className={cx(field, 'h-8 px-2 text-xs')} type="date" min="2025-01-01" max="2025-12-31" value={customEnd} onChange={event => onEnd(event.target.value)}/>
+    </div>}
   </section>;
 }
 

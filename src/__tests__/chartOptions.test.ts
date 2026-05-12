@@ -64,10 +64,12 @@ describe('mix chart options', () => {
     const linear = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'linie');
     const radialSeries = radial.series as Array<Record<string, unknown>>;
     const linearSeries = linear.series as Array<Record<string, unknown>>;
+    const radiusAxis = radial.radiusAxis as { axisLabel: { show: boolean } };
 
     expect(radial.polar).toBeDefined();
     expect(radial.angleAxis).toBeDefined();
     expect(radial.radiusAxis).toBeDefined();
+    expect(radiusAxis.axisLabel.show).toBe(false);
     expect(radial.xAxis).toBeUndefined();
     expect(radialSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBe('polar');
     expect(radialSeries.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
@@ -92,11 +94,16 @@ describe('mix chart options', () => {
 
     expect((series.find((s) => s.name === 'Last')?.data as number[]).slice(0, 13)).toHaveLength(13);
     expect(angleAxis.data.filter(Boolean)).toEqual([
-      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+      'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez',
     ]);
-    expect(angleAxis.data[0]).toBe('Januar');
-    expect(angleAxis.data.at(-1)).toBe('Dezember');
+    expect(angleAxis.data[0]).toBe('');
+    expect(angleAxis.data.at(-1)).toBe('');
+
+    const linear = buildMixChartOption(yearHours, DEFAULT_MIX_VISIBILITY, 'linie');
+    const xAxis = linear.xAxis as { data: string[] };
+    expect(xAxis.data.filter(Boolean)).toContain('Januar');
+    expect(xAxis.data.filter(Boolean)).toContain('Dezember');
   });
 
   it('makes storage radial by default and switchable too', () => {
