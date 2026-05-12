@@ -10,6 +10,7 @@
   "maxTargetHeatTWh": 675,
   "stepHeatTWh": 5,
   "seasonalCop": 3.5,
-  "distribution": "winter-weighted",
-  "note": "Zusatzlast = max(0, Ziel-Raumwärme - bereits per Wärmepumpe gedeckte Wärme) / Jahresarbeitszahl. Die Stundenverteilung ist wintergewichtet; Direktstromheizungen sind nicht enthalten."
+  "distribution": "heating-degree-days",
+  "degreeDayProfileFile": "last/gradtage-2025.json",
+  "note": "Zusatzlast = max(0, Ziel-Raumwärme - bereits per Wärmepumpe gedeckte Wärme) / Jahresarbeitszahl. Die Stundenverteilung folgt dem Gradtagszahl-Profil; Direktstromheizungen sind nicht enthalten."
 }

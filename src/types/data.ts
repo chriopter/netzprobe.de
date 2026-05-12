@@ -28,6 +28,12 @@ export type ModelFactorHour = {
   wind100m: number[];
 };
 
+export type HeatingDegreeDay = {
+  date: string;
+  heatingDegreeDay: number;
+  weight: number;
+};
+
 export type BevPkwElectrificationLoad = {
   id: 'bev-pkw-electrification';
   title: string;
@@ -56,7 +62,8 @@ export type HeatPumpElectrificationLoad = {
   maxTargetHeatTWh: number;
   stepHeatTWh: number;
   seasonalCop: number;
-  distribution: 'winter-weighted';
+  distribution: 'heating-degree-days';
+  degreeDayProfileFile: string;
   note: string;
 };
 
@@ -76,6 +83,7 @@ export type SplitDataFile<T> = {
 };
 
 export type HourlyInput = LoadHour & ModelFactorHour & {
+  heatingDegreeDayWeight: number;
   observed: ObservedPower;
 };
 

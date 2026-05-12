@@ -5,7 +5,7 @@
   "file": "last/waermepumpen-elektrifizierung.json",
   "source": "Dokumentierte Modellannahmen für privaten Raumwärmebedarf und bestehende Wärmepumpenwärme.",
   "period": "2026",
-  "resolution": "Jahr, wintergewichtet auf Stunden",
+  "resolution": "Jahr, über Gradtagszahlen auf Stunden verteilt",
   "unit": "TWh Wärme, TWh Strom, JAZ",
   "short": "Zusatzlast aus zusätzlich per Wärmepumpe gedecktem Raumwärmebedarf.",
   "description": "Der Zielwert beschreibt elektrifizierte Raumwärme. Bereits per Wärmepumpe gedeckte Wärme wird abgezogen; der Rest wird über eine Jahresarbeitszahl in Stromlast umgerechnet.",
@@ -15,7 +15,7 @@
     { "label": "Abzug", "value": "40 TWh Wärme werden als bereits per Wärmepumpe gedeckt abgezogen." },
     { "label": "Effizienz", "value": "Jahresarbeitszahl 3,5: 3,5 kWh Wärme je 1 kWh Strom." },
     { "label": "Default", "value": "450 TWh Zielwärme = 410 TWh zusätzliche Wärme = 117,1 TWh zusätzlicher Strom." },
-    { "label": "Verteilung", "value": "Wintergewichtetes Stundenprofil; keine Gebäudeklassen, keine Wetterjahre und keine Lastverschiebung." }
+    { "label": "Verteilung", "value": "Tägliches Gradtagszahl-Profil aus last/gradtage-2025.json; innerhalb des Tages flach auf 24 Stunden verteilt." }
   ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
@@ -30,6 +30,7 @@
     { "name": "stepHeatTWh", "unit": "TWh Wärme", "description": "Slider-Schrittweite." },
     { "name": "seasonalCop", "unit": "JAZ", "description": "Jahresarbeitszahl für die Umrechnung von Wärme in Strom." },
     { "name": "distribution", "unit": "Text", "description": "Zeitliche Verteilung der Zusatzlast." },
+    { "name": "degreeDayProfileFile", "unit": "Pfad", "description": "Gradtagszahl-Profil für die zeitliche Verteilung." },
     { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
   ],
   "caveats": ["Modellannahmen, keine amtliche Zeitreihe.", "Nur Wärmepumpen; Direktstromheizungen sind nicht enthalten.", "Kein Sanierungsgrad, kein Warmwasser, keine temperaturabhängige COP-Kurve."],
@@ -40,7 +41,7 @@
         "Der Regler beschreibt Wärmebedarf, weil Haushalte Wärme nachfragen und die Stromlast erst aus der Effizienz der Wärmepumpe entsteht.",
         "Bereits per Wärmepumpe gedeckte Wärme wird abgezogen, damit das Szenario nur zusätzliche Elektrifizierung zählt.",
         "Die Jahresarbeitszahl 3,5 liegt bewusst zwischen einfachen Bestandsannahmen und sehr guten Neuanlagen.",
-        "Die wintergewichtete Verteilung bildet die Saisonalität grob ab, ohne ein Wettermodell vorzutäuschen.",
+        "Das Gradtagszahl-Profil konzentriert die Last auf Heiztage statt auf eine glatte Cosinus-Kurve.",
         "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
       ]
     },

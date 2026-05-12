@@ -15,6 +15,11 @@
     "description": "last/waermepumpen-elektrifizierung.description.json"
   },
   {
+    "id": "last.gradtage.2025",
+    "domain": "last",
+    "description": "last/gradtage-2025.description.json"
+  },
+  {
     "id": "erzeugung.energy-charts.stuendlich.2025",
     "domain": "erzeugung",
     "description": "erzeugung/energy-charts-stuendlich-2025.description.json"

@@ -17,21 +17,10 @@ export function heatPumpAdditionalElectricityTWh(targetHeatTWh: number, model: H
   return heatPumpAdditionalHeatTWh(targetHeatTWh, model) / model.seasonalCop;
 }
 
-function dayOfYear(isoTime: string) {
-  const date = new Date(isoTime);
-  const start = Date.UTC(date.getUTCFullYear(), 0, 1);
-  return Math.floor((date.getTime() - start) / 86_400_000);
-}
-
-function winterWeight(isoTime: string) {
-  const day = dayOfYear(isoTime);
-  return 1 + Math.cos(2 * Math.PI * (day - 14) / 365);
-}
-
 export function heatPumpLoadGW(row: HourlyInput, scenario: Scenario, model: HeatPumpElectrificationLoad) {
   if (!scenario.demand.heatPump) return 0;
   const annualElectricityTWh = heatPumpAdditionalElectricityTWh(scenario.demand.heatPumpTargetHeatTWh, model);
-  return annualElectricityTWh * 1000 / 8760 * winterWeight(row.time);
+  return annualElectricityTWh * 1000 * row.heatingDegreeDayWeight / 24;
 }
 
 export function demandGW(row: HourlyInput, scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad, heatPumpElectrification: HeatPumpElectrificationLoad) {
