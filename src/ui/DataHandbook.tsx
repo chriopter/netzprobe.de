@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react';
-import type { DatasetDoc, HandbookPage } from './dataCatalog';
-import { dataWikiHomeUrl, dataWikiUrl, handbookPages } from './dataCatalog';
+import type { DatasetDoc } from './dataCatalog';
+import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
 import { cx } from './ui';
 
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const params = new URL(window.location.href).searchParams;
   const selectedId = params.get('dataset');
   const selectedDataset = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
-  const selectedPage = selectedId ? handbookPages.find(page => page.id === selectedId) : undefined;
   const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
     (acc[doc.domain] ??= []).push(doc);
     return acc;
@@ -31,38 +30,17 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
             <TreeSection title="Home">
               <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
             </TreeSection>
-            {sections.map(([domain, label]) => grouped[domain]?.length || handbookPages.some(page => page.domain === domain) ? <TreeSection key={domain} title={label}>
+            {sections.map(([domain, label]) => grouped[domain]?.length ? <TreeSection key={domain} title={label}>
               {grouped[domain]?.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
-              {handbookPages.filter(page => page.domain === domain).map(page => <TreeNode key={page.id} href={dataWikiUrl(page.id)} label={page.title} selected={selectedId === page.id}/>)}
             </TreeSection> : null)}
           </div>
         </nav>
       </aside>
       <article className="min-w-0 pb-12">
-        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedPage ? <HandbookPageArticle page={selectedPage}/> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs} pages={handbookPages}/> : <DatasetArticle selected={selectedDataset}/>}
+        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
       </article>
     </div>
   </main>;
-}
-
-function HandbookPageArticle({ page }: { page: HandbookPage }) {
-  return <div>
-    <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">{page.domain}</p>
-    <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{page.title}</h1>
-    <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{page.description}</p>
-    <section className="mt-8">
-      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Übersicht</h2>
-      <dl className="mt-3 grid gap-1 text-sm leading-6">
-        {page.overview.map(item => <InfoLine key={item.label} label={item.label} value={item.value}/>)}
-      </dl>
-    </section>
-    {page.sections.map(section => <section key={section.title} className="mt-8">
-      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">{section.title}</h2>
-      <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
-        {section.items.map(item => <li key={item}>• {item}</li>)}
-      </ul>
-    </section>)}
-  </div>;
 }
 
 function DatasetArticle({ selected }: { selected: DatasetDoc }) {
@@ -123,7 +101,7 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   </div>;
 }
 
-function DataHandbookHome({ docs, pages }: { docs: DatasetDoc[]; pages: HandbookPage[] }) {
+function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
   return <div>
     <div>
       <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">data/</p>
@@ -133,7 +111,7 @@ function DataHandbookHome({ docs, pages }: { docs: DatasetDoc[]; pages: Handbook
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Datensätze</h2>
       <ul className="mt-3 grid gap-2 text-sm leading-6">
-        {[...docs, ...pages].map(entry => <li key={entry.id}>
+        {docs.map(entry => <li key={entry.id}>
           <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
           <span className="text-zinc-500"> — {entry.short}</span>
         </li>)}

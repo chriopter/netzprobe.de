@@ -1,0 +1,15 @@
+{
+  "id": "modell.kernmodell",
+  "title": "Kernmodell",
+  "source": "Eigene stündliche Bilanzrechnung im Browser.",
+  "code": "src/simulation/engine.ts",
+  "timeStep": "1 Stunde",
+  "generationMode": "Historische Erzeugung ist fix; Zusatzlast erhöht keine Erzeugung.",
+  "balanceMode": "Kein Dispatch: Defizit wird Unterdeckung, Überschuss wird Abregelung.",
+  "notes": [
+    "Last = historische Last plus aktive Zusatzlasten.",
+    "Erzeugung = beobachtete Energy-Charts-Erzeugung je Stunde.",
+    "Keine Kraftwerksoptimierung, kein Speicherdispatch, kein zusätzlicher Import.",
+    "Jahreskennzahlen werden aus Stundenwerten summiert."
+  ]
+}

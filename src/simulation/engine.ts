@@ -8,13 +8,13 @@ import type { SimHour, SimulationResult } from './types';
 export type { SimHour, SimulationResult } from './types';
 
 export function runSimulation(input: HourlyInput[], scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad): SimulationResult {
-  let storage = initialStorageState(scenario);
+  let storage = initialStorageState();
   const hours: SimHour[] = [];
 
   for (const row of input) {
     const loadGW = demandGW(row, scenario, bevPkwElectrification);
     const generation = historicalGenerationGW(row);
-    const balance = balanceHour(generation.supplyGW, loadGW, storage, scenario);
+    const balance = balanceHour(generation.supplyGW, loadGW, storage);
     storage = { batteryGWh: balance.batteryGWh, h2GWh: balance.h2GWh };
 
     hours.push({
