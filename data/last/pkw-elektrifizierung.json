@@ -1,0 +1,19 @@
+{
+  "id": "bev-pkw-electrification",
+  "title": "PKW Elektrifizierung",
+  "source": "Destatis Pkw-Fahrleistung privater Haushalte 2023; KBA/BMWK Fahrzeugbestand und durchschnittliche Fahrleistung alternativer Antriebe 2023.",
+  "sourceUrls": [
+    "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
+    "https://data.gov.de/suche/daten/verkehr-in-kilometern-vk-fahrleistungen-2014-2023",
+    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.pdf"
+  ],
+  "referenceYear": 2023,
+  "referenceMillionKm": 472200,
+  "alreadyElectricMillionKm": 23800,
+  "defaultTargetMillionKm": 472200,
+  "maxTargetMillionKm": 708300,
+  "stepMillionKm": 1000,
+  "kwhPer100Km": 20,
+  "distribution": "flat",
+  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert aus rund 1,5 Mio. BEV Ende 2023 und 15.852 km durchschnittlicher Jahresfahrleistung der KBA-Gruppe alternative Antriebe abgeleitet."
+}

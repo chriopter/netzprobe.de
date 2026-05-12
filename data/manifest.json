@@ -25,6 +25,63 @@
     "caveats": []
   },
   {
+    "id": "last.pkw-elektrifizierung",
+    "domain": "last",
+    "title": "PKW Elektrifizierung",
+    "file": "last/pkw-elektrifizierung.json",
+    "doc": "last/pkw-elektrifizierung.md",
+    "source": "Destatis Pkw-Fahrleistung 2023: https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
+    "period": "2023",
+    "resolution": "Jahr",
+    "unit": "Mio. km, kWh/100 km, TWh",
+    "short": "Zusatzlast aus zusätzlich elektrifizierten Pkw-Kilometern.",
+    "description": "Ziel-Pkw-Kilometer minus bereits elektrisch gefahrene Pkw-Kilometer 2023 werden mit 20 kWh/100 km in zusätzliche Stromlast umgerechnet.",
+    "overview": [
+      { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt elektrifizierte Pkw-Kilometer." },
+      { "label": "Referenz", "value": "472,2 Mrd. Pkw-km privater Haushalte 2023 laut Destatis-Mitteilung." },
+      { "label": "Abzug", "value": "23,8 Mrd. km werden als bereits 2023 elektrisch gefahren abgezogen." },
+      { "label": "Verbrauch", "value": "20 kWh/100 km als pauschaler Flottenwert ab Netz inklusive grober Ladeverluste." },
+      { "label": "Default", "value": "472.200 Mio. km Ziel = 448.400 Mio. km Zusatz = 89,7 TWh/Jahr." },
+      { "label": "Verteilung", "value": "Gleichmäßig auf alle 8.760 Stunden verteilt; kein Ladeprofil." }
+    ],
+    "fields": [
+      { "name": "id", "unit": "Text", "description": "Technische Kennung." },
+      { "name": "title", "unit": "Text", "description": "Name des Zusatzlast-Szenarios." },
+      { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quellen." },
+      { "name": "sourceUrls", "unit": "Liste", "description": "Quellen für Referenzkilometer, Fahrleistung und BEV-Bestand." },
+      { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
+      { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte 2023." },
+      { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Abgezogene bereits elektrisch gefahrene Pkw-km 2023." },
+      { "name": "defaultTargetMillionKm", "unit": "Mio. km", "description": "Standardwert des Sliders." },
+      { "name": "maxTargetMillionKm", "unit": "Mio. km", "description": "Oberes Slider-Ende." },
+      { "name": "stepMillionKm", "unit": "Mio. km", "description": "Slider-Schrittweite." },
+      { "name": "kwhPer100Km", "unit": "kWh/100 km", "description": "Pauschaler BEV-Flottenverbrauch ab Netz." },
+      { "name": "distribution", "unit": "Text", "description": "Zeitliche Verteilung der Zusatzlast." },
+      { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
+    ],
+    "caveats": ["Kein Ladeprofil.", "PHEV-Stromkilometer sind nicht separat herausgerechnet.", "Der Abzug bereits elektrischer Kilometer ist eine dokumentierte Modellannahme."],
+    "sections": [
+      {
+        "title": "Erwägungsgründe",
+        "items": [
+          "Zulassungsdaten allein reichen nicht: sie zeigen Bestand oder Neuzulassungen, aber nicht reale Jahresfahrleistung und Ladeverluste.",
+          "20 kWh/100 km ist ein vorsichtiger Flottenwert für gemischte Pkw-Nutzung ab Netz.",
+          "Die Referenzkilometer stammen aus realer Fahrleistung privater Haushalte, nicht aus Fahrzeugbestand.",
+          "Bereits elektrische Kilometer 2023 werden abgezogen, damit nur zusätzliche Elektrifizierung als neue Last zählt.",
+          "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
+        ]
+      },
+      {
+        "title": "Grenzen",
+        "items": [
+          "Kein Tages-, Wochen- oder Saisonprofil fürs Laden.",
+          "Keine Unterscheidung nach Fahrzeugklasse, Temperatur, Geschwindigkeit oder Ladeort.",
+          "Nicht alle Pkw-Kilometer Deutschlands sind zwingend private Haushalte; die Quelle wird deshalb als transparente Referenz genutzt."
+        ]
+      }
+    ]
+  },
+  {
     "id": "erzeugung.energy-charts.stuendlich.2025",
     "domain": "erzeugung",
     "title": "Historisch 2025",

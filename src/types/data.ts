@@ -28,6 +28,22 @@ export type ModelFactorHour = {
   wind100m: number[];
 };
 
+export type BevPkwElectrificationLoad = {
+  id: 'bev-pkw-electrification';
+  title: string;
+  source: string;
+  sourceUrls: string[];
+  referenceYear: number;
+  referenceMillionKm: number;
+  alreadyElectricMillionKm: number;
+  defaultTargetMillionKm: number;
+  maxTargetMillionKm: number;
+  stepMillionKm: number;
+  kwhPer100Km: number;
+  distribution: 'flat';
+  note: string;
+};
+
 export type SplitDataFile<T> = {
   source: string;
   generatedAt?: string;
@@ -49,6 +65,7 @@ export type HourlyInput = LoadHour & ModelFactorHour & {
 
 export type DataSet = {
   source: string;
+  bevPkwElectrification: BevPkwElectrificationLoad;
   loadSumTWh?: number;
   generationSumTWh?: number;
   importSumTWh?: number;

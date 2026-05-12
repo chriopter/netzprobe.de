@@ -32,8 +32,8 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
               <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
             </TreeSection>
             {sections.map(([domain, label]) => grouped[domain]?.length || handbookPages.some(page => page.domain === domain) ? <TreeSection key={domain} title={label}>
-              {handbookPages.filter(page => page.domain === domain).map(page => <TreeNode key={page.id} href={dataWikiUrl(page.id)} label={page.title} selected={selectedId === page.id}/>)}
               {grouped[domain]?.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+              {handbookPages.filter(page => page.domain === domain).map(page => <TreeNode key={page.id} href={dataWikiUrl(page.id)} label={page.title} selected={selectedId === page.id}/>)}
             </TreeSection> : null)}
           </div>
         </nav>
@@ -73,10 +73,12 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Übersicht</h2>
       <dl className="mt-3 grid gap-1 text-sm leading-6">
-        <InfoLine label="Verwendung" value={selected.description}/>
-        <InfoLine label="Zeitraum" value={selected.period}/>
-        <InfoLine label="Auflösung" value={selected.resolution}/>
-        <InfoLine label="Einheit" value={selected.unit}/>
+        {(selected.overview ?? [
+          { label: 'Verwendung', value: selected.description },
+          { label: 'Zeitraum', value: selected.period },
+          { label: 'Auflösung', value: selected.resolution },
+          { label: 'Einheit', value: selected.unit },
+        ]).map(item => <InfoLine key={item.label} label={item.label} value={item.value}/>)}
         <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
           <dt className="font-medium text-zinc-950">Datei</dt>
           <dd>
@@ -112,6 +114,12 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
         {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
       </ul>
     </section>}
+    {selected.sections?.map(section => <section key={section.title} className="mt-8">
+      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">{section.title}</h2>
+      <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+        {section.items.map(item => <li key={item}>• {item}</li>)}
+      </ul>
+    </section>)}
   </div>;
 }
 
@@ -125,7 +133,7 @@ function DataHandbookHome({ docs, pages }: { docs: DatasetDoc[]; pages: Handbook
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Datensätze</h2>
       <ul className="mt-3 grid gap-2 text-sm leading-6">
-        {[...pages, ...docs].map(entry => <li key={entry.id}>
+        {[...docs, ...pages].map(entry => <li key={entry.id}>
           <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
           <span className="text-zinc-500"> — {entry.short}</span>
         </li>)}

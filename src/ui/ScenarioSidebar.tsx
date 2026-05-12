@@ -2,6 +2,7 @@ import { Info } from 'lucide-react';
 import { dataWikiUrl, datasetIds } from './dataCatalog';
 import { twh } from './format';
 import { cx, field, sectionBox } from './ui';
+import { bevPkwAdditionalMillionKm, bevPkwAdditionalTWh } from '../simulation/demand';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
@@ -18,7 +19,8 @@ export function ScenarioSidebar({
   onStart,
   onEnd,
   onFaqOpen,
-  onTest100TWhChange,
+  onBevPkwKmChange,
+  onBevPkwMillionKmChange,
 }: {
   data: DataSet | null;
   scenario: Scenario;
@@ -30,7 +32,8 @@ export function ScenarioSidebar({
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
   onFaqOpen: () => void;
-  onTest100TWhChange: (checked: boolean) => void;
+  onBevPkwKmChange: (checked: boolean) => void;
+  onBevPkwMillionKmChange: (millionKm: number) => void;
 }) {
   return <aside className="rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
     <div className="border-b border-zinc-200/80 px-4 py-3">
@@ -65,12 +68,7 @@ export function ScenarioSidebar({
         meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
         docId={datasetIds.loadHistorical2025}
       >
-        <ScenarioCheckItem
-          label="100 TWh Test"
-          meta="+100 TWh gleichmäßig übers Jahr"
-          checked={scenario.demand.test100TWh}
-          onChecked={onTest100TWhChange}
-        />
+        {data && <BevPkwControl data={data} scenario={scenario} onChecked={onBevPkwKmChange} onMillionKm={onBevPkwMillionKmChange}/>}
       </ScenarioChoiceSection>
 
       <ScenarioChoiceSection
@@ -115,14 +113,39 @@ function ScenarioRadioItem({ label, meta, docId }: { label: string; meta: string
   </label>;
 }
 
-function ScenarioCheckItem({ label, meta, checked, onChecked }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void }) {
-  return <label className="flex items-start gap-2 text-sm text-zinc-950">
-    <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={checked} onChange={event => onChecked(event.target.checked)} />
-    <span className="grid min-w-0 flex-1 gap-0.5">
-      <span className="truncate">{label}</span>
-      <span className="truncate text-xs text-zinc-500">{meta}</span>
-    </span>
-  </label>;
+function BevPkwControl({ data, scenario, onChecked, onMillionKm }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onMillionKm: (millionKm: number) => void }) {
+  const model = data.bevPkwElectrification;
+  const millionKm = scenario.demand.bevPkwMillionKm;
+  const share = millionKm / model.referenceMillionKm * 100;
+  const additionalMillionKm = bevPkwAdditionalMillionKm(millionKm, model);
+  return <div className="grid gap-2">
+    <label className="flex items-start gap-2 text-sm text-zinc-950">
+      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand.bevPkwKm} onChange={event => onChecked(event.target.checked)} />
+      <span className="grid min-w-0 flex-1 gap-0.5">
+        <span className="flex items-center justify-between gap-2">
+          <span className="truncate">PKW Elektrifizierung</span>
+          <DataInfoLink id={datasetIds.bevPkwKm} label="PKW Elektrifizierung erklären"/>
+        </span>
+        <span className="truncate text-xs text-zinc-500">{twh(bevPkwAdditionalTWh(millionKm, model))} Zusatz · {model.kwhPer100Km} kWh/100 km</span>
+      </span>
+    </label>
+    {scenario.demand.bevPkwKm && <div className="grid gap-1 pl-6">
+      <div className="flex items-center justify-between gap-2 text-xs text-zinc-600">
+        <span>Pkw-km</span>
+        <span>{millionKm.toLocaleString('de-DE')} Mio.</span>
+      </div>
+      <input
+        aria-label="Elektrifizierte Pkw-Kilometer in Millionen"
+        type="range"
+        min={0}
+        max={model.maxTargetMillionKm}
+        step={model.stepMillionKm}
+        value={millionKm}
+        onChange={event => onMillionKm(Number(event.target.value))}
+      />
+      <p className="text-xs leading-4 text-zinc-500">{share.toLocaleString('de-DE', { maximumFractionDigits: 1 })} % von 2023 · Zusatz nach Abzug: {additionalMillionKm.toLocaleString('de-DE')} Mio. km.</p>
+    </div>}
+  </div>;
 }
 
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {

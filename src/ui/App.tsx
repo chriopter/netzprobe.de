@@ -88,7 +88,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
     if (!worker || !data) return;
     hasDataRef.current = true;
     const requestId = ++requestRef.current;
-    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario });
+    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario, bevPkwElectrification: data.bevPkwElectrification });
   }, [data, scenario]);
 
   useEffect(() => {
@@ -223,7 +223,8 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onFaqOpen={() => setFaqOpen(true)}
-        onTest100TWhChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, test100TWh: checked } }))}
+        onBevPkwKmChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwKm: checked } }))}
+        onBevPkwMillionKmChange={(bevPkwMillionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwMillionKm } }))}
       />
 
       <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>

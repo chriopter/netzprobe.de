@@ -1,10 +1,16 @@
-import type { HourlyInput } from '../types/data';
+import type { BevPkwElectrificationLoad, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
-const TEST_100_TWH_LOAD_GW = 100_000 / 8760;
+export function bevPkwAdditionalMillionKm(targetMillionKm: number, model: BevPkwElectrificationLoad) {
+  return Math.max(0, targetMillionKm - model.alreadyElectricMillionKm);
+}
 
-export function demandGW(row: HourlyInput, scenario: Scenario) {
+export function bevPkwAdditionalTWh(targetMillionKm: number, model: BevPkwElectrificationLoad) {
+  return bevPkwAdditionalMillionKm(targetMillionKm, model) * model.kwhPer100Km / 100_000;
+}
+
+export function demandGW(row: HourlyInput, scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad) {
   const historicalLoadGW = scenario.demand.historicalLoad ? row.loadMW / 1000 : 0;
-  const test100TWhLoadGW = scenario.demand.test100TWh ? TEST_100_TWH_LOAD_GW : 0;
-  return historicalLoadGW + test100TWhLoadGW;
+  const bevPkwLoadGW = scenario.demand.bevPkwKm ? bevPkwAdditionalTWh(scenario.demand.bevPkwMillionKm, bevPkwElectrification) * 1000 / 8760 : 0;
+  return historicalLoadGW + bevPkwLoadGW;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../simulation/engine';
-import type { HourlyInput } from '../types/data';
+import type { BevPkwElectrificationLoad, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 const sampleHours: HourlyInput[] = [
@@ -13,15 +13,31 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, test100TWh: false },
+  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
 };
 
+const bevPkwElectrification: BevPkwElectrificationLoad = {
+  id: 'bev-pkw-electrification',
+  title: 'PKW Elektrifizierung',
+  source: 'Test',
+  sourceUrls: [],
+  referenceYear: 2023,
+  referenceMillionKm: 472_200,
+  alreadyElectricMillionKm: 23_800,
+  defaultTargetMillionKm: 472_200,
+  maxTargetMillionKm: 708_300,
+  stepMillionKm: 1_000,
+  kwhPer100Km: 20,
+  distribution: 'flat',
+  note: 'Test',
+};
+
 describe('simulation engine', () => {
   it('balances every hour with supply, imports, storage, curtailment or load shedding', () => {
-    const result = runSimulation(sampleHours, baselineScenario);
+    const result = runSimulation(sampleHours, baselineScenario, bevPkwElectrification);
     expect(result.hours).toHaveLength(sampleHours.length);
     for (const hour of result.hours) {
       expect(Math.abs(hour.balanceGW)).toBeLessThan(1e-6);
@@ -31,32 +47,32 @@ describe('simulation engine', () => {
   });
 
   it('reports annual KPIs in physical units', () => {
-    const result = runSimulation(sampleHours, baselineScenario);
+    const result = runSimulation(sampleHours, baselineScenario, bevPkwElectrification);
     expect(result.summary.totalDemandTWh).toBeGreaterThan(0);
     expect(result.summary.renewableSharePct).toBeGreaterThan(0);
     expect(result.summary.securityStatus).toMatch(/stabil|angespannt|kritisch/);
   });
 
   it('uses observed historical generation instead of scenario capacities', () => {
-    const left = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 0 }, renewables: { pvGW: 0, windOnGW: 0, windOffGW: 0 } });
-    const right = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 250, gasGW: 250 }, renewables: { pvGW: 250, windOnGW: 250, windOffGW: 250 } });
+    const left = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 0 }, renewables: { pvGW: 0, windOnGW: 0, windOffGW: 0 } }, bevPkwElectrification);
+    const right = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 250, gasGW: 250 }, renewables: { pvGW: 250, windOnGW: 250, windOffGW: 250 } }, bevPkwElectrification);
 
     expect(right.hours.map(hour => hour.supplyGW)).toEqual(left.hours.map(hour => hour.supplyGW));
   });
 
-  it('treats the 100 TWh test load as an additive demand part', () => {
-    const historical = runSimulation(sampleHours, baselineScenario);
-    const noHistorical = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, historicalLoad: false } });
-    const testLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, test100TWh: true } });
+  it('treats electrified BEV passenger car kilometres as an additive demand part', () => {
+    const historical = runSimulation(sampleHours, baselineScenario, bevPkwElectrification);
+    const noHistorical = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, historicalLoad: false } }, bevPkwElectrification);
+    const bevLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true, bevPkwMillionKm: 472_200 } }, bevPkwElectrification);
 
     expect(noHistorical.summary.totalDemandTWh).toBe(0);
     expect(noHistorical.summary.renewableSharePct).toBe(0);
-    expect(testLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(100 * sampleHours.length / 8760, 6);
+    expect(bevLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(89.68 * sampleHours.length / 8760, 6);
   });
 
   it('keeps historical generation fixed when additive demand changes', () => {
-    const historical = runSimulation(sampleHours, baselineScenario);
-    const testLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, test100TWh: true } });
+    const historical = runSimulation(sampleHours, baselineScenario, bevPkwElectrification);
+    const testLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true } }, bevPkwElectrification);
 
     expect(testLoad.hours.map(hour => hour.solarGW)).toEqual(historical.hours.map(hour => hour.solarGW));
     expect(testLoad.hours.map(hour => hour.windOnGW)).toEqual(historical.hours.map(hour => hour.windOnGW));

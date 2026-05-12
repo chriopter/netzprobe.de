@@ -11,6 +11,8 @@ export type DatasetDoc = {
   unit: string;
   short: string;
   description: string;
+  overview?: Array<{ label: string; value: string }>;
+  sections?: Array<{ title: string; items: string[] }>;
   fields: Array<{ name: string; unit: string; description: string }>;
   caveats?: string[];
 };
@@ -27,6 +29,7 @@ export type HandbookPage = {
 
 export const datasetIds = {
   loadHistorical2025: 'last.energy-charts.stuendlich.2025',
+  bevPkwKm: 'last.pkw-elektrifizierung',
   generationHistorical2025: 'erzeugung.energy-charts.stuendlich.2025',
   feedInFactors2025: 'modell.einspeisefaktoren.stuendlich.2025',
 } as const;
