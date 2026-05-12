@@ -203,15 +203,11 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   };
 }
 
-export function buildStorageChartOption(hours: SimHour[], mode: ChartMode = 'sunburst'): EChartsOption {
+export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
   const chartHours = compressHours(hours);
-  const coordinate = mode === 'sunburst'
-    ? { polar: { center: ['50%', '52%'], radius: ['14%', '70%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GWh') }
-    : { grid: { left: 46, right: 20, top: 18, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GWh') };
   const line = (name: string, color: string, data: number[]) => ({
     name,
     type: 'line' as const,
-    ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
     smooth: false,
     showSymbol: false,
     itemStyle: { color },
@@ -221,7 +217,9 @@ export function buildStorageChartOption(hours: SimHour[], mode: ChartMode = 'sun
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
-    ...coordinate,
+    grid: { left: 46, right: 20, top: 18, bottom: 48 },
+    xAxis: xAxis(hours, chartHours),
+    yAxis: yAxis('GWh'),
     series: [
       line('Batterie', '#10b981', chartHours.map(h => h.batteryGWh)),
       line('H₂', '#0891b2', chartHours.map(h => h.h2GWh)),

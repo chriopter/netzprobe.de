@@ -6,9 +6,8 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
-import { fmt0, gw, pct, twh } from './format';
+import { fmt0, pct, twh } from './format';
 
-type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 type DatasetDoc = {
@@ -94,17 +93,6 @@ function scenarioFromUrl(): Scenario | null {
   } catch {
     return null;
   }
-}
-
-function setScenarioValue(scenario: Scenario, path: string, value: number): Scenario {
-  const next = structuredClone(scenario) as Scenario & Record<string, any>;
-  const parts = path.split('.');
-  let target: Record<string, any> = next;
-  for (const part of parts.slice(0, -1)) target = target[part];
-  target[parts.at(-1)!] = value;
-  next.id = 'eigenes-szenario';
-  next.name = 'Eigenes Szenario';
-  return next;
 }
 
 function normalizeScenario(scenario: Scenario): Scenario {
@@ -208,12 +196,11 @@ export function App() {
 
 function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
+  const [scenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-12-31');
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
-  const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
   const [chartMode, setChartMode] = useState<ChartMode>(storedChartMode);
   const [faqOpen, setFaqOpen] = useState(false);
@@ -232,14 +219,14 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
 
   const result = useWorkerSimulation(data, scenario);
   useEffect(() => {
-    if (!result || chartResult === result || isTuning) return;
+    if (!result || chartResult === result) return;
     if (!chartResult) {
       setChartResult(result);
       return;
     }
     const timer = window.setTimeout(() => setChartResult(result), 650);
     return () => window.clearTimeout(timer);
-  }, [result, chartResult, isTuning]);
+  }, [result, chartResult]);
 
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd);
   const chartSource = chartResult ?? result;
@@ -248,12 +235,11 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
   const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, chartMode) : undefined, [sliced, mixVisibility, chartMode]);
-  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced, chartMode) : undefined, [sliced, chartMode]);
+  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
   useChart('mix-chart', mixOption);
   useChart('storage-chart', storageOption);
 
-  const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
     setCustomStart(date);
@@ -324,10 +310,12 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
             loadDocId="last.energy-charts.2025.stuendlich"
           />
 
-          <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} sourceDocId="erzeugung.energy-charts.2025.stuendlich" note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
-            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Onshore", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind Offshore", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-          </ControlSection>
+          <GenerationSection
+            generationMeta={generationMeta(data)}
+            generationDocId="erzeugung.energy-charts.2025.stuendlich"
+          />
+
+          <ModelAssumptionsSection modelDocId="modell.faktoren.2025.stuendlich"/>
         </div>
       </aside>
 
@@ -394,20 +382,25 @@ function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
             <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{selected.title}</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
             <section className="mt-8">
-              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Kurzinfo</h2>
+              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Übersicht</h2>
               <dl className="mt-3 grid gap-1 text-sm leading-6">
-                <InfoLine label="Quelle" value={selected.source}/>
+                <InfoLine label="Verwendung" value={selected.description}/>
                 <InfoLine label="Zeitraum" value={selected.period}/>
                 <InfoLine label="Auflösung" value={selected.resolution}/>
                 <InfoLine label="Einheit" value={selected.unit}/>
+                <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+                  <dt className="font-medium text-zinc-950">Datei</dt>
+                  <dd>
+                    <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+                      <code>data/{selected.file}</code>
+                    </a>
+                  </dd>
+                </div>
+                <InfoLine label="Quelle" value={selected.source}/>
               </dl>
             </section>
             <section className="mt-8">
-              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">
-                <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
-                  <code>data/{selected.file}</code>
-                </a>
-              </h2>
+              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Felder</h2>
               <dl className="mt-3 grid gap-3">
                 {selected.fields.map(field => <div key={field.name} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
                   <dt><code>{field.name}</code></dt>
@@ -470,9 +463,16 @@ function TreeNode({ href, label, selected }: { href: string; label: string; sele
 }
 
 function InfoLine({ label, value }: { label: string; value: string }) {
+  const urlMatch = value.match(/https?:\/\/\S+/);
   return <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
     <dt className="font-medium text-zinc-950">{label}</dt>
-    <dd className="text-zinc-700">{value}</dd>
+    <dd className="text-zinc-700">
+      {urlMatch ? <>
+        {value.slice(0, urlMatch.index).trim()}
+        {value.slice(0, urlMatch.index).trim() ? ' ' : ''}
+        <a href={urlMatch[0]} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{urlMatch[0]}</a>
+      </> : value}
+    </dd>
   </div>;
 }
 
@@ -569,21 +569,46 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function ControlSection({ title, sourceLabel, sourceMeta, sourceDocId, note, onPreset, children }: { title: string; sourceLabel: string; sourceMeta?: ReactNode; sourceDocId?: string; note?: string; onPreset: () => void; children: ReactNode }) {
+function GenerationSection({ generationMeta, generationDocId }: { generationMeta: string; generationDocId?: string }) {
   return <section className={cx(sectionBox, 'p-3')}>
-    <div className="grid gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{title}</span>
-      <button className="grid gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-left text-sm text-zinc-950 transition hover:border-zinc-300 hover:bg-white" type="button" onClick={onPreset}>
-        <span className="flex items-center justify-between gap-2">
-          <span>{sourceLabel}</span>
-          {sourceDocId && <DataInfoLink id={sourceDocId} label={`${sourceLabel} erklären`}/>} 
-        </span>
-        {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
-      </button>
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Erzeugung</span>
     </div>
-    <div className="mt-3 grid gap-4 border-t border-zinc-100 pt-3">
-      {children}
-      {note && <p className="text-xs leading-5 text-zinc-500">{note}</p>}
+    <div className="mt-3 grid gap-3 border-t border-zinc-100 pt-3">
+      <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
+        <label className="flex items-start gap-2 text-sm text-zinc-950">
+          <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
+          <span className="grid min-w-0 flex-1 gap-0.5">
+            <span className="flex items-center justify-between gap-2">
+              <span className="truncate">2025 Historisch</span>
+              {generationDocId && <DataInfoLink id={generationDocId} label="2025 Historisch erklären"/>}
+            </span>
+            <span className="truncate text-xs text-zinc-500">Energy-Charts · {generationMeta}</span>
+          </span>
+        </label>
+      </section>
+    </div>
+  </section>;
+}
+
+function ModelAssumptionsSection({ modelDocId }: { modelDocId?: string }) {
+  return <section className={cx(sectionBox, 'p-3')}>
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Modellannahmen</span>
+    </div>
+    <div className="mt-3 grid gap-3 border-t border-zinc-100 pt-3">
+      <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
+        <label className="flex items-start gap-2 text-sm text-zinc-950">
+          <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
+          <span className="grid min-w-0 flex-1 gap-0.5">
+            <span className="flex items-center justify-between gap-2">
+              <span className="truncate">Einspeisefaktoren 2025</span>
+              {modelDocId && <DataInfoLink id={modelDocId} label="Einspeisefaktoren 2025 erklären"/>}
+            </span>
+            <span className="truncate text-xs text-zinc-500">PV/Wind aus beobachteter Einspeisung abgeleitet</span>
+          </span>
+        </label>
+      </section>
     </div>
   </section>;
 }
@@ -607,18 +632,6 @@ function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, o
   </section>;
 }
 
-function Control({ rows, onChange, onTuneStart, onTuneEnd, disabled = false }: { rows: ControlRow[]; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void; disabled?: boolean }) {
-  return <div className={cx('grid gap-3', disabled && 'opacity-45')}>
-    {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-1.5">
-      <span className="flex items-center justify-between gap-4 text-xs text-zinc-700">
-        {label}
-        <b className="font-mono text-xs font-medium text-zinc-950">{formatControlValue(value, unit)}</b>
-      </span>
-      <input disabled={disabled} type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onPointerDown={onTuneStart} onPointerUp={onTuneEnd} onPointerCancel={onTuneEnd} onBlur={onTuneEnd} onKeyUp={onTuneEnd} onChange={event => onChange(path, Number(event.target.value))}/>
-    </label>)}
-  </div>;
-}
-
 function DemandSection({ loadMeta, loadDocId }: { loadMeta?: string; loadDocId?: string }) {
   return <section className={cx(sectionBox, 'p-3')}>
     <div className="flex items-center justify-between gap-3">
@@ -638,12 +651,12 @@ function FixedDemandSource({ label, meta, docId }: { label: string; meta: string
   return <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
     <label className="flex items-start gap-2 text-sm text-zinc-950">
       <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
-      <span className="grid flex-1 gap-0.5">
+      <span className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex items-center justify-between gap-2">
-          <span>{label}</span>
+          <span className="truncate">{label}</span>
           {docId && <DataInfoLink id={docId} label={`${label} erklären`}/>} 
         </span>
-        <span className="text-xs text-zinc-500">{meta}</span>
+        <span className="truncate text-xs text-zinc-500">{meta}</span>
       </span>
     </label>
   </section>;
@@ -654,12 +667,6 @@ function MetricLine({ label, value }: { label: string; value: string }) {
     <span className="text-zinc-500">{label}</span>
     <strong className="font-medium text-zinc-950">{value}</strong>
   </div>;
-}
-
-function formatControlValue(value: number, unit: string) {
-  if (unit === '%') return `${fmt0.format(value)} %`;
-  if (unit === 'GWh') return `${fmt0.format(value)} GWh`;
-  return gw(value);
 }
 
 function formatDate(date: string) {

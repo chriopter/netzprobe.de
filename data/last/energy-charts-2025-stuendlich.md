@@ -1,14 +1,26 @@
-# Historische Last 2025
+# 2025 Historisch
 
 - Quelle: Energy-Charts `public_power`, Deutschland.
 - Abruf: `https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01`
-- Rohauflösung: 15 Minuten; Netzprobe mittelt auf Stunden.
-- Auswahl: Feld für elektrische Last; keine Erzeugungs- oder Handelsreihen in dieser Datei.
-- Verwendung: feste Basislast des Szenarios, nicht abschaltbar.
+- Rohdaten: 15-Minuten-Werte der elektrischen Last.
+- Ermittlung: je Stunde Mittelwert aus den zugehörigen 15-Minuten-Werten.
+- Auswahl: nur Last; keine Erzeugungs- oder Handelsreihen in dieser Datei.
+- Verwendung: fixer Verbrauch; in der UI per Radio-Button als Lastszenario übernommen.
 - Plot: als Lastkurve gegen simulierte Erzeugung, Speicher, Import/Export und Unterdeckung.
 - Einheit: `loadMW` in MW; Darstellung in der UI meist als GW oder TWh-Summe.
 
+## Rohdaten
+
+- `data/last/energy-charts-2025-stuendlich.json`
+
 ## Felder
 
-- `time` — Zeitpunkt der Stunde.
-- `loadMW` — gemittelte Last in MW.
+- `generatedAt` — Zeitpunkt der lokalen Datendatei-Erzeugung.
+- `year` — Bezugsjahr des Datensatzes.
+- `source` — Kurzbeschreibung der Quelle und Verarbeitung.
+- `sourceUrl` — Energy-Charts-API-Abruf.
+- `unit` — Einheit der Stundenwerte: MW.
+- `hours[].time` — Zeitpunkt der Stunde.
+- `hours[].loadMW` — aus 15-Minuten-Werten gemittelte elektrische Last in Deutschland.
+- `sumTWh` — Jahressumme der Last in TWh.
+- `sumNote` — Kurznotiz zur Summenberechnung.

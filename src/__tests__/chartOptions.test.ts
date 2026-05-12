@@ -106,18 +106,15 @@ describe('mix chart options', () => {
     expect(xAxis.data.filter(Boolean)).toContain('Dezember');
   });
 
-  it('makes storage radial by default and switchable too', () => {
-    const radial = buildStorageChartOption([hour(0)]);
-    const linear = buildStorageChartOption([hour(0)], 'linie');
-    const radialSeries = radial.series as Array<Record<string, unknown>>;
-    const linearSeries = linear.series as Array<Record<string, unknown>>;
+  it('always renders storage as a linear chart', () => {
+    const option = buildStorageChartOption([hour(0)]);
+    const series = option.series as Array<Record<string, unknown>>;
 
-    expect(radial.polar).toBeDefined();
-    expect(radial.radiusAxis).toBeDefined();
-    expect(radialSeries.find((s) => s.name === 'Batterie')?.coordinateSystem).toBe('polar');
-    expect(linear.xAxis).toBeDefined();
-    expect(linear.yAxis).toBeDefined();
-    expect(linearSeries.find((s) => s.name === 'Batterie')?.coordinateSystem).toBeUndefined();
+    expect(option.polar).toBeUndefined();
+    expect(option.radiusAxis).toBeUndefined();
+    expect(option.xAxis).toBeDefined();
+    expect(option.yAxis).toBeDefined();
+    expect(series.find((s) => s.name === 'Batterie')?.coordinateSystem).toBeUndefined();
   });
 
   it('marks uncovered load as a red area series', () => {
