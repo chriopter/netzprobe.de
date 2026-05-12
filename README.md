@@ -1,10 +1,18 @@
 # Netzprobe
 
-Statische Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
+Kompakte Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
-## Disclaimer
+## Stack
 
-Dieses Projekt ist vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
+Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation läuft im Browser, rechenlastige Läufe im Web Worker. Kein Backend, keine Datenbank, keine Anmeldung.
+
+## Anspruch
+
+KISS: statisch hostbar, schnell bedienbar, Daten offen im Repo. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
+
+## Vorsicht
+
+Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
 
 ## Credits
 

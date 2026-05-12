@@ -5,7 +5,7 @@ import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import { baselineScenario } from '../../scenarios/baseline';
 import type { Scenario } from '../../scenarios/types';
-import { runSimulation } from '../simulation/engine';
+import type { SimulationResult } from '../simulation/engine';
 import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
@@ -13,6 +13,7 @@ type ControlRow = [label: string, path: string, value: number, min: number, max:
 type DemandScenario = { id: string; name: string; values: Scenario['demand'] };
 type SupplyScenario = { id: string; name: string; values: Pick<Scenario, 'renewables' | 'fossil' | 'storage'> };
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
+type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
 const demandScenarios: DemandScenario[] = [
   { id: 'demand-demo', name: 'Demo-Nachfrage', values: { basePct: 100, bevPct: 10, heatPumpPct: 10 } },
@@ -54,7 +55,7 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
 
   useEffect(() => {
     if (!option || !chartRef.current) return;
-    chartRef.current.setOption(option, { notMerge: true, lazyUpdate: true });
+    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true });
   }, [option]);
 }
 
@@ -115,23 +116,77 @@ function periodDates(preset: PeriodPreset, start: string, end: string) {
   return { start, end: end < start ? start : end };
 }
 
+function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
+  const [result, setResult] = useState<SimulationResult | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const requestRef = useRef(0);
+  const hasDataRef = useRef(false);
+
+  useEffect(() => {
+    const worker = new Worker(new URL('../simulation/worker.ts', import.meta.url), { type: 'module' });
+    workerRef.current = worker;
+    worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
+      if (event.data.requestId !== requestRef.current) return;
+      setResult(event.data.result);
+    };
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+      hasDataRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const worker = workerRef.current;
+    if (!worker || !data) return;
+    hasDataRef.current = true;
+    const requestId = ++requestRef.current;
+    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario });
+  }, [data]);
+
+  useEffect(() => {
+    const worker = workerRef.current;
+    if (!worker || !hasDataRef.current) return;
+    const timer = window.setTimeout(() => {
+      const requestId = ++requestRef.current;
+      worker.postMessage({ type: 'run', requestId, scenario });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [scenario]);
+
+  return result;
+}
+
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? baselineScenario);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('21d');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-01-21');
+  const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
+  const [isTuning, setIsTuning] = useState(false);
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
   }, []);
 
-  const result = useMemo(() => data ? runSimulation(data.hours, scenario) : null, [data, scenario]);
+  const result = useWorkerSimulation(data, scenario);
+  useEffect(() => {
+    if (!result || chartResult === result || isTuning) return;
+    if (!chartResult) {
+      setChartResult(result);
+      return;
+    }
+    const timer = window.setTimeout(() => setChartResult(result), 650);
+    return () => window.clearTimeout(timer);
+  }, [result, chartResult, isTuning]);
+
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd);
-  const sliced = useMemo(() => result?.hours.filter(hour => {
+  const chartSource = chartResult ?? result;
+  const sliced = useMemo(() => chartSource?.hours.filter(hour => {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
-  }) ?? [], [result, selectedPeriod.start, selectedPeriod.end]);
+  }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
   const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced) : undefined, [sliced]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
@@ -173,7 +228,7 @@ export function App() {
             presets={demandScenarios}
             onSelect={selectDemand}
           >
-            <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update}/>
+            <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ScenarioSelect>
 
           <ScenarioSelect
@@ -182,8 +237,8 @@ export function App() {
             presets={supplyScenarios}
             onSelect={selectSupply}
           >
-            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update}/>
-            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update}/>
+            <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ScenarioSelect>
         </div>
       </aside>
@@ -299,14 +354,14 @@ function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, o
   </section>;
 }
 
-function Control({ rows, onChange }: { rows: ControlRow[]; onChange: (path: string, value: number) => void }) {
+function Control({ rows, onChange, onTuneStart, onTuneEnd }: { rows: ControlRow[]; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
   return <div className="grid gap-3">
     {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-1.5">
       <span className="flex items-center justify-between gap-4 text-xs text-zinc-300">
         {label}
         <b className="font-mono text-xs font-medium text-white">{formatControlValue(value, unit)}</b>
       </span>
-      <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onChange={event => onChange(path, Number(event.target.value))}/>
+      <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onPointerDown={onTuneStart} onPointerUp={onTuneEnd} onPointerCancel={onTuneEnd} onBlur={onTuneEnd} onKeyUp={onTuneEnd} onChange={event => onChange(path, Number(event.target.value))}/>
     </label>)}
   </div>;
 }
