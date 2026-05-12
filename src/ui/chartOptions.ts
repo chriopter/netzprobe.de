@@ -33,7 +33,6 @@ export const DEFAULT_MIX_VISIBILITY: MixVisibility = Object.fromEntries(
 ) as MixVisibility;
 
 const shortDateLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' });
-const monthLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString('de-DE', { month: 'long' });
 const dayLabels = (hours: SimHour[]) => hours.map(shortDateLabel);
 const dateKey = (hour: SimHour) => hour.time.slice(0, 10);
 const dateParts = (date: string) => ({ month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) });
@@ -74,10 +73,21 @@ const compressHours = (hours: SimHour[], maxPoints = 365) => {
 };
 
 const isFullYearCompressed = (hours: SimHour[], chartHours: SimHour[]) => hours.length > chartHours.length && new Set(hours.map(dateKey)).size >= 360;
+const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const xAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
   if (!isFullYearCompressed(hours, chartHours)) return dayLabels(chartHours);
-  return chartHours.map((hour) => dateParts(dateKey(hour)).day === 1 ? monthLabel(hour) : '');
+  const slots = new Map<number, string>();
+  monthNames.forEach((label, index) => slots.set(Math.round(index * (chartHours.length - 1) / (monthNames.length - 1)), label));
+  return chartHours.map((_, index) => slots.get(index) ?? '');
 };
+
+const xAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
+  type: 'category' as const,
+  data: xAxisLabels(hours, chartHours),
+  axisTick: { show: false },
+  axisLabel: { color: '#71717a', interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
+  axisLine: { lineStyle: { color: '#e4e4e7' } },
+});
 
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
 const areaSeries = (name: string, color: string, data: number[]) => ({
@@ -86,8 +96,8 @@ const areaSeries = (name: string, color: string, data: number[]) => ({
   stack: 'supply',
   showSymbol: false,
   smooth: false,
-  areaStyle: { opacity: .34 },
-  lineStyle: { width: 1.1 },
+  areaStyle: { opacity: .28 },
+  lineStyle: { width: .8, opacity: .9 },
   itemStyle: { color },
   data,
 });
@@ -123,9 +133,9 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       },
     },
     legend: { show: false },
-    grid: { left: 42, right: 24, top: 12, bottom: 34 },
-    xAxis: { type: 'category', data: xAxisLabels(hours, chartHours), axisLabel: { color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
-    yAxis: { type: 'value', axisLabel: { color: '#6b7280', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(17,24,39,.10)' } } },
+    grid: { left: 44, right: 20, top: 10, bottom: 48 },
+    xAxis: xAxis(hours, chartHours),
+    yAxis: { type: 'value', axisLabel: { color: '#71717a', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } } },
     series: [
       ...supplySeries,
       areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW)),
@@ -160,9 +170,9 @@ export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
-    grid: { left: 44, right: 20, top: 20, bottom: 32 },
-    xAxis: { type: 'category', data: xAxisLabels(hours, chartHours), axisLabel: { color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
-    yAxis: { type: 'value', axisLabel: { color: '#6b7280', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(17,24,39,.10)' } } },
+    grid: { left: 46, right: 20, top: 18, bottom: 48 },
+    xAxis: xAxis(hours, chartHours),
+    yAxis: { type: 'value', axisLabel: { color: '#71717a', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } } },
     series: [
       { name: 'Batterie', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#10b981' }, data: chartHours.map(h => h.batteryGWh) },
       { name: 'H₂', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#0891b2' }, data: chartHours.map(h => h.h2GWh) },

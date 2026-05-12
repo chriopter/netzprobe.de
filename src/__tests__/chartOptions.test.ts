@@ -59,7 +59,7 @@ describe('mix chart options', () => {
     expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
   });
 
-  it('orders full-year daily buckets by day of month first and labels first-day ticks by month', () => {
+  it('orders full-year daily buckets by day of month first and spreads month labels across the axis', () => {
     const yearHours: SimHour[] = [];
     for (let month = 0; month < 12; month += 1) {
       const days = new Date(Date.UTC(2025, month + 1, 0)).getUTCDate();
@@ -70,12 +70,15 @@ describe('mix chart options', () => {
     }
     const option = buildMixChartOption(yearHours);
     const xAxis = option.xAxis as { data: string[] };
+    const series = option.series as Array<Record<string, unknown>>;
 
-    expect(xAxis.data.slice(0, 13)).toEqual([
+    expect((series.find((s) => s.name === 'Last')?.data as number[]).slice(0, 13)).toHaveLength(13);
+    expect(xAxis.data.filter(Boolean)).toEqual([
       'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-      '',
     ]);
+    expect(xAxis.data[0]).toBe('Januar');
+    expect(xAxis.data.at(-1)).toBe('Dezember');
   });
 
   it('marks uncovered load as a red area series', () => {

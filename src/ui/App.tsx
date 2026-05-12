@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { AlertTriangle, Banknote, Gauge, Zap } from 'lucide-react';
+import { AlertTriangle, Gauge, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
@@ -23,8 +23,9 @@ const defaultScenario: Scenario = {
 };
 
 const shell = 'min-h-screen px-3 py-3 text-zinc-950 sm:px-4 lg:px-6';
-const panel = 'rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,.08)]';
-const field = 'h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-indigo-400';
+const panel = 'rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,.05)]';
+const sectionBox = 'rounded-xl border border-zinc-200/80 bg-white';
+const field = 'h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400';
 const muted = 'text-zinc-500';
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -190,13 +191,13 @@ export function App() {
   };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1700px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)_220px] xl:grid-cols-[300px_minmax(0,1fr)_240px]">
-      <section className="flex min-w-0 flex-col gap-3 lg:order-last">
+    <div className="mx-auto grid w-full max-w-[1760px] gap-3 lg:grid-cols-[270px_minmax(0,1fr)_210px] xl:grid-cols-[280px_minmax(0,1fr)_220px]">
+      <section className="flex min-w-0 flex-col gap-3 lg:order-2">
         {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
-          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
-            <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-              <h2 className="text-base font-medium tracking-[-0.02em]">Energiemix vs. Last</h2>
-              <span className={cx(muted, 'text-xs sm:text-sm')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-5">
+            <div className="mb-2 flex shrink-0 items-baseline justify-between gap-3">
+              <h2 className="text-lg font-medium tracking-[-0.03em]">Energiemix vs. Last</h2>
+              <span className={cx(muted, 'text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
             </div>
             <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
             <MixLegend
@@ -214,12 +215,12 @@ export function App() {
         </>}
       </section>
 
-      <aside className={cx(panel, 'lg:order-first lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-zinc-200 px-4 py-3">
+      <aside className={cx(panel, 'lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+        <div className="border-b border-zinc-200/80 px-4 py-3">
           <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
         </div>
 
-        <div className="space-y-3 p-4">
+        <div className="space-y-4 p-4">
           <PeriodControl
             preset={periodPreset}
             start={selectedPeriod.start}
@@ -242,17 +243,16 @@ export function App() {
         </div>
       </aside>
 
-      <aside className={cx(panel, 'lg:order-last lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-zinc-200 px-4 py-3">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Ergebnisse</h2>
+      <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+        <div className="border-b border-zinc-200/80 px-4 py-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Ergebnisse</h2>
         </div>
         <div className="grid gap-3 p-4">
           {result ? <>
             <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
             <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
             <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
-            <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
-            <section className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <section className="grid gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
               <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
               <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
             </section>
@@ -275,37 +275,48 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
-    <div className="flex flex-wrap gap-x-3 gap-y-2">
-      {leaves.map(leaf => <label key={leaf.key} className="flex cursor-pointer items-center gap-1.5 text-zinc-700 hover:text-zinc-950">
-        <input className="accent-indigo-600" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
-        <span aria-hidden style={{ color: leaf.color }}>●</span>
+  return <div className="mt-3 flex flex-wrap gap-1.5 border-t border-zinc-100 pt-3 text-xs">
+    {leaves.map(leaf => {
+      const active = visibility[leaf.key];
+      return <button
+        key={leaf.key}
+        type="button"
+        aria-pressed={active}
+        className={cx(
+          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition',
+          active ? 'border-zinc-200 bg-white text-zinc-800 shadow-sm' : 'border-transparent bg-transparent text-zinc-400',
+        )}
+        onClick={() => onToggleLeaf(leaf.key, !active)}
+      >
+        <span aria-hidden className="text-[10px]" style={{ color: active ? leaf.color : '#d4d4d8' }}>●</span>
         <span>{leaf.label}</span>
-      </label>)}
-    </div>
+      </button>;
+    })}
   </div>;
 }
 
 function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: string; value: string; subValue?: string; tone?: string }) {
-  const toneClass = tone === 'stabil' ? 'text-emerald-400' : tone === 'angespannt' ? 'text-amber-400' : tone === 'kritisch' ? 'text-red-400' : 'text-indigo-600';
-  return <div className={cx(panel, 'min-h-20 p-3')}>
-    <div className={cx('mb-2 [&_svg]:h-4 [&_svg]:w-4', toneClass)}>{icon}</div>
-    <span className="text-xs text-zinc-500">{label}</span>
-    <strong className="mt-1 block text-xl font-medium tracking-[-0.04em] text-zinc-950">{value}</strong>
+  const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-600' : 'text-zinc-500';
+  return <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs text-zinc-500">{label}</span>
+      <span className={cx('[&_svg]:h-3.5 [&_svg]:w-3.5', toneClass)}>{icon}</span>
+    </div>
+    <strong className="mt-1 block text-2xl font-medium tracking-[-0.05em] text-zinc-950">{value}</strong>
     {subValue && <span className="mt-1 block text-xs text-zinc-500">{subValue}</span>}
   </div>;
 }
 
 function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, children }: { title: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; onPreset: () => void; children: ReactNode }) {
-  return <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+  return <section className={cx(sectionBox, 'p-3')}>
     <div className="grid gap-2">
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">{title}</span>
-      <button className="grid gap-0.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left text-sm text-zinc-950 transition hover:border-zinc-300 hover:bg-zinc-50" type="button" onClick={onPreset}>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{title}</span>
+      <button className="grid gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-left text-sm text-zinc-950 transition hover:border-zinc-300 hover:bg-white" type="button" onClick={onPreset}>
         <span>{sourceLabel}</span>
         {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
       </button>
     </div>
-    <div className="mt-3 grid gap-4 border-t border-zinc-200 pt-3">
+    <div className="mt-3 grid gap-4 border-t border-zinc-100 pt-3">
       {children}
       {note && <p className="text-xs leading-5 text-zinc-500">{note}</p>}
     </div>
@@ -313,9 +324,9 @@ function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, childr
 }
 
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
-  return <section className={cx(panel, 'grid gap-3 p-3')}>
+  return <section className={cx(sectionBox, 'grid gap-3 p-3')}>
     <div className="flex items-center justify-between gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Zeitraum</h2>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Zeitraum</h2>
       <span className="text-xs text-zinc-500">{formatDate(start)} – {formatDate(end)}</span>
     </div>
     <select className={field} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
@@ -324,7 +335,7 @@ function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, o
       <option value="year">Ganzes Jahr</option>
       <option value="custom">Custom</option>
     </select>
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid gap-2">
       <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customStart : start} onChange={event => onStart(event.target.value)}/>
       <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customEnd : end} onChange={event => onEnd(event.target.value)}/>
     </div>
