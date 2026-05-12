@@ -1,9 +1,14 @@
+export type ManifestEntry = {
+  id: string;
+  domain: string;
+  description: string;
+};
+
 export type DatasetDoc = {
   id: string;
   domain: string;
   title: string;
   file: string;
-  doc: string;
   scripts?: string[];
   source: string;
   period: string;

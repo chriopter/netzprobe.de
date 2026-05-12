@@ -3,7 +3,6 @@
   "domain": "last",
   "title": "Historisch 2025",
   "file": "last/energy-charts-stuendlich-2025.json",
-  "doc": "last/energy-charts-stuendlich-2025.md",
   "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
   "period": "2025",
   "resolution": "stündlich",

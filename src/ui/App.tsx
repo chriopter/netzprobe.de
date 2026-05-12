@@ -7,7 +7,7 @@ import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataHandbook } from './DataHandbook';
-import { dataWikiUrl, manifestUrl, type DatasetDoc } from './dataCatalog';
+import { dataWikiUrl, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario, scenarioFromUrl } from './scenarioPresets';
@@ -107,7 +107,10 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 function useDatasetDocs() {
   const [docs, setDocs] = useState<DatasetDoc[]>([]);
   useEffect(() => {
-    loadJson<DatasetDoc[]>(manifestUrl).then(setDocs).catch(console.error);
+    loadJson<ManifestEntry[]>(manifestUrl)
+      .then(entries => Promise.all(entries.map(entry => loadJson<DatasetDoc>(`${import.meta.env.BASE_URL}data/${entry.description}`))))
+      .then(setDocs)
+      .catch(console.error);
   }, []);
   return docs;
 }

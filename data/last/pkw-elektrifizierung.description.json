@@ -3,7 +3,6 @@
   "domain": "last",
   "title": "PKW Elektrifizierung",
   "file": "last/pkw-elektrifizierung.json",
-  "doc": "last/pkw-elektrifizierung.md",
   "source": "Destatis Pkw-Fahrleistung 2023: https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
   "period": "2023",
   "resolution": "Jahr",

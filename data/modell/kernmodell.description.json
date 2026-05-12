@@ -3,7 +3,6 @@
   "domain": "modell",
   "title": "Kernmodell",
   "file": "modell/kernmodell.json",
-  "doc": "modell/kernmodell.md",
   "source": "Eigene stündliche Bilanzrechnung im Browser.",
   "period": "laufend",
   "resolution": "stündlich",

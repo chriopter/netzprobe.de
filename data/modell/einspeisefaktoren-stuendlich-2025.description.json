@@ -3,7 +3,6 @@
   "domain": "modell",
   "title": "Einspeisefaktoren 2025",
   "file": "modell/einspeisefaktoren-stuendlich-2025.json",
-  "doc": "modell/einspeisefaktoren-stuendlich-2025.md",
   "scripts": ["modell/generate-feed-in-factors.mjs"],
   "source": "Energy-Charts public_power und installed_power APIs",
   "period": "2025",
