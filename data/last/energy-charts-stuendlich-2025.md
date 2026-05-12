@@ -1,4 +1,4 @@
-# 2025 Historisch
+# Historisch 2025
 
 - Quelle: Energy-Charts `public_power`, Deutschland.
 - Abruf: `https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01`
@@ -11,7 +11,7 @@
 
 ## Rohdaten
 
-- `data/last/energy-charts-2025-stuendlich.json`
+- `data/last/energy-charts-stuendlich-2025.json`
 
 ## Felder
 

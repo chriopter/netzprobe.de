@@ -1,10 +1,10 @@
 [
   {
-    "id": "last.energy-charts.2025.stuendlich",
+    "id": "last.energy-charts.stuendlich.2025",
     "domain": "last",
-    "title": "2025 Historisch",
-    "file": "last/energy-charts-2025-stuendlich.json",
-    "doc": "last/energy-charts-2025-stuendlich.md",
+    "title": "Historisch 2025",
+    "file": "last/energy-charts-stuendlich-2025.json",
+    "doc": "last/energy-charts-stuendlich-2025.md",
     "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
     "period": "2025",
     "resolution": "stündlich",
@@ -25,11 +25,11 @@
     "caveats": []
   },
   {
-    "id": "erzeugung.energy-charts.2025.stuendlich",
+    "id": "erzeugung.energy-charts.stuendlich.2025",
     "domain": "erzeugung",
-    "title": "2025 Historisch",
-    "file": "erzeugung/energy-charts-2025-stuendlich.json",
-    "doc": "erzeugung/energy-charts-2025-stuendlich.md",
+    "title": "Historisch 2025",
+    "file": "erzeugung/energy-charts-stuendlich-2025.json",
+    "doc": "erzeugung/energy-charts-stuendlich-2025.md",
     "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
     "period": "2025",
     "resolution": "stündlich",
@@ -65,11 +65,11 @@
     "caveats": ["Nur öffentliche Stromerzeugung; private/industrielle Eigenversorgung ist nicht vollständig enthalten."]
   },
   {
-    "id": "modell.faktoren.2025.stuendlich",
+    "id": "modell.einspeisefaktoren.stuendlich.2025",
     "domain": "modell",
     "title": "Einspeisefaktoren 2025",
-    "file": "modell/faktoren-2025-stuendlich.json",
-    "doc": "modell/faktoren-2025-stuendlich.md",
+    "file": "modell/einspeisefaktoren-stuendlich-2025.json",
+    "doc": "modell/einspeisefaktoren-stuendlich-2025.md",
     "source": "Energy-Charts public_power und installed_power APIs",
     "period": "2025",
     "resolution": "stündlich",

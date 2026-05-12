@@ -2,9 +2,9 @@ import type { DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile 
 
 const dataUrl = (file: string) => `${import.meta.env.BASE_URL}data/${file}`;
 
-const loadUrl = dataUrl('last/energy-charts-2025-stuendlich.json');
-const generationUrl = dataUrl('erzeugung/energy-charts-2025-stuendlich.json');
-const factorsUrl = dataUrl('modell/faktoren-2025-stuendlich.json');
+const loadUrl = dataUrl('last/energy-charts-stuendlich-2025.json');
+const generationUrl = dataUrl('erzeugung/energy-charts-stuendlich-2025.json');
+const factorsUrl = dataUrl('modell/einspeisefaktoren-stuendlich-2025.json');
 
 export async function loadJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
@@ -37,7 +37,7 @@ export async function loadDefaultData(): Promise<DataSet> {
   });
 
   return {
-    source: 'Energy-Charts 2025: Last, Erzeugung und Modellfaktoren getrennt geladen.',
+    source: 'Energy-Charts 2025: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
     loadSumTWh: loadData.sumTWh,
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,

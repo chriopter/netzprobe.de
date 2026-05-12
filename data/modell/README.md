@@ -1,3 +1,3 @@
 # Modell
 
-Abgeleitete Modellfaktoren für Simulationen.
+Abgeleitete Einspeisefaktoren für Modellannahmen.

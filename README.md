@@ -26,7 +26,7 @@ npm run dev
 
 KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Fachordnern und Datenhandbuch. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
 
-`data/modell/faktoren-2025-stuendlich.json` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für andere PV-/Wind-Leistungen.
+`data/modell/einspeisefaktoren-stuendlich-2025.json` enthält keine Rohwetterdaten, sondern aus Energy-Charts abgeleitete PV-/Wind-Einspeisefaktoren für andere installierte Leistungen.
 
 ## Vorsicht
 

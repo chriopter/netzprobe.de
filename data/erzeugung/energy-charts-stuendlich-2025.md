@@ -1,4 +1,4 @@
-# 2025 Historisch
+# Historisch 2025
 
 - Verwendung: fixe historische öffentliche Erzeugung; in der UI per Radio-Button als Erzeugungsszenario übernommen.
 - Quelle: Energy-Charts `public_power`, Deutschland.
