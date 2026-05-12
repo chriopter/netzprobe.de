@@ -2,6 +2,8 @@
 
 Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
+Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
+
 Live: https://chriopter.github.io/netzprobe/
 
 ## Stack
@@ -10,27 +12,7 @@ Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation l
 
 ## Entwicklung
 
-Abhängigkeiten installieren:
-
-```bash
-npm install
-```
-
-Dev-Server starten:
-
-```bash
-npm run dev
-```
-
-## Anspruch
-
-KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Fachordnern und Datenhandbuch. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
-
-`data/modell/einspeisefaktoren-stuendlich-2025.json` enthält keine Rohwetterdaten, sondern aus Energy-Charts abgeleitete PV-/Wind-Einspeisefaktoren für andere installierte Leistungen.
-
-## Vorsicht
-
-Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
+`npm install`, dann `npm run dev`.
 
 ## Credits
 

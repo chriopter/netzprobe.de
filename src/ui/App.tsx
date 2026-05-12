@@ -205,7 +205,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
             <div id="storage-chart" className="h-[240px] w-full"/>
           </ChartPanel>
           <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
-            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Code auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer">GitHub</a>.
           </footer>
         </>}
       </section>
