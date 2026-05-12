@@ -128,7 +128,7 @@ export function App() {
 
 function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
+  const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-12-31');
@@ -212,6 +212,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
 
       <ScenarioSidebar
         data={data}
+        scenario={scenario}
         selectedPeriod={selectedPeriod}
         periodPreset={periodPreset}
         customStart={customStart}
@@ -220,6 +221,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onFaqOpen={() => setFaqOpen(true)}
+        onTest100TWhChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, test100TWh: checked } }))}
       />
 
       <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>

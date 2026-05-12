@@ -1,6 +1,6 @@
 import type { HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, LOAD_100_BEV_GW, LOAD_100_HEATPUMP_WINTER_GW, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
+import { BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
 
 export type SimHour = {
   time: string; loadGW: number; solarGW: number; windOnGW: number; windOffGW: number; biomassGW: number; hydroGW: number; wasteGW: number; oilGW: number; geothermalGW: number; otherGW: number; coalGW: number; gasGW: number; nuclearGW: number; importGW: number; exportGW: number; storageChargeGW: number; storageDischargeGW: number; curtailmentGW: number; loadSheddingGW: number; batteryGWh: number; h2GWh: number; supplyGW: number; balanceGW: number; co2Tonnes: number;
@@ -11,7 +11,7 @@ const solarFactor = (irradiance: number[], pvGW: number) => irradiance.reduce((s
 const windCurve = (v: number, off = false) => { const v1 = off ? 4 : 3; const v2 = off ? 13 : 11.5; const v3 = off ? 22 : 21; if (v < v1 || v > v3) return 0; return v < v2 ? Math.pow(v / v2, 3) : 1; };
 const windOn = (wind: number[], gw: number) => WIND_ON_FRACTIONS.reduce((s, f, i) => s + gw * f * windCurve((wind[i] ?? 0) * 1.05) * 0.905, 0);
 const windOff = (wind: number[], gw: number) => WIND_OFF_FRACTIONS.reduce((s, f, i) => s + gw * f * windCurve((wind[i+4] ?? 0) * 1.03, true) * 0.78, 0);
-const heatPumpSeason = (index: number) => 0.5 * (1 + Math.cos((2 * Math.PI * (index % 8760)) / 8760 - Math.PI / 6));
+const TEST_100_TWH_LOAD_GW = 100_000 / 8760;
 
 export function runSimulation(input: HourlyInput[], scenario: Scenario): SimulationResult {
   let battery = scenario.storage.batteryEnergyGWh * 0.5;
@@ -21,9 +21,8 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
   for (let i = 0; i < input.length; i++) {
     const row = input[i];
     const historicalLoadGW = scenario.demand.historicalLoad ? row.loadMW / 1000 : 0;
-    const bevLoadGW = scenario.demand.bev ? (scenario.demand.bevPct / 100) * LOAD_100_BEV_GW : 0;
-    const heatPumpLoadGW = scenario.demand.heatPump ? (scenario.demand.heatPumpPct / 100) * LOAD_100_HEATPUMP_WINTER_GW * heatPumpSeason(i) : 0;
-    const loadGW = historicalLoadGW + bevLoadGW + heatPumpLoadGW;
+    const test100TWhLoadGW = scenario.demand.test100TWh ? TEST_100_TWH_LOAD_GW : 0;
+    const loadGW = historicalLoadGW + test100TWhLoadGW;
     const solarGW = solarFactor(row.solarIrradiance, scenario.renewables.pvGW);
     const won = windOn(row.wind100m, scenario.renewables.windOnGW);
     const woff = windOff(row.wind100m, scenario.renewables.windOffGW);

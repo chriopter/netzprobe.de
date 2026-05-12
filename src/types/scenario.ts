@@ -4,10 +4,7 @@ export type Scenario = {
   description: string;
   demand: {
     historicalLoad: boolean;
-    bev: boolean;
-    heatPump: boolean;
-    bevPct: number;
-    heatPumpPct: number;
+    test100TWh: boolean;
   };
   renewables: { pvGW: number; windOnGW: number; windOffGW: number };
   fossil: { coalGW: number; gasGW: number; nuclearGW?: number };

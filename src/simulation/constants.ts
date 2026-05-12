@@ -1,6 +1,3 @@
-export const LOAD_100_BEV_GW = 20;
-export const LOAD_100_HEATPUMP_WINTER_GW = 40;
-
 export const BIOMASS_GW = 4.8;
 export const RUN_OF_RIVER_GW = 2.0;
 export const COAL_MIN_REL = 0.2;

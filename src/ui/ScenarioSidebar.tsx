@@ -3,11 +3,13 @@ import { dataWikiUrl, datasetIds } from './dataCatalog';
 import { twh } from './format';
 import { cx, field, sectionBox } from './ui';
 import type { DataSet } from '../types/data';
+import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 
 export function ScenarioSidebar({
   data,
+  scenario,
   selectedPeriod,
   periodPreset,
   customStart,
@@ -16,8 +18,10 @@ export function ScenarioSidebar({
   onStart,
   onEnd,
   onFaqOpen,
+  onTest100TWhChange,
 }: {
   data: DataSet | null;
+  scenario: Scenario;
   selectedPeriod: { start: string; end: string };
   periodPreset: PeriodPreset;
   customStart: string;
@@ -26,6 +30,7 @@ export function ScenarioSidebar({
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
   onFaqOpen: () => void;
+  onTest100TWhChange: (checked: boolean) => void;
 }) {
   return <aside className="rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
     <div className="border-b border-zinc-200/80 px-4 py-3">
@@ -59,7 +64,14 @@ export function ScenarioSidebar({
         label="Historisch 2025"
         meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
         docId={datasetIds.loadHistorical2025}
-      />
+      >
+        <ScenarioCheckItem
+          label="100 TWh Test"
+          meta="+100 TWh gleichmäßig übers Jahr"
+          checked={scenario.demand.test100TWh}
+          onChecked={onTest100TWhChange}
+        />
+      </ScenarioChoiceSection>
 
       <ScenarioChoiceSection
         title="Erzeugung"
@@ -78,26 +90,39 @@ export function ScenarioSidebar({
   </aside>;
 }
 
-function ScenarioChoiceSection({ title, label, meta, docId }: { title: string; label: string; meta: string; docId: string }) {
+function ScenarioChoiceSection({ title, label, meta, docId, children }: { title: string; label: string; meta: string; docId: string; children?: React.ReactNode }) {
   return <section className={cx(sectionBox, 'p-3')}>
     <div className="flex items-center justify-between gap-3">
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{title}</span>
     </div>
-    <div className="mt-3 grid gap-3 border-t border-zinc-100 pt-3">
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
-        <label className="flex items-start gap-2 text-sm text-zinc-950">
-          <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
-          <span className="grid min-w-0 flex-1 gap-0.5">
-            <span className="flex items-center justify-between gap-2">
-              <span className="truncate">{label}</span>
-              <DataInfoLink id={docId} label={`${label} erklären`}/>
-            </span>
-            <span className="truncate text-xs text-zinc-500">{meta}</span>
-          </span>
-        </label>
-      </section>
+    <div className="mt-3 grid gap-2 border-t border-zinc-100 pt-3">
+      <ScenarioRadioItem label={label} meta={meta} docId={docId}/>
+      {children}
     </div>
   </section>;
+}
+
+function ScenarioRadioItem({ label, meta, docId }: { label: string; meta: string; docId: string }) {
+  return <label className="flex items-start gap-2 text-sm text-zinc-950">
+    <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
+    <span className="grid min-w-0 flex-1 gap-0.5">
+      <span className="flex items-center justify-between gap-2">
+        <span className="truncate">{label}</span>
+        <DataInfoLink id={docId} label={`${label} erklären`}/>
+      </span>
+      <span className="truncate text-xs text-zinc-500">{meta}</span>
+    </span>
+  </label>;
+}
+
+function ScenarioCheckItem({ label, meta, checked, onChecked }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void }) {
+  return <label className="flex items-start gap-2 text-sm text-zinc-950">
+    <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={checked} onChange={event => onChecked(event.target.checked)} />
+    <span className="grid min-w-0 flex-1 gap-0.5">
+      <span className="truncate">{label}</span>
+      <span className="truncate text-xs text-zinc-500">{meta}</span>
+    </span>
+  </label>;
 }
 
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
