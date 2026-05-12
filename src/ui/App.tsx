@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { BatteryCharging, CloudSun, Gauge, ShieldCheck, Zap } from 'lucide-react';
+import { CloudSun, Gauge, ShieldCheck, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import { baselineScenario } from '../../scenarios/baseline';
@@ -10,23 +10,25 @@ import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
-type DemandScenario = { id: string; name: string; description: string; values: Scenario['demand'] };
-type SupplyScenario = { id: string; name: string; description: string; values: Pick<Scenario, 'renewables' | 'fossil' | 'storage'> };
+type DemandScenario = { id: string; name: string; values: Scenario['demand'] };
+type SupplyScenario = { id: string; name: string; values: Pick<Scenario, 'renewables' | 'fossil' | 'storage'> };
+type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 
 const demandScenarios: DemandScenario[] = [
-  { id: 'demand-demo', name: 'Demo-Nachfrage', description: 'Runde Platzhalterwerte für Last, BEV und Wärme.', values: { basePct: 100, bevPct: 10, heatPumpPct: 10 } },
-  { id: 'demand-low', name: 'Niedrige Nachfrage', description: 'Platzhalter für einen sparsameren Verbrauchspfad.', values: { basePct: 90, bevPct: 10, heatPumpPct: 10 } },
-  { id: 'demand-high', name: 'Hohe Nachfrage', description: 'Platzhalter für Elektrifizierung und mehr Verbrauch.', values: { basePct: 110, bevPct: 30, heatPumpPct: 30 } },
+  { id: 'demand-demo', name: 'Demo-Nachfrage', values: { basePct: 100, bevPct: 10, heatPumpPct: 10 } },
+  { id: 'demand-low', name: 'Niedrige Nachfrage', values: { basePct: 90, bevPct: 10, heatPumpPct: 10 } },
+  { id: 'demand-high', name: 'Hohe Nachfrage', values: { basePct: 110, bevPct: 30, heatPumpPct: 30 } },
 ];
 
 const supplyScenarios: SupplyScenario[] = [
-  { id: 'supply-demo', name: 'Demo-Netz', description: 'Runde Platzhalterwerte für Erzeugung, Reserve und Speicher.', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 }, storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 } } },
-  { id: 'supply-renewable', name: 'Mehr Erneuerbare', description: 'Platzhalter für stärkeren PV- und Wind-Ausbau.', values: { renewables: { pvGW: 160, windOnGW: 140, windOffGW: 30 }, fossil: { coalGW: 5, gasGW: 20, nuclearGW: 0 }, storage: { batteryPowerGW: 30, batteryEnergyGWh: 200, h2PowerGW: 20, h2EnergyGWh: 400, importLimitGW: 15 } } },
-  { id: 'supply-reserve', name: 'Mehr Reserve', description: 'Platzhalter für mehr steuerbare Leistung und Import.', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 20, gasGW: 40, nuclearGW: 0 }, storage: { batteryPowerGW: 20, batteryEnergyGWh: 150, h2PowerGW: 20, h2EnergyGWh: 300, importLimitGW: 25 } } },
+  { id: 'supply-demo', name: 'Demo-Netz', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 }, storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 } } },
+  { id: 'supply-renewable', name: 'Mehr Erneuerbare', values: { renewables: { pvGW: 160, windOnGW: 140, windOffGW: 30 }, fossil: { coalGW: 5, gasGW: 20, nuclearGW: 0 }, storage: { batteryPowerGW: 30, batteryEnergyGWh: 200, h2PowerGW: 20, h2EnergyGWh: 400, importLimitGW: 15 } } },
+  { id: 'supply-reserve', name: 'Mehr Reserve', values: { renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 }, fossil: { coalGW: 20, gasGW: 40, nuclearGW: 0 }, storage: { batteryPowerGW: 20, batteryEnergyGWh: 150, h2PowerGW: 20, h2EnergyGWh: 300, importLimitGW: 25 } } },
 ];
 
-const shell = 'min-h-screen px-4 py-4 sm:px-6 lg:px-8';
+const shell = 'min-h-screen px-3 py-3 sm:px-4 lg:px-6';
 const panel = 'rounded-2xl border border-white/10 bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,.04),0_18px_60px_rgba(0,0,0,.28)]';
+const field = 'h-9 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition hover:border-white/20 focus:border-indigo-300/50';
 const muted = 'text-zinc-400';
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -81,25 +83,48 @@ function isEqual(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function matchingDemandName(demand: Scenario['demand']) {
-  return demandScenarios.find(preset => isEqual(preset.values, demand))?.name ?? 'Eigenes Szenario';
+function matchingDemandId(demand: Scenario['demand']) {
+  return demandScenarios.find(preset => isEqual(preset.values, demand))?.id ?? 'custom';
 }
 
-function matchingSupplyName(scenario: Scenario) {
-  return supplyScenarios.find(preset => isEqual(preset.values.renewables, scenario.renewables) && isEqual(preset.values.fossil, scenario.fossil) && isEqual(preset.values.storage, scenario.storage))?.name ?? 'Eigenes Szenario';
+function matchingSupplyId(scenario: Scenario) {
+  return supplyScenarios.find(preset => isEqual(preset.values.renewables, scenario.renewables) && isEqual(preset.values.fossil, scenario.fossil) && isEqual(preset.values.storage, scenario.storage))?.id ?? 'custom';
+}
+
+function addDays(date: string, days: number) {
+  const next = new Date(`${date}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
+function localDate(iso: string) {
+  return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+}
+
+function periodDates(preset: PeriodPreset, start: string, end: string) {
+  if (preset === '21d') return { start: '2025-01-01', end: '2025-01-21' };
+  if (preset === '90d') return { start: '2025-01-01', end: '2025-03-31' };
+  if (preset === 'year') return { start: '2025-01-01', end: '2025-12-31' };
+  return { start, end: end < start ? start : end };
 }
 
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? baselineScenario);
-  const [range, setRange] = useState<[number, number]>([0, 24 * 21]);
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('21d');
+  const [customStart, setCustomStart] = useState('2025-01-01');
+  const [customEnd, setCustomEnd] = useState('2025-01-21');
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
   }, []);
 
   const result = useMemo(() => data ? runSimulation(data.hours, scenario) : null, [data, scenario]);
-  const sliced = useMemo(() => result?.hours.slice(range[0], range[1]) ?? [], [result, range]);
+  const selectedPeriod = periodDates(periodPreset, customStart, customEnd);
+  const sliced = useMemo(() => result?.hours.filter(hour => {
+    const day = localDate(hour.time);
+    return day >= selectedPeriod.start && day <= selectedPeriod.end;
+  }) ?? [], [result, selectedPeriod.start, selectedPeriod.end]);
   const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced) : undefined, [sliced]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
@@ -107,73 +132,90 @@ export function App() {
   useChart('storage-chart', storageOption);
 
   const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
-  const selectDemand = (preset: DemandScenario) => setScenario(prev => setDemandScenario(prev, preset.values));
-  const selectSupply = (preset: SupplyScenario) => setScenario(prev => setSupplyScenario(prev, preset.values));
-  const visibleDays = Math.round((range[1] - range[0]) / 24);
+  const selectDemand = (id: string) => {
+    const preset = demandScenarios.find(item => item.id === id);
+    if (preset) setScenario(prev => setDemandScenario(prev, preset.values));
+  };
+  const selectSupply = (id: string) => {
+    const preset = supplyScenarios.find(item => item.id === id);
+    if (preset) setScenario(prev => setSupplyScenario(prev, preset.values));
+  };
+  const setQuickStart = (date: string) => {
+    setPeriodPreset('custom');
+    setCustomStart(date);
+    if (customEnd < date) setCustomEnd(date);
+  };
+  const setQuickEnd = (date: string) => {
+    setPeriodPreset('custom');
+    setCustomEnd(date < customStart ? customStart : date);
+  };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1540px] gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-      <aside className={cx(panel, 'lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-white/10 p-5">
-          <h1 className="text-2xl font-semibold tracking-[-0.04em] text-white">Netzprobe</h1>
-          <p className="mt-1 text-sm text-zinc-500">Daten · Nachfrage · Netz</p>
+    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+        <div className="border-b border-white/10 px-4 py-3">
+          <h1 className="text-xl font-semibold tracking-[-0.04em] text-white">Netzprobe</h1>
         </div>
 
-        <div className="space-y-4 p-5">
+        <div className="space-y-3 p-4">
           <SourceScenarioCard />
 
-          <ScenarioSection
+          <ScenarioSelect
             title="Nachfrage"
-            activeName={matchingDemandName(scenario.demand)}
+            value={matchingDemandId(scenario.demand)}
             presets={demandScenarios}
-            isActive={preset => isEqual(preset.values, scenario.demand)}
             onSelect={selectDemand}
           >
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update}/>
-          </ScenarioSection>
+          </ScenarioSelect>
 
-          <ScenarioSection
-            title="Netz, Erneuerbare & Erzeugung"
-            activeName={matchingSupplyName(scenario)}
+          <ScenarioSelect
+            title="Netz & Erzeugung"
+            value={matchingSupplyId(scenario)}
             presets={supplyScenarios}
-            isActive={preset => isEqual(preset.values.renewables, scenario.renewables) && isEqual(preset.values.fossil, scenario.fossil) && isEqual(preset.values.storage, scenario.storage)}
             onSelect={selectSupply}
           >
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update}/>
-            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Importlimit", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update}/>
-          </ScenarioSection>
+            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update}/>
+          </ScenarioSelect>
         </div>
       </aside>
 
-      <section className="grid min-w-0 content-start gap-4">
-        {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade 8760 Stunden Daten …</div> : <>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <Kpi icon={<ShieldCheck/>} label="Status" value={result.summary.securityStatus.toUpperCase()} tone={result.summary.securityStatus}/>
-            <Kpi icon={<Gauge/>} label="CO₂-Faktor" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`}/>
-            <Kpi icon={<CloudSun/>} label="Erneuerbar" value={pct(result.summary.renewableSharePct)}/>
-            <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-            <Kpi icon={<BatteryCharging/>} label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+      <section className="grid min-w-0 content-start gap-3">
+        {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div> : <>
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Kpi icon={<ShieldCheck/>} label="Status" value={result.summary.securityStatus.toUpperCase()} tone={result.summary.securityStatus}/>
+              <Kpi icon={<Gauge/>} label="CO₂" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`}/>
+              <Kpi icon={<CloudSun/>} label="Erneuerbar" value={pct(result.summary.renewableSharePct)}/>
+              <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+            </div>
+            <PeriodControl
+              preset={periodPreset}
+              start={selectedPeriod.start}
+              end={selectedPeriod.end}
+              customStart={customStart}
+              customEnd={customEnd}
+              onPreset={setPeriodPreset}
+              onStart={setQuickStart}
+              onEnd={setQuickEnd}
+            />
           </div>
 
-          <ChartPanel title="Energiemix vs. Last" meta={`${new Date(sliced[0]?.time).toLocaleDateString('de-DE')} – ${new Date(sliced.at(-1)?.time ?? '').toLocaleDateString('de-DE')}`}>
-            <div id="mix-chart" className="h-[360px] w-full sm:h-[430px]"/>
+          <ChartPanel title="Energiemix vs. Last" meta={`${formatDate(selectedPeriod.start)} – ${formatDate(selectedPeriod.end)}`}>
+            <div id="mix-chart" className="h-[340px] w-full sm:h-[420px]"/>
           </ChartPanel>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <ChartPanel title="Speicherfüllstand" meta="Batterie und H₂">
-              <div id="storage-chart" className="h-[260px] w-full"/>
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
+            <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
+              <div id="storage-chart" className="h-[240px] w-full"/>
             </ChartPanel>
 
-            <div className={cx(panel, 'grid content-between gap-5 p-5')}>
-              <div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <h2 className="text-lg font-medium tracking-[-0.02em]">Zeitraum</h2>
-                  <span className={cx(muted, 'text-sm')}>erste {visibleDays} Tage</span>
-                </div>
-                <input className="mt-6" type="range" min={7} max={365} value={visibleDays} onChange={e => setRange([0, Number(e.target.value) * 24])}/>
-              </div>
-              <footer className="text-sm leading-6 text-zinc-500">
-                Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+            <div className={cx(panel, 'grid content-between gap-4 p-4')}>
+              <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+              <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
+              <footer className="text-xs leading-5 text-zinc-500">
+                Vorsicht. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
               </footer>
             </div>
           </div>
@@ -184,10 +226,10 @@ export function App() {
 }
 
 function ChartPanel({ title, meta, children }: { title: string; meta: string; children: ReactNode }) {
-  return <section className={cx(panel, 'min-w-0 p-4 sm:p-5')}>
-    <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-      <h2 className="text-lg font-medium tracking-[-0.02em]">{title}</h2>
-      <span className={cx(muted, 'text-sm')}>{meta}</span>
+  return <section className={cx(panel, 'min-w-0 p-4')}>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2 className="text-base font-medium tracking-[-0.02em]">{title}</h2>
+      <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>
     </div>
     {children}
   </section>;
@@ -195,70 +237,79 @@ function ChartPanel({ title, meta, children }: { title: string; meta: string; ch
 
 function Kpi({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone?: string }) {
   const toneClass = tone === 'stabil' ? 'text-emerald-400' : tone === 'angespannt' ? 'text-amber-400' : tone === 'kritisch' ? 'text-red-400' : 'text-indigo-300';
-  return <div className={cx(panel, 'min-h-28 p-4')}>
-    <div className={cx('mb-3 [&_svg]:h-5 [&_svg]:w-5', toneClass)}>{icon}</div>
-    <span className="text-sm text-zinc-500">{label}</span>
-    <strong className="mt-1 block text-2xl font-medium tracking-[-0.04em] text-white">{value}</strong>
+  return <div className={cx(panel, 'min-h-20 p-3')}>
+    <div className={cx('mb-2 [&_svg]:h-4 [&_svg]:w-4', toneClass)}>{icon}</div>
+    <span className="text-xs text-zinc-500">{label}</span>
+    <strong className="mt-1 block text-xl font-medium tracking-[-0.04em] text-white">{value}</strong>
   </div>;
 }
 
 function SourceScenarioCard() {
-  return <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-    <div className="mb-3 flex items-start justify-between gap-3">
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">Quelle historische Daten</h2>
-        <p className="mt-2 text-sm font-medium text-white">Energy-Charts 2025</p>
-      </div>
-      <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2 py-1 text-xs text-emerald-300">aktiv</span>
-    </div>
-    <p className="text-sm leading-5 text-zinc-500">Last und Erzeugung aus public_power; installierte Leistung aus installed_power. Wetterwerte sind daraus abgeleitete Modellwerte.</p>
-    <details className="group mt-3">
-      <summary className="cursor-pointer list-none text-sm text-zinc-300 transition hover:text-white">Details <span className="text-zinc-600 group-open:hidden">anzeigen</span><span className="hidden text-zinc-600 group-open:inline">ausblenden</span></summary>
-      <div className="mt-3 grid gap-2 text-sm text-zinc-500">
-        <p>Datensatz: Deutschland, stündlich, 2025.</p>
-        <p>Platzhalter für spätere Datenquellen-Auswahl.</p>
-      </div>
+  return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Quelle</h2>
+    <select className={field} value="energy-charts-2025" disabled>
+      <option value="energy-charts-2025">Energy-Charts 2025</option>
+    </select>
+    <details className="group mt-2">
+      <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Details</summary>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">public_power + installed_power; Wetterwerte abgeleitet.</p>
     </details>
   </section>;
 }
 
-function ScenarioSection<T extends { id: string; name: string; description: string }>({ title, activeName, presets, isActive, onSelect, children }: { title: string; activeName: string; presets: T[]; isActive: (preset: T) => boolean; onSelect: (preset: T) => void; children: ReactNode }) {
-  return <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-    <div className="mb-3">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">{title}</h2>
-      <p className="mt-2 text-sm text-zinc-500">Szenario: <span className="font-medium text-white">{activeName}</span></p>
-    </div>
-    <div className="grid gap-2">
-      {presets.map(preset => <button
-        key={preset.id}
-        className={cx(
-          'rounded-xl border px-3 py-2.5 text-left transition',
-          isActive(preset) ? 'border-indigo-300/40 bg-indigo-500/20' : 'border-white/10 bg-black/10 hover:border-white/20 hover:bg-white/[0.05]',
-        )}
-        onClick={() => onSelect(preset)}
-      >
-        <span className="block text-sm font-medium text-white">{preset.name}</span>
-        <span className="mt-1 block text-xs leading-5 text-zinc-500">{preset.description}</span>
-      </button>)}
-    </div>
-    <details className="group mt-4">
-      <summary className="cursor-pointer list-none text-sm text-zinc-300 transition hover:text-white">Details <span className="text-zinc-600 group-open:hidden">anzeigen</span><span className="hidden text-zinc-600 group-open:inline">ausblenden</span></summary>
-      <div className="mt-4 grid gap-5 border-t border-white/10 pt-4">
+function ScenarioSelect<T extends { id: string; name: string }>({ title, value, presets, onSelect, children }: { title: string; value: string; presets: T[]; onSelect: (id: string) => void; children: ReactNode }) {
+  return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <label className="grid gap-2">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
+      <select className={field} value={value} onChange={event => onSelect(event.target.value)}>
+        {value === 'custom' && <option value="custom">Eigenes Szenario</option>}
+        {presets.map(preset => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+      </select>
+    </label>
+    <details className="group mt-2">
+      <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Feinwerte</summary>
+      <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
         {children}
       </div>
     </details>
   </section>;
 }
 
+function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
+  return <section className={cx(panel, 'grid gap-3 p-3')}>
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Zeitraum</h2>
+      <span className="text-xs text-zinc-500">{formatDate(start)} – {formatDate(end)}</span>
+    </div>
+    <select className={field} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
+      <option value="21d">21 Tage</option>
+      <option value="90d">90 Tage</option>
+      <option value="year">Ganzes Jahr</option>
+      <option value="custom">Custom</option>
+    </select>
+    <div className="grid grid-cols-2 gap-2">
+      <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customStart : start} onChange={event => onStart(event.target.value)}/>
+      <input className={field} type="date" min="2025-01-01" max="2025-12-31" value={preset === 'custom' ? customEnd : end} onChange={event => onEnd(event.target.value)}/>
+    </div>
+  </section>;
+}
+
 function Control({ rows, onChange }: { rows: ControlRow[]; onChange: (path: string, value: number) => void }) {
-  return <div className="grid gap-4">
-    {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-2">
-      <span className="flex items-center justify-between gap-4 text-sm text-zinc-300">
+  return <div className="grid gap-3">
+    {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-1.5">
+      <span className="flex items-center justify-between gap-4 text-xs text-zinc-300">
         {label}
-        <b className="font-mono text-sm font-medium text-white">{formatControlValue(value, unit)}</b>
+        <b className="font-mono text-xs font-medium text-white">{formatControlValue(value, unit)}</b>
       </span>
-      <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onChange={e => onChange(path, Number(e.target.value))}/>
+      <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onChange={event => onChange(path, Number(event.target.value))}/>
     </label>)}
+  </div>;
+}
+
+function MetricLine({ label, value }: { label: string; value: string }) {
+  return <div className="flex items-center justify-between gap-4 text-sm">
+    <span className="text-zinc-500">{label}</span>
+    <strong className="font-medium text-white">{value}</strong>
   </div>;
 }
 
@@ -266,4 +317,8 @@ function formatControlValue(value: number, unit: string) {
   if (unit === '%') return `${fmt0.format(value)} %`;
   if (unit === 'GWh') return `${fmt0.format(value)} GWh`;
   return gw(value);
+}
+
+function formatDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 }
