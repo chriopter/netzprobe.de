@@ -207,6 +207,7 @@ export function App() {
               <h2 className="text-base font-medium tracking-[-0.02em]">Energiemix vs. Last</h2>
               <span className={cx(muted, 'text-xs sm:text-sm')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
             </div>
+            <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
             <MixLegend
               visibility={mixVisibility}
               openGroups={openMixGroups}
@@ -214,26 +215,13 @@ export function App() {
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
               onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
             />
-            <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
           </ChartPanel>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-              <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
-              <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
-              <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
-            </div>
-            <PeriodControl
-              preset={periodPreset}
-              start={selectedPeriod.start}
-              end={selectedPeriod.end}
-              customStart={customStart}
-              customEnd={customEnd}
-              onPreset={setPeriodPreset}
-              onStart={setQuickStart}
-              onEnd={setQuickEnd}
-            />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+            <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
+            <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
+            <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
           </div>
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -258,6 +246,17 @@ export function App() {
         </div>
 
         <div className="space-y-3 p-4">
+          <PeriodControl
+            preset={periodPreset}
+            start={selectedPeriod.start}
+            end={selectedPeriod.end}
+            customStart={customStart}
+            customEnd={customEnd}
+            onPreset={setPeriodPreset}
+            onStart={setQuickStart}
+            onEnd={setQuickEnd}
+          />
+
           <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}>
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
@@ -291,7 +290,7 @@ function setGroupVisibility(visibility: MixVisibility, groupId: string, checked:
 }
 
 function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onToggleOpen }: { visibility: MixVisibility; openGroups: Record<string, boolean>; onToggleGroup: (groupId: string, checked: boolean) => void; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleOpen: (groupId: string) => void }) {
-  return <div className="mb-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
+  return <div className="mt-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
     <div className="flex flex-wrap gap-2">
       {MIX_GROUPS.map(group => {
         const active = group.leaves.filter(leaf => visibility[leaf.key]).length;
