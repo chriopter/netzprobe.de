@@ -190,13 +190,11 @@ export function App() {
         </div>
 
         <div className="space-y-3 p-4">
-          <DataSourceCard />
-
-          <ControlSection title="Last">
+          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025">
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
 
-          <ControlSection title="Erzeugung & Netz">
+          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
@@ -267,35 +265,17 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function DataSourceCard() {
+function ControlSection({ title, sourceValue, sourceLabel, note, children }: { title: string; sourceValue: string; sourceLabel: string; note?: string; children: ReactNode }) {
   return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Daten</h2>
-    <div className="grid gap-2">
-      <label className="grid gap-1">
-        <span className="text-xs text-zinc-400">Last</span>
-        <select className={field} value="last_energy-charts-2025" disabled>
-          <option value="last_energy-charts-2025">Energy-Charts 2025</option>
-        </select>
-      </label>
-      <label className="grid gap-1">
-        <span className="text-xs text-zinc-400">Erzeugung</span>
-        <select className={field} value="erzeugung_energy-charts-2025" disabled>
-          <option value="erzeugung_energy-charts-2025">Energy-Charts 2025</option>
-        </select>
-      </label>
-    </div>
-    <details className="group mt-2">
-      <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Details</summary>
-      <p className="mt-2 text-xs leading-5 text-zinc-500">Modellfaktoren sind abgeleitete Solar-/Wind-Verfügbarkeiten, keine Rohwetterdaten.</p>
-    </details>
-  </section>;
-}
-
-function ControlSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</h2>
+    <label className="grid gap-2">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
+      <select className={field} value={sourceValue} onChange={() => undefined}>
+        <option value={sourceValue}>{sourceLabel}</option>
+      </select>
+    </label>
     <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
       {children}
+      {note && <p className="text-xs leading-5 text-zinc-500">{note}</p>}
     </div>
   </section>;
 }
