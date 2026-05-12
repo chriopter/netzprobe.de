@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { CloudSun, Gauge, ShieldCheck, Zap } from 'lucide-react';
+import { AlertTriangle, Banknote, Gauge, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import { baselineScenario } from '../../scenarios/baseline';
@@ -185,10 +185,10 @@ export function App() {
         {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div> : <>
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Kpi icon={<ShieldCheck/>} label="Status" value={result.summary.securityStatus.toUpperCase()} tone={result.summary.securityStatus}/>
-              <Kpi icon={<Gauge/>} label="CO₂" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`}/>
-              <Kpi icon={<CloudSun/>} label="Erneuerbar" value={pct(result.summary.renewableSharePct)}/>
               <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+              <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
+              <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
+              <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
             </div>
             <PeriodControl
               preset={periodPreset}
@@ -235,12 +235,13 @@ function ChartPanel({ title, meta, children }: { title: string; meta: string; ch
   </section>;
 }
 
-function Kpi({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone?: string }) {
+function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: string; value: string; subValue?: string; tone?: string }) {
   const toneClass = tone === 'stabil' ? 'text-emerald-400' : tone === 'angespannt' ? 'text-amber-400' : tone === 'kritisch' ? 'text-red-400' : 'text-indigo-300';
   return <div className={cx(panel, 'min-h-20 p-3')}>
     <div className={cx('mb-2 [&_svg]:h-4 [&_svg]:w-4', toneClass)}>{icon}</div>
     <span className="text-xs text-zinc-500">{label}</span>
     <strong className="mt-1 block text-xl font-medium tracking-[-0.04em] text-white">{value}</strong>
+    {subValue && <span className="mt-1 block text-xs text-zinc-500">{subValue}</span>}
   </div>;
 }
 
