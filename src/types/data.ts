@@ -29,6 +29,9 @@ export type SplitDataFile<T> = {
   sourceUrls?: string[];
   unit?: string;
   sumTWh?: number;
+  sumImportTWh?: number;
+  sumExportTWh?: number;
+  sumSharesPct?: Record<string, number>;
   sumPartsTWh?: Record<string, number>;
   sumNote?: string;
   hours: T[];
@@ -42,5 +45,7 @@ export type DataSet = {
   source: string;
   loadSumTWh?: number;
   generationSumTWh?: number;
+  importSumTWh?: number;
+  generationSharesPct?: Record<string, number>;
   hours: HourlyInput[];
 };

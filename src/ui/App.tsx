@@ -135,6 +135,11 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   return result;
 }
 
+function generationMeta(data: DataSet | null) {
+  if (!data?.generationSharesPct) return undefined;
+  return `Erzeugung ${pct(data.generationSharesPct.generationPct ?? 0)}, Import ${pct(data.generationSharesPct.importPct ?? 0)}`;
+}
+
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? defaultScenario);
@@ -190,11 +195,11 @@ export function App() {
         </div>
 
         <div className="space-y-3 p-4">
-          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel={`Energy-Charts 2025${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}>
+          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}>
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
 
-          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel={`Energy-Charts 2025${data?.generationSumTWh ? ` · ${twh(data.generationSumTWh)}` : ''}`} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
+          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 80, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
@@ -265,14 +270,18 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function ControlSection({ title, sourceValue, sourceLabel, note, children }: { title: string; sourceValue: string; sourceLabel: string; note?: string; children: ReactNode }) {
+function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, children }: { title: string; sourceValue: string; sourceLabel: string; sourceMeta?: string; note?: string; children: ReactNode }) {
   return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <label className="grid gap-2">
+    <div className="grid gap-2">
       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
-      <select className={field} value={sourceValue} onChange={() => undefined}>
-        <option value={sourceValue}>{sourceLabel}</option>
-      </select>
-    </label>
+      <label className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white">
+        <input className="mt-0.5 accent-indigo-300" type="radio" name={`${title}-quelle`} value={sourceValue} checked readOnly />
+        <span className="grid gap-0.5">
+          <span>{sourceLabel}</span>
+          {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
+        </span>
+      </label>
+    </div>
     <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
       {children}
       {note && <p className="text-xs leading-5 text-zinc-500">{note}</p>}
