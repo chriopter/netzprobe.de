@@ -4,6 +4,7 @@ import { fmt } from './format';
 
 export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
+export type MixDisplayMode = 'grouped' | 'split';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 export const MIX_GROUPS: MixGroup[] = [
@@ -51,16 +52,33 @@ const compressHours = (hours: SimHour[], maxPoints = 365) => {
 
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
 const groupValue = (hour: SimHour, group: MixGroup, visibility: MixVisibility) => group.leaves.reduce((sum, leaf) => sum + (visibility[leaf.key] ? valueOf(hour, leaf.key) : 0), 0);
+const areaSeries = (name: string, color: string, data: number[]) => ({
+  name,
+  type: 'line' as const,
+  stack: 'supply',
+  showSymbol: false,
+  smooth: false,
+  areaStyle: { opacity: .34 },
+  lineStyle: { width: 1.1 },
+  itemStyle: { color },
+  data,
+});
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: MixDisplayMode = 'grouped'): EChartsOption {
   const chartHours = compressHours(hours);
+  const supplySeries = mode === 'split'
+    ? MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)))))
+    : MIX_GROUPS.map(group => areaSeries(group.label, group.color, chartHours.map(h => groupValue(h, group, visibility))));
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: {
       trigger: 'axis',
+      backgroundColor: 'rgba(255,255,255,.96)',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#111827' },
       formatter: (raw: unknown) => {
-        const params = Array.isArray(raw) ? raw as Array<{ dataIndex: number; marker: string; seriesName: string; value: number }> : [];
+        const params = Array.isArray(raw) ? raw as Array<{ dataIndex: number }> : [];
         const index = params[0]?.dataIndex ?? 0;
         const hour = chartHours[index];
         if (!hour) return '';
@@ -69,49 +87,29 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
           const total = groupValue(hour, group, visibility);
-          const detail = active.map(leaf => `${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
-          lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.72">${detail}</span>`);
+          const detail = active.map(leaf => `<span style="color:${leaf.color}">●</span> ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
+          lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
         }
         lines.push(`<span style="color:#a78bfa">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
-        lines.push(`<span style="color:#f7f8f8">●</span> Last: <b>${fmt.format(hour.loadGW)} GW</b>`);
-        if (hour.loadSheddingGW > 0) lines.push(`<span style="color:#ef4444">●</span> Unterdeckung: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
+        lines.push(`<span style="color:#111827">●</span> Last: <b>${fmt.format(hour.loadGW)} GW</b>`);
+        if (hour.loadSheddingGW > 0) lines.push(`<span style="color:#dc2626">●</span> Unterdeckung: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
         return lines.join('<br/>');
       },
     },
     legend: { show: false },
     grid: { left: 42, right: 24, top: 12, bottom: 34 },
-    xAxis: { type: 'category', data: dayLabels(chartHours), axisLabel: { color: '#8a8f98' } },
-    yAxis: { type: 'value', axisLabel: { color: '#8a8f98', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.07)' } } },
+    xAxis: { type: 'category', data: dayLabels(chartHours), axisLabel: { color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
+    yAxis: { type: 'value', axisLabel: { color: '#6b7280', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(17,24,39,.10)' } } },
     series: [
-      ...MIX_GROUPS.map(group => ({
-        name: group.label,
-        type: 'line' as const,
-        stack: 'supply',
-        showSymbol: false,
-        smooth: false,
-        areaStyle: { opacity: .26 },
-        lineStyle: { width: 1.5 },
-        itemStyle: { color: group.color },
-        data: chartHours.map((h) => groupValue(h, group, visibility)),
-      })),
-      {
-        name: 'Import',
-        type: 'line' as const,
-        stack: 'supply',
-        showSymbol: false,
-        smooth: false,
-        areaStyle: { opacity: .22 },
-        lineStyle: { width: 1.5 },
-        itemStyle: { color: '#a78bfa' },
-        data: chartHours.map((h) => h.importGW),
-      },
+      ...supplySeries,
+      areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW)),
       {
         name: 'Last',
         type: 'line' as const,
         showSymbol: false,
         smooth: false,
         lineStyle: { width: 2.2 },
-        itemStyle: { color: '#f7f8f8' },
+        itemStyle: { color: '#111827' },
         data: chartHours.map((h) => h.loadGW),
       },
       {
@@ -123,7 +121,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         stack: 'supply',
         areaStyle: { opacity: .45 },
         lineStyle: { width: 0 },
-        itemStyle: { color: '#ef4444' },
+        itemStyle: { color: '#dc2626' },
         data: chartHours.map((h) => h.loadSheddingGW),
       },
     ],
@@ -135,13 +133,13 @@ export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
   return {
     backgroundColor: 'transparent',
     animation: false,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
     grid: { left: 44, right: 20, top: 20, bottom: 32 },
-    xAxis: { type: 'category', data: dayLabels(chartHours), axisLabel: { color: '#8a8f98' } },
-    yAxis: { type: 'value', axisLabel: { color: '#8a8f98', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.07)' } } },
+    xAxis: { type: 'category', data: dayLabels(chartHours), axisLabel: { color: '#6b7280' }, axisLine: { lineStyle: { color: '#d1d5db' } } },
+    yAxis: { type: 'value', axisLabel: { color: '#6b7280', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(17,24,39,.10)' } } },
     series: [
       { name: 'Batterie', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#10b981' }, data: chartHours.map(h => h.batteryGWh) },
-      { name: 'H₂', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#22d3ee' }, data: chartHours.map(h => h.h2GWh) },
+      { name: 'H₂', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#0891b2' }, data: chartHours.map(h => h.h2GWh) },
     ],
   };
 }

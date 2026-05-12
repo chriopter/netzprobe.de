@@ -50,6 +50,24 @@ describe('mix chart options', () => {
     expect(fossil?.data).toEqual([6.9]);
   });
 
+  it('splits grouped areas into leaf series on hover mode', () => {
+    const option = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'split');
+    const series = option.series as Array<Record<string, unknown>>;
+    expect(series.slice(0, 11).map((s) => s.name)).toEqual([
+      'Wasser',
+      'Biomasse',
+      'Geo',
+      'Kohle',
+      'Öl',
+      'Sonstige',
+      'Müll',
+      'Gas',
+      'Wind See',
+      'Wind an Land',
+      'Solar',
+    ]);
+  });
+
   it('marks uncovered load as a red area series', () => {
     const option = buildMixChartOption([hour(0), hour(12)]);
     const series = option.series as Array<Record<string, unknown>>;
@@ -60,6 +78,6 @@ describe('mix chart options', () => {
     expect(underdecked?.data).toEqual([0, 12]);
     expect(underdecked?.stack).toBe('supply');
     expect(underdecked?.areaStyle).toMatchObject({ opacity: expect.any(Number) });
-    expect(underdecked?.itemStyle).toMatchObject({ color: '#ef4444' });
+    expect(underdecked?.itemStyle).toMatchObject({ color: '#dc2626' });
   });
 });

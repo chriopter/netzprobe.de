@@ -5,7 +5,7 @@ import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
-import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixLeafKey, type MixVisibility } from './chartOptions';
+import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixDisplayMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
@@ -22,10 +22,10 @@ const defaultScenario: Scenario = {
   storage: { batteryPowerGW: 15, batteryEnergyGWh: 22, h2PowerGW: 0, h2EnergyGWh: 0, importLimitGW: 16 },
 };
 
-const shell = 'min-h-screen px-3 py-3 sm:px-4 lg:px-6';
-const panel = 'rounded-2xl border border-white/10 bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,.04),0_18px_60px_rgba(0,0,0,.28)]';
-const field = 'h-9 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition hover:border-white/20 focus:border-indigo-300/50';
-const muted = 'text-zinc-400';
+const shell = 'min-h-screen px-3 py-3 text-zinc-950 sm:px-4 lg:px-6';
+const panel = 'rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,.08)]';
+const field = 'h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-indigo-400';
+const muted = 'text-zinc-500';
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -47,7 +47,7 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
     const el = document.getElementById(id);
     if (!el) return;
     if (!chartRef.current) {
-      const chart = echarts.init(el, 'dark');
+      const chart = echarts.init(el);
       const resize = () => chart.resize();
       window.addEventListener('resize', resize);
       chartRef.current = chart;
@@ -159,6 +159,7 @@ export function App() {
   const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
   const [openMixGroups, setOpenMixGroups] = useState<Record<string, boolean>>({});
+  const [mixMode, setMixMode] = useState<MixDisplayMode>('grouped');
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -181,7 +182,7 @@ export function App() {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility) : undefined, [sliced, mixVisibility]);
+  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, mixMode) : undefined, [sliced, mixVisibility, mixMode]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
   useChart('mix-chart', mixOption);
@@ -201,8 +202,8 @@ export function App() {
   return <main className={shell}>
     <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
       <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-white/10 px-4 py-3">
-          <h1 className="text-xl font-semibold tracking-[-0.04em] text-white">Netzprobe</h1>
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <h1 className="text-xl font-semibold tracking-[-0.04em] text-zinc-950">Netzprobe</h1>
         </div>
 
         <div className="space-y-3 p-4">
@@ -218,7 +219,7 @@ export function App() {
       </aside>
 
       <section className="flex min-w-0 flex-col gap-3">
-        {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div> : <>
+        {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-700')}>Lade Daten …</div> : <>
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
@@ -246,7 +247,7 @@ export function App() {
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
               onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
             />
-            <div id="mix-chart" className="h-[340px] w-full sm:h-[420px]"/>
+            <div id="mix-chart" className="h-[340px] w-full sm:h-[420px]" onMouseEnter={() => setMixMode('split')} onMouseLeave={() => setMixMode('grouped')} onFocus={() => setMixMode('split')} onBlur={() => setMixMode('grouped')} tabIndex={0}/>
           </ChartPanel>
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -260,7 +261,7 @@ export function App() {
             </div>
           </div>
           <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
-            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
           </footer>
         </>}
       </section>
@@ -287,30 +288,30 @@ function setGroupVisibility(visibility: MixVisibility, groupId: string, checked:
 }
 
 function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onToggleOpen }: { visibility: MixVisibility; openGroups: Record<string, boolean>; onToggleGroup: (groupId: string, checked: boolean) => void; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleOpen: (groupId: string) => void }) {
-  return <div className="mb-3 grid gap-2 rounded-xl border border-white/10 bg-black/15 p-2 text-xs">
+  return <div className="mb-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
     <div className="flex flex-wrap gap-2">
       {MIX_GROUPS.map(group => {
         const active = group.leaves.filter(leaf => visibility[leaf.key]).length;
         const checked = active === group.leaves.length;
         const partial = active > 0 && !checked;
-        return <div key={group.id} className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
+        return <div key={group.id} className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
           <div className="flex items-center gap-2">
             <input
-              className="accent-indigo-300"
+              className="accent-indigo-600"
               type="checkbox"
               checked={checked}
               ref={(el) => { if (el) el.indeterminate = partial; }}
               onChange={event => onToggleGroup(group.id, event.target.checked)}
             />
-            <button className="flex items-center gap-1 text-left text-zinc-200 hover:text-white" type="button" onClick={() => onToggleOpen(group.id)}>
+            <button className="flex items-center gap-1 text-left text-zinc-800 hover:text-zinc-950" type="button" onClick={() => onToggleOpen(group.id)}>
               <span aria-hidden style={{ color: group.color }}>●</span>
               <span>{group.label}</span>
               <span className="text-zinc-500">{openGroups[group.id] ? '▾' : '▸'}</span>
             </button>
           </div>
-          {openGroups[group.id] && <div className="mt-1 grid gap-1 pl-6 text-zinc-400">
-            {group.leaves.map(leaf => <label key={leaf.key} className="flex items-center gap-2 hover:text-zinc-200">
-              <input className="accent-indigo-300" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
+          {openGroups[group.id] && <div className="mt-1 grid gap-1 pl-6 text-zinc-600">
+            {group.leaves.map(leaf => <label key={leaf.key} className="flex items-center gap-2 hover:text-zinc-800">
+              <input className="accent-indigo-600" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
               <span aria-hidden style={{ color: leaf.color }}>●</span>
               <span>{leaf.label}</span>
             </label>)}
@@ -323,28 +324,28 @@ function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onTogg
 }
 
 function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: string; value: string; subValue?: string; tone?: string }) {
-  const toneClass = tone === 'stabil' ? 'text-emerald-400' : tone === 'angespannt' ? 'text-amber-400' : tone === 'kritisch' ? 'text-red-400' : 'text-indigo-300';
+  const toneClass = tone === 'stabil' ? 'text-emerald-400' : tone === 'angespannt' ? 'text-amber-400' : tone === 'kritisch' ? 'text-red-400' : 'text-indigo-600';
   return <div className={cx(panel, 'min-h-20 p-3')}>
     <div className={cx('mb-2 [&_svg]:h-4 [&_svg]:w-4', toneClass)}>{icon}</div>
     <span className="text-xs text-zinc-500">{label}</span>
-    <strong className="mt-1 block text-xl font-medium tracking-[-0.04em] text-white">{value}</strong>
+    <strong className="mt-1 block text-xl font-medium tracking-[-0.04em] text-zinc-950">{value}</strong>
     {subValue && <span className="mt-1 block text-xs text-zinc-500">{subValue}</span>}
   </div>;
 }
 
 function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, children }: { title: string; sourceValue: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; children: ReactNode }) {
-  return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+  return <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
     <div className="grid gap-2">
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
-      <label className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white">
-        <input className="mt-0.5 accent-indigo-300" type="radio" name={`${title}-quelle`} value={sourceValue} checked readOnly />
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">{title}</span>
+      <label className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950">
+        <input className="mt-0.5 accent-indigo-600" type="radio" name={`${title}-quelle`} value={sourceValue} checked readOnly />
         <span className="grid gap-0.5">
           <span>{sourceLabel}</span>
           {sourceMeta && <span className="grid gap-0.5 text-xs text-zinc-500">{sourceMeta}</span>}
         </span>
       </label>
     </div>
-    <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
+    <div className="mt-3 grid gap-4 border-t border-zinc-200 pt-3">
       {children}
       {note && <p className="text-xs leading-5 text-zinc-500">{note}</p>}
     </div>
@@ -354,7 +355,7 @@ function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, chi
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
   return <section className={cx(panel, 'grid gap-3 p-3')}>
     <div className="flex items-center justify-between gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Zeitraum</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Zeitraum</h2>
       <span className="text-xs text-zinc-500">{formatDate(start)} – {formatDate(end)}</span>
     </div>
     <select className={field} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
@@ -373,9 +374,9 @@ function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, o
 function Control({ rows, onChange, onTuneStart, onTuneEnd }: { rows: ControlRow[]; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
   return <div className="grid gap-3">
     {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-1.5">
-      <span className="flex items-center justify-between gap-4 text-xs text-zinc-300">
+      <span className="flex items-center justify-between gap-4 text-xs text-zinc-700">
         {label}
-        <b className="font-mono text-xs font-medium text-white">{formatControlValue(value, unit)}</b>
+        <b className="font-mono text-xs font-medium text-zinc-950">{formatControlValue(value, unit)}</b>
       </span>
       <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onPointerDown={onTuneStart} onPointerUp={onTuneEnd} onPointerCancel={onTuneEnd} onBlur={onTuneEnd} onKeyUp={onTuneEnd} onChange={event => onChange(path, Number(event.target.value))}/>
     </label>)}
@@ -385,7 +386,7 @@ function Control({ rows, onChange, onTuneStart, onTuneEnd }: { rows: ControlRow[
 function MetricLine({ label, value }: { label: string; value: string }) {
   return <div className="flex items-center justify-between gap-4 text-sm">
     <span className="text-zinc-500">{label}</span>
-    <strong className="font-medium text-white">{value}</strong>
+    <strong className="font-medium text-zinc-950">{value}</strong>
   </div>;
 }
 

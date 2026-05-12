@@ -10,8 +10,8 @@
 }
 
 @layer base{
-  html{background:#08090a;color:#f7f8f8;font-feature-settings:'cv01','ss03'}
-  body{min-width:320px;background:radial-gradient(circle at 18% 0%,rgba(94,106,210,.18),transparent 28rem),radial-gradient(circle at 88% 12%,rgba(56,189,248,.10),transparent 26rem),#08090a}
+  html{background:#f8fafc;color:#18181b;font-feature-settings:'cv01','ss03'}
+  body{min-width:320px;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 52%,#eef2ff 100%)}
   button,a,input{font:inherit}
-  input[type='range']{width:100%;accent-color:#7170ff}
+  input[type='range']{width:100%;accent-color:#4f46e5}
 }
