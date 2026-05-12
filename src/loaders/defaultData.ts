@@ -1,9 +1,10 @@
-import type { BevPkwElectrificationLoad, DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile } from '../types/data';
+import type { BevPkwElectrificationLoad, DataSet, GenerationHour, HeatPumpElectrificationLoad, LoadHour, ModelFactorHour, SplitDataFile } from '../types/data';
 
 const dataUrl = (file: string) => `${import.meta.env.BASE_URL}data/${file}`;
 
 const loadUrl = dataUrl('last/energy-charts-stuendlich-2025.json');
 const bevPkwElectrificationUrl = dataUrl('last/pkw-elektrifizierung.json');
+const heatPumpElectrificationUrl = dataUrl('last/waermepumpen-elektrifizierung.json');
 const generationUrl = dataUrl('erzeugung/energy-charts-stuendlich-2025.json');
 const factorsUrl = dataUrl('modell/einspeisefaktoren-stuendlich-2025.json');
 
@@ -14,9 +15,10 @@ export async function loadJson<T>(url: string): Promise<T> {
 }
 
 export async function loadDefaultData(): Promise<DataSet> {
-  const [loadData, bevPkwElectrification, generationData, factorData] = await Promise.all([
+  const [loadData, bevPkwElectrification, heatPumpElectrification, generationData, factorData] = await Promise.all([
     loadJson<SplitDataFile<LoadHour>>(loadUrl),
     loadJson<BevPkwElectrificationLoad>(bevPkwElectrificationUrl),
+    loadJson<HeatPumpElectrificationLoad>(heatPumpElectrificationUrl),
     loadJson<SplitDataFile<GenerationHour>>(generationUrl),
     loadJson<SplitDataFile<ModelFactorHour>>(factorsUrl),
   ]);
@@ -41,6 +43,7 @@ export async function loadDefaultData(): Promise<DataSet> {
   return {
     source: 'Energy-Charts 2025: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
     bevPkwElectrification,
+    heatPumpElectrification,
     loadSumTWh: loadData.sumTWh,
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,

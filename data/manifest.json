@@ -10,6 +10,11 @@
     "description": "last/pkw-elektrifizierung.description.json"
   },
   {
+    "id": "last.waermepumpen-elektrifizierung",
+    "domain": "last",
+    "description": "last/waermepumpen-elektrifizierung.description.json"
+  },
+  {
     "id": "erzeugung.energy-charts.stuendlich.2025",
     "domain": "erzeugung",
     "description": "erzeugung/energy-charts-stuendlich-2025.description.json"

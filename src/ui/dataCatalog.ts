@@ -25,6 +25,7 @@ export type DatasetDoc = {
 export const datasetIds = {
   loadHistorical2025: 'last.energy-charts.stuendlich.2025',
   bevPkwKm: 'last.pkw-elektrifizierung',
+  heatPump: 'last.waermepumpen-elektrifizierung',
   generationHistorical2025: 'erzeugung.energy-charts.stuendlich.2025',
   coreModel: 'modell.kernmodell',
   feedInFactors2025: 'modell.einspeisefaktoren.stuendlich.2025',

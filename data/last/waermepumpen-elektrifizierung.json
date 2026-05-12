@@ -1,0 +1,15 @@
+{
+  "id": "heat-pump-electrification",
+  "title": "Wärmepumpen",
+  "source": "Modellannahme für privaten Raumwärmebedarf Deutschland: 450 TWh Wärmebedarf, davon 40 TWh bereits per Wärmepumpe gedeckt.",
+  "sourceUrls": [],
+  "referenceYear": 2026,
+  "referenceHeatDemandTWh": 450,
+  "alreadyHeatPumpHeatTWh": 40,
+  "defaultTargetHeatTWh": 450,
+  "maxTargetHeatTWh": 675,
+  "stepHeatTWh": 5,
+  "seasonalCop": 3.5,
+  "distribution": "winter-weighted",
+  "note": "Zusatzlast = max(0, Ziel-Raumwärme - bereits per Wärmepumpe gedeckte Wärme) / Jahresarbeitszahl. Die Stundenverteilung ist wintergewichtet; Direktstromheizungen sind nicht enthalten."
+}

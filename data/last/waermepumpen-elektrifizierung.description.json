@@ -1,0 +1,56 @@
+{
+  "id": "last.waermepumpen-elektrifizierung",
+  "domain": "last",
+  "title": "Wärmepumpen",
+  "file": "last/waermepumpen-elektrifizierung.json",
+  "source": "Dokumentierte Modellannahmen für privaten Raumwärmebedarf und bestehende Wärmepumpenwärme.",
+  "period": "2026",
+  "resolution": "Jahr, wintergewichtet auf Stunden",
+  "unit": "TWh Wärme, TWh Strom, JAZ",
+  "short": "Zusatzlast aus zusätzlich per Wärmepumpe gedecktem Raumwärmebedarf.",
+  "description": "Der Zielwert beschreibt elektrifizierte Raumwärme. Bereits per Wärmepumpe gedeckte Wärme wird abgezogen; der Rest wird über eine Jahresarbeitszahl in Stromlast umgerechnet.",
+  "overview": [
+    { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt den per Wärmepumpe gedeckten Raumwärmebedarf ab dem bereits elektrifizierten Mindestwert." },
+    { "label": "Referenz", "value": "450 TWh Raumwärmebedarf privater Haushalte als Modellwert aus 625 TWh Endenergie und 72 % Raumwärmeanteil." },
+    { "label": "Abzug", "value": "40 TWh Wärme werden als bereits per Wärmepumpe gedeckt abgezogen." },
+    { "label": "Effizienz", "value": "Jahresarbeitszahl 3,5: 3,5 kWh Wärme je 1 kWh Strom." },
+    { "label": "Default", "value": "450 TWh Zielwärme = 410 TWh zusätzliche Wärme = 117,1 TWh zusätzlicher Strom." },
+    { "label": "Verteilung", "value": "Wintergewichtetes Stundenprofil; keine Gebäudeklassen, keine Wetterjahre und keine Lastverschiebung." }
+  ],
+  "fields": [
+    { "name": "id", "unit": "Text", "description": "Technische Kennung." },
+    { "name": "title", "unit": "Text", "description": "Name des Zusatzlast-Szenarios." },
+    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Annahmen." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "Quellen-URLs; leer, solange die Werte als Modellannahmen geführt werden." },
+    { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr der Annahmen." },
+    { "name": "referenceHeatDemandTWh", "unit": "TWh Wärme", "description": "Gesamter Raumwärmebedarf der privaten Haushalte." },
+    { "name": "alreadyHeatPumpHeatTWh", "unit": "TWh Wärme", "description": "Abgezogene bereits per Wärmepumpe gedeckte Wärme und Mindestwert des Sliders." },
+    { "name": "defaultTargetHeatTWh", "unit": "TWh Wärme", "description": "Standardwert des Sliders." },
+    { "name": "maxTargetHeatTWh", "unit": "TWh Wärme", "description": "Oberes Slider-Ende." },
+    { "name": "stepHeatTWh", "unit": "TWh Wärme", "description": "Slider-Schrittweite." },
+    { "name": "seasonalCop", "unit": "JAZ", "description": "Jahresarbeitszahl für die Umrechnung von Wärme in Strom." },
+    { "name": "distribution", "unit": "Text", "description": "Zeitliche Verteilung der Zusatzlast." },
+    { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
+  ],
+  "caveats": ["Modellannahmen, keine amtliche Zeitreihe.", "Nur Wärmepumpen; Direktstromheizungen sind nicht enthalten.", "Kein Sanierungsgrad, kein Warmwasser, keine temperaturabhängige COP-Kurve."],
+  "sections": [
+    {
+      "title": "Erwägungsgründe",
+      "items": [
+        "Der Regler beschreibt Wärmebedarf, weil Haushalte Wärme nachfragen und die Stromlast erst aus der Effizienz der Wärmepumpe entsteht.",
+        "Bereits per Wärmepumpe gedeckte Wärme wird abgezogen, damit das Szenario nur zusätzliche Elektrifizierung zählt.",
+        "Die Jahresarbeitszahl 3,5 liegt bewusst zwischen einfachen Bestandsannahmen und sehr guten Neuanlagen.",
+        "Die wintergewichtete Verteilung bildet die Saisonalität grob ab, ohne ein Wettermodell vorzutäuschen.",
+        "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
+      ]
+    },
+    {
+      "title": "Grenzen",
+      "items": [
+        "Keine Tagesprofile für Haushalte und keine Speicherwirkung von Gebäuden.",
+        "Keine Trennung nach Einfamilienhaus, Mehrfamilienhaus, Sanierungsstand oder Heizkörpertemperatur.",
+        "Die Annahmen müssen ersetzt werden, sobald belastbare amtliche Wärme- und Wärmepumpenzeitreihen eingebunden sind."
+      ]
+    }
+  ]
+}

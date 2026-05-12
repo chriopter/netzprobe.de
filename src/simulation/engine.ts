@@ -1,4 +1,4 @@
-import type { BevPkwElectrificationLoad, HourlyInput } from '../types/data';
+import type { BevPkwElectrificationLoad, HeatPumpElectrificationLoad, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { balanceHour, initialStorageState } from './balance';
 import { demandGW } from './demand';
@@ -7,12 +7,12 @@ import type { SimHour, SimulationResult } from './types';
 
 export type { SimHour, SimulationResult } from './types';
 
-export function runSimulation(input: HourlyInput[], scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad): SimulationResult {
+export function runSimulation(input: HourlyInput[], scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad, heatPumpElectrification: HeatPumpElectrificationLoad): SimulationResult {
   let storage = initialStorageState();
   const hours: SimHour[] = [];
 
   for (const row of input) {
-    const loadGW = demandGW(row, scenario, bevPkwElectrification);
+    const loadGW = demandGW(row, scenario, bevPkwElectrification, heatPumpElectrification);
     const generation = historicalGenerationGW(row);
     const balance = balanceHour(generation.supplyGW, loadGW, storage, generation.historicalImportGW, generation.historicalExportGW, generation.dataBoundaryResidualGW);
     storage = { batteryGWh: balance.batteryGWh, h2GWh: balance.h2GWh };

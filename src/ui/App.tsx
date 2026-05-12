@@ -88,7 +88,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
     if (!worker || !data) return;
     hasDataRef.current = true;
     const requestId = ++requestRef.current;
-    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario, bevPkwElectrification: data.bevPkwElectrification });
+    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario, bevPkwElectrification: data.bevPkwElectrification, heatPumpElectrification: data.heatPumpElectrification });
   }, [data, scenario]);
 
   useEffect(() => {
@@ -228,6 +228,8 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onFaqOpen={() => setFaqOpen(true)}
         onBevPkwKmChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwKm: checked } }))}
         onBevPkwMillionKmChange={(bevPkwMillionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwMillionKm } }))}
+        onHeatPumpChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, heatPump: checked } }))}
+        onHeatPumpTargetHeatTWhChange={(heatPumpTargetHeatTWh) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, heatPumpTargetHeatTWh } }))}
       />
 
       <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>

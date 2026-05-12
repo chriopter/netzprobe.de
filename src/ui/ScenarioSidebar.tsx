@@ -2,7 +2,7 @@ import { Info } from 'lucide-react';
 import { dataWikiUrl, datasetIds } from './dataCatalog';
 import { twh } from './format';
 import { cx, field, sectionBox } from './ui';
-import { bevPkwAdditionalMillionKm, bevPkwAdditionalTWh } from '../simulation/demand';
+import { bevPkwAdditionalMillionKm, bevPkwAdditionalTWh, heatPumpAdditionalElectricityTWh, heatPumpAdditionalHeatTWh } from '../simulation/demand';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
@@ -21,6 +21,8 @@ export function ScenarioSidebar({
   onFaqOpen,
   onBevPkwKmChange,
   onBevPkwMillionKmChange,
+  onHeatPumpChange,
+  onHeatPumpTargetHeatTWhChange,
 }: {
   data: DataSet | null;
   scenario: Scenario;
@@ -34,6 +36,8 @@ export function ScenarioSidebar({
   onFaqOpen: () => void;
   onBevPkwKmChange: (checked: boolean) => void;
   onBevPkwMillionKmChange: (millionKm: number) => void;
+  onHeatPumpChange: (checked: boolean) => void;
+  onHeatPumpTargetHeatTWhChange: (heatTWh: number) => void;
 }) {
   return <aside className="rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
     <div className="border-b border-zinc-200/80 px-4 py-3">
@@ -69,6 +73,7 @@ export function ScenarioSidebar({
         docId={datasetIds.loadHistorical2025}
       >
         {data && <BevPkwControl data={data} scenario={scenario} onChecked={onBevPkwKmChange} onMillionKm={onBevPkwMillionKmChange}/>}
+        {data && <HeatPumpControl data={data} scenario={scenario} onChecked={onHeatPumpChange} onTargetHeat={onHeatPumpTargetHeatTWhChange}/>}
       </ScenarioChoiceSection>
 
       <ScenarioChoiceSection
@@ -137,13 +142,50 @@ function BevPkwControl({ data, scenario, onChecked, onMillionKm }: { data: DataS
       <input
         aria-label="Elektrifizierte Pkw-Kilometer in Millionen"
         type="range"
-        min={0}
+        min={model.alreadyElectricMillionKm}
         max={model.maxTargetMillionKm}
         step={model.stepMillionKm}
         value={millionKm}
         onChange={event => onMillionKm(Number(event.target.value))}
       />
-      <p className="text-xs leading-4 text-zinc-500">{share.toLocaleString('de-DE', { maximumFractionDigits: 1 })} % von 2023 · Zusatz nach Abzug: {additionalMillionKm.toLocaleString('de-DE')} Mio. km.</p>
+      <p className="text-xs leading-4 text-zinc-500">
+        {share.toLocaleString('de-DE', { maximumFractionDigits: 1 })} % elektrifiziert. Minimum = Stand 2023; Zusatz ggü. 2023: {additionalMillionKm.toLocaleString('de-DE')} Mio. km.
+      </p>
+    </div>}
+  </div>;
+}
+
+function HeatPumpControl({ data, scenario, onChecked, onTargetHeat }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void }) {
+  const model = data.heatPumpElectrification;
+  const heatTWh = scenario.demand.heatPumpTargetHeatTWh;
+  const share = heatTWh / model.referenceHeatDemandTWh * 100;
+  const additionalHeat = heatPumpAdditionalHeatTWh(heatTWh, model);
+  return <div className="grid gap-2">
+    <label className="flex items-start gap-2 text-sm text-zinc-950">
+      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand.heatPump} onChange={event => onChecked(event.target.checked)} />
+      <span className="grid min-w-0 flex-1 gap-0.5">
+        <span className="flex items-center justify-between gap-2">
+          <span className="truncate">Wärmepumpen</span>
+          <DataInfoLink id={datasetIds.heatPump} label="Wärmepumpen erklären"/>
+        </span>
+        <span className="truncate text-xs text-zinc-500">{twh(heatPumpAdditionalElectricityTWh(heatTWh, model))} Strom · JAZ {model.seasonalCop.toLocaleString('de-DE')}</span>
+      </span>
+    </label>
+    {scenario.demand.heatPump && <div className="grid gap-1 pl-6">
+      <div className="flex items-center justify-between gap-2 text-xs text-zinc-600">
+        <span>Raumwärme</span>
+        <span>{heatTWh.toLocaleString('de-DE')} TWh</span>
+      </div>
+      <input
+        aria-label="Elektrifizierter Raumwärmebedarf in TWh Wärme"
+        type="range"
+        min={model.alreadyHeatPumpHeatTWh}
+        max={model.maxTargetHeatTWh}
+        step={model.stepHeatTWh}
+        value={heatTWh}
+        onChange={event => onTargetHeat(Number(event.target.value))}
+      />
+      <p className="text-xs leading-4 text-zinc-500">{share.toLocaleString('de-DE', { maximumFractionDigits: 1 })} % des Heizbedarfs · Zusatz: {additionalHeat.toLocaleString('de-DE', { maximumFractionDigits: 1 })} TWh Wärme.</p>
     </div>}
   </div>;
 }

@@ -6,6 +6,8 @@ export type Scenario = {
     historicalLoad: boolean;
     bevPkwKm: boolean;
     bevPkwMillionKm: number;
+    heatPump: boolean;
+    heatPumpTargetHeatTWh: number;
   };
   renewables: { pvGW: number; windOnGW: number; windOffGW: number };
   fossil: { coalGW: number; gasGW: number; nuclearGW?: number };

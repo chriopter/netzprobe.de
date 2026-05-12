@@ -44,6 +44,22 @@ export type BevPkwElectrificationLoad = {
   note: string;
 };
 
+export type HeatPumpElectrificationLoad = {
+  id: 'heat-pump-electrification';
+  title: string;
+  source: string;
+  sourceUrls: string[];
+  referenceYear: number;
+  referenceHeatDemandTWh: number;
+  alreadyHeatPumpHeatTWh: number;
+  defaultTargetHeatTWh: number;
+  maxTargetHeatTWh: number;
+  stepHeatTWh: number;
+  seasonalCop: number;
+  distribution: 'winter-weighted';
+  note: string;
+};
+
 export type SplitDataFile<T> = {
   source: string;
   generatedAt?: string;
@@ -66,6 +82,7 @@ export type HourlyInput = LoadHour & ModelFactorHour & {
 export type DataSet = {
   source: string;
   bevPkwElectrification: BevPkwElectrificationLoad;
+  heatPumpElectrification: HeatPumpElectrificationLoad;
   loadSumTWh?: number;
   generationSumTWh?: number;
   importSumTWh?: number;

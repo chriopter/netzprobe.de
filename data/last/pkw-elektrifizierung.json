@@ -15,5 +15,5 @@
   "stepMillionKm": 1000,
   "kwhPer100Km": 20,
   "distribution": "flat",
-  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert aus rund 1,5 Mio. BEV Ende 2023 und 15.852 km durchschnittlicher Jahresfahrleistung der KBA-Gruppe alternative Antriebe abgeleitet."
+  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert aus rund 1,5 Mio. BEV Ende 2023 und 15.852 km durchschnittlicher Jahresfahrleistung der KBA-Gruppe alternative Antriebe abgeleitet."
 }

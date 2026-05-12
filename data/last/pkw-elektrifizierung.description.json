@@ -10,7 +10,7 @@
   "short": "Zusatzlast aus zusätzlich elektrifizierten Pkw-Kilometern.",
   "description": "Ziel-Pkw-Kilometer minus bereits elektrisch gefahrene Pkw-Kilometer 2023 werden mit 20 kWh/100 km in zusätzliche Stromlast umgerechnet.",
   "overview": [
-    { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt elektrifizierte Pkw-Kilometer." },
+    { "label": "Verwendung", "value": "Checkbox aktiviert Zusatzlast; Slider setzt elektrifizierte Pkw-Kilometer ab dem 2023 bereits elektrischen Mindestwert." },
     { "label": "Referenz", "value": "472,2 Mrd. Pkw-km privater Haushalte 2023 laut Destatis-Mitteilung." },
     { "label": "Abzug", "value": "23,8 Mrd. km werden als bereits 2023 elektrisch gefahren abgezogen." },
     { "label": "Verbrauch", "value": "20 kWh/100 km als pauschaler Flottenwert ab Netz inklusive grober Ladeverluste." },
@@ -24,7 +24,7 @@
     { "name": "sourceUrls", "unit": "Liste", "description": "Quellen für Referenzkilometer, Fahrleistung und BEV-Bestand." },
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
     { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte 2023." },
-    { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Abgezogene bereits elektrisch gefahrene Pkw-km 2023." },
+    { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Abgezogene bereits elektrisch gefahrene Pkw-km 2023 und Mindestwert des Sliders." },
     { "name": "defaultTargetMillionKm", "unit": "Mio. km", "description": "Standardwert des Sliders." },
     { "name": "maxTargetMillionKm", "unit": "Mio. km", "description": "Oberes Slider-Ende." },
     { "name": "stepMillionKm", "unit": "Mio. km", "description": "Slider-Schrittweite." },
