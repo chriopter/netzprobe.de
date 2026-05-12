@@ -3,7 +3,7 @@ import type { Scenario } from '../types/scenario';
 import { BASE_BEV, BASE_HEATPUMP, BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, LOAD_100_BEV_GW, LOAD_100_HEATPUMP_WINTER_GW, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
 
 export type SimHour = {
-  time: string; loadGW: number; solarGW: number; windOnGW: number; windOffGW: number; biomassGW: number; hydroGW: number; coalGW: number; gasGW: number; nuclearGW: number; importGW: number; exportGW: number; storageChargeGW: number; storageDischargeGW: number; curtailmentGW: number; loadSheddingGW: number; batteryGWh: number; h2GWh: number; supplyGW: number; balanceGW: number; co2Tonnes: number;
+  time: string; loadGW: number; solarGW: number; windOnGW: number; windOffGW: number; biomassGW: number; hydroGW: number; wasteGW: number; oilGW: number; geothermalGW: number; otherGW: number; coalGW: number; gasGW: number; nuclearGW: number; importGW: number; exportGW: number; storageChargeGW: number; storageDischargeGW: number; curtailmentGW: number; loadSheddingGW: number; batteryGWh: number; h2GWh: number; supplyGW: number; balanceGW: number; co2Tonnes: number;
 };
 export type SimulationResult = { hours: SimHour[]; summary: { totalDemandTWh: number; renewableSharePct: number; co2IntensityGPerKWh: number; curtailmentTWh: number; importTWh: number; exportTWh: number; loadSheddingTWh: number; securityStatus: 'stabil'|'angespannt'|'kritisch' } };
 
@@ -29,7 +29,13 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
     const coalMax = scenario.fossil.coalGW * FOSSIL_AVAILABILITY;
     const gasMax = scenario.fossil.gasGW * FOSSIL_AVAILABILITY;
     let coalGW = coalMin, gasGW = gasMin, nuclearGW = (scenario.fossil.nuclearGW ?? 0) * 0.9;
-    let fixedSupply = solarGW + won + woff + BIOMASS_GW + RUN_OF_RIVER_GW + nuclearGW + coalGW + gasGW;
+    const biomassGW = (row.observed.biomassMW ?? BIOMASS_GW * 1000) / 1000;
+    const hydroGW = (row.observed.hydroMW ?? RUN_OF_RIVER_GW * 1000) / 1000;
+    const wasteGW = (row.observed.wasteMW ?? 0) / 1000;
+    const oilGW = (row.observed.oilMW ?? 0) / 1000;
+    const geothermalGW = (row.observed.geothermalMW ?? 0) / 1000;
+    const otherGW = (row.observed.otherMW ?? 0) / 1000;
+    let fixedSupply = solarGW + won + woff + biomassGW + hydroGW + wasteGW + oilGW + geothermalGW + otherGW + nuclearGW + coalGW + gasGW;
     let importGW = 0, exportGW = 0, charge = 0, discharge = 0, curtail = 0, shed = 0;
     let mismatch = fixedSupply - loadGW;
     if (mismatch > 0) {
@@ -48,14 +54,14 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
       importGW = Math.min(deficit, scenario.storage.importLimitGW); deficit -= importGW;
       shed = Math.max(0, deficit); mismatch = 0;
     }
-    const supplyGW = solarGW + won + woff + BIOMASS_GW + RUN_OF_RIVER_GW + nuclearGW + coalGW + gasGW;
-    const hourCo2 = solarGW*EMISSIONS.solar + (won+woff)*EMISSIONS.wind + BIOMASS_GW*EMISSIONS.biomass + RUN_OF_RIVER_GW*EMISSIONS.hydro + coalGW*EMISSIONS.coal + gasGW*EMISSIONS.gas + nuclearGW*EMISSIONS.nuclear;
+    const supplyGW = solarGW + won + woff + biomassGW + hydroGW + wasteGW + oilGW + geothermalGW + otherGW + nuclearGW + coalGW + gasGW;
+    const hourCo2 = solarGW*EMISSIONS.solar + (won+woff)*EMISSIONS.wind + biomassGW*EMISSIONS.biomass + hydroGW*EMISSIONS.hydro + wasteGW*EMISSIONS.waste + oilGW*EMISSIONS.oil + geothermalGW*EMISSIONS.geothermal + otherGW*EMISSIONS.other + coalGW*EMISSIONS.coal + gasGW*EMISSIONS.gas + nuclearGW*EMISSIONS.nuclear;
     co2 += hourCo2;
-    out.push({ time: row.time, loadGW, solarGW, windOnGW: won, windOffGW: woff, biomassGW: BIOMASS_GW, hydroGW: RUN_OF_RIVER_GW, coalGW, gasGW, nuclearGW, importGW, exportGW, storageChargeGW: charge, storageDischargeGW: discharge, curtailmentGW: curtail, loadSheddingGW: shed, batteryGWh: battery, h2GWh: h2, supplyGW, balanceGW: supplyGW + importGW + discharge + shed - loadGW - exportGW - charge - curtail, co2Tonnes: hourCo2 * 1000 });
+    out.push({ time: row.time, loadGW, solarGW, windOnGW: won, windOffGW: woff, biomassGW, hydroGW, wasteGW, oilGW, geothermalGW, otherGW, coalGW, gasGW, nuclearGW, importGW, exportGW, storageChargeGW: charge, storageDischargeGW: discharge, curtailmentGW: curtail, loadSheddingGW: shed, batteryGWh: battery, h2GWh: h2, supplyGW, balanceGW: supplyGW + importGW + discharge + shed - loadGW - exportGW - charge - curtail, co2Tonnes: hourCo2 * 1000 });
   }
   const sum = (fn: (h: SimHour) => number) => out.reduce((s, h) => s + fn(h), 0) / 1000;
   const demandTWh = sum(h => h.loadGW);
-  const renewableTWh = sum(h => h.solarGW + h.windOnGW + h.windOffGW + h.biomassGW + h.hydroGW);
+  const renewableTWh = sum(h => h.solarGW + h.windOnGW + h.windOffGW + h.biomassGW + h.hydroGW + h.geothermalGW);
   const loadSheddingTWh = sum(h => h.loadSheddingGW);
   const co2Intensity = co2 / Math.max(1e-9, out.reduce((s,h)=>s+h.loadGW,0));
   return { hours: out, summary: { totalDemandTWh: demandTWh, renewableSharePct: 100 * renewableTWh / Math.max(1e-9, demandTWh), co2IntensityGPerKWh: co2Intensity, curtailmentTWh: sum(h => h.curtailmentGW), importTWh: sum(h => h.importGW), exportTWh: sum(h => h.exportGW), loadSheddingTWh, securityStatus: loadSheddingTWh > 1 ? 'kritisch' : loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil' } };

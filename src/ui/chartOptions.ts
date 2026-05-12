@@ -3,20 +3,30 @@ import type { SimHour } from '../simulation/engine';
 import { fmt } from './format';
 
 const dayLabels = (hours: SimHour[]) => hours.map((h) => new Date(h.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' }));
-const thinHours = (hours: SimHour[], maxPoints = 360) => {
+const compressHours = (hours: SimHour[], maxPoints = 365) => {
   if (hours.length <= maxPoints) return hours;
   const step = Math.ceil(hours.length / maxPoints);
-  return hours.filter((_, index) => index % step === 0 || index === hours.length - 1);
+  const numericKeys = Object.keys(hours[0]).filter((key) => key !== 'time') as (keyof SimHour)[];
+  const compressed: SimHour[] = [];
+  for (let start = 0; start < hours.length; start += step) {
+    const bucket = hours.slice(start, start + step);
+    const row: Record<string, string | number> = { time: bucket[0].time };
+    for (const key of numericKeys) {
+      row[key] = bucket.reduce((sum, hour) => sum + Number(hour[key]), 0) / bucket.length;
+    }
+    compressed.push(row as unknown as SimHour);
+  }
+  return compressed;
 };
 
 export function buildMixChartOption(hours: SimHour[]): EChartsOption {
-  const chartHours = thinHours(hours);
+  const chartHours = compressHours(hours);
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'axis', valueFormatter: (v) => `${fmt.format(Number(v))} GW` },
-    legend: { textStyle: { color: '#aab0bd' }, top: 0 },
-    grid: { left: 42, right: 24, top: 48, bottom: 34 },
+    legend: { textStyle: { color: '#aab0bd' }, top: 0, type: 'scroll' },
+    grid: { left: 42, right: 24, top: 72, bottom: 34 },
     xAxis: { type: 'category', data: dayLabels(chartHours), axisLabel: { color: '#8a8f98' } },
     yAxis: { type: 'value', axisLabel: { color: '#8a8f98', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.07)' } } },
     series: [
@@ -24,7 +34,12 @@ export function buildMixChartOption(hours: SimHour[]): EChartsOption {
         ['Solar', 'solarGW', '#facc15'],
         ['Wind an Land', 'windOnGW', '#38bdf8'],
         ['Wind See', 'windOffGW', '#60a5fa'],
-        ['Bio/Wasser', 'biomassGW', '#34d399'],
+        ['Wasser', 'hydroGW', '#2dd4bf'],
+        ['Biomasse', 'biomassGW', '#34d399'],
+        ['Müll', 'wasteGW', '#a3e635'],
+        ['Öl', 'oilGW', '#f97316'],
+        ['Geo', 'geothermalGW', '#14b8a6'],
+        ['Sonstige', 'otherGW', '#94a3b8'],
         ['Gas', 'gasGW', '#fb923c'],
         ['Kohle', 'coalGW', '#ef4444'],
         ['Import', 'importGW', '#a78bfa'],
@@ -57,7 +72,7 @@ export function buildMixChartOption(hours: SimHour[]): EChartsOption {
 }
 
 export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
-  const chartHours = thinHours(hours);
+  const chartHours = compressHours(hours);
   return {
     backgroundColor: 'transparent',
     animation: false,
