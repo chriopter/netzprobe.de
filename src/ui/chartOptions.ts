@@ -89,10 +89,31 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
   axisLine: { lineStyle: { color: '#e4e4e7' } },
 });
 
+const angleAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
+  type: 'category' as const,
+  data: xAxisLabels(hours, chartHours),
+  boundaryGap: false,
+  startAngle: 90,
+  clockwise: true,
+  axisTick: { show: false },
+  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: 10, margin: 8 },
+  axisLine: { lineStyle: { color: '#e4e4e7' } },
+  splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
+});
+
+const radiusAxis = {
+  type: 'value' as const,
+  axisLabel: { color: '#71717a', formatter: '{value} GW' },
+  axisLine: { show: false },
+  axisTick: { show: false },
+  splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
+};
+
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
 const areaSeries = (name: string, color: string, data: number[]) => ({
   name,
   type: 'line' as const,
+  coordinateSystem: 'polar' as const,
   stack: 'supply',
   showSymbol: false,
   smooth: false,
@@ -133,15 +154,16 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       },
     },
     legend: { show: false },
-    grid: { left: 44, right: 20, top: 10, bottom: 48 },
-    xAxis: xAxis(hours, chartHours),
-    yAxis: { type: 'value', axisLabel: { color: '#71717a', formatter: '{value} GW' }, splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } } },
+    polar: { center: ['50%', '51%'], radius: ['8%', '78%'] },
+    angleAxis: angleAxis(hours, chartHours),
+    radiusAxis,
     series: [
       ...supplySeries,
       areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW)),
       {
         name: 'Last',
         type: 'line' as const,
+        coordinateSystem: 'polar' as const,
         showSymbol: false,
         smooth: false,
         lineStyle: { width: 2.2 },
@@ -151,6 +173,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       {
         name: 'Unterdeckung',
         type: 'line' as const,
+        coordinateSystem: 'polar' as const,
         showSymbol: false,
         smooth: false,
         z: 9,
