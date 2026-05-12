@@ -2,27 +2,9 @@
 
 Statische Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
-## Start
+## Disclaimer
 
-```bash
-npm install
-npm run dev
-```
-
-## Prüfung
-
-```bash
-npm test
-npm run build
-```
-
-## Veröffentlichung
-
-```bash
-npm run build
-```
-
-Dann `dist/` statisch ausliefern.
+Dieses Projekt ist vibecoded und schnell iteriert. Es dient der anschaulichen Probe, nicht der amtlichen Netzplanung.
 
 ## Credits
 
