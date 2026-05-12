@@ -142,7 +142,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   const chartHours = compressHours(hours);
   const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
   const coordinate = mode === 'sunburst'
-    ? { polar: { center: ['50%', '52%'], radius: ['12%', '70%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
+    ? { polar: { center: ['50%', '52%'], radius: ['6%', '96%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
     : { grid: { left: 44, right: 20, top: 10, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GW') };
   return {
     backgroundColor: 'transparent',

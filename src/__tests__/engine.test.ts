@@ -39,10 +39,12 @@ describe('simulation engine', () => {
     expect(result.summary.securityStatus).toMatch(/stabil|angespannt|kritisch/);
   });
 
-  it('reacts to scenario changes deterministically', () => {
-    const clean = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 10 }, renewables: { pvGW: 160, windOnGW: 120, windOffGW: 35 } });
-    const fossil = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 31, gasGW: 35.5 }, renewables: { pvGW: 40, windOnGW: 25, windOffGW: 5 } });
-    expect(clean.summary.co2IntensityGPerKWh).toBeLessThan(fossil.summary.co2IntensityGPerKWh);
+  it('uses observed historical generation instead of scenario capacities', () => {
+    const left = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 0 }, renewables: { pvGW: 0, windOnGW: 0, windOffGW: 0 } });
+    const right = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 250, gasGW: 250 }, renewables: { pvGW: 250, windOnGW: 250, windOffGW: 250 } });
+
+    expect(right.summary.co2IntensityGPerKWh).toBe(left.summary.co2IntensityGPerKWh);
+    expect(right.hours.map(hour => hour.supplyGW)).toEqual(left.hours.map(hour => hour.supplyGW));
   });
 
   it('treats the 100 TWh test load as an additive demand part', () => {
@@ -54,5 +56,15 @@ describe('simulation engine', () => {
     expect(noHistorical.summary.co2IntensityGPerKWh).toBe(0);
     expect(noHistorical.summary.renewableSharePct).toBe(0);
     expect(testLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(100 * sampleHours.length / 8760, 6);
+  });
+
+  it('keeps historical generation fixed when additive demand changes', () => {
+    const historical = runSimulation(sampleHours, baselineScenario);
+    const testLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, test100TWh: true } });
+
+    expect(testLoad.hours.map(hour => hour.solarGW)).toEqual(historical.hours.map(hour => hour.solarGW));
+    expect(testLoad.hours.map(hour => hour.windOnGW)).toEqual(historical.hours.map(hour => hour.windOnGW));
+    expect(testLoad.hours.map(hour => hour.gasGW)).toEqual(historical.hours.map(hour => hour.gasGW));
+    expect(testLoad.hours.map(hour => hour.coalGW)).toEqual(historical.hours.map(hour => hour.coalGW));
   });
 });

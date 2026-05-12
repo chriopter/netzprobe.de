@@ -1,16 +1,12 @@
 import type { HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
+import { BATTERY_ETA, EMISSIONS, H2_ETA } from './constants';
 
 export type SimHour = {
   time: string; loadGW: number; solarGW: number; windOnGW: number; windOffGW: number; biomassGW: number; hydroGW: number; wasteGW: number; oilGW: number; geothermalGW: number; otherGW: number; coalGW: number; gasGW: number; nuclearGW: number; importGW: number; exportGW: number; storageChargeGW: number; storageDischargeGW: number; curtailmentGW: number; loadSheddingGW: number; batteryGWh: number; h2GWh: number; supplyGW: number; balanceGW: number; co2Tonnes: number;
 };
 export type SimulationResult = { hours: SimHour[]; summary: { totalDemandTWh: number; renewableSharePct: number; co2IntensityGPerKWh: number; curtailmentTWh: number; importTWh: number; exportTWh: number; loadSheddingTWh: number; securityStatus: 'stabil'|'angespannt'|'kritisch' } };
 
-const solarFactor = (irradiance: number[], pvGW: number) => irradiance.reduce((s, i, idx) => s + pvGW * SOLAR_FRACTIONS[idx] * Math.max(0, i) / 1000 * 0.82, 0);
-const windCurve = (v: number, off = false) => { const v1 = off ? 4 : 3; const v2 = off ? 13 : 11.5; const v3 = off ? 22 : 21; if (v < v1 || v > v3) return 0; return v < v2 ? Math.pow(v / v2, 3) : 1; };
-const windOn = (wind: number[], gw: number) => WIND_ON_FRACTIONS.reduce((s, f, i) => s + gw * f * windCurve((wind[i] ?? 0) * 1.05) * 0.905, 0);
-const windOff = (wind: number[], gw: number) => WIND_OFF_FRACTIONS.reduce((s, f, i) => s + gw * f * windCurve((wind[i+4] ?? 0) * 1.03, true) * 0.78, 0);
 const TEST_100_TWH_LOAD_GW = 100_000 / 8760;
 
 export function runSimulation(input: HourlyInput[], scenario: Scenario): SimulationResult {
@@ -23,16 +19,14 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
     const historicalLoadGW = scenario.demand.historicalLoad ? row.loadMW / 1000 : 0;
     const test100TWhLoadGW = scenario.demand.test100TWh ? TEST_100_TWH_LOAD_GW : 0;
     const loadGW = historicalLoadGW + test100TWhLoadGW;
-    const solarGW = solarFactor(row.solarIrradiance, scenario.renewables.pvGW);
-    const won = windOn(row.wind100m, scenario.renewables.windOnGW);
-    const woff = windOff(row.wind100m, scenario.renewables.windOffGW);
-    const coalMin = scenario.fossil.coalGW * COAL_MIN_REL * FOSSIL_AVAILABILITY;
-    const gasMin = scenario.fossil.gasGW * GAS_MIN_REL * FOSSIL_AVAILABILITY;
-    const coalMax = scenario.fossil.coalGW * FOSSIL_AVAILABILITY;
-    const gasMax = scenario.fossil.gasGW * FOSSIL_AVAILABILITY;
-    let coalGW = coalMin, gasGW = gasMin, nuclearGW = (scenario.fossil.nuclearGW ?? 0) * 0.9;
-    const biomassGW = (row.observed.biomassMW ?? BIOMASS_GW * 1000) / 1000;
-    const hydroGW = (row.observed.hydroMW ?? RUN_OF_RIVER_GW * 1000) / 1000;
+    const solarGW = row.observed.pvMW / 1000;
+    const won = row.observed.windOnMW / 1000;
+    const woff = row.observed.windOffMW / 1000;
+    const coalGW = row.observed.coalMW / 1000;
+    const gasGW = row.observed.gasMW / 1000;
+    const nuclearGW = 0;
+    const biomassGW = (row.observed.biomassMW ?? 0) / 1000;
+    const hydroGW = (row.observed.hydroMW ?? 0) / 1000;
     const wasteGW = (row.observed.wasteMW ?? 0) / 1000;
     const oilGW = (row.observed.oilMW ?? 0) / 1000;
     const geothermalGW = (row.observed.geothermalMW ?? 0) / 1000;
@@ -51,8 +45,6 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
       let deficit = -mismatch;
       const battDischarge = Math.min(deficit, scenario.storage.batteryPowerGW, battery); discharge += battDischarge; battery -= battDischarge; deficit -= battDischarge;
       const h2Discharge = Math.min(deficit, scenario.storage.h2PowerGW, h2); discharge += h2Discharge; h2 -= h2Discharge; deficit -= h2Discharge;
-      const gasAdd = Math.min(deficit, Math.max(0, gasMax - gasGW)); gasGW += gasAdd; deficit -= gasAdd;
-      const coalAdd = Math.min(deficit, Math.max(0, coalMax - coalGW)); coalGW += coalAdd; deficit -= coalAdd;
       importGW = Math.min(deficit, scenario.storage.importLimitGW); deficit -= importGW;
       shed = Math.max(0, deficit); mismatch = 0;
     }

@@ -194,7 +194,9 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
+            <div className="min-h-0 flex-1 overflow-visible">
+              <div id="mix-chart" className="h-full w-[128%] -translate-x-[11%]"/>
+            </div>
             <MixLegend
               visibility={mixVisibility}
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
