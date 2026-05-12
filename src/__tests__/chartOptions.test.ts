@@ -31,6 +31,24 @@ const hour = (loadSheddingGW: number): SimHour => ({
 });
 
 describe('mix chart options', () => {
+  it('orders the supply stack like Energy-Charts from firm lower layers to solar top layer', () => {
+    const option = buildMixChartOption([hour(0)]);
+    const series = option.series as Array<Record<string, unknown>>;
+    expect(series.slice(0, 11).map((s) => s.name)).toEqual([
+      'Wasser',
+      'Biomasse',
+      'Kohle',
+      'Öl',
+      'Geo',
+      'Sonstige',
+      'Müll',
+      'Gas',
+      'Wind See',
+      'Wind an Land',
+      'Solar',
+    ]);
+  });
+
   it('marks uncovered load as a red area series', () => {
     const option = buildMixChartOption([hour(0), hour(12)]);
     const series = option.series as Array<Record<string, unknown>>;
