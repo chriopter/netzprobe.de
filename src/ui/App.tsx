@@ -61,7 +61,7 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
       chartRef.current = chart;
       cleanupRef.current = () => window.removeEventListener('resize', resize);
     }
-    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true });
+    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true, replaceMerge: ['series'] });
   }, [id, option]);
 }
 
