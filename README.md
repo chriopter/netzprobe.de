@@ -1,6 +1,6 @@
 # Netzprobe
 
-KISS-Netzprobe für Deutschland: **statisch hostbar**, keine Accounts, keine Datenbank, keine Laufzeit-API.
+Statische Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
 ## Start
 
@@ -9,29 +9,21 @@ npm install
 npm run dev
 ```
 
-## Build für eigenen Webserver
+## Prüfung
+
+```bash
+npm test
+npm run build
+```
+
+## Veröffentlichung
 
 ```bash
 npm run build
 ```
 
-Danach den Ordner `dist/` per Nginx/Caddy/Apache ausliefern.
+Dann `dist/` statisch ausliefern.
 
-## Struktur
+## Credits
 
-```txt
-public/data/          # normalisierte Quelldaten + Quellenliste
-src/data/             # Datentypen und Loader
-src/scenarios/        # Szenarien und Presets
-src/simulation/       # reine Simulationslogik, ohne UI
-src/ui/               # React-Oberfläche, Charts, Styling
-src/__tests__/        # Vitest-Tests für den Simulationskern
-```
-
-## Quellen / Plausibilität
-
-Die 8760-Stunden-Daten wurden aus einem öffentlichen Referenzdatensatz normalisiert. Größenordnungen wurden gegen Energy-Charts/Fraunhofer ISE, Bundesnetzagentur, UBA, SMARD, DWD und ERA5 eingeordnet; siehe `public/data/sources.json`.
-
-## Ziel
-
-Schnelle öffentliche Netzprobe: Szenario einstellen, Jahresbilanz sehen, Dunkelflaute/Abregelung/CO₂ bewerten, Link teilen.
+Inspiriert von und mit normalisierten Daten aus [`MTGermany/energy-simulation-de`](https://github.com/MTGermany/energy-simulation-de).
