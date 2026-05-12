@@ -199,7 +199,7 @@ export function App() {
   };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="mx-auto grid w-full max-w-[1700px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)_220px] xl:grid-cols-[300px_minmax(0,1fr)_240px]">
       <section className="flex min-w-0 flex-col gap-3 lg:order-last">
         {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
           <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
@@ -217,23 +217,9 @@ export function App() {
             />
           </ChartPanel>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-            <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
-            <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
-            <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
-          </div>
-
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
-            <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
-              <div id="storage-chart" className="h-[240px] w-full"/>
-            </ChartPanel>
-
-            <div className={cx(panel, 'grid content-start gap-4 p-4')}>
-              <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
-              <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
-            </div>
-          </div>
+          <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
+            <div id="storage-chart" className="h-[240px] w-full"/>
+          </ChartPanel>
           <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
             Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
           </footer>
@@ -265,6 +251,24 @@ export function App() {
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
+        </div>
+      </aside>
+
+      <aside className={cx(panel, 'lg:order-last lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Ergebnisse</h2>
+        </div>
+        <div className="grid gap-3 p-4">
+          {result ? <>
+            <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+            <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
+            <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
+            <Kpi icon={<Banknote/>} label="Kosten" value="—" subValue="Platzhalter"/>
+            <section className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+              <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+              <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
+            </section>
+          </> : <span className="text-sm text-zinc-500">Lade Ergebnisse …</span>}
         </div>
       </aside>
     </div>
