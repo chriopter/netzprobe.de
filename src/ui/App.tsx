@@ -15,8 +15,8 @@ type SimulationWorkerResponse = { requestId: number; result: SimulationResult; e
 const defaultScenario: Scenario = {
   id: 'eigenes-szenario',
   name: 'Eigenes Szenario',
-  description: 'Energy-Charts-naher Startwert 2025; direkt einstellbar.',
-  demand: { basePct: 100, bevPct: 10, heatPumpPct: 10 },
+  description: 'Historische Energy-Charts-Last 2025; Zusatzlasten sind optional.',
+  demand: { historicalLoad: true, bev: false, heatPump: false, basePct: 100, bevPct: 10, heatPumpPct: 10 },
   renewables: { pvGW: 100.5, windOnGW: 65.5, windOffGW: 9.5 },
   fossil: { coalGW: 35, gasGW: 36, nuclearGW: 0 },
   storage: { batteryPowerGW: 15, batteryEnergyGWh: 22, h2PowerGW: 0, h2EnergyGWh: 0, importLimitGW: 16 },
@@ -76,6 +76,31 @@ function setScenarioValue(scenario: Scenario, path: string, value: number): Scen
   next.id = 'eigenes-szenario';
   next.name = 'Eigenes Szenario';
   return next;
+}
+
+function setScenarioFlag(scenario: Scenario, path: string, value: boolean): Scenario {
+  const next = structuredClone(scenario) as Scenario & Record<string, any>;
+  const parts = path.split('.');
+  let target: Record<string, any> = next;
+  for (const part of parts.slice(0, -1)) target = target[part];
+  target[parts.at(-1)!] = value;
+  next.id = 'eigenes-szenario';
+  next.name = 'Eigenes Szenario';
+  return next;
+}
+
+function normalizeScenario(scenario: Scenario): Scenario {
+  return {
+    ...scenario,
+    demand: {
+      historicalLoad: scenario.demand.historicalLoad ?? true,
+      bev: scenario.demand.bev ?? false,
+      heatPump: scenario.demand.heatPump ?? false,
+      basePct: scenario.demand.basePct ?? 100,
+      bevPct: scenario.demand.bevPct ?? 10,
+      heatPumpPct: scenario.demand.heatPumpPct ?? 10,
+    },
+  };
 }
 
 function addDays(date: string, days: number) {
@@ -144,7 +169,7 @@ function generationMeta(data: DataSet | null) {
 
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? defaultScenario);
+  const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-12-31');
@@ -180,6 +205,7 @@ export function App() {
   useChart('storage-chart', storageOption);
 
   const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
+  const toggleScenario = (path: string, value: boolean) => setScenario(prev => setScenarioFlag(prev, path, value));
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
     setCustomStart(date);
@@ -233,7 +259,13 @@ export function App() {
           />
 
           <ControlSection title="Last" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined} onPreset={() => setScenario(defaultScenario)}>
-            <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+            <DemandControl
+              scenario={scenario}
+              onToggle={toggleScenario}
+              onChange={update}
+              onTuneStart={() => setIsTuning(true)}
+              onTuneEnd={() => setIsTuning(false)}
+            />
           </ControlSection>
 
           <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
@@ -342,16 +374,58 @@ function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, o
   </section>;
 }
 
-function Control({ rows, onChange, onTuneStart, onTuneEnd }: { rows: ControlRow[]; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
-  return <div className="grid gap-3">
+function Control({ rows, onChange, onTuneStart, onTuneEnd, disabled = false }: { rows: ControlRow[]; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void; disabled?: boolean }) {
+  return <div className={cx('grid gap-3', disabled && 'opacity-45')}>
     {rows.map(([label, path, value, min, max, unit]) => <label key={path} className="grid gap-1.5">
       <span className="flex items-center justify-between gap-4 text-xs text-zinc-700">
         {label}
         <b className="font-mono text-xs font-medium text-zinc-950">{formatControlValue(value, unit)}</b>
       </span>
-      <input type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onPointerDown={onTuneStart} onPointerUp={onTuneEnd} onPointerCancel={onTuneEnd} onBlur={onTuneEnd} onKeyUp={onTuneEnd} onChange={event => onChange(path, Number(event.target.value))}/>
+      <input disabled={disabled} type="range" min={min} max={max} step={unit === 'GW' ? 0.5 : 1} value={value} onPointerDown={onTuneStart} onPointerUp={onTuneEnd} onPointerCancel={onTuneEnd} onBlur={onTuneEnd} onKeyUp={onTuneEnd} onChange={event => onChange(path, Number(event.target.value))}/>
     </label>)}
   </div>;
+}
+
+function DemandControl({ scenario, onToggle, onChange, onTuneStart, onTuneEnd }: { scenario: Scenario; onToggle: (path: string, value: boolean) => void; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
+  return <div className="grid gap-3">
+    <DemandItem
+      label="Historische Last"
+      meta="Energy-Charts 2025"
+      checked={scenario.demand.historicalLoad}
+      onChecked={(checked) => onToggle('demand.historicalLoad', checked)}
+    >
+      <Control rows={[["Lastfaktor", 'demand.basePct', scenario.demand.basePct, 50, 150, '%']]} onChange={onChange} onTuneStart={onTuneStart} onTuneEnd={onTuneEnd} disabled={!scenario.demand.historicalLoad}/>
+    </DemandItem>
+    <DemandItem
+      label="BEV-Zusatz"
+      meta="Modellierte Zusatzlast"
+      checked={scenario.demand.bev}
+      onChecked={(checked) => onToggle('demand.bev', checked)}
+    >
+      <Control rows={[["Durchdringung", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%']]} onChange={onChange} onTuneStart={onTuneStart} onTuneEnd={onTuneEnd} disabled={!scenario.demand.bev}/>
+    </DemandItem>
+    <DemandItem
+      label="Wärmepumpen-Zusatz"
+      meta="Wintergewichtet modelliert"
+      checked={scenario.demand.heatPump}
+      onChecked={(checked) => onToggle('demand.heatPump', checked)}
+    >
+      <Control rows={[["Durchdringung", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={onChange} onTuneStart={onTuneStart} onTuneEnd={onTuneEnd} disabled={!scenario.demand.heatPump}/>
+    </DemandItem>
+  </div>;
+}
+
+function DemandItem({ label, meta, checked, onChecked, children }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void; children: ReactNode }) {
+  return <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
+    <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-950">
+      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={checked} onChange={event => onChecked(event.target.checked)} />
+      <span className="grid gap-0.5">
+        <span>{label}</span>
+        <span className="text-xs text-zinc-500">{meta}</span>
+      </span>
+    </label>
+    <div className="mt-2 border-t border-zinc-200/80 pt-2">{children}</div>
+  </section>;
 }
 
 function MetricLine({ label, value }: { label: string; value: string }) {

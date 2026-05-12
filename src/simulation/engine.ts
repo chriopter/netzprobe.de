@@ -1,6 +1,6 @@
 import type { HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { BASE_BEV, BASE_HEATPUMP, BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, LOAD_100_BEV_GW, LOAD_100_HEATPUMP_WINTER_GW, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
+import { BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, LOAD_100_BEV_GW, LOAD_100_HEATPUMP_WINTER_GW, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
 
 export type SimHour = {
   time: string; loadGW: number; solarGW: number; windOnGW: number; windOffGW: number; biomassGW: number; hydroGW: number; wasteGW: number; oilGW: number; geothermalGW: number; otherGW: number; coalGW: number; gasGW: number; nuclearGW: number; importGW: number; exportGW: number; storageChargeGW: number; storageDischargeGW: number; curtailmentGW: number; loadSheddingGW: number; batteryGWh: number; h2GWh: number; supplyGW: number; balanceGW: number; co2Tonnes: number;
@@ -20,7 +20,10 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario): Simulat
   let co2 = 0;
   for (let i = 0; i < input.length; i++) {
     const row = input[i];
-    const loadGW = (row.loadMW / 1000) * (scenario.demand.basePct / 100) + (scenario.demand.bevPct/100 - BASE_BEV) * LOAD_100_BEV_GW + (scenario.demand.heatPumpPct/100 - BASE_HEATPUMP) * LOAD_100_HEATPUMP_WINTER_GW * heatPumpSeason(i);
+    const historicalLoadGW = scenario.demand.historicalLoad ? (row.loadMW / 1000) * (scenario.demand.basePct / 100) : 0;
+    const bevLoadGW = scenario.demand.bev ? (scenario.demand.bevPct / 100) * LOAD_100_BEV_GW : 0;
+    const heatPumpLoadGW = scenario.demand.heatPump ? (scenario.demand.heatPumpPct / 100) * LOAD_100_HEATPUMP_WINTER_GW * heatPumpSeason(i) : 0;
+    const loadGW = historicalLoadGW + bevLoadGW + heatPumpLoadGW;
     const solarGW = solarFactor(row.solarIrradiance, scenario.renewables.pvGW);
     const won = windOn(row.wind100m, scenario.renewables.windOnGW);
     const woff = windOff(row.wind100m, scenario.renewables.windOffGW);

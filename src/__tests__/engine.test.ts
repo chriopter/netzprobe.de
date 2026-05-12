@@ -13,7 +13,7 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { basePct: 100, bevPct: 10, heatPumpPct: 10 },
+  demand: { historicalLoad: true, bev: false, heatPump: false, basePct: 100, bevPct: 10, heatPumpPct: 10 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -43,5 +43,16 @@ describe('simulation engine', () => {
     const clean = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 10 }, renewables: { pvGW: 160, windOnGW: 120, windOffGW: 35 } });
     const fossil = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 31, gasGW: 35.5 }, renewables: { pvGW: 40, windOnGW: 25, windOffGW: 5 } });
     expect(clean.summary.co2IntensityGPerKWh).toBeLessThan(fossil.summary.co2IntensityGPerKWh);
+  });
+
+  it('treats historical load, BEV and heat pumps as independent opt-in demand parts', () => {
+    const historical = runSimulation(sampleHours, baselineScenario);
+    const noHistorical = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, historicalLoad: false } });
+    const bev = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, bev: true } });
+    const heatPump = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true } });
+
+    expect(noHistorical.summary.totalDemandTWh).toBe(0);
+    expect(bev.summary.totalDemandTWh).toBeGreaterThan(historical.summary.totalDemandTWh);
+    expect(heatPump.summary.totalDemandTWh).toBeGreaterThan(historical.summary.totalDemandTWh);
   });
 });
