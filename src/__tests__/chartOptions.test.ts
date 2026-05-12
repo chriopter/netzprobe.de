@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MIX_VISIBILITY, buildMixChartOption } from '../ui/chartOptions';
+import { DEFAULT_MIX_VISIBILITY, buildMixChartOption, buildStorageChartOption } from '../ui/chartOptions';
 import type { SimHour } from '../simulation/engine';
 
 const hour = (loadSheddingGW: number): SimHour => ({
@@ -59,16 +59,22 @@ describe('mix chart options', () => {
     expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
   });
 
-  it('renders the main mix as a radial polar chart', () => {
-    const option = buildMixChartOption([hour(0)]);
-    const series = option.series as Array<Record<string, unknown>>;
+  it('renders the main mix as a radial polar chart by default and can switch back to line mode', () => {
+    const radial = buildMixChartOption([hour(0)]);
+    const linear = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'linie');
+    const radialSeries = radial.series as Array<Record<string, unknown>>;
+    const linearSeries = linear.series as Array<Record<string, unknown>>;
 
-    expect(option.polar).toBeDefined();
-    expect(option.angleAxis).toBeDefined();
-    expect(option.radiusAxis).toBeDefined();
-    expect(option.xAxis).toBeUndefined();
-    expect(series.find((s) => s.name === 'Solar')?.coordinateSystem).toBe('polar');
-    expect(series.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
+    expect(radial.polar).toBeDefined();
+    expect(radial.angleAxis).toBeDefined();
+    expect(radial.radiusAxis).toBeDefined();
+    expect(radial.xAxis).toBeUndefined();
+    expect(radialSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBe('polar');
+    expect(radialSeries.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
+    expect(linear.xAxis).toBeDefined();
+    expect(linear.yAxis).toBeDefined();
+    expect(linear.polar).toBeUndefined();
+    expect(linearSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBeUndefined();
   });
 
   it('orders full-year daily buckets by day of month first and spreads month labels across the axis', () => {
@@ -91,6 +97,20 @@ describe('mix chart options', () => {
     ]);
     expect(angleAxis.data[0]).toBe('Januar');
     expect(angleAxis.data.at(-1)).toBe('Dezember');
+  });
+
+  it('makes storage radial by default and switchable too', () => {
+    const radial = buildStorageChartOption([hour(0)]);
+    const linear = buildStorageChartOption([hour(0)], 'linie');
+    const radialSeries = radial.series as Array<Record<string, unknown>>;
+    const linearSeries = linear.series as Array<Record<string, unknown>>;
+
+    expect(radial.polar).toBeDefined();
+    expect(radial.radiusAxis).toBeDefined();
+    expect(radialSeries.find((s) => s.name === 'Batterie')?.coordinateSystem).toBe('polar');
+    expect(linear.xAxis).toBeDefined();
+    expect(linear.yAxis).toBeDefined();
+    expect(linearSeries.find((s) => s.name === 'Batterie')?.coordinateSystem).toBeUndefined();
   });
 
   it('marks uncovered load as a red area series', () => {

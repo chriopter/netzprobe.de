@@ -4,6 +4,7 @@ import { fmt } from './format';
 
 export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
+export type ChartMode = 'sunburst' | 'linie';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 export const MIX_GROUPS: MixGroup[] = [
@@ -101,19 +102,25 @@ const angleAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
   splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
 });
 
-const radiusAxis = {
+const radiusAxis = (unit = 'GW') => ({
   type: 'value' as const,
-  axisLabel: { color: '#71717a', formatter: '{value} GW' },
+  axisLabel: { color: '#71717a', formatter: `{value} ${unit}` },
   axisLine: { show: false },
   axisTick: { show: false },
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
-};
+});
+
+const yAxis = (unit = 'GW') => ({
+  type: 'value' as const,
+  axisLabel: { color: '#71717a', formatter: `{value} ${unit}` },
+  splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
+});
 
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
-const areaSeries = (name: string, color: string, data: number[]) => ({
+const areaSeries = (name: string, color: string, data: number[], mode: ChartMode) => ({
   name,
   type: 'line' as const,
-  coordinateSystem: 'polar' as const,
+  ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
   stack: 'supply',
   showSymbol: false,
   smooth: false,
@@ -123,9 +130,12 @@ const areaSeries = (name: string, color: string, data: number[]) => ({
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst'): EChartsOption {
   const chartHours = compressHours(hours);
-  const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)))));
+  const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
+  const coordinate = mode === 'sunburst'
+    ? { polar: { center: ['50%', '51%'], radius: ['8%', '78%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
+    : { grid: { left: 44, right: 20, top: 10, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GW') };
   return {
     backgroundColor: 'transparent',
     animation: false,
@@ -154,16 +164,14 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       },
     },
     legend: { show: false },
-    polar: { center: ['50%', '51%'], radius: ['8%', '78%'] },
-    angleAxis: angleAxis(hours, chartHours),
-    radiusAxis,
+    ...coordinate,
     series: [
       ...supplySeries,
-      areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW)),
+      areaSeries('Import', '#a78bfa', chartHours.map((h) => h.importGW), mode),
       {
         name: 'Last',
         type: 'line' as const,
-        coordinateSystem: 'polar' as const,
+        ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
         showSymbol: false,
         smooth: false,
         lineStyle: { width: 2.2 },
@@ -173,7 +181,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       {
         name: 'Unterdeckung',
         type: 'line' as const,
-        coordinateSystem: 'polar' as const,
+        ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
         showSymbol: false,
         smooth: false,
         z: 9,
@@ -187,18 +195,28 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   };
 }
 
-export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
+export function buildStorageChartOption(hours: SimHour[], mode: ChartMode = 'sunburst'): EChartsOption {
   const chartHours = compressHours(hours);
+  const coordinate = mode === 'sunburst'
+    ? { polar: { center: ['50%', '51%'], radius: ['10%', '78%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GWh') }
+    : { grid: { left: 46, right: 20, top: 18, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GWh') };
+  const line = (name: string, color: string, data: number[]) => ({
+    name,
+    type: 'line' as const,
+    ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
+    smooth: false,
+    showSymbol: false,
+    itemStyle: { color },
+    data,
+  });
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
-    grid: { left: 46, right: 20, top: 18, bottom: 48 },
-    xAxis: xAxis(hours, chartHours),
-    yAxis: { type: 'value', axisLabel: { color: '#71717a', formatter: '{value} GWh' }, splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } } },
+    ...coordinate,
     series: [
-      { name: 'Batterie', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#10b981' }, data: chartHours.map(h => h.batteryGWh) },
-      { name: 'H₂', type: 'line', smooth: false, showSymbol: false, itemStyle: { color: '#0891b2' }, data: chartHours.map(h => h.h2GWh) },
+      line('Batterie', '#10b981', chartHours.map(h => h.batteryGWh)),
+      line('H₂', '#0891b2', chartHours.map(h => h.h2GWh)),
     ],
   };
 }

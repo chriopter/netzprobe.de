@@ -5,12 +5,22 @@ import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
-import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixLeafKey, type MixVisibility } from './chartOptions';
+import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+
+const chartModeStorageKey = 'netzprobe.chartMode';
+
+function storedChartMode(): ChartMode {
+  try {
+    return window.localStorage.getItem(chartModeStorageKey) === 'linie' ? 'linie' : 'sunburst';
+  } catch {
+    return 'sunburst';
+  }
+}
 
 const dataFaq = [
   ['last_energy-charts-2025-stuendlich.json', 'Historische deutsche Stromlast 2025 aus Energy-Charts, von 15-Minuten-Werten auf Stunden gemittelt.'],
@@ -61,7 +71,7 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
       chartRef.current = chart;
       cleanupRef.current = () => window.removeEventListener('resize', resize);
     }
-    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true, replaceMerge: ['series'] });
+    chartRef.current.setOption(option, { notMerge: true, lazyUpdate: true });
   }, [id, option]);
 }
 
@@ -182,11 +192,20 @@ export function App() {
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
+  const [chartMode, setChartMode] = useState<ChartMode>(storedChartMode);
   const [faqOpen, setFaqOpen] = useState(false);
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(chartModeStorageKey, chartMode);
+    } catch {
+      // Speicherung ist Komfort, nicht Bedingung.
+    }
+  }, [chartMode]);
 
   const result = useWorkerSimulation(data, scenario);
   useEffect(() => {
@@ -205,8 +224,8 @@ export function App() {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility) : undefined, [sliced, mixVisibility]);
-  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
+  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, chartMode) : undefined, [sliced, mixVisibility, chartMode]);
+  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced, chartMode) : undefined, [sliced, chartMode]);
 
   useChart('mix-chart', mixOption);
   useChart('storage-chart', storageOption);
@@ -228,9 +247,12 @@ export function App() {
       <section className="flex min-w-0 flex-col gap-3 lg:order-2">
         {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
           <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-5">
-            <div className="mb-2 flex shrink-0 items-baseline justify-between gap-3">
-              <h2 className="text-lg font-medium tracking-[-0.03em]">Energiemix vs. Last</h2>
-              <span className={cx(muted, 'text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+            <div className="mb-2 flex shrink-0 items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-medium tracking-[-0.03em]">Energiemix vs. Last</h2>
+                <span className={cx(muted, 'text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+              </div>
+              <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
             <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
             <MixLegend
@@ -311,6 +333,19 @@ export function App() {
       {faqOpen && <DataFaq onClose={() => setFaqOpen(false)}/>} 
     </div>
   </main>;
+}
+
+function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
+  const modes: Array<[ChartMode, string]> = [['sunburst', 'Sunburst'], ['linie', 'Linie']];
+  return <div className="inline-flex shrink-0 rounded-full border border-zinc-200 bg-zinc-50 p-0.5 text-xs" aria-label="Diagrammform wählen">
+    {modes.map(([value, label]) => <button
+      key={value}
+      type="button"
+      aria-pressed={mode === value}
+      className={cx('rounded-full px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white shadow-sm' : 'text-zinc-500 hover:bg-white hover:text-zinc-950')}
+      onClick={() => onChange(value)}
+    >{label}</button>)}
+  </div>;
 }
 
 function DataFaq({ onClose }: { onClose: () => void }) {
