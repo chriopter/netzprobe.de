@@ -30,9 +30,7 @@ jobs:
       - name: Prüfen
         run: npm test
       - name: Bauen
-        run: npm run build
-        env:
-          GITHUB_PAGES: 'true'
+        run: npm run build:pages
       - name: Pages einrichten
         uses: actions/configure-pages@v5
       - name: Artefakt hochladen

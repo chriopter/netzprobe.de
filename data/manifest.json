@@ -9,13 +9,13 @@
     "period": "2025",
     "resolution": "stündlich",
     "unit": "MW",
-    "short": "Stündliche deutsche Stromlast 2025 aus Energy-Charts.",
-    "description": "Historische deutsche Stromlast 2025, aus Energy-Charts-15-Minuten-Werten auf Stunden gemittelt.",
+    "short": "Feste Basislast des Szenarios: Energy-Charts-Last 2025, stündlich gemittelt.",
+    "description": "Historische deutsche Stromlast 2025 aus Energy-Charts public_power. Die 15-Minuten-Werte werden stündlich gemittelt und als feste Lastkurve gegen Erzeugung, Speicher, Import/Export und Unterdeckung geplottet.",
     "fields": [
       { "name": "time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
       { "name": "loadMW", "unit": "MW", "description": "Gemittelte elektrische Last in Deutschland." }
     ],
-    "caveats": ["BEV und Wärmepumpen sind darin nicht separat ausgewiesen; sie sind optionale Zusatzlasten im Modell."]
+    "caveats": []
   },
   {
     "id": "erzeugung.energy-charts.2025.stuendlich",
@@ -57,23 +57,5 @@
       { "name": "wind100m", "unit": "0..1", "description": "Abgeleitete Wind-Verfügbarkeit je Stunde." }
     ],
     "caveats": ["Keine Rohwetterdaten; die Faktoren sind aus beobachteter Einspeisung zurückgerechnet."]
-  },
-  {
-    "id": "quellen.2025",
-    "domain": "quellen",
-    "title": "Quellen 2025",
-    "file": "quellen/2025.json",
-    "doc": "quellen/2025.md",
-    "source": "Projektmetadaten",
-    "period": "2025",
-    "resolution": "Notizen",
-    "unit": "—",
-    "short": "Quellen- und Plausibilitätsnotizen zu den 2025er Datendateien.",
-    "description": "Sammelt verwendete URLs, Ableitungsnotizen und Plausibilitätsstand für die öffentlichen Datendateien.",
-    "fields": [
-      { "name": "sources", "unit": "Liste", "description": "Verwendete Quellen mit URL und Notiz." },
-      { "name": "files", "unit": "Objekt", "description": "Zuordnung der fachlichen Datendateien." }
-    ],
-    "caveats": ["Metadatei, kein Simulationszeitreihen-Datensatz."]
   }
 ]

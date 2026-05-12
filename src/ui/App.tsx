@@ -38,6 +38,7 @@ function storedChartMode(): ChartMode {
 }
 
 const manifestUrl = `${import.meta.env.BASE_URL}data/manifest.json`;
+const dataWikiHomeUrl = () => `${import.meta.env.BASE_URL}?view=daten`;
 const dataWikiUrl = (id: string) => `${import.meta.env.BASE_URL}?view=daten&dataset=${encodeURIComponent(id)}`;
 
 const defaultScenario: Scenario = {
@@ -106,22 +107,11 @@ function setScenarioValue(scenario: Scenario, path: string, value: number): Scen
   return next;
 }
 
-function setScenarioFlag(scenario: Scenario, path: string, value: boolean): Scenario {
-  const next = structuredClone(scenario) as Scenario & Record<string, any>;
-  const parts = path.split('.');
-  let target: Record<string, any> = next;
-  for (const part of parts.slice(0, -1)) target = target[part];
-  target[parts.at(-1)!] = value;
-  next.id = 'eigenes-szenario';
-  next.name = 'Eigenes Szenario';
-  return next;
-}
-
 function normalizeScenario(scenario: Scenario): Scenario {
   return {
     ...scenario,
     demand: {
-      historicalLoad: scenario.demand.historicalLoad ?? true,
+      historicalLoad: true,
       bev: scenario.demand.bev ?? false,
       heatPump: scenario.demand.heatPump ?? false,
       bevPct: scenario.demand.bevPct ?? 10,
@@ -264,7 +254,6 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   useChart('storage-chart', storageOption);
 
   const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
-  const toggleScenario = (path: string, value: boolean) => setScenario(prev => setScenarioFlag(prev, path, value));
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
     setCustomStart(date);
@@ -332,13 +321,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
 
           <DemandSection
             loadMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}
-            scenario={scenario}
             loadDocId="last.energy-charts.2025.stuendlich"
-            onPreset={() => setScenario(defaultScenario)}
-            onToggle={toggleScenario}
-            onChange={update}
-            onTuneStart={() => setIsTuning(true)}
-            onTuneEnd={() => setIsTuning(false)}
           />
 
           <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} sourceDocId="erzeugung.energy-charts.2025.stuendlich" note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
@@ -371,76 +354,125 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
 
 function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const params = new URL(window.location.href).searchParams;
-  const selectedId = params.get('dataset') ?? docs[0]?.id;
-  const selected = docs.find(doc => doc.id === selectedId) ?? docs[0];
+  const selectedId = params.get('dataset');
+  const selected = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
   const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
     (acc[doc.domain] ??= []).push(doc);
     return acc;
   }, {});
+  const sections = [
+    ['last', 'Last'],
+    ['erzeugung', 'Erzeugung'],
+    ['modell', 'Modell'],
+  ] as const;
 
-  return <main className="min-h-screen bg-zinc-50 px-3 py-3 text-zinc-950 sm:px-4 lg:px-6">
-    <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:sticky lg:top-3 lg:h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
-        <a href={import.meta.env.BASE_URL} className="mb-4 inline-flex text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950">← Netzprobe</a>
-        <h1 className="text-2xl font-semibold tracking-[-0.05em]">Datenhandbuch</h1>
-        <p className="mt-1 text-sm leading-5 text-zinc-500">Alle Datensätze aus <code>/data</code>, direkt neben ihren Rohdateien dokumentiert.</p>
-        <nav className="mt-5 grid gap-4">
-          {Object.entries(grouped).map(([domain, items]) => <section key={domain}>
-            <h2 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{domain}</h2>
-            <div className="grid gap-1">
-              {items.map(doc => <a key={doc.id} href={dataWikiUrl(doc.id)} className={cx('rounded-lg px-3 py-2 text-sm transition', selected?.id === doc.id ? 'bg-zinc-950 text-white' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950')}>
-                {doc.title}
-              </a>)}
+  return <main className="min-h-screen bg-white px-3 py-3 text-zinc-950 sm:px-4 lg:px-6">
+    <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+      <aside className="border-r border-zinc-200 pr-4 lg:sticky lg:top-3 lg:h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
+        <div className="pb-4">
+          <a href={import.meta.env.BASE_URL} className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950">Netzprobe</a>
+          <h1 className="mt-3 text-xl font-semibold tracking-[-0.04em]">Datenhandbuch</h1>
+          <p className="mt-1 text-sm leading-5 text-zinc-500">Datensätze aus <code>data/</code>.</p>
+        </div>
+        <div>
+          <nav aria-label="Datensätze">
+            <div className="grid gap-3">
+              <TreeSection title="Home">
+                <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
+              </TreeSection>
+              {sections.map(([domain, label]) => grouped[domain]?.length ? <TreeSection key={domain} title={label}>
+                {grouped[domain].map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+              </TreeSection> : null)}
             </div>
-          </section>)}
-        </nav>
+          </nav>
+        </div>
       </aside>
-      <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:p-7">
-        {!selected ? <p className="text-zinc-500">Lade Datenhandbuch …</p> : <>
-          <div className="border-b border-zinc-100 pb-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{selected.domain}</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-[-0.06em]">{selected.title}</h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600">{selected.description}</p>
+      <article className="min-w-0 pb-12">
+        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selected ? <p className="p-5 text-zinc-500">Datensatz nicht gefunden.</p> : !selected ? <DataHandbookHome docs={docs}/> : <>
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">{selected.domain}</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{selected.title}</h1>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
+            <section className="mt-8">
+              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Kurzinfo</h2>
+              <dl className="mt-3 grid gap-1 text-sm leading-6">
+                <InfoLine label="Quelle" value={selected.source}/>
+                <InfoLine label="Zeitraum" value={selected.period}/>
+                <InfoLine label="Auflösung" value={selected.resolution}/>
+                <InfoLine label="Einheit" value={selected.unit}/>
+              </dl>
+            </section>
+            <section className="mt-8">
+              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">
+                <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+                  <code>data/{selected.file}</code>
+                </a>
+              </h2>
+              <dl className="mt-3 grid gap-3">
+                {selected.fields.map(field => <div key={field.name} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
+                  <dt><code>{field.name}</code></dt>
+                  <dd className="text-zinc-500">{field.unit}</dd>
+                  <dd className="leading-5 text-zinc-700">{field.description}</dd>
+                </div>)}
+              </dl>
+            </section>
+            {!!selected.caveats?.length && <section className="mt-8">
+              <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Hinweise</h2>
+              <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+                {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
+              </ul>
+            </section>}
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Fact label="Quelle" value={selected.source}/>
-            <Fact label="Zeitraum" value={selected.period}/>
-            <Fact label="Auflösung" value={selected.resolution}/>
-            <Fact label="Einheit" value={selected.unit}/>
-          </div>
-          <section className="mt-7">
-            <h2 className="text-lg font-medium tracking-[-0.03em]">Dateien</h2>
-            <div className="mt-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 text-sm">
-              <code className="break-all text-zinc-800">data/{selected.file}</code>
-              <code className="break-all text-zinc-500">data/{selected.doc}</code>
-            </div>
-          </section>
-          <section className="mt-7">
-            <h2 className="text-lg font-medium tracking-[-0.03em]">Felder</h2>
-            <div className="mt-3 overflow-hidden rounded-xl border border-zinc-200">
-              {selected.fields.map(field => <div key={field.name} className="grid gap-1 border-b border-zinc-100 p-3 last:border-b-0 sm:grid-cols-[190px_100px_1fr]">
-                <code className="text-sm text-zinc-900">{field.name}</code>
-                <span className="text-xs text-zinc-500">{field.unit}</span>
-                <span className="text-sm leading-5 text-zinc-600">{field.description}</span>
-              </div>)}
-            </div>
-          </section>
-          {!!selected.caveats?.length && <section className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <h2 className="text-sm font-semibold text-amber-900">Hinweise</h2>
-            <ul className="mt-2 grid gap-1 text-sm leading-6 text-amber-900/80">
-              {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
-            </ul>
-          </section>}
         </>}
       </article>
     </div>
   </main>;
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
-    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">{label}</span>
-    <strong className="mt-1 block text-sm font-medium text-zinc-950">{value}</strong>
+function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
+  return <div>
+    <div>
+      <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">data/</p>
+      <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">Datenhandbuch</h1>
+      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">Dokumentation der Datensätze, die die Simulation direkt aus dem statischen <code>data/</code>-Ordner lädt.</p>
+    </div>
+    <section className="mt-8">
+      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Datensätze</h2>
+      <ul className="mt-3 grid gap-2 text-sm leading-6">
+        {docs.map(doc => <li key={doc.id}>
+          <a href={dataWikiUrl(doc.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{doc.title}</a>
+          <span className="text-zinc-500"> — {doc.short}</span>
+        </li>)}
+      </ul>
+    </section>
+  </div>;
+}
+
+function TreeSection({ title, children }: { title: string; children: ReactNode }) {
+  return <section>
+    <h2 className="pb-1 text-[11px] font-semibold text-zinc-950">{title}</h2>
+    <div className="ml-1 grid gap-0.5 border-l border-zinc-200 pl-3">
+      {children}
+    </div>
+  </section>;
+}
+
+function TreeNode({ href, label, selected }: { href: string; label: string; selected: boolean }) {
+  return <a
+    href={href}
+    className={cx(
+      'block py-0.5 text-sm transition',
+      selected ? 'font-medium text-zinc-950' : 'text-zinc-600 hover:text-zinc-950',
+    )}
+  >
+    <span className="block truncate">{label}</span>
+  </a>;
+}
+
+function InfoLine({ label, value }: { label: string; value: string }) {
+  return <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+    <dt className="font-medium text-zinc-950">{label}</dt>
+    <dd className="text-zinc-700">{value}</dd>
   </div>;
 }
 
@@ -587,44 +619,25 @@ function Control({ rows, onChange, onTuneStart, onTuneEnd, disabled = false }: {
   </div>;
 }
 
-function DemandSection({ loadMeta, scenario, loadDocId, onPreset, onToggle, onChange, onTuneStart, onTuneEnd }: { loadMeta?: string; scenario: Scenario; loadDocId?: string; onPreset: () => void; onToggle: (path: string, value: boolean) => void; onChange: (path: string, value: number) => void; onTuneStart: () => void; onTuneEnd: () => void }) {
+function DemandSection({ loadMeta, loadDocId }: { loadMeta?: string; loadDocId?: string }) {
   return <section className={cx(sectionBox, 'p-3')}>
     <div className="flex items-center justify-between gap-3">
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Last</span>
-      <button className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950" type="button" onClick={onPreset}>Standard</button>
     </div>
     <div className="mt-3 grid gap-3 border-t border-zinc-100 pt-3">
-      <DemandItem
-        label="Energy-Charts 2025"
-        meta={loadMeta ?? 'Historische Last'}
+      <FixedDemandSource
+        label="2025 Historisch"
+        meta={`Energy-Charts${loadMeta ? ` · ${loadMeta}` : ''}`}
         docId={loadDocId}
-        checked={scenario.demand.historicalLoad}
-        onChecked={(checked) => onToggle('demand.historicalLoad', checked)}
       />
-      <DemandItem
-        label="BEV-Zusatz"
-        meta="Modellierte Zusatzlast"
-        checked={scenario.demand.bev}
-        onChecked={(checked) => onToggle('demand.bev', checked)}
-      >
-        <Control rows={[["Durchdringung", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%']]} onChange={onChange} onTuneStart={onTuneStart} onTuneEnd={onTuneEnd} disabled={!scenario.demand.bev}/>
-      </DemandItem>
-      <DemandItem
-        label="Wärmepumpen-Zusatz"
-        meta="Wintergewichtet modelliert"
-        checked={scenario.demand.heatPump}
-        onChecked={(checked) => onToggle('demand.heatPump', checked)}
-      >
-        <Control rows={[["Durchdringung", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={onChange} onTuneStart={onTuneStart} onTuneEnd={onTuneEnd} disabled={!scenario.demand.heatPump}/>
-      </DemandItem>
     </div>
   </section>;
 }
 
-function DemandItem({ label, meta, checked, onChecked, docId, children }: { label: string; meta: string; checked: boolean; onChecked: (checked: boolean) => void; docId?: string; children?: ReactNode }) {
+function FixedDemandSource({ label, meta, docId }: { label: string; meta: string; docId?: string }) {
   return <section className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5">
-    <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-950">
-      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={checked} onChange={event => onChecked(event.target.checked)} />
+    <label className="flex items-start gap-2 text-sm text-zinc-950">
+      <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
       <span className="grid flex-1 gap-0.5">
         <span className="flex items-center justify-between gap-2">
           <span>{label}</span>
@@ -633,7 +646,6 @@ function DemandItem({ label, meta, checked, onChecked, docId, children }: { labe
         <span className="text-xs text-zinc-500">{meta}</span>
       </span>
     </label>
-    {children && <div className="mt-2 border-t border-zinc-200/80 pt-2">{children}</div>}
   </section>;
 }
 
