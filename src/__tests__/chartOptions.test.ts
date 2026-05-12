@@ -59,7 +59,7 @@ describe('mix chart options', () => {
     expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
   });
 
-  it('orders full-year daily buckets by day of month first, then month', () => {
+  it('orders full-year daily buckets by day of month first and labels first-day ticks by month', () => {
     const yearHours: SimHour[] = [];
     for (let month = 0; month < 12; month += 1) {
       const days = new Date(Date.UTC(2025, month + 1, 0)).getUTCDate();
@@ -72,9 +72,9 @@ describe('mix chart options', () => {
     const xAxis = option.xAxis as { data: string[] };
 
     expect(xAxis.data.slice(0, 13)).toEqual([
-      '01.01.', '01.02.', '01.03.', '01.04.', '01.05.', '01.06.',
-      '01.07.', '01.08.', '01.09.', '01.10.', '01.11.', '01.12.',
-      '02.01.',
+      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+      '',
     ]);
   });
 

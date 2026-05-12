@@ -136,17 +136,9 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 }
 
 function generationMeta(data: DataSet | null) {
-  if (!data?.generationSharesPct) return undefined;
-  const generation = data.generationSumTWh ? twh(data.generationSumTWh) : '—';
-  const imported = data.importSumTWh ? twh(data.importSumTWh) : '—';
-  const parts = data.generationPartsTWh;
-  return <>
-    <span>{generation} Erzeugung · {imported} Import</span>
-    <span>{pct(data.generationSharesPct.generationPct ?? 0)} Erzeugung · {pct(data.generationSharesPct.importPct ?? 0)} Import</span>
-    {parts && <span>PV {twh(parts.pvTWh)} · Wind Land {twh(parts.windOnTWh)} · Wind See {twh(parts.windOffTWh)}</span>}
-    {parts && <span>Kohle {twh(parts.coalTWh)} · Gas {twh(parts.gasTWh)} · Wasser {twh(parts.hydroTWh)} · Biomasse {twh(parts.biomassTWh)}</span>}
-    {parts && <span>Müll {twh(parts.wasteTWh)} · Öl {twh(parts.oilTWh)} · Geo {twh(parts.geothermalTWh)} · Sonstige {twh(parts.otherTWh)}</span>}
-  </>;
+  const generation = data?.generationSumTWh ? twh(data.generationSumTWh) : '—';
+  const imported = data?.importSumTWh ? twh(data.importSumTWh) : '—';
+  return `${generation} Erzeugung · ${imported} Import`;
 }
 
 export function App() {
@@ -158,7 +150,6 @@ export function App() {
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
-  const [openMixGroups, setOpenMixGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -210,10 +201,7 @@ export function App() {
             <div id="mix-chart" className="min-h-0 flex-1 w-full"/>
             <MixLegend
               visibility={mixVisibility}
-              openGroups={openMixGroups}
-              onToggleGroup={(groupId, checked) => setMixVisibility(prev => setGroupVisibility(prev, groupId, checked))}
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
-              onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
             />
           </ChartPanel>
 
@@ -243,11 +231,11 @@ export function App() {
             onEnd={setQuickEnd}
           />
 
-          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined}>
+          <ControlSection title="Last" sourceLabel="Energy-Charts 2025" sourceMeta={data?.loadSumTWh ? twh(data.loadSumTWh) : undefined} onPreset={() => setScenario(defaultScenario)}>
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
 
-          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
+          <ControlSection title="Erzeugung" sourceLabel="Energy-Charts 2025" sourceMeta={generationMeta(data)} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte." onPreset={() => setScenario(defaultScenario)}>
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 0, 250, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 0, 250, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 250, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 250, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 250, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 1200, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 250, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 250, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
@@ -285,47 +273,16 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
   </section>;
 }
 
-function setGroupVisibility(visibility: MixVisibility, groupId: string, checked: boolean) {
-  const group = MIX_GROUPS.find(item => item.id === groupId);
-  if (!group) return visibility;
-  const next = { ...visibility };
-  for (const leaf of group.leaves) next[leaf.key] = checked;
-  return next;
-}
-
-function MixLegend({ visibility, openGroups, onToggleGroup, onToggleLeaf, onToggleOpen }: { visibility: MixVisibility; openGroups: Record<string, boolean>; onToggleGroup: (groupId: string, checked: boolean) => void; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleOpen: (groupId: string) => void }) {
-  return <div className="mt-3 grid gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
-    <div className="flex flex-wrap gap-2">
-      {MIX_GROUPS.map(group => {
-        const active = group.leaves.filter(leaf => visibility[leaf.key]).length;
-        const checked = active === group.leaves.length;
-        const partial = active > 0 && !checked;
-        return <div key={group.id} className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
-          <div className="flex items-center gap-2">
-            <input
-              className="accent-indigo-600"
-              type="checkbox"
-              checked={checked}
-              ref={(el) => { if (el) el.indeterminate = partial; }}
-              onChange={event => onToggleGroup(group.id, event.target.checked)}
-            />
-            <button className="flex items-center gap-1 text-left text-zinc-800 hover:text-zinc-950" type="button" onClick={() => onToggleOpen(group.id)}>
-              <span aria-hidden style={{ color: group.color }}>●</span>
-              <span>{group.label}</span>
-              <span className="text-zinc-500">{openGroups[group.id] ? '▾' : '▸'}</span>
-            </button>
-          </div>
-          {openGroups[group.id] && <div className="mt-1 grid gap-1 pl-6 text-zinc-600">
-            {group.leaves.map(leaf => <label key={leaf.key} className="flex items-center gap-2 hover:text-zinc-800">
-              <input className="accent-indigo-600" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
-              <span aria-hidden style={{ color: leaf.color }}>●</span>
-              <span>{leaf.label}</span>
-            </label>)}
-          </div>}
-        </div>;
-      })}
+function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
+  const leaves = MIX_GROUPS.flatMap(group => group.leaves);
+  return <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-xs">
+    <div className="flex flex-wrap gap-x-3 gap-y-2">
+      {leaves.map(leaf => <label key={leaf.key} className="flex cursor-pointer items-center gap-1.5 text-zinc-700 hover:text-zinc-950">
+        <input className="accent-indigo-600" type="checkbox" checked={visibility[leaf.key]} onChange={event => onToggleLeaf(leaf.key, event.target.checked)} />
+        <span aria-hidden style={{ color: leaf.color }}>●</span>
+        <span>{leaf.label}</span>
+      </label>)}
     </div>
-    <span className="text-zinc-500">Gruppen steuern die sichtbaren Einzelflächen im Graph.</span>
   </div>;
 }
 
@@ -339,17 +296,14 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function ControlSection({ title, sourceValue, sourceLabel, sourceMeta, note, children }: { title: string; sourceValue: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; children: ReactNode }) {
+function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, children }: { title: string; sourceLabel: string; sourceMeta?: ReactNode; note?: string; onPreset: () => void; children: ReactNode }) {
   return <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
     <div className="grid gap-2">
       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">{title}</span>
-      <label className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950">
-        <input className="mt-0.5 accent-indigo-600" type="radio" name={`${title}-quelle`} value={sourceValue} checked readOnly />
-        <span className="grid gap-0.5">
-          <span>{sourceLabel}</span>
-          {sourceMeta && <span className="grid gap-0.5 text-xs text-zinc-500">{sourceMeta}</span>}
-        </span>
-      </label>
+      <button className="grid gap-0.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left text-sm text-zinc-950 transition hover:border-zinc-300 hover:bg-zinc-50" type="button" onClick={onPreset}>
+        <span>{sourceLabel}</span>
+        {sourceMeta && <span className="text-xs text-zinc-500">{sourceMeta}</span>}
+      </button>
     </div>
     <div className="mt-3 grid gap-4 border-t border-zinc-200 pt-3">
       {children}
