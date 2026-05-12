@@ -31,27 +31,8 @@ const hour = (loadSheddingGW: number): SimHour => ({
 });
 
 describe('mix chart options', () => {
-  it('orders combined supply groups from firm lower layers to solar top layer', () => {
+  it('orders visible supply leaves like Energy-Charts from firm lower layers to solar top layer', () => {
     const option = buildMixChartOption([hour(0)]);
-    const series = option.series as Array<Record<string, unknown>>;
-    expect(series.slice(0, 4).map((s) => s.name)).toEqual([
-      'CO₂-freie Grundlast',
-      'Fossil',
-      'Wind',
-      'Solar',
-    ]);
-  });
-
-  it('keeps plotted areas combined while summing visible leaves', () => {
-    const visibility = { ...DEFAULT_MIX_VISIBILITY, coalGW: false };
-    const option = buildMixChartOption([hour(0)], visibility);
-    const series = option.series as Array<Record<string, unknown>>;
-    const fossil = series.find((s) => s.name === 'Fossil');
-    expect(fossil?.data).toEqual([6.9]);
-  });
-
-  it('splits grouped areas into leaf series on hover mode', () => {
-    const option = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'split');
     const series = option.series as Array<Record<string, unknown>>;
     expect(series.slice(0, 11).map((s) => s.name)).toEqual([
       'Wasser',
@@ -66,6 +47,14 @@ describe('mix chart options', () => {
       'Wind an Land',
       'Solar',
     ]);
+  });
+
+  it('keeps hidden leaves out of the plotted stack', () => {
+    const visibility = { ...DEFAULT_MIX_VISIBILITY, coalGW: false };
+    const option = buildMixChartOption([hour(0)], visibility);
+    const series = option.series as Array<Record<string, unknown>>;
+    expect(series.map((s) => s.name)).not.toContain('Kohle');
+    expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
   });
 
   it('marks uncovered load as a red area series', () => {

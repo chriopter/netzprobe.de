@@ -4,7 +4,6 @@ import { fmt } from './format';
 
 export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
-export type MixDisplayMode = 'grouped' | 'split';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 export const MIX_GROUPS: MixGroup[] = [
@@ -51,7 +50,6 @@ const compressHours = (hours: SimHour[], maxPoints = 365) => {
 };
 
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
-const groupValue = (hour: SimHour, group: MixGroup, visibility: MixVisibility) => group.leaves.reduce((sum, leaf) => sum + (visibility[leaf.key] ? valueOf(hour, leaf.key) : 0), 0);
 const areaSeries = (name: string, color: string, data: number[]) => ({
   name,
   type: 'line' as const,
@@ -64,11 +62,9 @@ const areaSeries = (name: string, color: string, data: number[]) => ({
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: MixDisplayMode = 'grouped'): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY): EChartsOption {
   const chartHours = compressHours(hours);
-  const supplySeries = mode === 'split'
-    ? MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)))))
-    : MIX_GROUPS.map(group => areaSeries(group.label, group.color, chartHours.map(h => groupValue(h, group, visibility))));
+  const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)))));
   return {
     backgroundColor: 'transparent',
     animation: false,
@@ -86,7 +82,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         for (const group of MIX_GROUPS) {
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
-          const total = groupValue(hour, group, visibility);
+          const total = active.reduce((sum, leaf) => sum + valueOf(hour, leaf.key), 0);
           const detail = active.map(leaf => `<span style="color:${leaf.color}">●</span> ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
           lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
         }

@@ -5,7 +5,7 @@ import { loadDefaultData } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
-import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixDisplayMode, type MixLeafKey, type MixVisibility } from './chartOptions';
+import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
 
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
@@ -159,7 +159,6 @@ export function App() {
   const [isTuning, setIsTuning] = useState(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
   const [openMixGroups, setOpenMixGroups] = useState<Record<string, boolean>>({});
-  const [mixMode, setMixMode] = useState<MixDisplayMode>('grouped');
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -182,7 +181,7 @@ export function App() {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, mixMode) : undefined, [sliced, mixVisibility, mixMode]);
+  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility) : undefined, [sliced, mixVisibility]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
   useChart('mix-chart', mixOption);
@@ -247,7 +246,7 @@ export function App() {
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
               onToggleOpen={(groupId) => setOpenMixGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))}
             />
-            <div id="mix-chart" className="h-[340px] w-full sm:h-[420px]" onMouseEnter={() => setMixMode('split')} onMouseLeave={() => setMixMode('grouped')} onFocus={() => setMixMode('split')} onBlur={() => setMixMode('grouped')} tabIndex={0}/>
+            <div id="mix-chart" className="h-[680px] w-full sm:h-[840px]"/>
           </ChartPanel>
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
