@@ -15,11 +15,11 @@ type SimulationWorkerResponse = { requestId: number; result: SimulationResult; e
 const defaultScenario: Scenario = {
   id: 'eigenes-szenario',
   name: 'Eigenes Szenario',
-  description: 'Direkt einstellbares Szenario mit runden Startwerten.',
+  description: 'Energy-Charts-naher Startwert 2025; direkt einstellbar.',
   demand: { basePct: 100, bevPct: 10, heatPumpPct: 10 },
-  renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
-  fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
-  storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
+  renewables: { pvGW: 100.5, windOnGW: 65.5, windOffGW: 9.5 },
+  fossil: { coalGW: 35, gasGW: 36, nuclearGW: 0 },
+  storage: { batteryPowerGW: 15, batteryEnergyGWh: 22, h2PowerGW: 0, h2EnergyGWh: 0, importLimitGW: 16 },
 };
 
 const shell = 'min-h-screen px-3 py-3 sm:px-4 lg:px-6';
@@ -196,7 +196,7 @@ export function App() {
 
           <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel={`Energy-Charts 2025${data?.generationSumTWh ? ` · ${twh(data.generationSumTWh)}` : ''}`} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
+            <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ P", 'storage.h2PowerGW', scenario.storage.h2PowerGW, 0, 80, 'GW'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
         </div>
       </aside>
