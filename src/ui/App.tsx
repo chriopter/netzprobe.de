@@ -266,12 +266,9 @@ function ScenarioSelect<T extends { id: string; name: string }>({ title, value, 
         {presets.map(preset => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
       </select>
     </label>
-    <details className="group mt-2">
-      <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Feinwerte</summary>
-      <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
-        {children}
-      </div>
-    </details>
+    <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
+      {children}
+    </div>
   </section>;
 }
 
