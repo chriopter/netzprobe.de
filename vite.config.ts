@@ -6,22 +6,28 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
-const dataDir = resolve(rootDir, 'data');
+const dataMounts = ['data_last', 'data_erzeugung', 'data_modellfaktoren', 'data_quellen'];
 
 function topLevelData(): Plugin {
   return {
     name: 'top-level-data',
     configureServer(server) {
-      server.middlewares.use('/data', (req, res, next) => {
-        const requested = normalize(decodeURIComponent(req.url?.split('?')[0] ?? '/'));
-        const filePath = join(dataDir, requested);
-        if (!filePath.startsWith(dataDir) || !existsSync(filePath) || !statSync(filePath).isFile()) return next();
-        res.setHeader('Content-Type', extname(filePath) === '.json' ? 'application/json; charset=utf-8' : 'application/octet-stream');
-        res.end(readFileSync(filePath));
-      });
+      for (const mount of dataMounts) {
+        const sourceDir = resolve(rootDir, mount);
+        server.middlewares.use(`/${mount}`, (req, res, next) => {
+          const requested = normalize(decodeURIComponent(req.url?.split('?')[0] ?? '/'));
+          const filePath = join(sourceDir, requested);
+          if (!filePath.startsWith(sourceDir) || !existsSync(filePath) || !statSync(filePath).isFile()) return next();
+          res.setHeader('Content-Type', extname(filePath) === '.json' ? 'application/json; charset=utf-8' : 'application/octet-stream');
+          res.end(readFileSync(filePath));
+        });
+      }
     },
     closeBundle() {
-      if (existsSync(dataDir)) cpSync(dataDir, resolve(rootDir, 'dist/data'), { recursive: true });
+      for (const mount of dataMounts) {
+        const sourceDir = resolve(rootDir, mount);
+        if (existsSync(sourceDir)) cpSync(sourceDir, resolve(rootDir, `dist/${mount}`), { recursive: true });
+      }
     },
   };
 }

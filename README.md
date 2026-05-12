@@ -8,7 +8,9 @@ Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation l
 
 ## Anspruch
 
-KISS: statisch hostbar, schnell bedienbar, Daten offen und getrennt im Repo. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
+KISS: statisch hostbar, schnell bedienbar, Daten offen und nach Art getrennt (`data_last`, `data_erzeugung`, `data_modellfaktoren`, `data_quellen`). UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
+
+`data_modellfaktoren` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für Szenariorechnung.
 
 ## Vorsicht
 

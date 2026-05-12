@@ -282,7 +282,7 @@ export function App() {
             </div>
           </div>
           <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
-            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer">GitHub</a>.
           </footer>
         </>}
       </section>
@@ -318,7 +318,7 @@ function SourceScenarioCard() {
     </select>
     <details className="group mt-2">
       <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Details</summary>
-      <p className="mt-2 text-xs leading-5 text-zinc-500">Last, Erzeugung und Modellfaktoren getrennt.</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">Last, Erzeugung und abgeleitete Modellfaktoren getrennt.</p>
     </details>
   </section>;
 }
