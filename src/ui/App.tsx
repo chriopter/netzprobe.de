@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { Activity, BatteryCharging, CloudSun, Download, Gauge, ShieldCheck, Zap } from 'lucide-react';
-import { loadDefaultData } from '../data/loaders';
-import type { DataSet } from '../data/types';
-import { baselineScenario, scenarioPresets } from '../scenarios/baseline';
-import type { Scenario } from '../scenarios/types';
+import { loadDefaultData } from '../loaders/defaultData';
+import type { DataSet } from '../types/data';
+import { baselineScenario, scenarioPresets } from '../../scenarios/baseline';
+import type { Scenario } from '../../scenarios/types';
 import { runSimulation } from '../simulation/engine';
 import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt, fmt0, gw, pct, twh } from './format';

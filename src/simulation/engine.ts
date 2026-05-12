@@ -1,5 +1,5 @@
-import type { HourlyInput } from '../data/types';
-import type { Scenario } from '../scenarios/types';
+import type { HourlyInput } from '../types/data';
+import type { Scenario } from '../../scenarios/types';
 import { BASE_BEV, BASE_HEATPUMP, BATTERY_ETA, BIOMASS_GW, COAL_MIN_REL, EMISSIONS, FOSSIL_AVAILABILITY, GAS_MIN_REL, H2_ETA, LOAD_100_BEV_GW, LOAD_100_HEATPUMP_WINTER_GW, RUN_OF_RIVER_GW, SOLAR_FRACTIONS, WIND_OFF_FRACTIONS, WIND_ON_FRACTIONS } from './constants';
 
 export type SimHour = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../simulation/engine';
-import { baselineScenario } from '../scenarios/baseline';
-import type { HourlyInput } from '../data/types';
+import { baselineScenario } from '../../scenarios/baseline';
+import type { HourlyInput } from '../types/data';
 
 const sampleHours: HourlyInput[] = [
   { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [8, 7, 10, 9, 12, 11], observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },

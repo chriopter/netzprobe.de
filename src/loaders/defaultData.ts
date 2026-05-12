@@ -1,4 +1,4 @@
-import type { DataSet } from './types';
+import type { DataSet } from '../types/data';
 
 export async function loadDefaultData(): Promise<DataSet> {
   const response = await fetch('/data/de-2025-hourly.json');
