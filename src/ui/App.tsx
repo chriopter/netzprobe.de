@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { AlertTriangle, Banknote, Gauge, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
-import { composeScenario, loadScenarioPresets } from '../loaders/scenarios';
 import type { DataSet } from '../types/data';
-import type { DemandScenario, Scenario, ScenarioPresets, SupplyScenario } from '../types/scenario';
+import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
 import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { fmt0, gw, pct, twh } from './format';
@@ -12,6 +11,16 @@ import { fmt0, gw, pct, twh } from './format';
 type ControlRow = [label: string, path: string, value: number, min: number, max: number, unit: string];
 type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+
+const defaultScenario: Scenario = {
+  id: 'eigenes-szenario',
+  name: 'Eigenes Szenario',
+  description: 'Direkt einstellbares Szenario mit runden Startwerten.',
+  demand: { basePct: 100, bevPct: 10, heatPumpPct: 10 },
+  renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
+  fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
+  storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
+};
 
 const shell = 'min-h-screen px-3 py-3 sm:px-4 lg:px-6';
 const panel = 'rounded-2xl border border-white/10 bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,.04),0_18px_60px_rgba(0,0,0,.28)]';
@@ -68,26 +77,6 @@ function setScenarioValue(scenario: Scenario, path: string, value: number): Scen
   return next;
 }
 
-function setDemandScenario(scenario: Scenario, demand: Scenario['demand']): Scenario {
-  return { ...structuredClone(scenario), id: 'eigenes-szenario', name: 'Eigenes Szenario', demand: structuredClone(demand) };
-}
-
-function setSupplyScenario(scenario: Scenario, values: SupplyScenario['values']): Scenario {
-  return { ...structuredClone(scenario), id: 'eigenes-szenario', name: 'Eigenes Szenario', ...structuredClone(values) };
-}
-
-function isEqual(left: unknown, right: unknown) {
-  return JSON.stringify(left) === JSON.stringify(right);
-}
-
-function matchingDemandId(demand: Scenario['demand'], demandScenarios: DemandScenario[]) {
-  return demandScenarios.find(preset => isEqual(preset.values, demand))?.id ?? 'custom';
-}
-
-function matchingSupplyId(scenario: Scenario, supplyScenarios: SupplyScenario[]) {
-  return supplyScenarios.find(preset => isEqual(preset.values.renewables, scenario.renewables) && isEqual(preset.values.fossil, scenario.fossil) && isEqual(preset.values.storage, scenario.storage))?.id ?? 'custom';
-}
-
 function addDays(date: string, days: number) {
   const next = new Date(`${date}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + days);
@@ -105,7 +94,7 @@ function periodDates(preset: PeriodPreset, start: string, end: string) {
   return { start, end: end < start ? start : end };
 }
 
-function useWorkerSimulation(data: DataSet | null, scenario: Scenario | null) {
+function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
@@ -127,7 +116,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario | null) {
 
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !data || !scenario) return;
+    if (!worker || !data) return;
     hasDataRef.current = true;
     const requestId = ++requestRef.current;
     worker.postMessage({ type: 'init', requestId, input: data.hours, scenario });
@@ -135,7 +124,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario | null) {
 
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !hasDataRef.current || !scenario) return;
+    if (!worker || !hasDataRef.current) return;
     const timer = window.setTimeout(() => {
       const requestId = ++requestRef.current;
       worker.postMessage({ type: 'run', requestId, scenario });
@@ -148,8 +137,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario | null) {
 
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenarioPresets, setScenarioPresets] = useState<ScenarioPresets | null>(null);
-  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? defaultScenario);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('21d');
   const [customStart, setCustomStart] = useState('2025-01-01');
   const [customEnd, setCustomEnd] = useState('2025-01-21');
@@ -158,15 +146,9 @@ export function App() {
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
-    loadScenarioPresets().then((presets) => {
-      setScenarioPresets(presets);
-      setScenario(scenarioFromUrl() ?? composeScenario(presets.demand[0], presets.supply[0]));
-    }).catch(console.error);
   }, []);
 
   const result = useWorkerSimulation(data, scenario);
-  const demandScenarios = scenarioPresets?.demand ?? [];
-  const supplyScenarios = scenarioPresets?.supply ?? [];
   useEffect(() => {
     if (!result || chartResult === result || isTuning) return;
     if (!chartResult) {
@@ -189,15 +171,7 @@ export function App() {
   useChart('mix-chart', mixOption);
   useChart('storage-chart', storageOption);
 
-  const update = (path: string, value: number) => setScenario(prev => prev ? setScenarioValue(prev, path, value) : prev);
-  const selectDemand = (id: string) => {
-    const preset = demandScenarios.find(item => item.id === id);
-    if (preset) setScenario(prev => prev ? setDemandScenario(prev, preset.values) : prev);
-  };
-  const selectSupply = (id: string) => {
-    const preset = supplyScenarios.find(item => item.id === id);
-    if (preset) setScenario(prev => prev ? setSupplyScenario(prev, preset.values) : prev);
-  };
+  const update = (path: string, value: number) => setScenario(prev => setScenarioValue(prev, path, value));
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
     setCustomStart(date);
@@ -208,10 +182,6 @@ export function App() {
     setCustomEnd(date < customStart ? customStart : date);
   };
 
-  if (!scenario || !scenarioPresets) {
-    return <main className={shell}><div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div></main>;
-  }
-
   return <main className={shell}>
     <div className="mx-auto grid w-full max-w-[1540px] gap-3 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
       <aside className={cx(panel, 'lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
@@ -220,26 +190,16 @@ export function App() {
         </div>
 
         <div className="space-y-3 p-4">
-          <SourceScenarioCard />
+          <DataSourceCard />
 
-          <ScenarioSelect
-            title="Nachfrage"
-            value={scenario ? matchingDemandId(scenario.demand, demandScenarios) : ''}
-            presets={demandScenarios}
-            onSelect={selectDemand}
-          >
+          <ControlSection title="Last">
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-          </ScenarioSelect>
+          </ControlSection>
 
-          <ScenarioSelect
-            title="Netz & Erzeugung"
-            value={scenario ? matchingSupplyId(scenario, supplyScenarios) : ''}
-            presets={supplyScenarios}
-            onSelect={selectSupply}
-          >
+          <ControlSection title="Erzeugung & Netz">
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
-          </ScenarioSelect>
+          </ControlSection>
         </div>
       </aside>
 
@@ -307,28 +267,33 @@ function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: s
   </div>;
 }
 
-function SourceScenarioCard() {
+function DataSourceCard() {
   return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Quelle</h2>
-    <select className={field} value="energy-charts-2025" disabled>
-      <option value="energy-charts-2025">Energy-Charts 2025</option>
-    </select>
+    <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">Daten</h2>
+    <div className="grid gap-2">
+      <label className="grid gap-1">
+        <span className="text-xs text-zinc-400">Last</span>
+        <select className={field} value="last_energy-charts-2025" disabled>
+          <option value="last_energy-charts-2025">Energy-Charts 2025</option>
+        </select>
+      </label>
+      <label className="grid gap-1">
+        <span className="text-xs text-zinc-400">Erzeugung</span>
+        <select className={field} value="erzeugung_energy-charts-2025" disabled>
+          <option value="erzeugung_energy-charts-2025">Energy-Charts 2025</option>
+        </select>
+      </label>
+    </div>
     <details className="group mt-2">
       <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Details</summary>
-      <p className="mt-2 text-xs leading-5 text-zinc-500">Last, Erzeugung und abgeleitete Modellfaktoren getrennt.</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">Modellfaktoren sind abgeleitete Solar-/Wind-Verfügbarkeiten, keine Rohwetterdaten.</p>
     </details>
   </section>;
 }
 
-function ScenarioSelect<T extends { id: string; name: string }>({ title, value, presets, onSelect, children }: { title: string; value: string; presets: T[]; onSelect: (id: string) => void; children: ReactNode }) {
+function ControlSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <label className="grid gap-2">
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</span>
-      <select className={field} value={value} onChange={event => onSelect(event.target.value)}>
-        {value === 'custom' && <option value="custom">Eigenes Szenario</option>}
-        {presets.map(preset => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
-      </select>
-    </label>
+    <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300">{title}</h2>
     <div className="mt-3 grid gap-4 border-t border-white/10 pt-3">
       {children}
     </div>

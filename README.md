@@ -1,6 +1,6 @@
 # Netzprobe
 
-Kompakte Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
+Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
 ## Stack
 
@@ -10,7 +10,7 @@ Frontend zuerst: Vite, TypeScript, React, Tailwind und ECharts. Die Simulation l
 
 KISS: statisch hostbar, schnell bedienbar, ein offener `data/`-Ordner mit Präfix-Dateien. UI deutsch und knapp; Modell, Tests und technische Bezeichner englisch.
 
-`modellfaktoren_*` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für Szenariorechnung.
+`modellfaktoren_*` enthält keine Rohwetterdaten, sondern aus Energy-Charts zurückgerechnete Solar-/Wind-Verfügbarkeiten für andere PV-/Wind-Leistungen.
 
 ## Vorsicht
 
