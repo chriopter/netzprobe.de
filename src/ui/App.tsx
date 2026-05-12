@@ -432,20 +432,20 @@ function ControlSection({ title, sourceLabel, sourceMeta, note, onPreset, childr
 }
 
 function PeriodControl({ preset, start, end, customStart, customEnd, onPreset, onStart, onEnd }: { preset: PeriodPreset; start: string; end: string; customStart: string; customEnd: string; onPreset: (preset: PeriodPreset) => void; onStart: (date: string) => void; onEnd: (date: string) => void }) {
-  return <section className={cx(sectionBox, 'grid gap-2 p-3')}>
+  return <section className={cx(sectionBox, 'grid gap-1.5 p-2.5')}>
     <div className="flex items-center justify-between gap-2">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Zeitraum</h2>
-      <span className="whitespace-nowrap text-[11px] text-zinc-500">{formatDate(start)}–{formatDate(end)}</span>
+      <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Zeitraum</h2>
+      <span className="whitespace-nowrap text-[10px] text-zinc-500">{formatDate(start)}–{formatDate(end)}</span>
     </div>
-    <select className={cx(field, 'h-8 text-xs')} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
+    <select className={cx(field, 'h-7 px-2 text-xs')} value={preset} onChange={event => onPreset(event.target.value as PeriodPreset)}>
       <option value="21d">21 Tage</option>
       <option value="90d">90 Tage</option>
-      <option value="year">Ganzes Jahr</option>
+      <option value="year">Jahr</option>
       <option value="custom">Custom</option>
     </select>
-    {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
-      <input aria-label="Startdatum" className={cx(field, 'h-8 px-2 text-xs')} type="date" min="2025-01-01" max="2025-12-31" value={customStart} onChange={event => onStart(event.target.value)}/>
-      <input aria-label="Enddatum" className={cx(field, 'h-8 px-2 text-xs')} type="date" min="2025-01-01" max="2025-12-31" value={customEnd} onChange={event => onEnd(event.target.value)}/>
+    {preset === 'custom' && <div className="grid grid-cols-2 gap-1.5">
+      <input aria-label="Startdatum" className={cx(field, 'h-7 px-1.5 text-[11px]')} type="date" min="2025-01-01" max="2025-12-31" value={customStart} onChange={event => onStart(event.target.value)}/>
+      <input aria-label="Enddatum" className={cx(field, 'h-7 px-1.5 text-[11px]')} type="date" min="2025-01-01" max="2025-12-31" value={customEnd} onChange={event => onEnd(event.target.value)}/>
     </div>}
   </section>;
 }
