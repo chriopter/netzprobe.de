@@ -87,6 +87,7 @@ export function App() {
           <div className="panel chart-card"><div className="card-head"><h2>Speicherfüllstand</h2><span>Batterie und H₂</span></div><div id="storage-chart" className="chart small"/></div>
           <div className="panel range"><label>Zeitraum: erste {Math.round((range[1]-range[0])/24)} Tage</label><input type="range" min={7} max={365} value={Math.round((range[1]-range[0])/24)} onChange={e => setRange([0, Number(e.target.value)*24])}/></div>
           <div className="panel notes"><h2>Plausibilität</h2><p>Konstanten wurden grob gegen Energy-Charts/Fraunhofer ISE, Bundesnetzagentur, UBA, SMARD, DWD und ERA5 eingeordnet. Ergebnis: Größenordnungen sind für 2025 plausibel; Batterie-Leistung konservativ, PV/Wind eher Anfang-2025.</p></div>
+          <footer className="footer">Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.</footer>
         </>}
       </section>
     </section>

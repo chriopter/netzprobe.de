@@ -4,7 +4,7 @@ Statische Stromnetz-Simulation für Deutschland. Szenario einstellen, Lastdeckun
 
 ## Disclaimer
 
-Dieses Projekt ist vibecoded und schnell iteriert. Es dient der anschaulichen Probe, nicht der amtlichen Netzplanung.
+Dieses Projekt ist vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
 
 ## Credits
 
