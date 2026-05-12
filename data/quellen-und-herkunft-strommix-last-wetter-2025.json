@@ -27,5 +27,6 @@
       "note": "Öffentliche Wetterreferenz; keine fremden Wetterdaten übernommen."
     }
   ],
-  "datasetFile": "deutschland-strommix-last-wetter-2025-stuendlich.json"
+  "datasetFile": "deutschland-strommix-last-wetter-2025-stuendlich.json",
+  "sourceFile": "quellen-und-herkunft-strommix-last-wetter-2025.json"
 }
