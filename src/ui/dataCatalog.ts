@@ -53,7 +53,7 @@ export const handbookPages: HandbookPage[] = [
           'Erzeugung minus Last bilanzieren.',
           'Überschüsse zuerst in Batterie, dann H2, dann Export, dann Abregelung.',
           'Defizite zuerst aus Batterie, dann H2, dann Import, dann Unterdeckung.',
-          'CO2 und Jahreskennzahlen aus den Stundenwerten summieren.',
+          'Jahreskennzahlen aus den Stundenwerten summieren.',
         ],
       },
       {

@@ -27,7 +27,6 @@ const hour = (loadSheddingGW: number): SimHour => ({
   h2GWh: 0,
   supplyGW: 40,
   balanceGW: 0,
-  co2Tonnes: 0,
 });
 
 const hourAt = (date: string, loadGW = 80): SimHour => ({ ...hour(0), time: `${date}T00:00:00Z`, loadGW });

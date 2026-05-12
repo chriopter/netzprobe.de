@@ -23,7 +23,6 @@ export type SimHour = {
   h2GWh: number;
   supplyGW: number;
   balanceGW: number;
-  co2Tonnes: number;
 };
 
 export type SimulationResult = {
@@ -31,7 +30,6 @@ export type SimulationResult = {
   summary: {
     totalDemandTWh: number;
     renewableSharePct: number;
-    co2IntensityGPerKWh: number;
     curtailmentTWh: number;
     importTWh: number;
     exportTWh: number;

@@ -3,6 +3,7 @@
 - Verwendung: Modellannahme für PV- und Wind-Ausbauvarianten.
 - Quelle: Energy-Charts `public_power` und `installed_power`, Deutschland.
 - Ermittlung: beobachtete PV-/Wind-Einspeisung geteilt durch installierte Leistung.
+- Skript: `data/modell/generate-feed-in-factors.mjs` über `npm run data:factors -- <installed_power.json>`.
 - Bedeutung: stündlicher Einspeisefaktor, kein Wetter- oder Verfügbarkeitsfaktor.
 - Abregelung: nicht herausgerechnet; mögliche Erzeugung kann unterschätzt werden.
 - Plot: skaliert PV und Wind im Modell für andere installierte Leistungen.

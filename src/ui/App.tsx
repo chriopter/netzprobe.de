@@ -233,7 +233,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         <div className="grid gap-3 p-4">
           {result ? <>
             <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-            <Kpi icon={<Gauge/>} label="CO₂ / EE" value={`${fmt0.format(result.summary.co2IntensityGPerKWh)} g/kWh`} subValue={pct(result.summary.renewableSharePct)}/>
+            <Kpi icon={<Gauge/>} label="CO₂ / EE" value="offen" subValue={pct(result.summary.renewableSharePct)}/>
             <Kpi icon={<AlertTriangle/>} label="Unterdeckung" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 1 ? 'kritisch' : result.summary.loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil'}/>
             <section className="grid gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
               <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>

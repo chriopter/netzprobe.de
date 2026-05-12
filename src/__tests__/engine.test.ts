@@ -33,8 +33,6 @@ describe('simulation engine', () => {
   it('reports annual KPIs in physical units', () => {
     const result = runSimulation(sampleHours, baselineScenario);
     expect(result.summary.totalDemandTWh).toBeGreaterThan(0);
-    expect(result.summary.co2IntensityGPerKWh).toBeGreaterThan(0);
-    expect(result.summary.co2IntensityGPerKWh).toBeLessThan(800);
     expect(result.summary.renewableSharePct).toBeGreaterThan(0);
     expect(result.summary.securityStatus).toMatch(/stabil|angespannt|kritisch/);
   });
@@ -43,7 +41,6 @@ describe('simulation engine', () => {
     const left = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 0, gasGW: 0 }, renewables: { pvGW: 0, windOnGW: 0, windOffGW: 0 } });
     const right = runSimulation(sampleHours, { ...baselineScenario, fossil: { coalGW: 250, gasGW: 250 }, renewables: { pvGW: 250, windOnGW: 250, windOffGW: 250 } });
 
-    expect(right.summary.co2IntensityGPerKWh).toBe(left.summary.co2IntensityGPerKWh);
     expect(right.hours.map(hour => hour.supplyGW)).toEqual(left.hours.map(hour => hour.supplyGW));
   });
 
@@ -53,7 +50,6 @@ describe('simulation engine', () => {
     const testLoad = runSimulation(sampleHours, { ...baselineScenario, demand: { ...baselineScenario.demand, test100TWh: true } });
 
     expect(noHistorical.summary.totalDemandTWh).toBe(0);
-    expect(noHistorical.summary.co2IntensityGPerKWh).toBe(0);
     expect(noHistorical.summary.renewableSharePct).toBe(0);
     expect(testLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(100 * sampleHours.length / 8760, 6);
   });

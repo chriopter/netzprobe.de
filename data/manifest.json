@@ -80,7 +80,7 @@
       { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
       { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
       { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der verwendeten Energy-Charts-Quellen." },
-      { "name": "sourceUrls", "unit": "Objekt", "description": "API-Abrufe für Einspeisung und installierte Leistung." },
+      { "name": "sourceUrls", "unit": "Liste", "description": "API-Abrufe für Einspeisung und installierte Leistung." },
       { "name": "notes", "unit": "Liste", "description": "Hinweise zur Ableitung und Begrenzung." },
       { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
       { "name": "hours[].solarIrradiance", "unit": "Faktor", "description": "PV-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." },

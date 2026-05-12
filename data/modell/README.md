@@ -1,3 +1,3 @@
 # Modell
 
-Abgeleitete Einspeisefaktoren für Modellannahmen.
+Abgeleitete Einspeisefaktoren und Modellannahmen.
