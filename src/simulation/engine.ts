@@ -14,7 +14,7 @@ export function runSimulation(input: HourlyInput[], scenario: Scenario, bevPkwEl
   for (const row of input) {
     const loadGW = demandGW(row, scenario, bevPkwElectrification);
     const generation = historicalGenerationGW(row);
-    const balance = balanceHour(generation.supplyGW, loadGW, storage);
+    const balance = balanceHour(generation.supplyGW, loadGW, storage, generation.historicalImportGW, generation.historicalExportGW, generation.dataBoundaryResidualGW);
     storage = { batteryGWh: balance.batteryGWh, h2GWh: balance.h2GWh };
 
     hours.push({

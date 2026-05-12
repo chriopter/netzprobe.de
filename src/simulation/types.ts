@@ -13,6 +13,9 @@ export type SimHour = {
   coalGW: number;
   gasGW: number;
   nuclearGW: number;
+  historicalImportGW: number;
+  historicalExportGW: number;
+  dataBoundaryResidualGW: number;
   importGW: number;
   exportGW: number;
   storageChargeGW: number;
@@ -38,7 +41,7 @@ export type SimulationResult = {
   };
 };
 
-export type HistoricalGeneration = Pick<SimHour, 'solarGW' | 'windOnGW' | 'windOffGW' | 'biomassGW' | 'hydroGW' | 'wasteGW' | 'oilGW' | 'geothermalGW' | 'otherGW' | 'coalGW' | 'gasGW' | 'nuclearGW' | 'supplyGW'>;
+export type HistoricalGeneration = Pick<SimHour, 'solarGW' | 'windOnGW' | 'windOffGW' | 'biomassGW' | 'hydroGW' | 'wasteGW' | 'oilGW' | 'geothermalGW' | 'otherGW' | 'coalGW' | 'gasGW' | 'nuclearGW' | 'historicalImportGW' | 'historicalExportGW' | 'dataBoundaryResidualGW' | 'supplyGW'>;
 
 export type BalanceResult = {
   importGW: number;

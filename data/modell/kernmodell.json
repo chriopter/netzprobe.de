@@ -4,11 +4,13 @@
   "source": "Eigene stündliche Bilanzrechnung im Browser.",
   "code": "src/simulation/engine.ts",
   "timeStep": "1 Stunde",
-  "generationMode": "Historische Erzeugung ist fix; Zusatzlast erhöht keine Erzeugung.",
-  "balanceMode": "Kein Dispatch: Defizit wird Unterdeckung, Überschuss wird Abregelung.",
+  "generationMode": "Historische öffentliche Erzeugung bleibt reine Erzeugung. Historischer Import und Abgrenzungsrest werden separat als historischer Ausgleich geführt.",
+  "balanceMode": "Historisch 2025 bilanziert auf null. Zusatzlast wird nach der historischen Bilanz addiert und erzeugt Unterdeckung, wenn sie nicht gedeckt ist.",
   "notes": [
     "Last = historische Last plus aktive Zusatzlasten.",
     "Erzeugung = beobachtete Energy-Charts-Erzeugung je Stunde.",
+    "Historischer Import/Export wird stündlich aus Energy-Charts übernommen.",
+    "Abgrenzungsrest wird stündlich aus Last + Export - öffentliche Erzeugung - Import abgeleitet.",
     "Keine Kraftwerksoptimierung, kein Speicherdispatch, kein zusätzlicher Import.",
     "Jahreskennzahlen werden aus Stundenwerten summiert."
   ]

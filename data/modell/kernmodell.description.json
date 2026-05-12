@@ -7,13 +7,15 @@
   "period": "laufend",
   "resolution": "stündlich",
   "unit": "GW, GWh, TWh",
-  "short": "Stündliche Bilanz aus fixer Last, fixer historischer Erzeugung, Zusatzlast, Unterdeckung und Abregelung.",
-  "description": "Kernmodell der Simulation: pro Stunde werden fixe Last, fixe historische Erzeugung und additive Lastannahmen bilanziert. Es gibt keinen Dispatch, keinen Speicherdispatch und keinen zusätzlichen Import.",
+  "short": "Stündliche Bilanz aus fixer Last, historischer Erzeugung, historischem Handelssaldo, Abgrenzungsrest und Zusatzlast.",
+  "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert; es gibt keinen Dispatch, keinen Speicherdispatch und keinen zusätzlichen Import.",
   "overview": [
     { "label": "Verwendung", "value": "Rechnet die stündliche Netzbilanz und daraus Jahreskennzahlen." },
     { "label": "Zeitschritt", "value": "1 Stunde" },
     { "label": "Erzeugung", "value": "Historisch fix; zusätzliche Last erhöht die Erzeugung nicht." },
-    { "label": "Ausgleich", "value": "Defizit wird Unterdeckung; Überschuss wird Abregelung." },
+    { "label": "Import/Export", "value": "Historischer Handelssaldo aus Energy-Charts wird stündlich übernommen." },
+    { "label": "Abgrenzungsrest", "value": "Stündlich aus Last + Export - öffentliche Erzeugung - Import abgeleitet, damit 2025 exakt auf null kommt." },
+    { "label": "Zusatzlast", "value": "Zusatzlast wird nach der historischen Bilanz addiert und kann Unterdeckung erzeugen." },
     { "label": "Code", "value": "src/simulation/engine.ts" }
   ],
   "fields": [
@@ -22,8 +24,8 @@
     { "name": "source", "unit": "Text", "description": "Ursprung der Modelllogik." },
     { "name": "code", "unit": "Pfad", "description": "Zentrale Implementierung." },
     { "name": "timeStep", "unit": "Text", "description": "Zeitliche Auflösung." },
-    { "name": "generationMode", "unit": "Text", "description": "Behandlung der Erzeugung." },
-    { "name": "balanceMode", "unit": "Text", "description": "Behandlung von Defizit und Überschuss." },
+    { "name": "generationMode", "unit": "Text", "description": "Behandlung der historischen Erzeugung." },
+    { "name": "balanceMode", "unit": "Text", "description": "Behandlung von historischer Bilanz und Zusatzlast." },
     { "name": "notes", "unit": "Liste", "description": "Kurznotizen zur Rechenlogik." }
   ],
   "sections": [
@@ -32,9 +34,10 @@
       "items": [
         "Last aus historischem Verbrauch plus aktiven Zusatzlasten bestimmen.",
         "Historische Erzeugung aus den beobachteten Energy-Charts-Reihen übernehmen.",
-        "Erzeugung minus Last bilanzieren.",
-        "Defizite als Unterdeckung zählen.",
-        "Überschüsse als Abregelung zählen.",
+        "Historischen Import/Export aus dem Handelssaldo übernehmen.",
+        "Abgrenzungsrest berechnen, sodass Last 2025 stündlich gedeckt ist.",
+        "Aktive Zusatzlasten danach addieren.",
+        "Restdefizite der Zusatzlast als Unterdeckung zählen.",
         "Jahreskennzahlen aus den Stundenwerten summieren."
       ]
     },
@@ -43,6 +46,7 @@
       "items": [
         "Kein Kraftwerksdispatch für Zusatzlasten.",
         "Kein Speicherdispatch und kein zusätzlicher Import.",
+        "Der Abgrenzungsrest ist keine Erzeugung und keine Zukunftsannahme, sondern die historische Restgröße aus unterschiedlichen Datenabgrenzungen.",
         "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
       ]
     }

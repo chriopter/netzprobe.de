@@ -15,6 +15,9 @@ export function historicalGenerationGW(row: HourlyInput): HistoricalGeneration {
   const gasGW = row.observed.gasMW / 1000;
   const nuclearGW = 0;
   const supplyGW = solarGW + windOnGW + windOffGW + biomassGW + hydroGW + wasteGW + oilGW + geothermalGW + otherGW + coalGW + gasGW + nuclearGW;
+  const historicalImportGW = Math.max(0, row.observed.importExportMW / 1000);
+  const historicalExportGW = Math.max(0, -row.observed.importExportMW / 1000);
+  const dataBoundaryResidualGW = row.loadMW / 1000 + historicalExportGW - supplyGW - historicalImportGW;
 
-  return { solarGW, windOnGW, windOffGW, biomassGW, hydroGW, wasteGW, oilGW, geothermalGW, otherGW, coalGW, gasGW, nuclearGW, supplyGW };
+  return { solarGW, windOnGW, windOffGW, biomassGW, hydroGW, wasteGW, oilGW, geothermalGW, otherGW, coalGW, gasGW, nuclearGW, historicalImportGW, historicalExportGW, dataBoundaryResidualGW, supplyGW };
 }

@@ -12,20 +12,21 @@ export function initialStorageState(): StorageState {
   };
 }
 
-export function balanceHour(supplyGW: number, loadGW: number, storage: StorageState): BalanceResult {
-  const mismatch = supplyGW - loadGW;
+export function balanceHour(supplyGW: number, loadGW: number, storage: StorageState, historicalImportGW: number, historicalExportGW: number, dataBoundaryResidualGW: number): BalanceResult {
+  const historicalCoverageGW = supplyGW + historicalImportGW + dataBoundaryResidualGW;
+  const mismatch = historicalCoverageGW - loadGW - historicalExportGW;
   const curtailmentGW = Math.max(0, mismatch);
   const loadSheddingGW = Math.max(0, -mismatch);
 
   return {
-    importGW: 0,
-    exportGW: 0,
+    importGW: historicalImportGW,
+    exportGW: historicalExportGW,
     storageChargeGW: 0,
     storageDischargeGW: 0,
     curtailmentGW,
     loadSheddingGW,
     batteryGWh: storage.batteryGWh,
     h2GWh: storage.h2GWh,
-    balanceGW: supplyGW + loadSheddingGW - loadGW - curtailmentGW,
+    balanceGW: historicalCoverageGW + loadSheddingGW - loadGW - historicalExportGW - curtailmentGW,
   };
 }
