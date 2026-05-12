@@ -27,6 +27,7 @@ function topLevelData(): Plugin {
 }
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES === 'true' ? '/netzprobe/' : '/',
   plugins: [react(), tailwindcss(), topLevelData()],
   server: { port: 5177 },
   preview: { port: 4177 },

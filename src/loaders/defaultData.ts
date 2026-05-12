@@ -1,8 +1,10 @@
 import type { DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile } from '../types/data';
 
-const loadUrl = '/data/last_energy-charts-2025-stuendlich.json';
-const generationUrl = '/data/erzeugung_energy-charts-2025-stuendlich.json';
-const factorsUrl = '/data/modellfaktoren_2025-stuendlich.json';
+const dataUrl = (file: string) => `${import.meta.env.BASE_URL}data/${file}`;
+
+const loadUrl = dataUrl('last_energy-charts-2025-stuendlich.json');
+const generationUrl = dataUrl('erzeugung_energy-charts-2025-stuendlich.json');
+const factorsUrl = dataUrl('modellfaktoren_2025-stuendlich.json');
 
 export async function loadJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
