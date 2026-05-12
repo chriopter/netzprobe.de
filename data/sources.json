@@ -1,40 +1,30 @@
 {
-  "plausibilityChecked": "2026-05-11",
+  "plausibilityChecked": "2026-05-12",
   "sources": [
     {
-      "name": "Energy-Charts installed power API",
+      "name": "Energy-Charts public_power API",
+      "url": "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+      "note": "Frisch bezogene 15-Minuten-Werte für Last, Solar, Wind, Gas, Kohle und Stromhandel; stündlich gemittelt."
+    },
+    {
+      "name": "Energy-Charts installed_power API",
       "url": "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
-      "note": "2025 installierte Leistungen: PV, Wind, Kohle, Gas, Speicher plausibel."
-    },
-    {
-      "name": "Energy-Charts chart",
-      "url": "https://energy-charts.info/charts/installed_power/chart.htm?l=de&c=DE&year=2025",
-      "note": "Fraunhofer-ISE Visualisierung installierter Leistung."
-    },
-    {
-      "name": "Bundesnetzagentur Kraftwerksliste",
-      "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/start.html",
-      "note": "Gegenpr\u00fcfung konventioneller Kraftwerke."
-    },
-    {
-      "name": "UBA CO2 pro kWh Strom 2024",
-      "url": "https://www.umweltbundesamt.de/themen/co2-emissionen-pro-kilowattstunde-strom-2024",
-      "note": "363 g/kWh f\u00fcr 2024; Default um 369 g/kWh plausibel."
+      "note": "Monatliche installierte Leistung zur Ableitung der Modell-Wetterwerte."
     },
     {
       "name": "SMARD Download Marktdaten",
       "url": "https://www.smard.de/home/downloadcenter/download-marktdaten/",
-      "note": "Last, Erzeugung, Import/Export."
+      "note": "Öffentliche Referenz für Last, Erzeugung und Import/Export; nicht in der Repo-Datei gespiegelt."
     },
     {
       "name": "DWD Climate Data Center",
       "url": "https://opendata.dwd.de/climate_environment/CDC/",
-      "note": "Wetterdaten Solar/Wind."
+      "note": "Öffentliche Wetterreferenz; keine fremden Wetterdaten übernommen."
     },
     {
       "name": "Copernicus ERA5",
       "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels",
-      "note": "Fl\u00e4chige Reanalyse Wind/Solar."
+      "note": "Öffentliche Wetterreferenz; keine fremden Wetterdaten übernommen."
     }
   ]
 }

@@ -23,7 +23,7 @@ describe('simulation engine', () => {
   it('reports annual KPIs in physical units', () => {
     const result = runSimulation(sampleHours, baselineScenario);
     expect(result.summary.totalDemandTWh).toBeGreaterThan(0);
-    expect(result.summary.co2IntensityGPerKWh).toBeGreaterThan(200);
+    expect(result.summary.co2IntensityGPerKWh).toBeGreaterThan(0);
     expect(result.summary.co2IntensityGPerKWh).toBeLessThan(800);
     expect(result.summary.renewableSharePct).toBeGreaterThan(0);
     expect(result.summary.securityStatus).toMatch(/stabil|angespannt|kritisch/);

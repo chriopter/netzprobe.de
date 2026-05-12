@@ -8,4 +8,4 @@ Dieses Projekt ist vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behan
 
 ## Credits
 
-Inspiriert von und mit normalisierten Daten aus [`MTGermany/energy-simulation-de`](https://github.com/MTGermany/energy-simulation-de).
+Inspiriert von [`MTGermany/energy-simulation-de`](https://github.com/MTGermany/energy-simulation-de). Die Daten in diesem Repo wurden neu aus öffentlichen Quellen bezogen.
