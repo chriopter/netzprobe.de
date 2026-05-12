@@ -7,6 +7,7 @@ const dayLabels = (hours: SimHour[]) => hours.map((h) => new Date(h.time).toLoca
 export function buildMixChartOption(hours: SimHour[]): EChartsOption {
   return {
     backgroundColor: 'transparent',
+    animation: false,
     tooltip: { trigger: 'axis', valueFormatter: (v) => `${fmt.format(Number(v))} GW` },
     legend: { textStyle: { color: '#aab0bd' }, top: 0 },
     grid: { left: 42, right: 24, top: 48, bottom: 34 },
@@ -52,6 +53,7 @@ export function buildMixChartOption(hours: SimHour[]): EChartsOption {
 export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
   return {
     backgroundColor: 'transparent',
+    animation: false,
     tooltip: { trigger: 'axis' },
     grid: { left: 44, right: 20, top: 20, bottom: 32 },
     xAxis: { type: 'category', data: dayLabels(hours), axisLabel: { color: '#8a8f98' } },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { AlertTriangle, Banknote, Gauge, Zap } from 'lucide-react';
 import { loadDefaultData } from '../loaders/defaultData';
@@ -36,19 +36,26 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 function useChart(id: string, option: echarts.EChartsOption | undefined) {
+  const chartRef = useRef<echarts.ECharts | null>(null);
+
   useEffect(() => {
-    if (!option) return;
     const el = document.getElementById(id);
     if (!el) return;
     const chart = echarts.init(el, 'dark');
-    chart.setOption(option);
+    chartRef.current = chart;
     const resize = () => chart.resize();
     window.addEventListener('resize', resize);
     return () => {
       window.removeEventListener('resize', resize);
       chart.dispose();
+      chartRef.current = null;
     };
-  }, [id, option]);
+  }, [id]);
+
+  useEffect(() => {
+    if (!option || !chartRef.current) return;
+    chartRef.current.setOption(option, { notMerge: true, lazyUpdate: true });
+  }, [option]);
 }
 
 function scenarioFromUrl(): Scenario | null {
@@ -181,7 +188,7 @@ export function App() {
         </div>
       </aside>
 
-      <section className="grid min-w-0 content-start gap-3">
+      <section className="flex min-w-0 flex-col gap-3">
         {!result ? <div className={cx(panel, 'grid min-h-80 place-items-center text-zinc-300')}>Lade Daten …</div> : <>
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -211,14 +218,14 @@ export function App() {
               <div id="storage-chart" className="h-[240px] w-full"/>
             </ChartPanel>
 
-            <div className={cx(panel, 'grid content-between gap-4 p-4')}>
+            <div className={cx(panel, 'grid content-start gap-4 p-4')}>
               <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
               <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
-              <footer className="text-xs leading-5 text-zinc-500">
-                Vorsicht. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
-              </footer>
             </div>
           </div>
+          <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
+            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Daten auf <a className="text-zinc-200 underline decoration-white/30 underline-offset-4 hover:text-white" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">GitHub</a>.
+          </footer>
         </>}
       </section>
     </div>
