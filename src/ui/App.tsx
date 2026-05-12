@@ -139,9 +139,13 @@ function generationMeta(data: DataSet | null) {
   if (!data?.generationSharesPct) return undefined;
   const generation = data.generationSumTWh ? twh(data.generationSumTWh) : '—';
   const imported = data.importSumTWh ? twh(data.importSumTWh) : '—';
+  const parts = data.generationPartsTWh;
   return <>
     <span>{generation} Erzeugung · {imported} Import</span>
     <span>{pct(data.generationSharesPct.generationPct ?? 0)} Erzeugung · {pct(data.generationSharesPct.importPct ?? 0)} Import</span>
+    {parts && <span>PV {twh(parts.pvTWh)} · Wind Land {twh(parts.windOnTWh)} · Wind See {twh(parts.windOffTWh)}</span>}
+    {parts && <span>Kohle {twh(parts.coalTWh)} · Gas {twh(parts.gasTWh)} · Wasser {twh(parts.hydroTWh)} · Biomasse {twh(parts.biomassTWh)}</span>}
+    {parts && <span>Müll {twh(parts.wasteTWh)} · Öl {twh(parts.oilTWh)} · Geo {twh(parts.geothermalTWh)} · Sonstige {twh(parts.otherTWh)}</span>}
   </>;
 }
 

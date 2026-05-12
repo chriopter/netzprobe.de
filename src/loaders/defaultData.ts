@@ -40,6 +40,7 @@ export async function loadDefaultData(): Promise<DataSet> {
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,
     generationSharesPct: generationData.sumSharesPct,
+    generationPartsTWh: generationData.sumPartsTWh,
     hours,
   };
 }

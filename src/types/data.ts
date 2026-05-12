@@ -48,5 +48,6 @@ export type DataSet = {
   generationSumTWh?: number;
   importSumTWh?: number;
   generationSharesPct?: Record<string, number>;
+  generationPartsTWh?: Record<string, number>;
   hours: HourlyInput[];
 };
