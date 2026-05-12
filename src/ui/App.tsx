@@ -137,7 +137,9 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 
 function generationMeta(data: DataSet | null) {
   if (!data?.generationSharesPct) return undefined;
-  return `Erzeugung ${pct(data.generationSharesPct.generationPct ?? 0)}, Import ${pct(data.generationSharesPct.importPct ?? 0)}`;
+  const generation = data.generationSumTWh ? twh(data.generationSumTWh) : '—';
+  const imported = data.importSumTWh ? twh(data.importSumTWh) : '—';
+  return `Erzeugung ${generation} (${pct(data.generationSharesPct.generationPct ?? 0)}), Import ${imported} (${pct(data.generationSharesPct.importPct ?? 0)})`;
 }
 
 export function App() {
