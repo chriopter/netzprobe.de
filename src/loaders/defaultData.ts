@@ -36,6 +36,8 @@ export async function loadDefaultData(): Promise<DataSet> {
 
   return {
     source: 'Energy-Charts 2025: Last, Erzeugung und Modellfaktoren getrennt geladen.',
+    loadSumTWh: loadData.sumTWh,
+    generationSumTWh: generationData.sumTWh,
     hours,
   };
 }

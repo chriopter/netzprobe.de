@@ -138,9 +138,9 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
 export function App() {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => scenarioFromUrl() ?? defaultScenario);
-  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('21d');
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
   const [customStart, setCustomStart] = useState('2025-01-01');
-  const [customEnd, setCustomEnd] = useState('2025-01-21');
+  const [customEnd, setCustomEnd] = useState('2025-12-31');
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [isTuning, setIsTuning] = useState(false);
 
@@ -190,11 +190,11 @@ export function App() {
         </div>
 
         <div className="space-y-3 p-4">
-          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel="Energy-Charts 2025">
+          <ControlSection title="Last" sourceValue="last_energy-charts-2025" sourceLabel={`Energy-Charts 2025${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}>
             <Control rows={[["Grundlast", 'demand.basePct', scenario.demand.basePct, 50, 150, '%'], ["BEV", 'demand.bevPct', scenario.demand.bevPct, 0, 100, '%'], ["Wärmepumpen", 'demand.heatPumpPct', scenario.demand.heatPumpPct, 0, 100, '%']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
 
-          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel="Energy-Charts 2025" note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
+          <ControlSection title="Erzeugung" sourceValue="erzeugung_energy-charts-2025" sourceLabel={`Energy-Charts 2025${data?.generationSumTWh ? ` · ${twh(data.generationSumTWh)}` : ''}`} note="Modellfaktoren: abgeleitete Solar-/Wind-Verfügbarkeit für andere Ausbauwerte.">
             <Control rows={[["PV", 'renewables.pvGW', scenario.renewables.pvGW, 20, 220, 'GW'], ["Wind Land", 'renewables.windOnGW', scenario.renewables.windOnGW, 10, 180, 'GW'], ["Wind See", 'renewables.windOffGW', scenario.renewables.windOffGW, 5, 80, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
             <Control rows={[["Kohle", 'fossil.coalGW', scenario.fossil.coalGW, 0, 40, 'GW'], ["Gas", 'fossil.gasGW', scenario.fossil.gasGW, 0, 80, 'GW'], ["Batterie P", 'storage.batteryPowerGW', scenario.storage.batteryPowerGW, 0, 80, 'GW'], ["Batterie E", 'storage.batteryEnergyGWh', scenario.storage.batteryEnergyGWh, 0, 300, 'GWh'], ["H₂ E", 'storage.h2EnergyGWh', scenario.storage.h2EnergyGWh, 0, 1200, 'GWh'], ["Import", 'storage.importLimitGW', scenario.storage.importLimitGW, 0, 35, 'GW']]} onChange={update} onTuneStart={() => setIsTuning(true)} onTuneEnd={() => setIsTuning(false)}/>
           </ControlSection>
