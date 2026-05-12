@@ -318,7 +318,7 @@ function SourceScenarioCard() {
     </select>
     <details className="group mt-2">
       <summary className="cursor-pointer list-none text-xs text-zinc-400 hover:text-white">Details</summary>
-      <p className="mt-2 text-xs leading-5 text-zinc-500">public_power + installed_power; Wetterwerte abgeleitet.</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">Last, Erzeugung und Modellfaktoren getrennt.</p>
     </details>
   </section>;
 }
