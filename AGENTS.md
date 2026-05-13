@@ -2,23 +2,48 @@
 
 ## Code
 
-- Code, filenames, types, tests, and technical identifiers stay in English.
-- User-facing UI text, README and dataset descriptions stay in German.
-- Keep the app small: simple React/Vite structure, simulation logic separate from UI.
-- Start development with `npm install`, then `npm run dev`.
-- Before committing, run `npm test` and `npm run build`.
-- Release by running `npm run build` and serving `dist/` as static files.
+- Code, Dateinamen, Typen, Tests, technische Identifier: Englisch.
+- UI-Text, README, Description-JSONs, Daten-Notes: Deutsch, knapp, sachlich.
+- Simulation getrennt von UI; rechenlastige Läufe im Web Worker.
+- Start: `npm install`, dann `npm run dev`. Vor Commit: `npm test` und `npm run build`.
 
-## Daten (`data/`)
+## Szenarien entwickeln
 
-- Jede öffentliche `.json`-Datendatei liegt in einem Fachordner (`data/last/`, `data/erzeugung/`, `data/modell/`).
-- Jede Datendatei braucht eine gleichnamige `.description.json` im selben Ordner.
-- `data/manifest.json` listet alle öffentlichen Datensätze in der gewünschten Reihenfolge und verweist auf die jeweilige Description-Datei.
-- Dokumentiere immer: Zweck, Quelle (`sourceUrls`), Zeitraum, Auflösung, Einheit, Felder und bekannte Grenzen.
-- Reproduzierbare Datensätze haben ein `generate-*.mjs`-Skript im selben Ordner; nach Parameter-Änderung das Skript ausführen und die JSON neu schreiben.
-- Ändere keine Feldnamen oder Pfade ohne Anpassung von App, Tests und Dokumentation.
-- Daten-Texte bleiben deutsch, kurz und sachlich.
+Jedes Daten-Szenario lebt unter `data/<domain>/` mit drei Dateien:
+
+1. `<name>.json` — Modellparameter und eingebettete Profile.
+2. `generate-<name>.mjs` daneben, wenn Werte berechnet werden. Skript schreibt nach stdout, JSON wird über `node generate-<name>.mjs > <name>.json` regeneriert.
+3. `<name>.description.json` — Wiki-Eintrag (siehe Stil unten).
+
+Außerdem nötig:
+- Eintrag in `data/manifest.json` in der Reihenfolge, in der die App es zeigen soll.
+- Loader-Anpassung in `src/loaders/defaultData.ts` und Typen in `src/types/data.ts`.
+- Test-Fixture in `src/__tests__/engine.test.ts` mit minimalem Plausibilitäts-Check.
+
+## Szenarien prüfen
+
+Vor dem Mergen jedes neuen oder geänderten Szenarios:
+
+- Werte gegen reale Benchmarks halten: BDEW, AGEB, UBA, KBA, DWD, BWP, Fraunhofer ISE, Destatis. Quelle samt URL in `sourceUrls`.
+- Mengenrechnung explizit ausweisen, z. B. `(Ziel − Mindest) / JAZ = X TWh`.
+- Stundenintegration mit kleinem Node-Skript verifizieren: monatliche und jährliche Summen müssen physikalisch erwartbar sein (Heizen Jun-Aug ≈ 0, BEV-Last über Jahr ≈ Default-TWh).
+- Im Chart prüfen, dass das aktivierte Szenario einen klar erkennbaren saisonalen oder tageszeitlichen Effekt erzeugt.
+
+## Wiki-Stil
+
+Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbild: `data/last/energy-charts-stuendlich-2025.description.json` — kurz, ohne `overview`, ohne `sections`.
+
+Regeln:
+
+- `description`: 2–3 Sätze. Was tut der Slider, welche Rechnung, welche zeitliche Verteilung. Keine Wiederholung von `source` oder `fields`.
+- `source`: ein Satz mit den wichtigsten Bezugswerten in Klammern (z. B. „UBA Raumwärme 2023 (445 TWh)"). URLs in `sourceUrls`.
+- `fields`: eine knappe Zeile pro Top-Level-Feld. Verschachtelte Strukturen (`degreeDayProfile`, `hourlyProfile`) als ein einziger Eintrag mit Inhalt-Zusammenfassung, nicht jede Sub-Property einzeln.
+- `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen.
+- `overview` und `sections` vermeiden. Wichtige Werte gehören in `description`, strukturelle Infos in `fields`. „Erwägungsgründe"-Prosa und pädagogische Bullet-Listen entfernen.
+- Keine Marketingsprache.
+
+Negativ-Beispiel: vorherige Versionen von `pkw-elektrifizierung.description.json` und `heiz-elektrifizierung.description.json` mit `overview`-Blöcken und „Erwägungsgründe"-Sektionen.
 
 ## Dokumentation
 
-- Nur eine `README.md` und eine `AGENTS.md` auf Top-Level. Keine geschachtelten Doku-Dateien in Unterordnern.
+Nur eine `README.md` und eine `AGENTS.md` auf Top-Level. Keine geschachtelten Doku-Dateien.

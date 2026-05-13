@@ -3,58 +3,37 @@
   "domain": "last",
   "title": "PKW Elektrifizierung",
   "file": "last/pkw-elektrifizierung.json",
-  "source": "Destatis Pkw-Fahrleistung 2023: https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
-  "period": "2023",
-  "resolution": "Jahr",
-  "unit": "Mio. km, kWh/100 km, TWh",
-  "short": "Zusatzlast aus zusätzlich elektrifizierten Pkw-Kilometern.",
-  "description": "Ziel-Pkw-Kilometer minus bereits elektrisch gefahrene Pkw-Kilometer 2023 werden mit 20 kWh/100 km in zusätzliche Stromlast umgerechnet.",
-  "overview": [
-    { "label": "Verwendung", "value": "Checkbox aktiviert das Szenario; Slider setzt elektrifizierte Pkw-Kilometer ab dem 2023 bereits elektrischen Mindestwert." },
-    { "label": "Referenz", "value": "472,2 Mrd. Pkw-km privater Haushalte 2023 laut Destatis-Mitteilung." },
-    { "label": "Abzug", "value": "20 Mrd. km werden als bereits 2023 elektrisch gefahren abgezogen: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch." },
-    { "label": "Verbrauch", "value": "20 kWh/100 km als pauschaler Flottenwert ab Netz inklusive grober Ladeverluste." },
-    { "label": "Default", "value": "(472.200 - 20.000) Mio. km × 20 kWh/100 km = 90,44 TWh/Jahr." },
-    { "label": "Verteilung", "value": "Empirisches 24-h-Heimladeprofil aus dem Deutschen Mobilitätspanel (Heinz 2018, KIT-IIP WP No. 30). Wochenmittel aus 5 Werktagen und 2 Wochenendtagen, ungesteuertes Laden mit Abendpeak 17–21 Uhr und Nachttal 4–6 Uhr." }
+  "source": "Destatis Pkw-Fahrleistung private Haushalte 2023 (472 Mrd. km); bereits elektrisch rund 20 Mrd. km aus KBA-Bestand Ende 2023 (1,4 Mio. BEV mit etwa 11.000 km/a plus 0,9 Mio. PHEV mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch); Flottenverbrauch 20 kWh/100 km ab Netz; Tagesgang aus KIT Heinz 2018 (Deutsches Mobilitätspanel, ungesteuertes Heimladen).",
+  "sourceUrls": [
+    "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
+    "https://publikationen.bibliothek.kit.edu/1000086372",
+    "https://www.iip.kit.edu/3559.php"
   ],
+  "period": "2023",
+  "resolution": "Jahr × Stunde",
+  "unit": "Mio. km, kWh/100 km, TWh",
+  "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
+  "description": "Slider setzt Ziel-Pkw-km zwischen 20.000 Mio. km (bereits elektrisch, Slider-Minimum) und 708.300 Mio. km. Zusatzlast = (Ziel − 20.000) × 20 kWh/100 km. Default 472.200 Mio. km ergibt 90,44 TWh/Jahr. Stundenverteilung: empirisches 24-h-Heimladeprofil (Wochenmittel, Summe 24) mit Abendpeak 17-21 Uhr und Nachttal 4-6 Uhr.",
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
-    { "name": "title", "unit": "Text", "description": "Name des Zusatzlast-Szenarios." },
-    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quellen." },
-    { "name": "sourceUrls", "unit": "Liste", "description": "Quellen für Referenzkilometer, Fahrleistung und BEV-Bestand." },
+    { "name": "title", "unit": "Text", "description": "Anzeigename." },
+    { "name": "source", "unit": "Text", "description": "Quellenzusammenfassung." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "Belege." },
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
-    { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte 2023." },
-    { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Abgezogene bereits elektrisch gefahrene Pkw-km 2023 und Mindestwert des Sliders." },
-    { "name": "defaultTargetMillionKm", "unit": "Mio. km", "description": "Standardwert des Sliders." },
-    { "name": "maxTargetMillionKm", "unit": "Mio. km", "description": "Oberes Slider-Ende." },
+    { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte." },
+    { "name": "alreadyElectricMillionKm", "unit": "Mio. km", "description": "Bereits elektrisch gefahren; Slider-Minimum." },
+    { "name": "defaultTargetMillionKm", "unit": "Mio. km", "description": "Slider-Default." },
+    { "name": "maxTargetMillionKm", "unit": "Mio. km", "description": "Slider-Maximum." },
     { "name": "stepMillionKm", "unit": "Mio. km", "description": "Slider-Schrittweite." },
-    { "name": "kwhPer100Km", "unit": "kWh/100 km", "description": "Pauschaler BEV-Flottenverbrauch ab Netz." },
-    { "name": "distribution", "unit": "Text", "description": "Zeitliche Verteilung der Zusatzlast." },
-    { "name": "hourlyProfile.source", "unit": "Text", "description": "Herkunft des 24-h-Ladeprofils." },
-    { "name": "hourlyProfile.sourceUrls", "unit": "Liste", "description": "URLs zu Profil-Quellen." },
-    { "name": "hourlyProfile.multipliers", "unit": "Faktor", "description": "24 Stunden-Multiplikatoren Berlin-Zeit; Summe = 24 (Tagesmittel 1,0)." },
+    { "name": "kwhPer100Km", "unit": "kWh/100 km", "description": "Flottenverbrauch ab Netz inklusive Ladeverluste." },
+    { "name": "distribution", "unit": "Text", "description": "Verteilungstyp." },
+    { "name": "hourlyProfile", "unit": "Objekt", "description": "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs." },
     { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
   ],
-  "caveats": ["Ungesteuertes Heimladen — Smart-Charging und §14a-Steuerung 2024+ würden Last in die Nachtstunden verschieben.", "PHEV-Stromkilometer sind nicht separat herausgerechnet.", "Der Abzug bereits elektrischer Kilometer ist eine dokumentierte Modellannahme.", "Profil ist Wochenmittel — keine Werktag/Wochenend-Differenzierung im Jahresverlauf."],
-  "sections": [
-    {
-      "title": "Erwägungsgründe",
-      "items": [
-        "Zulassungsdaten allein reichen nicht: sie zeigen Bestand oder Neuzulassungen, aber nicht reale Jahresfahrleistung und Ladeverluste.",
-        "20 kWh/100 km ist ein vorsichtiger Flottenwert für gemischte Pkw-Nutzung ab Netz.",
-        "Die Referenzkilometer stammen aus realer Fahrleistung privater Haushalte, nicht aus Fahrzeugbestand.",
-        "Bereits elektrische Kilometer 2023 werden abgezogen, damit nur zusätzliche Elektrifizierung als neue Last zählt.",
-        "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
-      ]
-    },
-    {
-      "title": "Grenzen",
-      "items": [
-        "Kein saisonales Profil (Tagesgang ist über das Jahr konstant); reale Sommer-Vakanzfahrten oder Winterheizung des Innenraums sind nicht modelliert.",
-        "Keine Unterscheidung nach Fahrzeugklasse, Temperatur, Geschwindigkeit oder Ladeort.",
-        "Heimladung ist Modellannahme — Arbeitsplatz-/öffentliche Ladung würde Lasten in den Tag verschieben.",
-        "Nicht alle Pkw-Kilometer Deutschlands sind zwingend private Haushalte; die Quelle wird deshalb als transparente Referenz genutzt."
-      ]
-    }
+  "caveats": [
+    "Ungesteuertes Heimladen — Smart-Charging und §14a-Steuerung würden Last in die Nacht verschieben.",
+    "Kein Saisonprofil; Tagesgang ist über das Jahr konstant.",
+    "PHEV-Stromkilometer im Abzug pauschal mit 40 % elektrischer Quote.",
+    "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert."
   ]
 }
