@@ -34,6 +34,15 @@ export type HeatingDegreeDay = {
   weight: number;
 };
 
+export type DegreeDayProfile = {
+  year: number;
+  heatingLimitC: number;
+  indoorReferenceC: number;
+  monthlyMeanTemperatureC: number[];
+  sumNote?: string;
+  days: HeatingDegreeDay[];
+};
+
 export type BevPkwElectrificationLoad = {
   id: 'bev-pkw-electrification';
   title: string;
@@ -63,7 +72,7 @@ export type HeatPumpElectrificationLoad = {
   stepHeatTWh: number;
   seasonalCop: number;
   distribution: 'heating-degree-days';
-  degreeDayProfileFile: string;
+  degreeDayProfile: DegreeDayProfile;
   note: string;
 };
 

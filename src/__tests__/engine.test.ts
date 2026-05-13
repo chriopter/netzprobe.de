@@ -13,7 +13,7 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 450 },
+  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 430 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -41,14 +41,20 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
   source: 'Test',
   sourceUrls: [],
   referenceYear: 2026,
-  referenceHeatDemandTWh: 450,
-  alreadyHeatPumpHeatTWh: 40,
-  defaultTargetHeatTWh: 450,
-  maxTargetHeatTWh: 675,
+  referenceHeatDemandTWh: 430,
+  alreadyHeatPumpHeatTWh: 35,
+  defaultTargetHeatTWh: 430,
+  maxTargetHeatTWh: 600,
   stepHeatTWh: 5,
-  seasonalCop: 3.5,
+  seasonalCop: 3.3,
   distribution: 'heating-degree-days',
-  degreeDayProfileFile: 'last/gradtage-2025.json',
+  degreeDayProfile: {
+    year: 2025,
+    heatingLimitC: 15,
+    indoorReferenceC: 20,
+    monthlyMeanTemperatureC: [1.5, 2.6, 5.7, 9.6, 13.5, 16.6, 18.4, 18.0, 13.7, 9.4, 4.9, 2.0],
+    days: [],
+  },
   note: 'Test',
 };
 
@@ -106,8 +112,8 @@ describe('simulation engine', () => {
 
   it('distributes heat pump load by heating degree day weights', () => {
     const historical = simulate(baselineScenario);
-    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 450 } });
-    const expectedTWh = (450 - 40) / 3.5 * sampleHours.length / (365 * 24);
+    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 430 } });
+    const expectedTWh = (430 - 35) / 3.3 * sampleHours.length / (365 * 24);
 
     expect(heatPumpLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
     expect(heatPumpLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);
