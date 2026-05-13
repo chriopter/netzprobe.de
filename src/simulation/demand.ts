@@ -20,11 +20,18 @@ export function heatPumpAdditionalElectricityTWh(targetHeatTWh: number, model: H
 export function heatPumpLoadGW(row: HourlyInput, scenario: Scenario, model: HeatPumpElectrificationLoad) {
   if (!scenario.demand.heatPump) return 0;
   const annualElectricityTWh = heatPumpAdditionalElectricityTWh(scenario.demand.heatPumpTargetHeatTWh, model);
-  return annualElectricityTWh * 1000 * row.heatingDegreeDayWeight / 24;
+  const hourMultiplier = model.hourlyProfile.multipliers[row.hourOfDayBerlin];
+  return annualElectricityTWh * 1000 * row.heatingDegreeDayWeight * hourMultiplier / 24;
+}
+
+export function bevPkwLoadGW(row: HourlyInput, scenario: Scenario, model: BevPkwElectrificationLoad) {
+  if (!scenario.demand.bevPkwKm) return 0;
+  const annualTWh = bevPkwAdditionalTWh(scenario.demand.bevPkwMillionKm, model);
+  const hourMultiplier = model.hourlyProfile.multipliers[row.hourOfDayBerlin];
+  return annualTWh * 1000 * hourMultiplier / 8760;
 }
 
 export function demandGW(row: HourlyInput, scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad, heatPumpElectrification: HeatPumpElectrificationLoad) {
   const historicalLoadGW = scenario.demand.historicalLoad ? row.loadMW / 1000 : 0;
-  const bevPkwLoadGW = scenario.demand.bevPkwKm ? bevPkwAdditionalTWh(scenario.demand.bevPkwMillionKm, bevPkwElectrification) * 1000 / 8760 : 0;
-  return historicalLoadGW + bevPkwLoadGW + heatPumpLoadGW(row, scenario, heatPumpElectrification);
+  return historicalLoadGW + bevPkwLoadGW(row, scenario, bevPkwElectrification) + heatPumpLoadGW(row, scenario, heatPumpElectrification);
 }

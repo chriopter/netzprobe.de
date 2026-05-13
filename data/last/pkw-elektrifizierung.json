@@ -9,11 +9,26 @@
   ],
   "referenceYear": 2023,
   "referenceMillionKm": 472200,
-  "alreadyElectricMillionKm": 23800,
+  "alreadyElectricMillionKm": 20000,
   "defaultTargetMillionKm": 472200,
   "maxTargetMillionKm": 708300,
   "stepMillionKm": 1000,
   "kwhPer100Km": 20,
-  "distribution": "flat",
-  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert aus rund 1,5 Mio. BEV Ende 2023 und 15.852 km durchschnittlicher Jahresfahrleistung der KBA-Gruppe alternative Antriebe abgeleitet."
+  "distribution": "hourly-profile",
+  "hourlyProfile": {
+    "source": "Heinz (2018), KIT-IIP Working Paper No. 30: Standardlastprofile Elektrofahrzeuge aus dem Deutschen Mobilitätspanel (MOP), Welle 2015/16. Ladeszenario 'Zuhause laden', Wochenmittel (5x Werktag + 2x Wochenende)/7. Ungesteuertes Laden (Auto wird beim Heimkommen sofort geladen). Stunde 0 = 00:00-01:00 Berlin-Zeit, Summe = 24.",
+    "sourceUrls": [
+      "https://publikationen.bibliothek.kit.edu/1000086372",
+      "https://www.iip.kit.edu/3559.php",
+      "https://www.ffe.de/publikationen/veroeffentlichungen/316-standardlastprofile-fuer-kunden-mit-elektrostrassenfahrzeugen",
+      "https://www.bdew.de/energie/standardlastprofile-strom/"
+    ],
+    "multipliers": [
+      0.786, 0.503, 0.332, 0.222, 0.140, 0.096,
+      0.124, 0.197, 0.252, 0.275, 0.457, 0.704,
+      0.921, 1.100, 1.223, 1.560, 2.137, 2.542,
+      2.549, 2.225, 1.812, 1.548, 1.279, 1.016
+    ]
+  },
+  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr)."
 }

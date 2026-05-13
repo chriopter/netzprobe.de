@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
+import { DisclaimerFooter } from './DisclaimerFooter';
 import { cx } from './ui';
 
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
@@ -38,6 +39,7 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
       </aside>
       <article className="min-w-0 pb-12">
         {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
+        <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
       </article>
     </div>
   </main>;

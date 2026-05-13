@@ -47,6 +47,12 @@ export type DegreeDayProfile = {
   days: HeatingDegreeDay[];
 };
 
+export type HourlyProfile = {
+  source: string;
+  sourceUrls?: string[];
+  multipliers: number[];
+};
+
 export type BevPkwElectrificationLoad = {
   id: 'bev-pkw-electrification';
   title: string;
@@ -59,7 +65,8 @@ export type BevPkwElectrificationLoad = {
   maxTargetMillionKm: number;
   stepMillionKm: number;
   kwhPer100Km: number;
-  distribution: 'flat';
+  distribution: 'hourly-profile';
+  hourlyProfile: HourlyProfile;
   note: string;
 };
 
@@ -77,6 +84,7 @@ export type HeatPumpElectrificationLoad = {
   seasonalCop: number;
   distribution: 'heating-degree-days';
   degreeDayProfile: DegreeDayProfile;
+  hourlyProfile: HourlyProfile;
   note: string;
 };
 
@@ -97,6 +105,7 @@ export type SplitDataFile<T> = {
 
 export type HourlyInput = LoadHour & ModelFactorHour & {
   heatingDegreeDayWeight: number;
+  hourOfDayBerlin: number;
   observed: ObservedPower;
 };
 

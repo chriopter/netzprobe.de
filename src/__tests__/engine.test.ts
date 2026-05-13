@@ -3,17 +3,19 @@ import { runSimulation } from '../simulation/engine';
 import type { BevPkwElectrificationLoad, HeatPumpElectrificationLoad, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
+const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
+
 const sampleHours: HourlyInput[] = [
-  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [8, 7, 10, 9, 12, 11], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
-  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220, 260, 180, 160, 240, 230], wind100m: [6, 6, 7, 7, 9, 10], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
-  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0, 0, 0, 0, 0, 0], wind100m: [3, 4, 5, 4, 7, 8], heatingDegreeDayWeight: 1 / 365, observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
+  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0], wind100m: [8], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 1, observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
+  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220], wind100m: [6], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 13, observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
+  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0], wind100m: [3], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 19, observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
 ];
 
 const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 430 },
+  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 445 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -26,12 +28,13 @@ const bevPkwElectrification: BevPkwElectrificationLoad = {
   sourceUrls: [],
   referenceYear: 2023,
   referenceMillionKm: 472_200,
-  alreadyElectricMillionKm: 23_800,
+  alreadyElectricMillionKm: 20_000,
   defaultTargetMillionKm: 472_200,
   maxTargetMillionKm: 708_300,
   stepMillionKm: 1_000,
   kwhPer100Km: 20,
-  distribution: 'flat',
+  distribution: 'hourly-profile',
+  hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers },
   note: 'Test',
 };
 
@@ -41,9 +44,9 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
   source: 'Test',
   sourceUrls: [],
   referenceYear: 2026,
-  referenceHeatDemandTWh: 430,
+  referenceHeatDemandTWh: 445,
   alreadyHeatPumpHeatTWh: 35,
-  defaultTargetHeatTWh: 430,
+  defaultTargetHeatTWh: 445,
   maxTargetHeatTWh: 600,
   stepHeatTWh: 5,
   seasonalCop: 3.3,
@@ -55,6 +58,7 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
     monthlyMeanTemperatureC: [1.5, 2.6, 5.7, 9.6, 13.5, 16.6, 18.4, 18.0, 13.7, 9.4, 4.9, 2.0],
     days: [],
   },
+  hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers },
   note: 'Test',
 };
 
@@ -92,7 +96,7 @@ describe('simulation engine', () => {
 
     expect(noHistorical.summary.totalDemandTWh).toBe(0);
     expect(noHistorical.summary.renewableSharePct).toBe(0);
-    expect(bevLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(89.68 * sampleHours.length / 8760, 6);
+    expect(bevLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(90.44 * sampleHours.length / 8760, 6);
   });
 
   it('balances the historical baseline without load shedding or curtailment', () => {
@@ -107,13 +111,13 @@ describe('simulation engine', () => {
     const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true, bevPkwMillionKm: 472_200 } });
 
     expect(bevLoad.summary.loadSheddingTWh).toBe(0);
-    expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(89.68 * sampleHours.length / 8760, 6);
+    expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(90.44 * sampleHours.length / 8760, 6);
   });
 
   it('distributes heat pump load by heating degree day weights', () => {
     const historical = simulate(baselineScenario);
-    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 430 } });
-    const expectedTWh = (430 - 35) / 3.3 * sampleHours.length / (365 * 24);
+    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 445 } });
+    const expectedTWh = (445 - 35) / 3.3 * sampleHours.length / (365 * 24);
 
     expect(heatPumpLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
     expect(heatPumpLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);

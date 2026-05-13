@@ -12,11 +12,13 @@ const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   year: 'numeric',
   month: '2-digit',
   day: '2-digit',
+  hour: '2-digit',
+  hourCycle: 'h23',
 });
 
-function berlinDate(isoTime: string) {
+function berlinDateAndHour(isoTime: string) {
   const parts = Object.fromEntries(berlinDateFormatter.formatToParts(new Date(isoTime)).map((part) => [part.type, part.value]));
-  return `${parts.year}-${parts.month}-${parts.day}`;
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) };
 }
 
 export async function loadJson<T>(url: string): Promise<T> {
@@ -41,7 +43,7 @@ export async function loadDefaultData(): Promise<DataSet> {
   const hours = loadData.hours.map((loadHour) => {
     const generation = generationByTime.get(loadHour.time);
     const factors = factorsByTime.get(loadHour.time);
-    const date = berlinDate(loadHour.time);
+    const { date, hour } = berlinDateAndHour(loadHour.time);
     const heatingDegreeDay = heatingDegreeDayByDate.get(date);
     if (!generation || !factors || !heatingDegreeDay) throw new Error(`Unvollständige Daten für ${loadHour.time}`);
     const { time: _generationTime, ...observed } = generation;
@@ -51,6 +53,7 @@ export async function loadDefaultData(): Promise<DataSet> {
       solarIrradiance: factors.solarIrradiance,
       wind100m: factors.wind100m,
       heatingDegreeDayWeight: heatingDegreeDay.weight,
+      hourOfDayBerlin: hour,
       observed,
     };
   });

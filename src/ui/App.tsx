@@ -8,6 +8,7 @@ import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataHandbook } from './DataHandbook';
 import { dataWikiUrl, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
+import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario, scenarioFromUrl } from './scenarioPresets';
@@ -209,9 +210,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
           <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
             <div id="storage-chart" className="h-[240px] w-full"/>
           </ChartPanel>
-          <footer className="mt-auto pt-2 text-xs leading-5 text-zinc-500">
-            Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln. Code auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer">GitHub</a>.
-          </footer>
+          <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
 

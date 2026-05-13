@@ -20,12 +20,22 @@ const indoorReferenceC = 20;
 const monthlyMeanTemperatureC = [1.5, 2.6, 5.7, 9.6, 13.5, 16.6, 18.4, 18.0, 13.7, 9.4, 4.9, 2.0];
 const monthLengths2025 = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-const referenceHeatDemandTWh = 430;
+const referenceHeatDemandTWh = 445;
 const alreadyHeatPumpHeatTWh = 35;
-const defaultTargetHeatTWh = 430;
+const defaultTargetHeatTWh = 445;
 const maxTargetHeatTWh = 600;
 const stepHeatTWh = 5;
 const seasonalCop = 3.3;
+
+// 24-h-Gleichzeitigkeitsprofil fuer Waermepumpen-Heizungslast (Stunde 0 = 00:00-01:00 Berlin-Zeit).
+// Bimodaler Tagesgang aus When2Heat-h-Funktionen (BDEW-Gas-SLP-SFH) und WPuQ-Feldmessung Hamelin,
+// auf Grid-Aggregat-Niveau gedaempft. Renormiert sodass Summe = 24 (Tagesmittel 1,0).
+const heatPumpHourlyMultipliers = [
+  0.6868, 0.6083, 0.5691, 0.5691, 0.6083, 0.7653,
+  1.0303, 1.3246, 1.4227, 1.2756, 1.1284, 1.0303,
+  0.9812, 0.9321, 0.9321, 0.9812, 1.1284, 1.3246,
+  1.4227, 1.3737, 1.2265, 1.0303, 0.8831, 0.7653,
+];
 
 function midMonthDoy(month) {
   let sum = 0;
@@ -81,8 +91,9 @@ const annualHdd = Number(sumHdd.toFixed(2));
 const output = {
   id: 'heat-pump-electrification',
   title: 'Heiz Elektrifizierung',
-  source: 'Raumwaermebedarf privater Haushalte Deutschland nach AGEB/UBA; Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.',
+  source: 'Raumwaermebedarf privater Haushalte Deutschland nach UBA "Energieverbrauch der privaten Haushalte 2023"; Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.',
   sourceUrls: [
+    'https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte',
     'https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren',
     'https://ag-energiebilanzen.de/daten-und-fakten/',
     'https://www.dwd.de/DE/leistungen/klimadatendeutschland/klarchivtagmonat.html',
@@ -96,7 +107,18 @@ const output = {
   stepHeatTWh,
   seasonalCop,
   distribution: 'heating-degree-days',
-  note: 'Zusatzlast = max(0, Ziel-Raumwaerme - bereits elektrisch gedeckte Heizwaerme) / Jahresarbeitszahl. Die Stundenverteilung folgt dem taeglichen Gradtagszahl-Profil, flach auf 24 Stunden je Tag.',
+  note: 'Zusatzlast = max(0, Ziel-Raumwaerme - bereits elektrisch gedeckte Heizwaerme) / Jahresarbeitszahl. Die Tagesgewichte folgen Gradtagszahlen, innerhalb des Tages moduliert das 24-h-Profil aus dem hourlyProfile-Block.',
+  hourlyProfile: {
+    source: 'Bimodaler WP-Tagesgang nach BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Auf Grid-Aggregat gedaempft, Summe = 24.',
+    sourceUrls: [
+      'https://www.nature.com/articles/s41597-019-0199-y',
+      'https://data.open-power-system-data.org/when2heat/',
+      'https://www.nature.com/articles/s41597-022-01156-1',
+      'https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html',
+      'https://www.bdew.de/energie/standardlastprofile-strom/',
+    ],
+    multipliers: heatPumpHourlyMultipliers,
+  },
   degreeDayProfile: {
     year: profileYear,
     heatingLimitC,

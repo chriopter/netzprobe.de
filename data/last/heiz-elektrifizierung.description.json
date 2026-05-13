@@ -4,7 +4,7 @@
   "title": "Heiz Elektrifizierung",
   "file": "last/heiz-elektrifizierung.json",
   "scripts": ["last/generate-heiz-elektrifizierung.mjs"],
-  "source": "Raumwärmebedarf privater Haushalte Deutschland aus AGEB/UBA-Energiebilanzen; tagesaufgelöstes Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Interpolation zwischen Monatsmittel-Ankerpunkten.",
+  "source": "Raumwärmebedarf privater Haushalte Deutschland nach UBA \"Energieverbrauch der privaten Haushalte 2023\"; tagesaufgelöstes Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Interpolation zwischen Monatsmittel-Ankerpunkten.",
   "period": "2026 (Mengen), Klimanormale 1991-2020 auf Kalender 2025 (Profil)",
   "resolution": "Jahr, über tagesaufgelöste Gradtagszahlen auf Stunden verteilt",
   "unit": "TWh Wärme, TWh Strom, JAZ",
@@ -12,11 +12,11 @@
   "description": "Der Zielwert beschreibt elektrifizierte Raumwärme privater Haushalte. Bereits elektrisch gedeckte Heizwärme wird abgezogen; der Rest wird über eine Jahresarbeitszahl in Stromlast umgerechnet. Die zeitliche Verteilung folgt einer tagesaufgelösten Heizgradtagszahl, die durch lineare Interpolation zwischen DWD-Monatsmittel-Ankerpunkten gebildet wird. Mai und September laufen damit weich aus, Juni bis August liegen vollständig auf 0.",
   "overview": [
     { "label": "Verwendung", "value": "Checkbox aktiviert das Szenario; Slider setzt den elektrisch gedeckten Raumwärmebedarf ab dem bereits elektrifizierten Mindestwert." },
-    { "label": "Referenz", "value": "430 TWh Raumwärmebedarf privater Haushalte 2024 nach UBA/AGEB (rund 67 % von 640 TWh Endenergie der Haushalte)." },
+    { "label": "Referenz", "value": "445 TWh Raumwärmebedarf privater Haushalte 2023 nach UBA (\"Energieverbrauch der privaten Haushalte 2023\")." },
     { "label": "Abzug", "value": "35 TWh Wärme werden als bereits elektrisch gedeckt abgezogen (Wärmepumpen-Bestand rund 1,9 Mio. Anlagen plus Direktstromheizungen)." },
     { "label": "Effizienz", "value": "Jahresarbeitszahl 3,3: Mischwert aus Bestandsanlagen (Luft/Wasser, JAZ rund 3,0) und neueren Anlagen (JAZ 3,5-4,0)." },
-    { "label": "Default", "value": "430 TWh Zielwärme = 395 TWh zusätzliche Wärme = 119,7 TWh zusätzlicher Strom." },
-    { "label": "Verteilung", "value": "Tagesaufgelöstes Gradtagszahl-Profil: Monatsmittel als Ankerpunkte am 15. jedes Monats, lineare Interpolation dazwischen, Heizschwelle 15 °C pro Tag, Innenreferenz 20 °C. Stundenverteilung flach innerhalb des Tages." },
+    { "label": "Default", "value": "445 TWh Zielwärme = 410 TWh zusätzliche Wärme = 124,24 TWh zusätzlicher Strom." },
+    { "label": "Verteilung", "value": "Tagesaufgelöstes Gradtagszahl-Profil: Monatsmittel als Ankerpunkte am 15. jedes Monats, lineare Interpolation dazwischen, Heizschwelle 15 °C pro Tag, Innenreferenz 20 °C. Innerhalb des Tages bimodaler 24-h-Tagesgang (Morgen-/Abendpeak, Nacht-Setback) aus When2Heat-h-Funktionen, WPuQ-Feldmessungen und VDI 4655." },
     { "label": "Profil-Eckdaten", "value": "Jahres-HDD rund 3.486 K·d, 266 Heiztage; Juni, Juli und August liegen vollständig auf 0; Mai und September laufen weich aus." }
   ],
   "fields": [
@@ -43,9 +43,12 @@
     { "name": "degreeDayProfile.days[].meanTemperatureC", "unit": "°C", "description": "Interpolierte Tagesmitteltemperatur." },
     { "name": "degreeDayProfile.days[].heatingDegreeDay", "unit": "K·d", "description": "Tägliche Gradtagszahl, null wenn Tagesmittel oberhalb der Heizgrenze." },
     { "name": "degreeDayProfile.days[].weight", "unit": "Anteil", "description": "Normierter Anteil an der Jahres-Heizlast (alle Tage summieren auf 1)." },
+    { "name": "hourlyProfile.source", "unit": "Text", "description": "Herkunft des 24-h-Tagesgangs." },
+    { "name": "hourlyProfile.sourceUrls", "unit": "Liste", "description": "URLs zu Profil-Quellen." },
+    { "name": "hourlyProfile.multipliers", "unit": "Faktor", "description": "24 Stunden-Multiplikatoren Berlin-Zeit; Summe = 24 (Tagesmittel 1,0)." },
     { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
   ],
-  "caveats": ["Modellannahmen, keine amtliche Zeitreihe.", "Nur Raumwärme privater Haushalte; Warmwasser, Industrie und GHD sind nicht enthalten.", "Direktstromheizungen werden im Abzug, aber nicht im JAZ-Pfad berücksichtigt.", "Tagesprofil basiert auf glatten Monats-Anker-Interpolationen, nicht auf realen Tageswetter-Messungen.", "Kein Tagesgang (24-h-Mittel); reale Wärmepumpen-Lastgänge haben Morgen- und Abendspitzen."],
+  "caveats": ["Modellannahmen, keine amtliche Zeitreihe.", "Nur Raumwärme privater Haushalte; Warmwasser, Industrie und GHD sind nicht enthalten.", "Direktstromheizungen werden im Abzug, aber nicht im JAZ-Pfad berücksichtigt.", "Tagesprofil basiert auf glatten Monats-Anker-Interpolationen, nicht auf realen Tageswetter-Messungen.", "24-h-Tagesgang ist ein national gemitteltes Gleichzeitigkeitsprofil; einzelne Haushalte haben deutlich stärkere Peak/Tal-Spreizungen."],
   "sections": [
     {
       "title": "Erwägungsgründe",
@@ -56,17 +59,19 @@
         "Tagesaufgelöste Gradtagszahlen vermeiden die unphysikalischen Monats-Stufensprünge des reinen Monatsmittel-Ansatzes; insbesondere Juni-August fallen damit sauber auf 0.",
         "Lineare Interpolation zwischen Monatsmittel-Ankerpunkten ist deterministisch und reproduzierbar, ohne ein konkretes Wetterjahr vorzutäuschen.",
         "Das Tagesprofil und die Mengen liegen in einer Datei, weil sie nur zusammen ein Szenario ergeben.",
-        "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix."
+        "Das Szenario bildet Nachfrage ab; Erzeugung bleibt historisch fix.",
+        "Der Slider erlaubt Zielwerte bis 600 TWh über der reinen Raumwärme-Referenz, um Upside-Szenarien einzuschließen: Elektrifizierung von Warmwasser-Anteilen, GHD-Sektor-Gebäudewärme oder erweitertem privaten Heizbedarf. Werte oberhalb von 445 TWh sind als 'Erweitertes Elektrifizierungs-Szenario' zu lesen, nicht als reine Raumwärme privater Haushalte."
       ]
     },
     {
       "title": "Grenzen",
       "items": [
-        "Kein Tagesgang innerhalb des Kalendertags; reale Heizlast hat morgens und abends Spitzen.",
+        "Tagesgang ist ein deterministisches Aggregat-Profil; tagesweise Wetterausschläge, Smart-Grid-Steuerung und individuelle Thermostateinstellungen sind nicht modelliert.",
         "Keine außentemperaturabhängige COP-Kurve; reale Luft-Wasser-Wärmepumpen verlieren bei -10 °C deutlich an Effizienz.",
         "Keine Trennung nach Einfamilienhaus, Mehrfamilienhaus, Sanierungsstand oder Heizkörpertemperatur.",
         "Kein Warmwasser; das wäre eine zusätzliche, fast saisonunabhängige Komponente.",
-        "Profil-Basis sind Klimanormale 1991-2020, nicht das tatsächliche Wetterjahr 2025; der nächste harte Schritt wäre eine stündliche Temperaturzeitreihe Deutschland-Mittel."
+        "Profil-Basis sind Klimanormale 1991-2020, nicht das tatsächliche Wetterjahr 2025; der nächste harte Schritt wäre eine stündliche Temperaturzeitreihe Deutschland-Mittel.",
+        "Die Jahresarbeitszahl 3,3 ist ein Jahres-Mittelwert und nicht außentemperaturabhängig. Real fällt der COP bei -10 °C Außentemperatur auf etwa 2,0 und steigt bei +12 °C auf etwa 4,5. An kalten Wintertagen wird der hier modellierte Wärmepumpen-Strombedarf daher leicht unterschätzt; an milden Übergangstagen leicht überschätzt. Im Jahresmittel kompensiert sich das."
       ]
     }
   ]

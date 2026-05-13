@@ -1,3 +1,0 @@
-# Last
-
-Historische Stromlast-Datensätze.
