@@ -30,6 +30,7 @@ export type ModelFactorHour = {
 
 export type HeatingDegreeDay = {
   date: string;
+  meanTemperatureC?: number;
   heatingDegreeDay: number;
   weight: number;
 };
@@ -39,6 +40,9 @@ export type DegreeDayProfile = {
   heatingLimitC: number;
   indoorReferenceC: number;
   monthlyMeanTemperatureC: number[];
+  interpolation?: string;
+  annualHeatingDegreeDays?: number;
+  heatingDays?: number;
   sumNote?: string;
   days: HeatingDegreeDay[];
 };

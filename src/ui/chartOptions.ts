@@ -44,7 +44,7 @@ const averageBucket = (bucket: SimHour[], numericKeys: (keyof SimHour)[]): SimHo
   return row as unknown as SimHour;
 };
 
-const dayOfMonthOrderedDailyAverages = (hours: SimHour[], numericKeys: (keyof SimHour)[]) => {
+const chronologicalDailyAverages = (hours: SimHour[], numericKeys: (keyof SimHour)[]) => {
   const buckets = new Map<string, SimHour[]>();
   for (const hour of hours) {
     const date = dateKey(hour);
@@ -55,7 +55,7 @@ const dayOfMonthOrderedDailyAverages = (hours: SimHour[], numericKeys: (keyof Si
     .sort((a, b) => {
       const left = dateParts(dateKey(a));
       const right = dateParts(dateKey(b));
-      return left.day - right.day || left.month - right.month;
+      return left.month - right.month || left.day - right.day;
     });
 };
 
@@ -63,7 +63,7 @@ const compressHours = (hours: SimHour[], maxPoints = 365) => {
   if (hours.length <= maxPoints) return hours;
   const numericKeys = Object.keys(hours[0]).filter((key) => key !== 'time') as (keyof SimHour)[];
   const uniqueDates = new Set(hours.map(dateKey));
-  if (uniqueDates.size >= 360) return dayOfMonthOrderedDailyAverages(hours, numericKeys);
+  if (uniqueDates.size >= 360) return chronologicalDailyAverages(hours, numericKeys);
   const step = Math.ceil(hours.length / maxPoints);
   const compressed: SimHour[] = [];
   for (let start = 0; start < hours.length; start += step) {
