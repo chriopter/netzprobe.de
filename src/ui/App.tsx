@@ -6,6 +6,7 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
+import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
 import { dataWikiUrl, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
@@ -116,18 +117,21 @@ function useDatasetDocs() {
   return docs;
 }
 
-function isDataWikiView() {
+function urlView() {
   try {
-    return new URL(window.location.href).searchParams.get('view') === 'daten';
+    const params = new URL(window.location.href).searchParams;
+    return { view: params.get('view'), path: params.get('path') };
   } catch {
-    return false;
+    return { view: null, path: null };
   }
 }
 
 export function App() {
   const datasetDocs = useDatasetDocs();
-  const [dataWikiView] = useState(isDataWikiView);
-  return dataWikiView ? <DataHandbook docs={datasetDocs}/> : <Dashboard datasetDocs={datasetDocs}/>;
+  const [route] = useState(urlView);
+  if (route.view === 'datei' && route.path) return <DataFileViewer path={route.path}/>;
+  if (route.view === 'daten') return <DataHandbook docs={datasetDocs}/>;
+  return <Dashboard datasetDocs={datasetDocs}/>;
 }
 
 function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {

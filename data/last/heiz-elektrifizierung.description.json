@@ -15,7 +15,12 @@
   "resolution": "Tag × Stunde",
   "unit": "TWh Wärme, TWh Strom, JAZ",
   "short": "Zusatzlast aus elektrifizierter Raumwärme privater Haushalte.",
-  "description": "Slider setzt Ziel-Raumwärme zwischen 35 TWh (bereits elektrisch, Slider-Minimum) und 600 TWh. Zusatzlast = (Ziel − 35) / 3,3. Default 445 TWh ergibt 124,2 TWh Strom. Stundenverteilung: lineare Tagesinterpolation zwischen Monats-Klimanormalen × bimodaler 24-h-Tagesgang (Summe 24); Juni-August fallen auf 0, Mai und September laufen weich aus.",
+  "description": "Zusätzlicher Strombedarf, wenn ein größerer Teil der privaten Raumwärme elektrisch gedeckt wird, typischerweise per Wärmepumpe. Bereits elektrisch gedeckte Heizwärme wird als Mindestwert abgezogen, der Rest über eine Jahresarbeitszahl in Strom umgerechnet. Die Stundenverteilung folgt tagesaufgelösten Gradtagszahlen mit innertäglichem Tagesgang.",
+  "overview": [
+    { "label": "Verwendung", "value": "Slider zwischen 35 TWh (bereits elektrisch, Mindestwert) und 600 TWh. Default 445 TWh entspricht der UBA-Raumwärme privater Haushalte 2023." },
+    { "label": "Verteilung", "value": "Tagesweise Gradtagszahl aus DWD-Klimanormalen 1991–2020 (lineare Interpolation, Heizgrenze 15 °C, Innenreferenz 20 °C). Innerhalb des Tages bimodaler 24-h-Tagesgang. Juni–August fallen auf 0, Mai und September laufen weich aus." },
+    { "label": "Formel", "value": "Zusatzstrom (TWh) = (Ziel − 35 TWh) / JAZ. Default: (445 − 35) / 3,3 = 124,24 TWh/Jahr." }
+  ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Anzeigename." },

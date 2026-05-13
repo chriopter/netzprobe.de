@@ -31,18 +31,24 @@ Vor dem Mergen jedes neuen oder geänderten Szenarios:
 
 ## Wiki-Stil
 
-Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbild: `data/last/energy-charts-stuendlich-2025.description.json` — kurz, ohne `overview`, ohne `sections`.
+Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbilder:
+- Reine Daten ohne Slider: `data/last/energy-charts-stuendlich-2025.description.json` — kein `overview`, kein `sections`.
+- Szenarien mit Slider und Formel: `data/last/pkw-elektrifizierung.description.json` und `data/last/heiz-elektrifizierung.description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
 
 Regeln:
 
-- `description`: 2–3 Sätze. Was tut der Slider, welche Rechnung, welche zeitliche Verteilung. Keine Wiederholung von `source` oder `fields`.
-- `source`: ein Satz mit den wichtigsten Bezugswerten in Klammern (z. B. „UBA Raumwärme 2023 (445 TWh)"). URLs in `sourceUrls`.
+- `description`: 2–3 Sätze, generisch, ohne konkrete Zahlen. Beschreibt _was_ das Szenario tut und _wie_ es prinzipiell gerechnet wird, nicht mit welchen Werten.
+- `source`: ein Satz mit den wichtigsten Bezugswerten in Klammern (z. B. „UBA Raumwärme 2023 (445 TWh)"). URLs gehören in `sourceUrls`.
+- `overview`: nur für Szenarien mit Slider/Formel. Maximal drei Einträge in dieser Reihenfolge:
+  - **Verwendung**: konkrete Slider-Spanne, was Default bedeutet.
+  - **Verteilung**: zeitliche Verteilung und Profil-Quelle.
+  - **Formel**: Rechenvorschrift inklusive Default-Auswertung.
+  Kein zusätzlicher `Quelle`-Eintrag — die Quelle ist in `source` und der Wiki-Header rendert sie ohnehin separat.
 - `fields`: eine knappe Zeile pro Top-Level-Feld. Verschachtelte Strukturen (`degreeDayProfile`, `hourlyProfile`) als ein einziger Eintrag mit Inhalt-Zusammenfassung, nicht jede Sub-Property einzeln.
 - `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen.
-- `overview` und `sections` vermeiden. Wichtige Werte gehören in `description`, strukturelle Infos in `fields`. „Erwägungsgründe"-Prosa und pädagogische Bullet-Listen entfernen.
+- `sections` vermeiden. „Erwägungsgründe" und pädagogische Bullet-Listen gehören weder ins Wiki noch in den Code.
+- Keine Wiederholung: Was schon in `title`, `short`, `source` oder `fields` steht, gehört nicht nochmal in `description` oder `overview`.
 - Keine Marketingsprache.
-
-Negativ-Beispiel: vorherige Versionen von `pkw-elektrifizierung.description.json` und `heiz-elektrifizierung.description.json` mit `overview`-Blöcken und „Erwägungsgründe"-Sektionen.
 
 ## Dokumentation
 

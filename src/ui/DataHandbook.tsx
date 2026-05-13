@@ -4,6 +4,8 @@ import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { cx } from './ui';
 
+const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=datei&path=${encodeURIComponent(path)}`;
+
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const params = new URL(window.location.href).searchParams;
   const selectedId = params.get('dataset');
@@ -59,14 +61,7 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
           { label: 'Auflösung', value: selected.resolution },
           { label: 'Einheit', value: selected.unit },
         ]).map(item => <InfoLine key={item.label} label={item.label} value={item.value}/>)}
-        <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
-          <dt className="font-medium text-zinc-950">Datei</dt>
-          <dd>
-            <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
-              <code>data/{selected.file}</code>
-            </a>
-          </dd>
-        </div>
+        <DataFileRow filePath={selected.file}/>
         {!!selected.scripts?.length && <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
           <dt className="font-medium text-zinc-950">Skript</dt>
           <dd className="grid gap-1">
@@ -153,6 +148,19 @@ function InfoLine({ label, value }: { label: string; value: string }) {
         {value.slice(0, urlMatch.index).trim() ? ' ' : ''}
         <a href={urlMatch[0]} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{urlMatch[0]}</a>
       </> : value}
+    </dd>
+  </div>;
+}
+
+function DataFileRow({ filePath }: { filePath: string }) {
+  const rawUrl = `${import.meta.env.BASE_URL}data/${filePath}`;
+  return <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+    <dt className="font-medium text-zinc-950">Datei</dt>
+    <dd className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <a href={dataFileViewerUrl(filePath)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+        <code>data/{filePath}</code>
+      </a>
+      <a href={rawUrl} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
     </dd>
   </div>;
 }

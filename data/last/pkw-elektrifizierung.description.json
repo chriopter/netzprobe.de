@@ -13,7 +13,12 @@
   "resolution": "Jahr × Stunde",
   "unit": "Mio. km, kWh/100 km, TWh",
   "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
-  "description": "Slider setzt Ziel-Pkw-km zwischen 20.000 Mio. km (bereits elektrisch, Slider-Minimum) und 708.300 Mio. km. Zusatzlast = (Ziel − 20.000) × 20 kWh/100 km. Default 472.200 Mio. km ergibt 90,44 TWh/Jahr. Stundenverteilung: empirisches 24-h-Heimladeprofil (Wochenmittel, Summe 24) mit Abendpeak 17-21 Uhr und Nachttal 4-6 Uhr.",
+  "description": "Zusätzlicher Strombedarf, wenn ein größerer Teil der privaten Pkw-Kilometer elektrisch gefahren wird. Bereits elektrisch gefahrene Kilometer werden als Mindestwert abgezogen, der Rest mit einem pauschalen Flottenverbrauch in Stromlast umgerechnet. Die Stundenverteilung folgt einem empirischen Heimladeprofil mit ausgeprägtem Abendpeak.",
+  "overview": [
+    { "label": "Verwendung", "value": "Slider zwischen 20.000 Mio. km (bereits elektrisch, Mindestwert) und 708.300 Mio. km. Default 472.200 Mio. km entspricht der Pkw-Fahrleistung privater Haushalte 2023." },
+    { "label": "Verteilung", "value": "Empirisches 24-h-Heimladeprofil aus KIT Heinz 2018 (Deutsches Mobilitätspanel), Wochenmittel mit Abendpeak 17–21 Uhr und Nachttal 4–6 Uhr." },
+    { "label": "Formel", "value": "Zusatzlast (TWh) = (Ziel − 20.000) Mio. km × 20 kWh/100 km / 100.000. Default: (472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/Jahr." }
+  ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Anzeigename." },
