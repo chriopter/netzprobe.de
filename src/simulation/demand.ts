@@ -10,7 +10,7 @@ export function bevPkwAdditionalTWh(targetMillionKm: number, model: BevPkwElectr
 }
 
 export function heatPumpAdditionalHeatTWh(targetHeatTWh: number, model: HeatPumpElectrificationLoad) {
-  return Math.max(0, targetHeatTWh - model.alreadyHeatPumpHeatTWh);
+  return Math.max(0, targetHeatTWh - model.alreadyElectricHeatTWh);
 }
 
 export function heatPumpAdditionalElectricityTWh(targetHeatTWh: number, model: HeatPumpElectrificationLoad) {

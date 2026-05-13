@@ -1,22 +1,26 @@
 {
   "id": "modell.kernmodell",
+  "code": "KERN",
   "domain": "modell",
   "title": "Kernmodell",
   "file": "modell/kernmodell.json",
-  "source": "Eigene stündliche Bilanzrechnung im Browser.",
+  "source": "Eigene Implementierung.",
   "period": "laufend",
   "resolution": "stündlich",
   "unit": "GW, GWh, TWh",
-  "short": "Stündliche Bilanz aus fixer Last, historischer Erzeugung, historischem Handelssaldo, Abgrenzungsrest und Zusatzlast.",
+  "short": "Stündliche Bilanzrechnung aus Last, Erzeugung, Handelssaldo und Zusatzlasten.",
   "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert und automatisch als zusätzlicher Import aufgefüllt; es gibt keinen Kraftwerks- oder Speicherdispatch.",
   "overview": [
-    { "label": "Verwendung", "value": "Rechnet die stündliche Netzbilanz und daraus Jahreskennzahlen." },
     { "label": "Zeitschritt", "value": "1 Stunde" },
-    { "label": "Erzeugung", "value": "Historisch fix; zusätzliche Last erhöht die Erzeugung nicht." },
-    { "label": "Import/Export", "value": "Historischer Handelssaldo aus Energy-Charts wird stündlich übernommen." },
-    { "label": "Abgrenzungsrest", "value": "Stündlich aus Last + Export - öffentliche Erzeugung - Import abgeleitet, damit 2025 exakt auf null kommt." },
-    { "label": "Zusatzlast", "value": "Zusatzlast wird nach der historischen Bilanz addiert und als zusätzlicher Import aufgefüllt." },
-    { "label": "Code", "value": "src/simulation/engine.ts" }
+    { "label": "Implementierung", "value": "src/simulation/engine.ts" }
+  ],
+  "method": [
+    "Last bestimmen: historische Last plus aktive Zusatzlasten (PKW, Heiz).",
+    "Erzeugung übernehmen: beobachtete Energy-Charts-Reihen je Stunde, fixe Werte ohne Skalierung.",
+    "Handelssaldo übernehmen: historischer Import/Export aus Energy-Charts je Stunde.",
+    "Abgrenzungsrest berechnen: Last + Export − öffentliche Erzeugung − Import. Sorgt dafür, dass 2025 historisch exakt auf null bilanziert.",
+    "Zusatzlast-Defizite werden automatisch als zusätzlicher Import aufgefüllt; kein Kraftwerks- oder Speicherdispatch.",
+    "Jahreskennzahlen aus den Stundenwerten summieren (Last, Import, Export, Curtailment, Load-Shedding)."
   ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
@@ -28,28 +32,10 @@
     { "name": "balanceMode", "unit": "Text", "description": "Behandlung von historischer Bilanz und Zusatzlast." },
     { "name": "notes", "unit": "Liste", "description": "Kurznotizen zur Rechenlogik." }
   ],
-  "sections": [
-    {
-      "title": "Rechenfolge",
-      "items": [
-        "Last aus historischem Verbrauch plus aktiven Zusatzlasten bestimmen.",
-        "Historische Erzeugung aus den beobachteten Energy-Charts-Reihen übernehmen.",
-        "Historischen Import/Export aus dem Handelssaldo übernehmen.",
-        "Abgrenzungsrest berechnen, sodass Last 2025 stündlich gedeckt ist.",
-        "Aktive Zusatzlasten danach addieren.",
-        "Restdefizite der Zusatzlast als zusätzlichen Import auffüllen.",
-        "Jahreskennzahlen aus den Stundenwerten summieren."
-      ]
-    },
-    {
-      "title": "Grenzen",
-      "items": [
-        "Kein Kraftwerksdispatch für Zusatzlasten.",
-        "Kein Speicherdispatch.",
-        "Zusätzlicher Import ist automatische Auffüllung der Restlücke, kein Kraftwerksdispatch.",
-        "Der Abgrenzungsrest ist keine Erzeugung und keine Zukunftsannahme, sondern die historische Restgröße aus unterschiedlichen Datenabgrenzungen.",
-        "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
-      ]
-    }
+  "caveats": [
+    "Kein Kraftwerksdispatch für Zusatzlasten; Defizit wird als Import aufgefüllt.",
+    "Kein Speicherdispatch.",
+    "Abgrenzungsrest ist keine Erzeugung, sondern die historische Restgröße aus unterschiedlichen Datenabgrenzungen.",
+    "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
   ]
 }

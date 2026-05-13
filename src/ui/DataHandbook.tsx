@@ -8,8 +8,8 @@ const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=da
 
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const params = new URL(window.location.href).searchParams;
-  const selectedId = params.get('dataset');
-  const selectedDataset = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
+  const selectedCode = params.get('code');
+  const selectedDataset = selectedCode ? docs.find(doc => doc.code === selectedCode) : undefined;
   const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
     (acc[doc.domain] ??= []).push(doc);
     return acc;
@@ -31,16 +31,34 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
         <nav aria-label="Datensätze">
           <div className="grid gap-3">
             <TreeSection title="Home">
-              <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
+              <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedCode}/>
             </TreeSection>
-            {sections.map(([domain, label]) => grouped[domain]?.length ? <TreeSection key={domain} title={label}>
-              {grouped[domain]?.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
-            </TreeSection> : null)}
+            {sections.map(([domain, label]) => {
+              const inDomain = grouped[domain];
+              if (!inDomain?.length) return null;
+              const orphans = inDomain.filter(doc => !doc.parent);
+              const byParent = new Map<string, { name: string; docs: DatasetDoc[] }>();
+              for (const doc of inDomain) {
+                if (!doc.parent) continue;
+                const entry = byParent.get(doc.parent.code) ?? { name: doc.parent.name, docs: [] };
+                entry.docs.push(doc);
+                byParent.set(doc.parent.code, entry);
+              }
+              return <TreeSection key={domain} title={label}>
+                {orphans.map(doc => <TreeNode key={doc.code} href={dataWikiUrl(doc.code)} label={doc.title} selected={selectedCode === doc.code}/>)}
+                {[...byParent.entries()].map(([parentCode, { name, docs }]) => <div key={parentCode} className="grid gap-0.5">
+                  <span className="block truncate py-0.5 text-sm font-medium text-zinc-700">{name}</span>
+                  <div className="ml-2 grid gap-0.5">
+                    {docs.map(doc => <TreeNode key={doc.code} href={dataWikiUrl(doc.code)} label={doc.title} selected={selectedCode === doc.code}/>)}
+                  </div>
+                </div>)}
+              </TreeSection>;
+            })}
           </div>
         </nav>
       </aside>
       <article className="min-w-0 pb-12">
-        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
+        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedCode && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
         <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
       </article>
     </div>
@@ -51,31 +69,58 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   return <div>
     <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">{selected.domain}</p>
     <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{selected.title}</h1>
-    <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Übersicht</h2>
-      <dl className="mt-3 grid gap-1 text-sm leading-6">
+      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
+      <dl className="mt-4 grid gap-1 text-sm leading-6">
+        <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+          <dt className="font-medium text-zinc-950">Code</dt>
+          <dd><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-700">{selected.code}</code></dd>
+        </div>
         {(selected.overview ?? [
-          { label: 'Verwendung', value: selected.description },
           { label: 'Zeitraum', value: selected.period },
           { label: 'Auflösung', value: selected.resolution },
           { label: 'Einheit', value: selected.unit },
         ]).map(item => <InfoLine key={item.label} label={item.label} value={item.value}/>)}
-        <DataFileRow filePath={selected.file}/>
-        {!!selected.scripts?.length && <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
-          <dt className="font-medium text-zinc-950">Skript</dt>
-          <dd className="grid gap-1">
-            {selected.scripts.map(script => <a key={script} href={`${import.meta.env.BASE_URL}data/${script}`} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
-              <code>data/{script}</code>
-            </a>)}
+        {!!selected.caveats?.length && <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+          <dt className="font-medium text-zinc-950">Grenzen</dt>
+          <dd>
+            <ul className="grid gap-1 text-zinc-700">
+              {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
+            </ul>
           </dd>
         </div>}
-        <InfoLine label="Quelle" value={selected.source}/>
+        <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
+          <dt className="font-medium text-zinc-950">Quelle</dt>
+          <dd>
+            {selected.sourceUrls?.length
+              ? <ul className="grid gap-1 text-zinc-700">
+                  {selected.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
+                </ul>
+              : <span className="text-zinc-700">{selected.source}</span>}
+          </dd>
+        </div>
       </dl>
     </section>
+    {!!selected.method?.length && <section className="mt-8">
+      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Methode</h2>
+      <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+        {selected.method.map(item => <li key={item}>• {item}</li>)}
+      </ul>
+    </section>}
     <section className="mt-8">
-      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Felder</h2>
+      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">JSON</h2>
       <dl className="mt-3 grid gap-3">
+        <div className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
+          <dt><code>Datei</code></dt>
+          <dd className="text-zinc-500">Pfad</dd>
+          <dd className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <a href={dataFileViewerUrl(selected.file)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+              <code>data/{selected.file}</code>
+            </a>
+            <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
+          </dd>
+        </div>
         {selected.fields.map(field => <div key={field.name} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
           <dt><code>{field.name}</code></dt>
           <dd className="text-zinc-500">{field.unit}</dd>
@@ -83,12 +128,6 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
         </div>)}
       </dl>
     </section>
-    {!!selected.caveats?.length && <section className="mt-8">
-      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Hinweise</h2>
-      <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
-        {selected.caveats.map(caveat => <li key={caveat}>• {caveat}</li>)}
-      </ul>
-    </section>}
     {selected.sections?.map(section => <section key={section.title} className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">{section.title}</h2>
       <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
@@ -108,8 +147,9 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Datensätze</h2>
       <ul className="mt-3 grid gap-2 text-sm leading-6">
-        {docs.map(entry => <li key={entry.id}>
-          <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
+        {docs.map(entry => <li key={entry.code}>
+          <a href={dataWikiUrl(entry.code)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
+          <code className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">{entry.code}</code>
           <span className="text-zinc-500"> — {entry.short}</span>
         </li>)}
       </ul>

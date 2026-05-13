@@ -1,34 +1,45 @@
 {
   "id": "last.heiz-elektrifizierung",
+  "code": "E100-HEIZ",
+  "parent": { "code": "E100", "name": "100% Elektrifizierung" },
   "domain": "last",
   "title": "Heiz Elektrifizierung",
   "file": "last/heiz-elektrifizierung.json",
   "scripts": ["last/generate-heiz-elektrifizierung.mjs"],
-  "source": "UBA Raumwärme private Haushalte 2023 (445 TWh); bereits elektrisch rund 35 TWh (1,9 Mio. Wärmepumpen plus Direktstromheizungen, BWP); JAZ 3,3 als Mischwert Bestand und Neuanlagen (Fraunhofer ISE WPsmart); Tagesprofil aus DWD-Klimanormalen 1991-2020 (lineare Tagesinterpolation, Heizschwelle 15 °C, Innenreferenz 20 °C); 24-h-Tagesgang aus When2Heat, WPuQ Hamelin und VDI 4655.",
+  "source": "UBA, AGEB, BWP, Fraunhofer ISE, DWD, When2Heat, WPuQ Hamelin.",
   "sourceUrls": [
     "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
     "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html",
     "https://www.nature.com/articles/s41597-019-0199-y",
-    "https://www.nature.com/articles/s41597-022-01156-1"
+    "https://www.nature.com/articles/s41597-022-01156-1",
+    "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html"
   ],
   "period": "2026 (Mengen), Klimanormale 1991-2020 auf Kalender 2025 (Profil)",
   "resolution": "Tag × Stunde",
   "unit": "TWh Wärme, TWh Strom, JAZ",
-  "short": "Zusatzlast aus elektrifizierter Raumwärme privater Haushalte.",
-  "description": "Zusätzlicher Strombedarf, wenn ein größerer Teil der privaten Raumwärme elektrisch gedeckt wird, typischerweise per Wärmepumpe. Bereits elektrisch gedeckte Heizwärme wird als Mindestwert abgezogen, der Rest über eine Jahresarbeitszahl in Strom umgerechnet. Die Stundenverteilung folgt tagesaufgelösten Gradtagszahlen mit innertäglichem Tagesgang.",
+  "short": "Zusatzlast aus Umstellung fossiler Heizung und Warmwasser auf Wärmepumpen.",
+  "description": "Zusätzlicher Strombedarf beim Übergang von fossilen Heizungen und Warmwassererzeugern auf Wärmepumpen in privaten Haushalten. Bereits elektrisch gedeckte Wärme bleibt unverändert in der historischen Last und wird als Mindestwert abgezogen. Der verbleibende Wärmebedarf wird über eine Jahresarbeitszahl in Stromlast umgerechnet und saisonal sowie tageszeitlich verteilt.",
   "overview": [
-    { "label": "Verwendung", "value": "Slider zwischen 35 TWh (bereits elektrisch, Mindestwert) und 600 TWh. Default 445 TWh entspricht der UBA-Raumwärme privater Haushalte 2023." },
-    { "label": "Verteilung", "value": "Tagesweise Gradtagszahl aus DWD-Klimanormalen 1991–2020 (lineare Interpolation, Heizgrenze 15 °C, Innenreferenz 20 °C). Innerhalb des Tages bimodaler 24-h-Tagesgang. Juni–August fallen auf 0, Mai und September laufen weich aus." },
-    { "label": "Formel", "value": "Zusatzstrom (TWh) = (Ziel − 35 TWh) / JAZ. Default: (445 − 35) / 3,3 = 124,24 TWh/Jahr." }
+    { "label": "Verwendung", "value": "Slider zwischen 50 TWh (bereits elektrisch, Mindestwert) und 700 TWh. Default 530 TWh entspricht der Summe aus Raumwärme und Warmwasser privater Haushalte 2023 (UBA/AGEB)." },
+    { "label": "Verteilung", "value": "Tagesweise Gradtagszahl aus DWD-Klimanormalen mit linearer Interpolation; innerhalb des Tages bimodaler 24-h-Tagesgang. Juni–August fallen auf 0, Mai und September laufen weich aus." },
+    { "label": "Formel", "value": "Zusatzstrom (TWh) = (Ziel − 50 TWh) / JAZ. Default: (530 − 50) / 3,3 = 145,45 TWh/Jahr." }
+  ],
+  "method": [
+    "Datei: erzeugt durch data/last/generate-heiz-elektrifizierung.mjs. Skript ausführen mit `node data/last/generate-heiz-elektrifizierung.mjs > data/last/heiz-elektrifizierung.json`.",
+    "Referenz-Wärmebedarf referenceHeatDemandTWh: UBA-Anwendungsbilanz private Haushalte 2023, Raumwärme 445 TWh + Warmwasser 85 TWh = 530 TWh.",
+    "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus 1,9 Mio. Bestand-Wärmepumpen (BWP) plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
+    "Jahresarbeitszahl seasonalCop: 3,3 als Mischwert aus Bestandsanlagen (Luft-Wasser, JAZ rund 3,0) und Neuanlagen (3,5-4,0). Quelle Fraunhofer ISE WPsmart.",
+    "Gradtagszahl-Tagesprofil degreeDayProfile: DWD-Klimanormale 1991-2020 (Deutschland-Mittel) als Monatsmittel-Ankerpunkte am 15. jedes Monats; lineare Interpolation zwischen Ankerpunkten ergibt Tagesmitteltemperatur; HDD = max(0, 20 − T) wenn T < 15. Weights = HDD-Tag / Jahressumme HDD; Summe 1.",
+    "24-h-Tagesgang hourlyProfile.multipliers: bimodal aus BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Peak/Tal-Spreizung auf Grid-Aggregat (1,45 / 0,57) gedämpft. Summe 24, Tagesmittel 1,0."
   ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Anzeigename." },
-    { "name": "source", "unit": "Text", "description": "Quellenzusammenfassung." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
     { "name": "sourceUrls", "unit": "Liste", "description": "Belege." },
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
-    { "name": "referenceHeatDemandTWh", "unit": "TWh", "description": "Raumwärmebedarf private Haushalte." },
-    { "name": "alreadyHeatPumpHeatTWh", "unit": "TWh", "description": "Bereits elektrisch gedeckte Heizwärme; Slider-Minimum." },
+    { "name": "referenceHeatDemandTWh", "unit": "TWh", "description": "Raumwärme + Warmwasser privater Haushalte." },
+    { "name": "alreadyElectricHeatTWh", "unit": "TWh", "description": "Bereits elektrisch gedeckte Wärme (WP, Direktheizung, Boiler); Slider-Minimum." },
     { "name": "defaultTargetHeatTWh", "unit": "TWh", "description": "Slider-Default." },
     { "name": "maxTargetHeatTWh", "unit": "TWh", "description": "Slider-Maximum." },
     { "name": "stepHeatTWh", "unit": "TWh", "description": "Slider-Schrittweite." },
@@ -39,9 +50,9 @@
     { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
   ],
   "caveats": [
-    "Nur Raumwärme privater Haushalte — Warmwasser, GHD und Industrie nicht enthalten.",
-    "JAZ ist Jahresmittel; reale Luft-Wasser-Wärmepumpen verlieren bei kalten Außentemperaturen Effizienz.",
+    "Nur private Haushalte — GHD und Industrie nicht enthalten.",
+    "JAZ ist Jahresmittel; reale Luft-Wasser-Wärmepumpen verlieren bei kalten Außentemperaturen Effizienz, der Winterpeak ist daher leicht unterschätzt.",
     "Profil-Basis sind Klimanormale 1991-2020, kein konkretes Wetterjahr.",
-    "Slider-Werte oberhalb 445 TWh decken Upside-Szenarien (Warmwasser, GHD) ab, nicht reine Raumwärme."
+    "Slider-Werte oberhalb 530 TWh decken Upside-Szenarien (Sanierungsstau, GHD-Mitnahme) ab."
   ]
 }

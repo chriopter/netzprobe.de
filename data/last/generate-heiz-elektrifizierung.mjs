@@ -20,10 +20,10 @@ const indoorReferenceC = 20;
 const monthlyMeanTemperatureC = [1.5, 2.6, 5.7, 9.6, 13.5, 16.6, 18.4, 18.0, 13.7, 9.4, 4.9, 2.0];
 const monthLengths2025 = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-const referenceHeatDemandTWh = 445;
-const alreadyHeatPumpHeatTWh = 35;
-const defaultTargetHeatTWh = 445;
-const maxTargetHeatTWh = 600;
+const referenceHeatDemandTWh = 530;
+const alreadyElectricHeatTWh = 50;
+const defaultTargetHeatTWh = 530;
+const maxTargetHeatTWh = 700;
 const stepHeatTWh = 5;
 const seasonalCop = 3.3;
 
@@ -91,7 +91,7 @@ const annualHdd = Number(sumHdd.toFixed(2));
 const output = {
   id: 'heat-pump-electrification',
   title: 'Heiz Elektrifizierung',
-  source: 'Raumwaermebedarf privater Haushalte Deutschland nach UBA "Energieverbrauch der privaten Haushalte 2023"; Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.',
+  source: 'Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.',
   sourceUrls: [
     'https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte',
     'https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren',
@@ -101,13 +101,13 @@ const output = {
   ],
   referenceYear,
   referenceHeatDemandTWh,
-  alreadyHeatPumpHeatTWh,
+  alreadyElectricHeatTWh,
   defaultTargetHeatTWh,
   maxTargetHeatTWh,
   stepHeatTWh,
   seasonalCop,
   distribution: 'heating-degree-days',
-  note: 'Zusatzlast = max(0, Ziel-Raumwaerme - bereits elektrisch gedeckte Heizwaerme) / Jahresarbeitszahl. Die Tagesgewichte folgen Gradtagszahlen, innerhalb des Tages moduliert das 24-h-Profil aus dem hourlyProfile-Block.',
+  note: 'Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen Gradtagszahlen, innerhalb des Tages moduliert das 24-h-Profil.',
   hourlyProfile: {
     source: 'Bimodaler WP-Tagesgang nach BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Auf Grid-Aggregat gedaempft, Summe = 24.',
     sourceUrls: [

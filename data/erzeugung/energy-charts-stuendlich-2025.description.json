@@ -1,21 +1,30 @@
 {
   "id": "erzeugung.energy-charts.stuendlich.2025",
+  "code": "ERZ25",
   "domain": "erzeugung",
   "title": "Historisch 2025",
   "file": "erzeugung/energy-charts-stuendlich-2025.json",
-  "source": "Energy-Charts public_power API: https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+  "source": "Energy-Charts API.",
+  "sourceUrls": [
+    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01"
+  ],
   "period": "2025",
   "resolution": "stündlich",
   "unit": "MW",
-  "short": "Historische öffentliche Stromerzeugung 2025 nach Energieträgern und Handelssaldo.",
-  "description": "Fixe historische öffentliche Erzeugung 2025. Das Szenario kann in der UI per Radio-Button übernommen werden.",
+  "short": "Historische öffentliche Stromerzeugung Deutschland 2025 nach Energieträgern und Handelssaldo.",
+  "description": "Feste historische öffentliche Stromerzeugung Deutschlands 2025, stündlich aufgelöst nach Energieträgern, plus Handelssaldo. Bildet die fixe Erzeugungsseite aller Szenarien; Zusatzlasten erhöhen die Erzeugung nicht, sondern werden als zusätzlicher Import aufgefüllt.",
+  "method": [
+    "Bezug aus Energy-Charts public_power API für Deutschland, 2025-01-01 bis 2026-01-01.",
+    "Stundenwerte je Energieträger werden direkt übernommen; Handelssaldo importExportMW positiv = Import, negativ = Export.",
+    "Jahressummen sumPartsTWh und sumSharesPct werden aus den Stundenwerten aggregiert; sumTWh ist Erzeugung ohne Handelssaldo, sumImportTWh und sumExportTWh sind die positiven beziehungsweise negativen Anteile."
+  ],
   "fields": [
     { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
-    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
-    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der Quelle und Verarbeitung." },
-    { "name": "sourceUrl", "unit": "URL", "description": "Energy-Charts-API-Abruf für Deutschland und 2025." },
-    { "name": "unit", "unit": "Text", "description": "Einheit der Stundenwerte: MW." },
-    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
+    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
+    { "name": "sourceUrl", "unit": "URL", "description": "Energy-Charts-API-Abruf." },
+    { "name": "unit", "unit": "Text", "description": "Stundenwert-Einheit." },
+    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Stundenanfang." },
     { "name": "hours[].pvMW", "unit": "MW", "description": "Photovoltaik-Einspeisung." },
     { "name": "hours[].windOnMW", "unit": "MW", "description": "Wind Onshore." },
     { "name": "hours[].windOffMW", "unit": "MW", "description": "Wind Offshore." },
@@ -27,13 +36,15 @@
     { "name": "hours[].oilMW", "unit": "MW", "description": "Öl." },
     { "name": "hours[].geothermalMW", "unit": "MW", "description": "Geothermie." },
     { "name": "hours[].otherMW", "unit": "MW", "description": "Sonstige Erzeugung." },
-    { "name": "hours[].importExportMW", "unit": "MW", "description": "Handelssaldo; positive Werte stehen für Import, negative für Export." },
+    { "name": "hours[].importExportMW", "unit": "MW", "description": "Handelssaldo; positiv = Import, negativ = Export." },
     { "name": "sumTWh", "unit": "TWh", "description": "Erzeugungssumme ohne Handelssaldo." },
     { "name": "sumPartsTWh", "unit": "Objekt", "description": "Jahressummen je Energieträger." },
     { "name": "sumImportTWh", "unit": "TWh", "description": "Summe positiver Handelssaldo-Werte." },
     { "name": "sumExportTWh", "unit": "TWh", "description": "Summe negativer Handelssaldo-Werte als Exportbetrag." },
     { "name": "sumSharesPct", "unit": "%", "description": "Anteile der Energieträger an der Erzeugungssumme." },
-    { "name": "sumNote", "unit": "Text", "description": "Kurznotiz zur Summenberechnung." }
+    { "name": "sumNote", "unit": "Text", "description": "Rechenhinweis." }
   ],
-  "caveats": ["Nur öffentliche Stromerzeugung; private/industrielle Eigenversorgung ist nicht vollständig enthalten."]
+  "caveats": [
+    "Nur öffentliche Stromerzeugung; private und industrielle Eigenversorgung sind nicht vollständig enthalten."
+  ]
 }

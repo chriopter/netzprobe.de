@@ -77,7 +77,7 @@ export type HeatPumpElectrificationLoad = {
   sourceUrls: string[];
   referenceYear: number;
   referenceHeatDemandTWh: number;
-  alreadyHeatPumpHeatTWh: number;
+  alreadyElectricHeatTWh: number;
   defaultTargetHeatTWh: number;
   maxTargetHeatTWh: number;
   stepHeatTWh: number;

@@ -15,7 +15,7 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 445 },
+  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 530 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -44,10 +44,10 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
   source: 'Test',
   sourceUrls: [],
   referenceYear: 2026,
-  referenceHeatDemandTWh: 445,
-  alreadyHeatPumpHeatTWh: 35,
-  defaultTargetHeatTWh: 445,
-  maxTargetHeatTWh: 600,
+  referenceHeatDemandTWh: 530,
+  alreadyElectricHeatTWh: 50,
+  defaultTargetHeatTWh: 530,
+  maxTargetHeatTWh: 700,
   stepHeatTWh: 5,
   seasonalCop: 3.3,
   distribution: 'heating-degree-days',
@@ -116,8 +116,8 @@ describe('simulation engine', () => {
 
   it('distributes heat pump load by heating degree day weights', () => {
     const historical = simulate(baselineScenario);
-    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 445 } });
-    const expectedTWh = (445 - 35) / 3.3 * sampleHours.length / (365 * 24);
+    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 530 } });
+    const expectedTWh = (530 - 50) / 3.3 * sampleHours.length / (365 * 24);
 
     expect(heatPumpLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
     expect(heatPumpLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);

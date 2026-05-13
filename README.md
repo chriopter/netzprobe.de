@@ -2,7 +2,7 @@
 
 Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
-Vibecoded und schnell iteriert. Ergebnisse mit Vorsicht behandeln.
+Vibecoded und schnell iteriert. Alle Eingangsgrößen sind dokumentierte Modellannahmen aus öffentlichen Quellen, keine empirisch belastbaren Werte. Ergebnisse als grobe Orientierung lesen, nicht als Prognose.
 
 Live: https://chriopter.github.io/netzprobe/
 

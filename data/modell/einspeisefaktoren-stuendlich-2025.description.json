@@ -1,24 +1,39 @@
 {
   "id": "modell.einspeisefaktoren.stuendlich.2025",
+  "code": "EF25",
   "domain": "modell",
   "title": "Einspeisefaktoren 2025",
   "file": "modell/einspeisefaktoren-stuendlich-2025.json",
   "scripts": ["modell/generate-feed-in-factors.mjs"],
-  "source": "Energy-Charts public_power und installed_power APIs",
+  "source": "Energy-Charts public_power und installed_power APIs.",
+  "sourceUrls": [
+    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly"
+  ],
   "period": "2025",
   "resolution": "stündlich",
   "unit": "dimensionslos",
-  "short": "Aus beobachteter PV-/Wind-Einspeisung und installierter Leistung abgeleitete Faktoren.",
-  "description": "Modellannahme für PV und Wind: tatsächliche Einspeisung 2025 geteilt durch installierte Leistung. Abregelung wird nicht zurückgerechnet.",
+  "short": "PV- und Wind-Einspeisefaktoren aus beobachteter Einspeisung und installierter Leistung.",
+  "description": "Stündliche Einspeisefaktoren für PV und Wind, abgeleitet aus tatsächlicher Einspeisung 2025 geteilt durch installierte Leistung. Aktuell als Reserve-Datensatz im DataSet enthalten; wird vom Kernmodell noch nicht aktiv genutzt, wird aber für zukünftige Erzeugungs-Skalierungs-Szenarien benötigt.",
+  "method": [
+    "Datei: erzeugt durch data/modell/generate-feed-in-factors.mjs. Skript ausführen mit `node data/modell/generate-feed-in-factors.mjs > data/modell/einspeisefaktoren-stuendlich-2025.json`.",
+    "PV-Faktor solarIrradiance: beobachtete pvMW je Stunde geteilt durch monatlich installierte PV-Leistung. Wert auf 0..1 begrenzt.",
+    "Wind-Faktor wind100m: (beobachtete windOnMW + windOffMW) je Stunde geteilt durch monatlich installierte Wind-Leistung. Wert auf 0..1 begrenzt.",
+    "Datenquellen: Energy-Charts public_power für Einspeisung und installed_power (time_step=monthly) für installierte Leistung."
+  ],
   "fields": [
     { "name": "generatedAt", "unit": "ISO-Zeit", "description": "Zeitpunkt der lokalen Datendatei-Erzeugung." },
-    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr des Datensatzes." },
-    { "name": "source", "unit": "Text", "description": "Kurzbeschreibung der verwendeten Energy-Charts-Quellen." },
-    { "name": "sourceUrls", "unit": "Liste", "description": "API-Abrufe für Einspeisung und installierte Leistung." },
-    { "name": "notes", "unit": "Liste", "description": "Hinweise zur Ableitung und Begrenzung." },
-    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Zeitpunkt der Stunde." },
-    { "name": "hours[].solarIrradiance", "unit": "Faktor", "description": "PV-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." },
-    { "name": "hours[].wind100m", "unit": "Faktor", "description": "Wind-Einspeisefaktor aus beobachteter Einspeisung / installierter Leistung." }
+    { "name": "year", "unit": "Jahr", "description": "Bezugsjahr." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "API-Abrufe." },
+    { "name": "notes", "unit": "Liste", "description": "Hinweise zur Ableitung." },
+    { "name": "hours[].time", "unit": "ISO-Zeit", "description": "Stundenanfang." },
+    { "name": "hours[].solarIrradiance", "unit": "Faktor", "description": "PV-Einspeisefaktor (Array, aktuell 1 Element)." },
+    { "name": "hours[].wind100m", "unit": "Faktor", "description": "Wind-Einspeisefaktor (Array, aktuell 1 Element)." }
   ],
-  "caveats": ["Keine Rohwetterdaten.", "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung unterschätzen."]
+  "caveats": [
+    "Keine Rohwetterdaten, sondern empirische Faktoren aus Einspeisung und Bestand.",
+    "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung leicht unterschätzen.",
+    "Aktuell vom Simulator nicht ausgewertet; vorgehalten für künftige Erzeugungs-Skalierungs-Szenarien."
+  ]
 }

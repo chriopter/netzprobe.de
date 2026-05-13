@@ -4,7 +4,7 @@ export const defaultScenario: Scenario = {
   id: 'historisch-2025',
   name: 'Historisch 2025',
   description: 'Historische Energy-Charts-Daten 2025 mit festen Modellannahmen.',
-  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 445 },
+  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 530 },
   renewables: { pvGW: 100.5, windOnGW: 65.5, windOffGW: 9.5 },
   fossil: { coalGW: 35, gasGW: 36, nuclearGW: 0 },
   storage: { batteryPowerGW: 15, batteryEnergyGWh: 22, h2PowerGW: 0, h2EnergyGWh: 0, importLimitGW: 16 },

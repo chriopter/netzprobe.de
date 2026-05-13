@@ -1,9 +1,11 @@
 {
   "id": "last.pkw-elektrifizierung",
+  "code": "E100-PKW",
+  "parent": { "code": "E100", "name": "100% Elektrifizierung" },
   "domain": "last",
   "title": "PKW Elektrifizierung",
   "file": "last/pkw-elektrifizierung.json",
-  "source": "Destatis Pkw-Fahrleistung private Haushalte 2023 (472 Mrd. km); bereits elektrisch rund 20 Mrd. km aus KBA-Bestand Ende 2023 (1,4 Mio. BEV mit etwa 11.000 km/a plus 0,9 Mio. PHEV mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch); Flottenverbrauch 20 kWh/100 km ab Netz; Tagesgang aus KIT Heinz 2018 (Deutsches Mobilitätspanel, ungesteuertes Heimladen).",
+  "source": "Destatis, KBA, KIT-IIP Heinz 2018.",
   "sourceUrls": [
     "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
     "https://publikationen.bibliothek.kit.edu/1000086372",
@@ -16,13 +18,20 @@
   "description": "Zusätzlicher Strombedarf, wenn ein größerer Teil der privaten Pkw-Kilometer elektrisch gefahren wird. Bereits elektrisch gefahrene Kilometer werden als Mindestwert abgezogen, der Rest mit einem pauschalen Flottenverbrauch in Stromlast umgerechnet. Die Stundenverteilung folgt einem empirischen Heimladeprofil mit ausgeprägtem Abendpeak.",
   "overview": [
     { "label": "Verwendung", "value": "Slider zwischen 20.000 Mio. km (bereits elektrisch, Mindestwert) und 708.300 Mio. km. Default 472.200 Mio. km entspricht der Pkw-Fahrleistung privater Haushalte 2023." },
-    { "label": "Verteilung", "value": "Empirisches 24-h-Heimladeprofil aus KIT Heinz 2018 (Deutsches Mobilitätspanel), Wochenmittel mit Abendpeak 17–21 Uhr und Nachttal 4–6 Uhr." },
+    { "label": "Verteilung", "value": "24-h-Heimladeprofil, Wochenmittel, Abendpeak 17–21 Uhr und Nachttal 4–6 Uhr." },
     { "label": "Formel", "value": "Zusatzlast (TWh) = (Ziel − 20.000) Mio. km × 20 kWh/100 km / 100.000. Default: (472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/Jahr." }
+  ],
+  "method": [
+    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/last/pkw-elektrifizierung.json.",
+    "Referenz-Fahrleistung referenceMillionKm: Destatis-Pkw-Fahrleistung privater Haushalte 2023, 472.200 Mio. km.",
+    "Slider-Mindestwert alreadyElectricMillionKm: 1,4 Mio. BEV (KBA-Bestand Ende 2023) × rund 11.000 km/a plus 0,9 Mio. PHEV × rund 14.000 km/a × 40 % elektrischer Anteil ≈ 20.000 Mio. km. Strom für diese Kilometer ist bereits in der historischen Last enthalten; das Szenario modelliert nur die darüber hinausgehende Elektrifizierung.",
+    "Flottenverbrauch kwhPer100Km: 20 kWh/100 km ab Netz, inklusive AC-Ladeverlusten. Reale BEV liegen zwischen 18 und 22 kWh/100 km; Saison- und Temperatureffekte (höherer Winterverbrauch durch Heizung) sind nicht modelliert.",
+    "Stundenverteilung hourlyProfile.multipliers: Heinz 2018 (KIT-IIP Working Paper No. 30), Sheet 'Alle_Werktag' und 'Alle_Wochenende', Ladeszenario 'Zuhause laden' (Spalte 'Durchschnittliche Ladeleistung kW/Fahrzeug'). 10-Min-Werte auf 24 Stunden gemittelt, auf Tagesmittel 1,0 normiert. Wochenmittel = (5 × Werktag + 2 × Wochenende) / 7. Summe der 24 Werte exakt 24."
   ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Anzeigename." },
-    { "name": "source", "unit": "Text", "description": "Quellenzusammenfassung." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
     { "name": "sourceUrls", "unit": "Liste", "description": "Belege." },
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
     { "name": "referenceMillionKm", "unit": "Mio. km", "description": "Pkw-Fahrleistung privater Haushalte." },
