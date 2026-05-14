@@ -1,0 +1,28 @@
+{
+  "id": "e100",
+  "domain": "last",
+  "kind": "composition",
+  "title": "100% Elektrifizierung",
+  "scripts": ["e100/model.ts"],
+  "source": "Komposition aus e100-pkw und e100-heiz.",
+  "period": "2026",
+  "resolution": "stündlich",
+  "unit": "TWh Strom",
+  "short": "Vollelektrifizierung privater Pkw-Kilometer und Heizungswärme auf Basis der historischen Last.",
+  "description": "Alternativ-Szenario zu reiner historischer Last: private Pkw-Kilometer und Raumwärme inklusive Warmwasser werden vollständig elektrifiziert. Die historische Last 2025 bleibt als Basis bestehen, PKW-Last und Wärmepumpenlast werden additiv aufgesetzt. Beide Teilszenarien lassen sich einzeln über die Sidebar-Slider justieren.",
+  "overview": [
+    { "label": "Verwendung", "value": "Master-Checkbox in der Sidebar aktiviert beide Teilszenarien gemeinsam; danach lassen sich die Slider für PKW-Kilometer und Wärme-Zielgröße individuell setzen." },
+    { "label": "Default-Effekt", "value": "PKW rund 90,4 TWh plus Heizen rund 145,5 TWh, zusammen rund 236 TWh zusätzlicher Strombedarf pro Jahr." },
+    { "label": "Teilszenarien", "value": "e100-pkw (private Pkw-Elektrifizierung) und e100-heiz (Raumwärme + Warmwasser per Wärmepumpe)." }
+  ],
+  "method": [
+    "Zusammensetzung: Zusatzlast = e100-pkw + e100-heiz, beide stundenweise gerechnet und addiert.",
+    "Historische Last 2025 bleibt unverändert in der Basis; die Erzeugung bleibt historisch fix, Defizit wird vom Kernmodell als Import aufgefüllt.",
+    "Modellierung der Teile in den jeweiligen Unterseiten dokumentiert."
+  ],
+  "caveats": [
+    "Keine eigene data.json — Komposition aus e100-pkw und e100-heiz.",
+    "Sektorale Wechselwirkungen (z. B. Smart-Charging zur Verlagerung von BEV-Last in WP-Schwachlast) werden nicht modelliert.",
+    "Sliderwerte gelten unabhängig; das Default ist Vollelektrifizierung beider Sektoren."
+  ]
+}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { dataFileUrl } from '../dataPackages';
 import { JsonTree } from './JsonTree';
 
 export function DataFileViewer({ path }: { path: string }) {
-  const url = `${import.meta.env.BASE_URL}data/${path}`;
+  const url = dataFileUrl(path);
   const rawUrl = url;
   const [data, setData] = useState<unknown | null>(null);
   const [error, setError] = useState<string | null>(null);

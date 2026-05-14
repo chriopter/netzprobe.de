@@ -53,8 +53,8 @@ export type HourlyProfile = {
   multipliers: number[];
 };
 
-export type BevPkwElectrificationLoad = {
-  id: 'bev-pkw-electrification';
+export type E100PkwData = {
+  id: 'e100-pkw';
   title: string;
   source: string;
   sourceUrls: string[];
@@ -70,8 +70,8 @@ export type BevPkwElectrificationLoad = {
   note: string;
 };
 
-export type HeatPumpElectrificationLoad = {
-  id: 'heat-pump-electrification';
+export type E100HeizData = {
+  id: 'e100-heiz';
   title: string;
   source: string;
   sourceUrls: string[];
@@ -111,8 +111,8 @@ export type HourlyInput = LoadHour & ModelFactorHour & {
 
 export type DataSet = {
   source: string;
-  bevPkwElectrification: BevPkwElectrificationLoad;
-  heatPumpElectrification: HeatPumpElectrificationLoad;
+  'e100-pkw': E100PkwData;
+  'e100-heiz': E100HeizData;
   loadSumTWh?: number;
   generationSumTWh?: number;
   importSumTWh?: number;

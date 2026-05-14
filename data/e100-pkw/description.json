@@ -1,13 +1,16 @@
 {
-  "id": "last.pkw-elektrifizierung",
-  "code": "E100-PKW",
-  "parent": { "code": "E100", "name": "100% Elektrifizierung" },
+  "id": "e100-pkw",
+  "parentId": "e100",
   "domain": "last",
+  "kind": "scenario",
   "title": "PKW Elektrifizierung",
-  "file": "last/pkw-elektrifizierung.json",
-  "source": "Destatis, KBA, KIT-IIP Heinz 2018.",
+  "file": "e100-pkw/data.json",
+  "scripts": ["e100-pkw/model.ts"],
+  "source": "Destatis Pkw-Fahrleistung 2023 (472,2 Mrd. km), KBA/BMWK Fahrzeugbestand, KIT-IIP Heinz 2018.",
   "sourceUrls": [
     "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
+    "https://www.bmwk.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.html",
+    "https://www.umweltbundesamt.de/daten/umweltzustand-trends/verkehr/verkehrsinfrastruktur-fahrzeugbestand",
     "https://publikationen.bibliothek.kit.edu/1000086372",
     "https://www.iip.kit.edu/3559.php"
   ],
@@ -22,7 +25,7 @@
     { "label": "Formel", "value": "Zusatzlast (TWh) = (Ziel − 20.000) Mio. km × 20 kWh/100 km / 100.000. Default: (472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/Jahr." }
   ],
   "method": [
-    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/last/pkw-elektrifizierung.json.",
+    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/e100-pkw/data.json; Rechenlogik in data/e100-pkw/model.ts.",
     "Referenz-Fahrleistung referenceMillionKm: Destatis-Pkw-Fahrleistung privater Haushalte 2023, 472.200 Mio. km.",
     "Slider-Mindestwert alreadyElectricMillionKm: 1,4 Mio. BEV (KBA-Bestand Ende 2023) × rund 11.000 km/a plus 0,9 Mio. PHEV × rund 14.000 km/a × 40 % elektrischer Anteil ≈ 20.000 Mio. km. Strom für diese Kilometer ist bereits in der historischen Last enthalten; das Szenario modelliert nur die darüber hinausgehende Elektrifizierung.",
     "Flottenverbrauch kwhPer100Km: 20 kWh/100 km ab Netz, inklusive AC-Ladeverlusten. Reale BEV liegen zwischen 18 und 22 kWh/100 km; Saison- und Temperatureffekte (höherer Winterverbrauch durch Heizung) sind nicht modelliert.",
@@ -48,6 +51,7 @@
     "Ungesteuertes Heimladen — Smart-Charging und §14a-Steuerung würden Last in die Nacht verschieben.",
     "Kein Saisonprofil; Tagesgang ist über das Jahr konstant.",
     "PHEV-Stromkilometer im Abzug pauschal mit 40 % elektrischer Quote.",
-    "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert."
+    "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert.",
+    "Der Mindestwert ist eine gerundete Bestandsableitung; höhere Elektrobestände nach 2023 senken die Zusatzlast nur um wenige TWh."
   ]
 }

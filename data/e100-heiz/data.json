@@ -1,15 +1,17 @@
 {
-  "id": "heat-pump-electrification",
+  "id": "e100-heiz",
   "title": "Heiz Elektrifizierung",
   "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.",
   "sourceUrls": [
     "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
     "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
     "https://ag-energiebilanzen.de/daten-und-fakten/",
+    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
+    "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
     "https://www.dwd.de/DE/leistungen/klimadatendeutschland/klarchivtagmonat.html",
     "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html"
   ],
-  "referenceYear": 2026,
+  "referenceYear": 2023,
   "referenceHeatDemandTWh": 530,
   "alreadyElectricHeatTWh": 50,
   "defaultTargetHeatTWh": 530,

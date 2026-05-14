@@ -1,11 +1,12 @@
 {
-  "id": "bev-pkw-electrification",
+  "id": "e100-pkw",
   "title": "PKW Elektrifizierung",
   "source": "Destatis Pkw-Fahrleistung privater Haushalte 2023; KBA/BMWK Fahrzeugbestand und durchschnittliche Fahrleistung alternativer Antriebe 2023.",
   "sourceUrls": [
     "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
     "https://data.gov.de/suche/daten/verkehr-in-kilometern-vk-fahrleistungen-2014-2023",
-    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.pdf"
+    "https://www.bmwk.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.html",
+    "https://www.umweltbundesamt.de/daten/umweltzustand-trends/verkehr/verkehrsinfrastruktur-fahrzeugbestand"
   ],
   "referenceYear": 2023,
   "referenceMillionKm": 472200,

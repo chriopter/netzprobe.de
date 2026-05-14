@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../simulation/engine';
-import type { BevPkwElectrificationLoad, HeatPumpElectrificationLoad, HourlyInput } from '../types/data';
+import type { E100PkwData, E100HeizData, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
@@ -15,14 +15,14 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { historicalLoad: true, bevPkwKm: false, bevPkwMillionKm: 472_200, heatPump: false, heatPumpTargetHeatTWh: 530 },
+  demand: { 'last-2025': true, 'e100-pkw': false, 'e100-pkw-million-km': 472_200, 'e100-heiz': false, 'e100-heiz-target-heat-twh': 530 },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
-  fossil: { coalGW: 10, gasGW: 10, nuclearGW: 0 },
+  fossil: { coalGW: 10, gasGW: 10 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
 };
 
-const bevPkwElectrification: BevPkwElectrificationLoad = {
-  id: 'bev-pkw-electrification',
+const e100Pkw: E100PkwData = {
+  id: 'e100-pkw',
   title: 'PKW Elektrifizierung',
   source: 'Test',
   sourceUrls: [],
@@ -38,12 +38,12 @@ const bevPkwElectrification: BevPkwElectrificationLoad = {
   note: 'Test',
 };
 
-const heatPumpElectrification: HeatPumpElectrificationLoad = {
-  id: 'heat-pump-electrification',
+const e100Heiz: E100HeizData = {
+  id: 'e100-heiz',
   title: 'Heiz Elektrifizierung',
   source: 'Test',
   sourceUrls: [],
-  referenceYear: 2026,
+  referenceYear: 2023,
   referenceHeatDemandTWh: 530,
   alreadyElectricHeatTWh: 50,
   defaultTargetHeatTWh: 530,
@@ -62,7 +62,7 @@ const heatPumpElectrification: HeatPumpElectrificationLoad = {
   note: 'Test',
 };
 
-const simulate = (scenario: Scenario) => runSimulation(sampleHours, scenario, bevPkwElectrification, heatPumpElectrification);
+const simulate = (scenario: Scenario) => runSimulation(sampleHours, scenario, e100Pkw, e100Heiz);
 
 describe('simulation engine', () => {
   it('balances every hour with supply, imports, storage, curtailment or load shedding', () => {
@@ -91,8 +91,8 @@ describe('simulation engine', () => {
 
   it('treats electrified BEV passenger car kilometres as an additive demand part', () => {
     const historical = simulate(baselineScenario);
-    const noHistorical = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, historicalLoad: false } });
-    const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true, bevPkwMillionKm: 472_200 } });
+    const noHistorical = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'last-2025': false } });
+    const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true, 'e100-pkw-million-km': 472_200 } });
 
     expect(noHistorical.summary.totalDemandTWh).toBe(0);
     expect(noHistorical.summary.renewableSharePct).toBe(0);
@@ -108,7 +108,7 @@ describe('simulation engine', () => {
 
   it('fills additive load with additional import instead of separate load shedding', () => {
     const historical = simulate(baselineScenario);
-    const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true, bevPkwMillionKm: 472_200 } });
+    const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true, 'e100-pkw-million-km': 472_200 } });
 
     expect(bevLoad.summary.loadSheddingTWh).toBe(0);
     expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(90.44 * sampleHours.length / 8760, 6);
@@ -116,16 +116,16 @@ describe('simulation engine', () => {
 
   it('distributes heat pump load by heating degree day weights', () => {
     const historical = simulate(baselineScenario);
-    const heatPumpLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, heatPump: true, heatPumpTargetHeatTWh: 530 } });
+    const e100HeizLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-heiz': true, 'e100-heiz-target-heat-twh': 530 } });
     const expectedTWh = (530 - 50) / 3.3 * sampleHours.length / (365 * 24);
 
-    expect(heatPumpLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
-    expect(heatPumpLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);
+    expect(e100HeizLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
+    expect(e100HeizLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);
   });
 
   it('keeps historical generation fixed when additive demand changes', () => {
     const historical = simulate(baselineScenario);
-    const testLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, bevPkwKm: true } });
+    const testLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true } });
 
     expect(testLoad.hours.map(hour => hour.solarGW)).toEqual(historical.hours.map(hour => hour.solarGW));
     expect(testLoad.hours.map(hour => hour.windOnGW)).toEqual(historical.hours.map(hour => hour.windOnGW));

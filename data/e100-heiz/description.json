@@ -1,20 +1,23 @@
 {
-  "id": "last.heiz-elektrifizierung",
-  "code": "E100-HEIZ",
-  "parent": { "code": "E100", "name": "100% Elektrifizierung" },
+  "id": "e100-heiz",
+  "parentId": "e100",
   "domain": "last",
+  "kind": "scenario",
   "title": "Heiz Elektrifizierung",
-  "file": "last/heiz-elektrifizierung.json",
-  "scripts": ["last/generate-heiz-elektrifizierung.mjs"],
+  "file": "e100-heiz/data.json",
+  "scripts": ["e100-heiz/generate.mjs", "e100-heiz/model.ts"],
   "source": "UBA, AGEB, BWP, Fraunhofer ISE, DWD, When2Heat, WPuQ Hamelin.",
   "sourceUrls": [
     "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
+    "https://ag-energiebilanzen.de/daten-und-fakten/",
+    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
+    "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
     "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html",
     "https://www.nature.com/articles/s41597-019-0199-y",
     "https://www.nature.com/articles/s41597-022-01156-1",
     "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html"
   ],
-  "period": "2026 (Mengen), Klimanormale 1991-2020 auf Kalender 2025 (Profil)",
+  "period": "2023 (Mengen), Klimanormale 1991-2020 auf Kalender 2025 (Profil)",
   "resolution": "Tag × Stunde",
   "unit": "TWh Wärme, TWh Strom, JAZ",
   "short": "Zusatzlast aus Umstellung fossiler Heizung und Warmwasser auf Wärmepumpen.",
@@ -25,9 +28,9 @@
     { "label": "Formel", "value": "Zusatzstrom (TWh) = (Ziel − 50 TWh) / JAZ. Default: (530 − 50) / 3,3 = 145,45 TWh/Jahr." }
   ],
   "method": [
-    "Datei: erzeugt durch data/last/generate-heiz-elektrifizierung.mjs. Skript ausführen mit `node data/last/generate-heiz-elektrifizierung.mjs > data/last/heiz-elektrifizierung.json`.",
+    "Datei: erzeugt durch data/e100-heiz/generate.mjs. Skript ausführen mit `node data/e100-heiz/generate.mjs > data/e100-heiz/data.json`; Rechenlogik in data/e100-heiz/model.ts.",
     "Referenz-Wärmebedarf referenceHeatDemandTWh: UBA-Anwendungsbilanz private Haushalte 2023, Raumwärme 445 TWh + Warmwasser 85 TWh = 530 TWh.",
-    "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus 1,9 Mio. Bestand-Wärmepumpen (BWP) plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
+    "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus etwa 1,8 Mio. Wärmepumpen im Betrieb plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
     "Jahresarbeitszahl seasonalCop: 3,3 als Mischwert aus Bestandsanlagen (Luft-Wasser, JAZ rund 3,0) und Neuanlagen (3,5-4,0). Quelle Fraunhofer ISE WPsmart.",
     "Gradtagszahl-Tagesprofil degreeDayProfile: DWD-Klimanormale 1991-2020 (Deutschland-Mittel) als Monatsmittel-Ankerpunkte am 15. jedes Monats; lineare Interpolation zwischen Ankerpunkten ergibt Tagesmitteltemperatur; HDD = max(0, 20 − T) wenn T < 15. Weights = HDD-Tag / Jahressumme HDD; Summe 1.",
     "24-h-Tagesgang hourlyProfile.multipliers: bimodal aus BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Peak/Tal-Spreizung auf Grid-Aggregat (1,45 / 0,57) gedämpft. Summe 24, Tagesmittel 1,0."

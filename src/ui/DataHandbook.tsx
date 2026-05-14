@@ -1,15 +1,27 @@
 import type { ReactNode } from 'react';
+import { dataFileUrl } from '../dataPackages';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { cx } from './ui';
 
 const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=datei&path=${encodeURIComponent(path)}`;
+const domainLabels: Record<string, string> = {
+  last: 'Last',
+  erzeugung: 'Erzeugung',
+  modell: 'Modell',
+};
+const kindLabels: Record<DatasetDoc['kind'], string> = {
+  dataset: 'Datensatz',
+  scenario: 'Szenario',
+  composition: 'Komposition',
+  model: 'Modell',
+};
 
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const params = new URL(window.location.href).searchParams;
-  const selectedCode = params.get('code');
-  const selectedDataset = selectedCode ? docs.find(doc => doc.code === selectedCode) : undefined;
+  const selectedId = params.get('id');
+  const selectedDataset = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
   const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
     (acc[doc.domain] ??= []).push(doc);
     return acc;
@@ -31,25 +43,26 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
         <nav aria-label="Datensätze">
           <div className="grid gap-3">
             <TreeSection title="Home">
-              <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedCode}/>
+              <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
             </TreeSection>
             {sections.map(([domain, label]) => {
               const inDomain = grouped[domain];
               if (!inDomain?.length) return null;
-              const orphans = inDomain.filter(doc => !doc.parent);
-              const byParent = new Map<string, { name: string; docs: DatasetDoc[] }>();
+              const childrenByParentId = new Map<string, DatasetDoc[]>();
               for (const doc of inDomain) {
-                if (!doc.parent) continue;
-                const entry = byParent.get(doc.parent.code) ?? { name: doc.parent.name, docs: [] };
-                entry.docs.push(doc);
-                byParent.set(doc.parent.code, entry);
+                if (!doc.parentId) continue;
+                const list = childrenByParentId.get(doc.parentId) ?? [];
+                list.push(doc);
+                childrenByParentId.set(doc.parentId, list);
               }
+              const orphans = inDomain.filter(doc => !doc.parentId && !childrenByParentId.has(doc.id));
+              const parents = inDomain.filter(doc => !doc.parentId && childrenByParentId.has(doc.id));
               return <TreeSection key={domain} title={label}>
-                {orphans.map(doc => <TreeNode key={doc.code} href={dataWikiUrl(doc.code)} label={doc.title} selected={selectedCode === doc.code}/>)}
-                {[...byParent.entries()].map(([parentCode, { name, docs }]) => <div key={parentCode} className="grid gap-0.5">
-                  <span className="block truncate py-0.5 text-sm font-medium text-zinc-700">{name}</span>
-                  <div className="ml-2 grid gap-0.5">
-                    {docs.map(doc => <TreeNode key={doc.code} href={dataWikiUrl(doc.code)} label={doc.title} selected={selectedCode === doc.code}/>)}
+                {orphans.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+                {parents.map(parentDoc => <div key={parentDoc.id} className="grid gap-0.5">
+                  <TreeNode href={dataWikiUrl(parentDoc.id)} label={parentDoc.title} selected={selectedId === parentDoc.id} bullet/>
+                  <div className="ml-5 grid gap-0.5 border-l border-zinc-100 pl-3">
+                    {(childrenByParentId.get(parentDoc.id) ?? []).map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
                   </div>
                 </div>)}
               </TreeSection>;
@@ -58,7 +71,7 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
         </nav>
       </aside>
       <article className="min-w-0 pb-12">
-        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedCode && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
+        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
         <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
       </article>
     </div>
@@ -67,15 +80,15 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
 
 function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   return <div>
-    <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">{selected.domain}</p>
+    <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">{domainLabels[selected.domain] ?? selected.domain} · {kindLabels[selected.kind]}</p>
     <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{selected.title}</h1>
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Übersicht</h2>
       <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
       <dl className="mt-4 grid gap-1 text-sm leading-6">
         <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
-          <dt className="font-medium text-zinc-950">Code</dt>
-          <dd><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-700">{selected.code}</code></dd>
+          <dt className="font-medium text-zinc-950">ID</dt>
+          <dd><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-700">{selected.id}</code></dd>
         </div>
         {(selected.overview ?? [
           { label: 'Zeitraum', value: selected.period },
@@ -108,26 +121,35 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
         {selected.method.map(item => <li key={item}>• {item}</li>)}
       </ul>
     </section>}
-    <section className="mt-8">
-      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">JSON</h2>
+    {(selected.file || !!selected.scripts?.length || !!selected.fields?.length) && <section className="mt-8">
+      <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Dateien</h2>
       <dl className="mt-3 grid gap-3">
-        <div className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
+        {selected.file && <div className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
           <dt><code>Datei</code></dt>
           <dd className="text-zinc-500">Pfad</dd>
           <dd className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <a href={dataFileViewerUrl(selected.file)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
               <code>data/{selected.file}</code>
             </a>
-            <a href={`${import.meta.env.BASE_URL}data/${selected.file}`} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
+            <a href={dataFileUrl(selected.file)} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
           </dd>
-        </div>
-        {selected.fields.map(field => <div key={field.name} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
+        </div>}
+        {selected.scripts?.map(script => <div key={script} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
+          <dt><code>{script.endsWith('.ts') ? 'Code' : 'Skript'}</code></dt>
+          <dd className="text-zinc-500">Pfad</dd>
+          <dd>
+            <a href={dataFileUrl(script)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
+              <code>data/{script}</code>
+            </a>
+          </dd>
+        </div>)}
+        {selected.fields?.map(field => <div key={field.name} className="grid gap-1 text-sm sm:grid-cols-[180px_90px_1fr]">
           <dt><code>{field.name}</code></dt>
           <dd className="text-zinc-500">{field.unit}</dd>
           <dd className="leading-5 text-zinc-700">{field.description}</dd>
         </div>)}
       </dl>
-    </section>
+    </section>}
     {selected.sections?.map(section => <section key={section.title} className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">{section.title}</h2>
       <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
@@ -147,9 +169,10 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
     <section className="mt-8">
       <h2 className="border-b border-zinc-200 pb-1 text-lg font-medium">Datensätze</h2>
       <ul className="mt-3 grid gap-2 text-sm leading-6">
-        {docs.map(entry => <li key={entry.code}>
-          <a href={dataWikiUrl(entry.code)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
-          <code className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">{entry.code}</code>
+        {docs.map(entry => <li key={entry.id}>
+          <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
+          <code className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">{entry.id}</code>
+          <span className="ml-2 text-xs text-zinc-400">{domainLabels[entry.domain] ?? entry.domain} · {kindLabels[entry.kind]}</span>
           <span className="text-zinc-500"> — {entry.short}</span>
         </li>)}
       </ul>
@@ -166,7 +189,7 @@ function TreeSection({ title, children }: { title: string; children: ReactNode }
   </section>;
 }
 
-function TreeNode({ href, label, selected }: { href: string; label: string; selected: boolean }) {
+function TreeNode({ href, label, selected, bullet = false }: { href: string; label: string; selected: boolean; bullet?: boolean }) {
   return <a
     href={href}
     className={cx(
@@ -174,7 +197,7 @@ function TreeNode({ href, label, selected }: { href: string; label: string; sele
       selected ? 'font-medium text-zinc-950' : 'text-zinc-600 hover:text-zinc-950',
     )}
   >
-    <span className="block truncate">{label}</span>
+    <span className="block truncate">{bullet && <span className="mr-1.5 text-zinc-400">•</span>}{label}</span>
   </a>;
 }
 
@@ -188,19 +211,6 @@ function InfoLine({ label, value }: { label: string; value: string }) {
         {value.slice(0, urlMatch.index).trim() ? ' ' : ''}
         <a href={urlMatch[0]} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{urlMatch[0]}</a>
       </> : value}
-    </dd>
-  </div>;
-}
-
-function DataFileRow({ filePath }: { filePath: string }) {
-  const rawUrl = `${import.meta.env.BASE_URL}data/${filePath}`;
-  return <div className="grid gap-1 sm:grid-cols-[120px_1fr]">
-    <dt className="font-medium text-zinc-950">Datei</dt>
-    <dd className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <a href={dataFileViewerUrl(filePath)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
-        <code>data/{filePath}</code>
-      </a>
-      <a href={rawUrl} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
     </dd>
   </div>;
 }

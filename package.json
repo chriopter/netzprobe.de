@@ -8,13 +8,14 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "build:pages": "GITHUB_PAGES=true npm run build",
-    "data:factors": "node data/modell/generate-feed-in-factors.mjs",
+    "data:factors": "node data/einspeisefaktoren-2025/generate.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "claude": "^0.1.1",
     "echarts": "latest",
     "lucide-react": "latest",
     "react": "latest",

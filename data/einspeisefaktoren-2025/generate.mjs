@@ -1,16 +1,17 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const generationPath = 'data/erzeugung/energy-charts-stuendlich-2025.json';
-const outputPath = 'data/modell/einspeisefaktoren-stuendlich-2025.json';
+const generationPath = 'data/erzeugung-2025/data.json';
+const outputPath = 'data/einspeisefaktoren-2025/data.json';
+const installedPowerUrl = 'https://api.energy-charts.info/installed_power?country=de&time_step=monthly';
 const installedPowerPath = process.argv[2];
 
-if (!installedPowerPath) {
-  console.error('Usage: node data/modell/generate-feed-in-factors.mjs <installed_power.json>');
-  process.exit(1);
-}
-
 const generation = JSON.parse(readFileSync(generationPath, 'utf8'));
-const installed = JSON.parse(readFileSync(installedPowerPath, 'utf8'));
+const installed = installedPowerPath
+  ? JSON.parse(readFileSync(installedPowerPath, 'utf8'))
+  : await fetch(installedPowerUrl).then((response) => {
+      if (!response.ok) throw new Error(`installed_power API failed: ${response.status} ${response.statusText}`);
+      return response.json();
+    });
 
 const seriesByName = new Map(installed.production_types.map((series) => [series.name, series.data]));
 const solar = seriesByName.get('Solar AC');
@@ -55,7 +56,7 @@ writeFileSync(outputPath, `${JSON.stringify({
   source: 'Locally derived feed-in factors from Energy-Charts public_power and installed_power APIs.',
   sourceUrls: [
     generation.sourceUrl,
-    'https://api.energy-charts.info/installed_power?country=de&time_step=monthly',
+    installedPowerUrl,
   ],
   notes: [
     'Regenerated locally from repository generation data and freshly fetched Energy-Charts installed_power data.',

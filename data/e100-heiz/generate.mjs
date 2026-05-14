@@ -1,4 +1,4 @@
-// Erzeugt data/last/heiz-elektrifizierung.json reproduzierbar.
+// Erzeugt data/e100-heiz/data.json reproduzierbar.
 // Modellparameter Raumwaerme-Elektrifizierung Deutschland plus taegliches Gradtagszahl-Profil.
 //
 // Methode:
@@ -11,7 +11,7 @@
 //      und Juni-August bleiben praktisch komplett unbeheizt.
 //   4. Weights sind die normierten Tagesanteile an der Jahres-HDD-Summe.
 
-const referenceYear = 2026;
+const referenceYear = 2023;
 const profileYear = 2025;
 const heatingLimitC = 15;
 const indoorReferenceC = 20;
@@ -30,7 +30,7 @@ const seasonalCop = 3.3;
 // 24-h-Gleichzeitigkeitsprofil fuer Waermepumpen-Heizungslast (Stunde 0 = 00:00-01:00 Berlin-Zeit).
 // Bimodaler Tagesgang aus When2Heat-h-Funktionen (BDEW-Gas-SLP-SFH) und WPuQ-Feldmessung Hamelin,
 // auf Grid-Aggregat-Niveau gedaempft. Renormiert sodass Summe = 24 (Tagesmittel 1,0).
-const heatPumpHourlyMultipliers = [
+const e100HeizHourlyMultipliers = [
   0.6868, 0.6083, 0.5691, 0.5691, 0.6083, 0.7653,
   1.0303, 1.3246, 1.4227, 1.2756, 1.1284, 1.0303,
   0.9812, 0.9321, 0.9321, 0.9812, 1.1284, 1.3246,
@@ -89,13 +89,15 @@ const heatingDays = days.filter((day) => day.heatingDegreeDay > 0).length;
 const annualHdd = Number(sumHdd.toFixed(2));
 
 const output = {
-  id: 'heat-pump-electrification',
+  id: 'e100-heiz',
   title: 'Heiz Elektrifizierung',
   source: 'Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.',
   sourceUrls: [
     'https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte',
     'https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren',
     'https://ag-energiebilanzen.de/daten-und-fakten/',
+    'https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html',
+    'https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html',
     'https://www.dwd.de/DE/leistungen/klimadatendeutschland/klarchivtagmonat.html',
     'https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html',
   ],
@@ -117,7 +119,7 @@ const output = {
       'https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html',
       'https://www.bdew.de/energie/standardlastprofile-strom/',
     ],
-    multipliers: heatPumpHourlyMultipliers,
+    multipliers: e100HeizHourlyMultipliers,
   },
   degreeDayProfile: {
     year: profileYear,

@@ -1,10 +1,10 @@
 {
-  "id": "modell.einspeisefaktoren.stuendlich.2025",
-  "code": "EF25",
+  "id": "einspeisefaktoren-2025",
   "domain": "modell",
+  "kind": "dataset",
   "title": "Einspeisefaktoren 2025",
-  "file": "modell/einspeisefaktoren-stuendlich-2025.json",
-  "scripts": ["modell/generate-feed-in-factors.mjs"],
+  "file": "einspeisefaktoren-2025/data.json",
+  "scripts": ["einspeisefaktoren-2025/model.ts", "einspeisefaktoren-2025/generate.mjs"],
   "source": "Energy-Charts public_power und installed_power APIs.",
   "sourceUrls": [
     "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
@@ -16,7 +16,7 @@
   "short": "PV- und Wind-Einspeisefaktoren aus beobachteter Einspeisung und installierter Leistung.",
   "description": "Stündliche Einspeisefaktoren für PV und Wind, abgeleitet aus tatsächlicher Einspeisung 2025 geteilt durch installierte Leistung. Aktuell als Reserve-Datensatz im DataSet enthalten; wird vom Kernmodell noch nicht aktiv genutzt, wird aber für zukünftige Erzeugungs-Skalierungs-Szenarien benötigt.",
   "method": [
-    "Datei: erzeugt durch data/modell/generate-feed-in-factors.mjs. Skript ausführen mit `node data/modell/generate-feed-in-factors.mjs > data/modell/einspeisefaktoren-stuendlich-2025.json`.",
+    "Datei: erzeugt durch data/einspeisefaktoren-2025/generate.mjs. Skript ohne Argument lädt installed_power aus der Energy-Charts-API; optional kann eine lokale installed_power.json übergeben werden. Adapter in data/einspeisefaktoren-2025/model.ts.",
     "PV-Faktor solarIrradiance: beobachtete pvMW je Stunde geteilt durch monatlich installierte PV-Leistung. Wert auf 0..1 begrenzt.",
     "Wind-Faktor wind100m: (beobachtete windOnMW + windOffMW) je Stunde geteilt durch monatlich installierte Wind-Leistung. Wert auf 0..1 begrenzt.",
     "Datenquellen: Energy-Charts public_power für Einspeisung und installed_power (time_step=monthly) für installierte Leistung."

@@ -1,12 +1,11 @@
-import type { BevPkwElectrificationLoad, DataSet, GenerationHour, HeatPumpElectrificationLoad, LoadHour, ModelFactorHour, SplitDataFile } from '../types/data';
+import type { E100PkwData, DataSet, GenerationHour, E100HeizData, LoadHour, ModelFactorHour, SplitDataFile } from '../types/data';
+import { dataPackageIds, dataPackageUrl } from '../dataPackages';
 
-const dataUrl = (file: string) => `${import.meta.env.BASE_URL}data/${file}`;
-
-const loadUrl = dataUrl('last/energy-charts-stuendlich-2025.json');
-const bevPkwElectrificationUrl = dataUrl('last/pkw-elektrifizierung.json');
-const heatPumpElectrificationUrl = dataUrl('last/heiz-elektrifizierung.json');
-const generationUrl = dataUrl('erzeugung/energy-charts-stuendlich-2025.json');
-const factorsUrl = dataUrl('modell/einspeisefaktoren-stuendlich-2025.json');
+const loadUrl = dataPackageUrl(dataPackageIds.loadHistorical2025, 'data.json');
+const e100PkwUrl = dataPackageUrl(dataPackageIds.e100Pkw, 'data.json');
+const e100HeizUrl = dataPackageUrl(dataPackageIds.e100Heiz, 'data.json');
+const generationUrl = dataPackageUrl(dataPackageIds.generationHistorical2025, 'data.json');
+const factorsUrl = dataPackageUrl(dataPackageIds.feedInFactors2025, 'data.json');
 const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   timeZone: 'Europe/Berlin',
   year: 'numeric',
@@ -28,24 +27,31 @@ export async function loadJson<T>(url: string): Promise<T> {
 }
 
 export async function loadDefaultData(): Promise<DataSet> {
-  const [loadData, bevPkwElectrification, heatPumpElectrification, generationData, factorData] = await Promise.all([
+  const [loadData, e100Pkw, e100Heiz, generationData, factorData] = await Promise.all([
     loadJson<SplitDataFile<LoadHour>>(loadUrl),
-    loadJson<BevPkwElectrificationLoad>(bevPkwElectrificationUrl),
-    loadJson<HeatPumpElectrificationLoad>(heatPumpElectrificationUrl),
+    loadJson<E100PkwData>(e100PkwUrl),
+    loadJson<E100HeizData>(e100HeizUrl),
     loadJson<SplitDataFile<GenerationHour>>(generationUrl),
     loadJson<SplitDataFile<ModelFactorHour>>(factorsUrl),
   ]);
 
   const generationByTime = new Map(generationData.hours.map((hour) => [hour.time, hour]));
   const factorsByTime = new Map(factorData.hours.map((hour) => [hour.time, hour]));
-  const heatingDegreeDayByDate = new Map(heatPumpElectrification.degreeDayProfile.days.map((day) => [day.date, day]));
+  const heatingDegreeDayByDate = new Map(e100Heiz.degreeDayProfile.days.map((day) => [day.date, day]));
 
   const hours = loadData.hours.map((loadHour) => {
     const generation = generationByTime.get(loadHour.time);
     const factors = factorsByTime.get(loadHour.time);
     const { date, hour } = berlinDateAndHour(loadHour.time);
     const heatingDegreeDay = heatingDegreeDayByDate.get(date);
-    if (!generation || !factors || !heatingDegreeDay) throw new Error(`Unvollständige Daten für ${loadHour.time}`);
+    if (!generation || !factors || !heatingDegreeDay) {
+      const missing = [
+        !generation && 'erzeugung-2025',
+        !factors && 'einspeisefaktoren-2025',
+        !heatingDegreeDay && `e100-heiz (${date})`,
+      ].filter(Boolean);
+      throw new Error(`Unvollständige Daten für ${loadHour.time}: ${missing.join(', ')}`);
+    }
     const { time: _generationTime, ...observed } = generation;
     return {
       time: loadHour.time,
@@ -60,8 +66,8 @@ export async function loadDefaultData(): Promise<DataSet> {
 
   return {
     source: 'Energy-Charts 2025: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
-    bevPkwElectrification,
-    heatPumpElectrification,
+    'e100-pkw': e100Pkw,
+    'e100-heiz': e100Heiz,
     loadSumTWh: loadData.sumTWh,
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,

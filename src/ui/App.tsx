@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { AlertTriangle, Gauge, X, Zap } from 'lucide-react';
+import { dataFileUrl } from '../dataPackages';
 import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
@@ -88,10 +89,9 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !data) return;
+    worker.postMessage({ type: 'init', input: data.hours, 'e100-pkw': data['e100-pkw'], 'e100-heiz': data['e100-heiz'] });
     hasDataRef.current = true;
-    const requestId = ++requestRef.current;
-    worker.postMessage({ type: 'init', requestId, input: data.hours, scenario, bevPkwElectrification: data.bevPkwElectrification, heatPumpElectrification: data.heatPumpElectrification });
-  }, [data, scenario]);
+  }, [data]);
 
   useEffect(() => {
     const worker = workerRef.current;
@@ -101,7 +101,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
       worker.postMessage({ type: 'run', requestId, scenario });
     }, 80);
     return () => window.clearTimeout(timer);
-  }, [scenario]);
+  }, [data, scenario]);
 
   return result;
 }
@@ -110,7 +110,7 @@ function useDatasetDocs() {
   const [docs, setDocs] = useState<DatasetDoc[]>([]);
   useEffect(() => {
     loadJson<ManifestEntry[]>(manifestUrl)
-      .then(entries => Promise.all(entries.map(entry => loadJson<DatasetDoc>(`${import.meta.env.BASE_URL}data/${entry.description}`))))
+      .then(entries => Promise.all(entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description)))))
       .then(setDocs)
       .catch(console.error);
   }, []);
@@ -229,10 +229,11 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onFaqOpen={() => setFaqOpen(true)}
-        onBevPkwKmChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwKm: checked } }))}
-        onBevPkwMillionKmChange={(bevPkwMillionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, bevPkwMillionKm } }))}
-        onHeatPumpChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, heatPump: checked } }))}
-        onHeatPumpTargetHeatTWhChange={(heatPumpTargetHeatTWh) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, heatPumpTargetHeatTWh } }))}
+        onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
+        onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
+        onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
+        onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}
+        onE100HeizTargetHeatTWhChange={(heatTWh) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz-target-heat-twh': heatTWh } }))}
       />
 
       <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>

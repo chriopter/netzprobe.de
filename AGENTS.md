@@ -7,16 +7,24 @@
 - Simulation getrennt von UI; rechenlastige Läufe im Web Worker.
 - Start: `npm install`, dann `npm run dev`. Vor Commit: `npm test` und `npm run build`.
 
-## Szenarien entwickeln
+## Datenpakete entwickeln
 
-Jedes Daten-Szenario lebt unter `data/<domain>/` mit drei Dateien:
+Jeder fachliche Daten-, Szenario- oder Modellbaustein lebt als Paket unter `data/<paket>/`.
+Jedes Paket hat immer:
 
-1. `<name>.json` — Modellparameter und eingebettete Profile.
-2. `generate-<name>.mjs` daneben, wenn Werte berechnet werden. Skript schreibt nach stdout, JSON wird über `node generate-<name>.mjs > <name>.json` regeneriert.
-3. `<name>.description.json` — Wiki-Eintrag (siehe Stil unten).
+1. `description.json` — Wiki-Eintrag (siehe Stil unten), mit `id`, `domain` und `kind`.
+2. `model.ts` — ausführbarer Paket-Adapter oder Modellcode. Auch reine Datenpakete exportieren hier typisiert ihre `data.json`.
+
+Optional:
+
+3. `data.json` — Modellparameter, Rohdaten und eingebettete Profile, wenn das Paket Datenwerte enthält.
+4. `generate.mjs` — Generator, wenn Werte berechnet werden. Skript schreibt nach stdout oder direkt nach `data.json`; Regeneration klar in `description.json` beschreiben.
 
 Außerdem nötig:
 - Eintrag in `data/manifest.json` in der Reihenfolge, in der die App es zeigen soll.
+- Paketordner, Manifest-`id`, `description.json.id` und der `model.ts`-Pfad in `scripts` müssen 1:1 denselben Paketnamen verwenden, z. B. `data/e100-pkw/`, `"id": "e100-pkw"`, `"scripts": ["e100-pkw/model.ts"]`.
+- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt der Paketordner sein.
+- App-Code referenziert Paket-IDs über `src/dataPackages.ts`; Scenario-State, Worker-Nachrichten und Core-Kontext verwenden die Paket-ID als Key, keine historischen Feature-Aliasse.
 - Loader-Anpassung in `src/loaders/defaultData.ts` und Typen in `src/types/data.ts`.
 - Test-Fixture in `src/__tests__/engine.test.ts` mit minimalem Plausibilitäts-Check.
 
@@ -32,8 +40,8 @@ Vor dem Mergen jedes neuen oder geänderten Szenarios:
 ## Wiki-Stil
 
 Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbilder:
-- Reine Daten ohne Slider: `data/last/energy-charts-stuendlich-2025.description.json` — kein `overview`, kein `sections`.
-- Szenarien mit Slider und Formel: `data/last/pkw-elektrifizierung.description.json` und `data/last/heiz-elektrifizierung.description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
+- Reine Daten ohne Slider: `data/last-2025/description.json` — kein `overview`, kein `sections`.
+- Szenarien mit Slider und Formel: `data/e100-pkw/description.json` und `data/e100-heiz/description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
 
 Regeln:
 
@@ -45,6 +53,7 @@ Regeln:
   - **Formel**: Rechenvorschrift inklusive Default-Auswertung.
   Kein zusätzlicher `Quelle`-Eintrag — die Quelle ist in `source` und der Wiki-Header rendert sie ohnehin separat.
 - `fields`: eine knappe Zeile pro Top-Level-Feld. Verschachtelte Strukturen (`degreeDayProfile`, `hourlyProfile`) als ein einziger Eintrag mit Inhalt-Zusammenfassung, nicht jede Sub-Property einzeln.
+- `file`: auf `<paket>/data.json`, wenn vorhanden. `scripts`: mindestens `<paket>/model.ts`, plus `<paket>/generate.mjs` wenn vorhanden. Ordnername, `id` und Modellcode-Pfad müssen identisch sein.
 - `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen.
 - `sections` vermeiden. „Erwägungsgründe" und pädagogische Bullet-Listen gehören weder ins Wiki noch in den Code.
 - Keine Wiederholung: Was schon in `title`, `short`, `source` oder `fields` steht, gehört nicht nochmal in `description` oder `overview`.

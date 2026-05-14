@@ -1,8 +1,8 @@
 {
-  "id": "modell.kernmodell",
+  "id": "kernmodell",
   "title": "Kernmodell",
   "source": "Eigene stündliche Bilanzrechnung im Browser.",
-  "code": "src/simulation/engine.ts",
+  "modelPath": "data/kernmodell/model.ts",
   "timeStep": "1 Stunde",
   "generationMode": "Historische öffentliche Erzeugung bleibt reine Erzeugung. Historischer Import und Abgrenzungsrest werden separat als historischer Ausgleich geführt.",
   "balanceMode": "Historisch 2025 bilanziert auf null. Zusatzlast wird nach der historischen Bilanz addiert und automatisch als zusätzlicher Import aufgefüllt.",

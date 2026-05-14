@@ -1,46 +1,18 @@
-import type { BevPkwElectrificationLoad, HeatPumpElectrificationLoad, HourlyInput } from '../types/data';
+import type { E100PkwData, E100HeizData, HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { balanceHour, initialStorageState } from './balance';
-import { demandGW } from './demand';
-import { historicalGenerationGW } from './generation';
-import type { SimHour, SimulationResult } from './types';
+import { kernmodellCoreModel } from '../../data/kernmodell/model';
+import type { CoreModel } from './coreModel';
+import type { SimulationResult } from './types';
 
 export type { SimHour, SimulationResult } from './types';
+export type { CoreModel } from './coreModel';
 
-export function runSimulation(input: HourlyInput[], scenario: Scenario, bevPkwElectrification: BevPkwElectrificationLoad, heatPumpElectrification: HeatPumpElectrificationLoad): SimulationResult {
-  let storage = initialStorageState();
-  const hours: SimHour[] = [];
+export const coreModels = [
+  kernmodellCoreModel,
+] satisfies CoreModel[];
 
-  for (const row of input) {
-    const loadGW = demandGW(row, scenario, bevPkwElectrification, heatPumpElectrification);
-    const generation = historicalGenerationGW(row);
-    const balance = balanceHour(generation.supplyGW, loadGW, storage, generation.historicalImportGW, generation.historicalExportGW, generation.dataBoundaryResidualGW);
-    storage = { batteryGWh: balance.batteryGWh, h2GWh: balance.h2GWh };
+export const defaultCoreModel = kernmodellCoreModel;
 
-    hours.push({
-      time: row.time,
-      loadGW,
-      ...generation,
-      ...balance,
-    });
-  }
-
-  const sum = (fn: (h: SimHour) => number) => hours.reduce((s, h) => s + fn(h), 0) / 1000;
-  const demandTWh = sum(h => h.loadGW);
-  const renewableTWh = sum(h => h.solarGW + h.windOnGW + h.windOffGW + h.biomassGW + h.hydroGW + h.geothermalGW);
-  const loadSheddingTWh = sum(h => h.loadSheddingGW);
-  const renewableSharePct = demandTWh > 0 ? 100 * renewableTWh / demandTWh : 0;
-
-  return {
-    hours,
-    summary: {
-      totalDemandTWh: demandTWh,
-      renewableSharePct,
-      curtailmentTWh: sum(h => h.curtailmentGW),
-      importTWh: sum(h => h.importGW),
-      exportTWh: sum(h => h.exportGW),
-      loadSheddingTWh,
-      securityStatus: loadSheddingTWh > 1 ? 'kritisch' : loadSheddingTWh > 0.01 ? 'angespannt' : 'stabil',
-    },
-  };
+export function runSimulation(input: HourlyInput[], scenario: Scenario, e100Pkw: E100PkwData, e100Heiz: E100HeizData): SimulationResult {
+  return defaultCoreModel.run({ hours: input, scenario, 'e100-pkw': e100Pkw, 'e100-heiz': e100Heiz });
 }

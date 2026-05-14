@@ -1,12 +1,14 @@
 {
-  "id": "last.energy-charts.stuendlich.2025",
-  "code": "LAST25",
+  "id": "last-2025",
   "domain": "last",
+  "kind": "dataset",
   "title": "Historisch 2025",
-  "file": "last/energy-charts-stuendlich-2025.json",
-  "source": "Energy-Charts API.",
+  "file": "last-2025/data.json",
+  "scripts": ["last-2025/model.ts"],
+  "source": "Energy-Charts API; Fraunhofer ISE Jahresauswertung 2025 (Last rund 466 TWh).",
   "sourceUrls": [
-    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01"
+    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+    "https://www.ise.fraunhofer.de/content/dam/ise/en/documents/press-releases/2026/0126_ISE_e_PR_Net%20electricity%20generation%202025.pdf"
   ],
   "period": "2025",
   "resolution": "stündlich",
@@ -29,5 +31,7 @@
     { "name": "sumTWh", "unit": "TWh", "description": "Jahressumme der Last." },
     { "name": "sumNote", "unit": "Text", "description": "Rechenhinweis." }
   ],
-  "caveats": []
+  "caveats": [
+    "Energy-Charts weist die öffentliche Netzlast ab; Eigenverbrauch und industrielle Eigenerzeugung sind nur indirekt enthalten."
+  ]
 }

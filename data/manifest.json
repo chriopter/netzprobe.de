@@ -1,32 +1,30 @@
 [
   {
-    "id": "last.energy-charts.stuendlich.2025",
-    "domain": "last",
-    "description": "last/energy-charts-stuendlich-2025.description.json"
+    "id": "last-2025",
+    "description": "last-2025/description.json"
   },
   {
-    "id": "last.pkw-elektrifizierung",
-    "domain": "last",
-    "description": "last/pkw-elektrifizierung.description.json"
+    "id": "e100",
+    "description": "e100/description.json"
   },
   {
-    "id": "last.heiz-elektrifizierung",
-    "domain": "last",
-    "description": "last/heiz-elektrifizierung.description.json"
+    "id": "e100-pkw",
+    "description": "e100-pkw/description.json"
   },
   {
-    "id": "erzeugung.energy-charts.stuendlich.2025",
-    "domain": "erzeugung",
-    "description": "erzeugung/energy-charts-stuendlich-2025.description.json"
+    "id": "e100-heiz",
+    "description": "e100-heiz/description.json"
   },
   {
-    "id": "modell.kernmodell",
-    "domain": "modell",
-    "description": "modell/kernmodell.description.json"
+    "id": "erzeugung-2025",
+    "description": "erzeugung-2025/description.json"
   },
   {
-    "id": "modell.einspeisefaktoren.stuendlich.2025",
-    "domain": "modell",
-    "description": "modell/einspeisefaktoren-stuendlich-2025.description.json"
+    "id": "kernmodell",
+    "description": "kernmodell/description.json"
+  },
+  {
+    "id": "einspeisefaktoren-2025",
+    "description": "einspeisefaktoren-2025/description.json"
   }
 ]

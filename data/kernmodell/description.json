@@ -1,9 +1,10 @@
 {
-  "id": "modell.kernmodell",
-  "code": "KERN",
+  "id": "kernmodell",
   "domain": "modell",
+  "kind": "model",
   "title": "Kernmodell",
-  "file": "modell/kernmodell.json",
+  "file": "kernmodell/data.json",
+  "scripts": ["kernmodell/model.ts"],
   "source": "Eigene Implementierung.",
   "period": "laufend",
   "resolution": "stündlich",
@@ -12,7 +13,7 @@
   "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert und automatisch als zusätzlicher Import aufgefüllt; es gibt keinen Kraftwerks- oder Speicherdispatch.",
   "overview": [
     { "label": "Zeitschritt", "value": "1 Stunde" },
-    { "label": "Implementierung", "value": "src/simulation/engine.ts" }
+    { "label": "Implementierung", "value": "data/kernmodell/model.ts; src/simulation/engine.ts wählt nur das aktive Core-Modell aus." }
   ],
   "method": [
     "Last bestimmen: historische Last plus aktive Zusatzlasten (PKW, Heiz).",
@@ -26,7 +27,7 @@
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Name des Modellbausteins." },
     { "name": "source", "unit": "Text", "description": "Ursprung der Modelllogik." },
-    { "name": "code", "unit": "Pfad", "description": "Zentrale Implementierung." },
+    { "name": "modelPath", "unit": "Pfad", "description": "Implementierung im Datenpaket." },
     { "name": "timeStep", "unit": "Text", "description": "Zeitliche Auflösung." },
     { "name": "generationMode", "unit": "Text", "description": "Behandlung der historischen Erzeugung." },
     { "name": "balanceMode", "unit": "Text", "description": "Behandlung von historischer Bilanz und Zusatzlast." },

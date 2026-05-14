@@ -2,17 +2,18 @@
 
 Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
 
-Vibecoded und schnell iteriert. Alle Eingangsgrößen sind dokumentierte Modellannahmen aus öffentlichen Quellen, keine empirisch belastbaren Werte. Ergebnisse als grobe Orientierung lesen, nicht als Prognose.
+Vibecoded und schnell iteriert. Alle Eingangsgrößen sind dokumentierte Annahmen basierend auf öffentlichen Quellen, keine empirisch belastbaren Werte. Ergebnisse als grobe Orientierung lesen, nicht als Prognose.
 
 Live: https://chriopter.github.io/netzprobe/
 
 ## Daten
 
-- `data/last/` — Last und Zusatzlast-Szenarien.
-- `data/erzeugung/` — historische Erzeugung.
-- `data/modell/` — Kernmodell und Modellannahmen.
+- `data/last-2025/` — historische Last.
+- `data/e100-pkw/`, `data/e100-heiz/`, `data/e100/` — Lastszenarien und Komposition.
+- `data/erzeugung-2025/` — historische Erzeugung.
+- `data/kernmodell/`, `data/einspeisefaktoren-2025/` — Modell und Modellannahmen.
 
-Jede `.json` hat eine gleichnamige `.description.json`. `data/manifest.json` ist die Karte.
+Jedes Paket hat immer `description.json` und `model.ts`. Datenwerte liegen optional in `data.json`, Generatoren optional in `generate.mjs`; `data/manifest.json` bestimmt die Reihenfolge.
 
 ## Stack
 

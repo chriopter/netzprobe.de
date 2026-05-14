@@ -1,9 +1,9 @@
 import { Info } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import { dataWikiUrl, datasetCodes } from './dataCatalog';
+import { dataWikiUrl, datasetIds } from './dataCatalog';
 import { twh } from './format';
 import { cx, field, sectionBox } from './ui';
-import { bevPkwAdditionalMillionKm, bevPkwAdditionalTWh, heatPumpAdditionalElectricityTWh, heatPumpAdditionalHeatTWh } from '../simulation/demand';
+import { additionalMillionKm as e100PkwAdditionalMillionKm, additionalTWh as e100PkwAdditionalTWh } from '../../data/e100-pkw/model';
+import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh, additionalHeatTWh as e100HeizAdditionalHeatTWh } from '../../data/e100-heiz/model';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
@@ -20,10 +20,11 @@ export function ScenarioSidebar({
   onStart,
   onEnd,
   onFaqOpen,
-  onBevPkwKmChange,
-  onBevPkwMillionKmChange,
-  onHeatPumpChange,
-  onHeatPumpTargetHeatTWhChange,
+  onHistoricalLoadChange,
+  onE100PkwChange,
+  onE100PkwMillionKmChange,
+  onE100HeizChange,
+  onE100HeizTargetHeatTWhChange,
 }: {
   data: DataSet | null;
   scenario: Scenario;
@@ -35,10 +36,11 @@ export function ScenarioSidebar({
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
   onFaqOpen: () => void;
-  onBevPkwKmChange: (checked: boolean) => void;
-  onBevPkwMillionKmChange: (millionKm: number) => void;
-  onHeatPumpChange: (checked: boolean) => void;
-  onHeatPumpTargetHeatTWhChange: (heatTWh: number) => void;
+  onHistoricalLoadChange: (checked: boolean) => void;
+  onE100PkwChange: (checked: boolean) => void;
+  onE100PkwMillionKmChange: (millionKm: number) => void;
+  onE100HeizChange: (checked: boolean) => void;
+  onE100HeizTargetHeatTWhChange: (heatTWh: number) => void;
 }) {
   return <aside className="rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,.05)] lg:order-1 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
     <div className="border-b border-zinc-200/80 px-4 py-3">
@@ -67,39 +69,60 @@ export function ScenarioSidebar({
         onEnd={onEnd}
       />
 
-      <ScenarioChoiceSection
-        title="Last"
-        label="Historisch 2025"
-        meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
-        docId={datasetCodes.loadHistorical2025}
-      >
-        {data && <FullElectrificationGroup
-          data={data}
-          scenario={scenario}
-          onBevPkwKmChange={onBevPkwKmChange}
-          onBevPkwMillionKmChange={onBevPkwMillionKmChange}
-          onHeatPumpChange={onHeatPumpChange}
-          onHeatPumpTargetHeatTWhChange={onHeatPumpTargetHeatTWhChange}
-        />}
-      </ScenarioChoiceSection>
+      {(() => {
+        const elektrifizierung = scenario.demand['e100-pkw'] || scenario.demand['e100-heiz'];
+        return <section className={cx(sectionBox, 'p-3')}>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Last</span>
+          </div>
+          <div className="mt-3 grid gap-2 border-t border-zinc-100 pt-3">
+            <ScenarioRadioItem
+              label="Historisch 2025"
+              meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
+              docId={datasetIds.loadHistorical2025}
+              checked={!elektrifizierung}
+              onSelect={() => { onHistoricalLoadChange(true); onE100PkwChange(false); onE100HeizChange(false); }}
+            />
+            <ScenarioRadioItem
+              label="100% Elektrifizierung"
+              meta="Historisch plus PKW und Heizung elektrisch"
+              docId={datasetIds.fullElectrification}
+              checked={elektrifizierung}
+              onSelect={() => { onHistoricalLoadChange(true); onE100PkwChange(true); onE100HeizChange(true); }}
+            />
+            {data && <div className={cx('ml-5 grid gap-2 border-l border-zinc-200 pl-3', !elektrifizierung && 'opacity-50')}>
+              <ScenarioCheckboxItem
+                label="Historisch 2025"
+                meta={`Basislast · Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
+                docId={datasetIds.loadHistorical2025}
+                checked={scenario.demand['last-2025']}
+                onChange={onHistoricalLoadChange}
+                disabled={!elektrifizierung}
+              />
+              <E100PkwControl data={data} scenario={scenario} onChecked={onE100PkwChange} onMillionKm={onE100PkwMillionKmChange} disabled={!elektrifizierung}/>
+              <E100HeizControl data={data} scenario={scenario} onChecked={onE100HeizChange} onTargetHeat={onE100HeizTargetHeatTWhChange} disabled={!elektrifizierung}/>
+            </div>}
+          </div>
+        </section>;
+      })()}
 
       <ScenarioChoiceSection
         title="Erzeugung"
         label="Historisch 2025"
         meta={`Energy-Charts · ${generationMeta(data)}`}
-        docId={datasetCodes.generationHistorical2025}
+        docId={datasetIds.generationHistorical2025}
       />
 
       <ScenarioChoiceSection
         title="Modell"
         label="Kernmodell"
         meta="Stündliche Bilanzrechnung"
-        docId={datasetCodes.coreModel}
+        docId={datasetIds.coreModel}
       >
         <ScenarioRadioItem
           label="Einspeisefaktoren 2025"
           meta="PV/Wind aus beobachteter Einspeisung abgeleitet"
-          docId={datasetCodes.feedInFactors2025}
+          docId={datasetIds.feedInFactors2025}
         />
       </ScenarioChoiceSection>
     </div>
@@ -118,9 +141,15 @@ function ScenarioChoiceSection({ title, label, meta, docId, children }: { title:
   </section>;
 }
 
-function ScenarioRadioItem({ label, meta, docId }: { label: string; meta: string; docId: string }) {
+function ScenarioRadioItem({ label, meta, docId, checked = true, onSelect }: { label: string; meta: string; docId: string; checked?: boolean; onSelect?: () => void }) {
   return <label className="flex items-start gap-2 text-sm text-zinc-950">
-    <input className="mt-0.5 accent-zinc-700" type="radio" checked readOnly />
+    <input
+      className="mt-0.5 accent-zinc-700"
+      type="radio"
+      checked={checked}
+      onChange={() => onSelect?.()}
+      readOnly={!onSelect}
+    />
     <span className="grid min-w-0 flex-1 gap-0.5">
       <span className="flex items-center justify-between gap-2">
         <span className="truncate">{label}</span>
@@ -131,60 +160,42 @@ function ScenarioRadioItem({ label, meta, docId }: { label: string; meta: string
   </label>;
 }
 
-function FullElectrificationGroup({ data, scenario, onBevPkwKmChange, onBevPkwMillionKmChange, onHeatPumpChange, onHeatPumpTargetHeatTWhChange }: {
-  data: DataSet;
-  scenario: Scenario;
-  onBevPkwKmChange: (checked: boolean) => void;
-  onBevPkwMillionKmChange: (millionKm: number) => void;
-  onHeatPumpChange: (checked: boolean) => void;
-  onHeatPumpTargetHeatTWhChange: (heatTWh: number) => void;
-}) {
-  const both = scenario.demand.bevPkwKm && scenario.demand.heatPump;
-  const some = scenario.demand.bevPkwKm || scenario.demand.heatPump;
-  const indeterminate = some && !both;
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  useEffect(() => { if (inputRef.current) inputRef.current.indeterminate = indeterminate; }, [indeterminate]);
-  return <div className="grid gap-2">
-    <label className="flex items-start gap-2 text-sm text-zinc-950">
-      <input
-        ref={inputRef}
-        className="mt-0.5 accent-zinc-700"
-        type="checkbox"
-        checked={both}
-        onChange={event => {
-          const next = event.target.checked;
-          onBevPkwKmChange(next);
-          onHeatPumpChange(next);
-        }}
-      />
-      <span className="flex flex-1 items-center justify-between gap-2">
-        <span className="font-medium">100% Elektrifizierung</span>
+function ScenarioCheckboxItem({ label, meta, docId, checked, onChange, disabled = false }: { label: string; meta: string; docId: string; checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean }) {
+  return <label className="flex items-start gap-2 text-sm text-zinc-950">
+    <input
+      className="mt-0.5 accent-zinc-700"
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={event => onChange(event.target.checked)}
+    />
+    <span className="grid min-w-0 flex-1 gap-0.5">
+      <span className="flex items-center justify-between gap-2">
+        <span className="truncate">{label}</span>
+        <DataInfoLink id={docId} label={`${label} erklären`}/>
       </span>
-    </label>
-    <div className="grid gap-2 border-l border-zinc-200 pl-3">
-      <BevPkwControl data={data} scenario={scenario} onChecked={onBevPkwKmChange} onMillionKm={onBevPkwMillionKmChange}/>
-      <HeatingElectrificationControl data={data} scenario={scenario} onChecked={onHeatPumpChange} onTargetHeat={onHeatPumpTargetHeatTWhChange}/>
-    </div>
-  </div>;
+      <span className="truncate text-xs text-zinc-500">{meta}</span>
+    </span>
+  </label>;
 }
 
-function BevPkwControl({ data, scenario, onChecked, onMillionKm }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onMillionKm: (millionKm: number) => void }) {
-  const model = data.bevPkwElectrification;
-  const millionKm = scenario.demand.bevPkwMillionKm;
+function E100PkwControl({ data, scenario, onChecked, onMillionKm, disabled = false }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onMillionKm: (millionKm: number) => void; disabled?: boolean }) {
+  const model = data['e100-pkw'];
+  const millionKm = scenario.demand['e100-pkw-million-km'];
   const share = millionKm / model.referenceMillionKm * 100;
-  const additionalMillionKm = bevPkwAdditionalMillionKm(millionKm, model);
+  const additionalMillionKm = e100PkwAdditionalMillionKm(millionKm, model);
   return <div className="grid gap-2">
     <label className="flex items-start gap-2 text-sm text-zinc-950">
-      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand.bevPkwKm} onChange={event => onChecked(event.target.checked)} />
+      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand['e100-pkw']} disabled={disabled} onChange={event => onChecked(event.target.checked)} />
       <span className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex items-center justify-between gap-2">
           <span className="truncate">PKW Elektrifizierung</span>
-          <DataInfoLink id={datasetCodes.bevPkwKm} label="PKW Elektrifizierung erklären"/>
+          <DataInfoLink id={datasetIds.e100Pkw} label="PKW Elektrifizierung erklären"/>
         </span>
-        <span className="truncate text-xs text-zinc-500">{twh(bevPkwAdditionalTWh(millionKm, model))} Zusatz · {model.kwhPer100Km} kWh/100 km</span>
+        <span className="truncate text-xs text-zinc-500">{twh(e100PkwAdditionalTWh(millionKm, model))} Zusatz · {model.kwhPer100Km} kWh/100 km</span>
       </span>
     </label>
-    {scenario.demand.bevPkwKm && <div className="grid gap-1 pl-6">
+    {scenario.demand['e100-pkw'] && !disabled && <div className="grid gap-1 pl-6">
       <div className="flex items-center justify-between gap-2 text-xs text-zinc-600">
         <span>Pkw-km</span>
         <span>{millionKm.toLocaleString('de-DE')} Mio.</span>
@@ -205,23 +216,23 @@ function BevPkwControl({ data, scenario, onChecked, onMillionKm }: { data: DataS
   </div>;
 }
 
-function HeatingElectrificationControl({ data, scenario, onChecked, onTargetHeat }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void }) {
-  const model = data.heatPumpElectrification;
-  const heatTWh = scenario.demand.heatPumpTargetHeatTWh;
+function E100HeizControl({ data, scenario, onChecked, onTargetHeat, disabled = false }: { data: DataSet; scenario: Scenario; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void; disabled?: boolean }) {
+  const model = data['e100-heiz'];
+  const heatTWh = scenario.demand['e100-heiz-target-heat-twh'];
   const share = heatTWh / model.referenceHeatDemandTWh * 100;
-  const additionalHeat = heatPumpAdditionalHeatTWh(heatTWh, model);
+  const additionalHeat = e100HeizAdditionalHeatTWh(heatTWh, model);
   return <div className="grid gap-2">
     <label className="flex items-start gap-2 text-sm text-zinc-950">
-      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand.heatPump} onChange={event => onChecked(event.target.checked)} />
+      <input className="mt-0.5 accent-zinc-700" type="checkbox" checked={scenario.demand['e100-heiz']} disabled={disabled} onChange={event => onChecked(event.target.checked)} />
       <span className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex items-center justify-between gap-2">
           <span className="truncate">Heiz Elektrifizierung</span>
-          <DataInfoLink id={datasetCodes.heatPump} label="Heiz Elektrifizierung erklären"/>
+          <DataInfoLink id={datasetIds.e100Heiz} label="Heiz Elektrifizierung erklären"/>
         </span>
-        <span className="truncate text-xs text-zinc-500">{twh(heatPumpAdditionalElectricityTWh(heatTWh, model))} Strom · JAZ {model.seasonalCop.toLocaleString('de-DE')}</span>
+        <span className="truncate text-xs text-zinc-500">{twh(e100HeizAdditionalElectricityTWh(heatTWh, model))} Strom · JAZ {model.seasonalCop.toLocaleString('de-DE')}</span>
       </span>
     </label>
-    {scenario.demand.heatPump && <div className="grid gap-1 pl-6">
+    {scenario.demand['e100-heiz'] && !disabled && <div className="grid gap-1 pl-6">
       <div className="flex items-center justify-between gap-2 text-xs text-zinc-600">
         <span>Raumwärme</span>
         <span>{heatTWh.toLocaleString('de-DE')} TWh</span>
