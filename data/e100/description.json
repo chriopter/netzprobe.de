@@ -12,7 +12,7 @@
   "description": "Alternativ-Szenario zu reiner historischer Last: Pkw, Lkw und Bus, Bahn, Schifffahrt, Luftverkehr, Raumwärme und Warmwasser in Haushalten und GHD, industrielle Prozesswärme, Stahl und Chemie werden vollständig auf Strom oder strombasierte Brennstoffe umgestellt. Die historische Last 2025 bleibt als Basis bestehen, jeder Sektor wird additiv aufgesetzt. Alle Teilszenarien lassen sich einzeln über die Sidebar-Slider justieren.",
   "overview": [
     { "label": "Verwendung", "value": "Master-Checkbox in der Sidebar aktiviert alle Teilszenarien gemeinsam; danach lassen sich die Slider je Sektor (Fahrleistung, TWh-Wärme, Stahlmenge, Chemiestrom) individuell setzen." },
-    { "label": "Default-Effekt", "value": "Pkw 90 + Lkw/Bus 55 + Bahn 10 + Schiff 80 + Flug 300 + HH-Wärme 145 + GHD-Wärme 47 + Industrie-Wärme 135 + Stahl 104 + Chemie 630 ≈ 1.600 TWh Zusatzstrom pro Jahr. Plus historische rund 466 TWh ergibt ca. 2.060 TWh Voll-E-DE." },
+    { "label": "Default-Effekt", "value": "Pkw 90 + Lkw/Bus 55 + Bahn 10 + Schiff 80 + Flug 300 + HH-Wärme 145 + GHD-Wärme 56 + Industrie-Wärme 135 + Stahl 104 + Chemie 630 ≈ 1.610 TWh Zusatzstrom pro Jahr. Plus historische rund 466 TWh ergibt ca. 2.080 TWh Voll-E-DE." },
     { "label": "Teilszenarien", "value": "e100-pkw, e100-lkw, e100-bahn, e100-schiff, e100-flug (Verkehr); e100-heiz, e100-ghd (Gebäudewärme); e100-industrie-waerme, e100-stahl, e100-chemie (Industrie)." }
   ],
   "method": [
