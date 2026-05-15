@@ -5,7 +5,7 @@ $log = function($message) use ($logFile) {
 };
 
 $secretFile = '/root/netzprobe/deploy/.secret';
-$deployScript = '/root/netzprobe/bin/deploy';
+$deployScript = '/root/netzprobe/deploy/deploy';
 
 $log('Webhook received');
 
