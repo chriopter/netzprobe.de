@@ -25,7 +25,27 @@ export type Scenario = {
     'e100-chemie': boolean;
     'e100-chemie-target-twh': number;
   };
-  renewables: { pvGW: number; windOnGW: number; windOffGW: number };
-  fossil: { coalGW: number; gasGW: number };
-  storage: { batteryPowerGW: number; batteryEnergyGWh: number; h2PowerGW: number; h2EnergyGWh: number; importLimitGW: number };
+  supplyPreset: 'custom' | 'historical-2025' | '100ee-noimport' | '50ee-50import' | '2025-skaliert';
+  generation: {
+    pvInstalledGW: number;
+    windOnInstalledGW: number;
+    windOffInstalledGW: number;
+    kernkraftInstalledGW: number;
+    biomasseInstalledGW: number;
+    laufwasserInstalledGW: number;
+    gasInstalledGW: number;
+    kohleInstalledGW: number;
+    importMaxGW: number;
+    exportMaxGW: number;
+    importEmissionGperKWh: number;
+  };
+  storage: {
+    batteriePowerGW: number;
+    batterieEnergyGWh: number;
+    pumpspeicherPowerGW: number;
+    pumpspeicherEnergyGWh: number;
+    h2ChargePowerGW: number;
+    h2DischargePowerGW: number;
+    h2EnergyGWh: number;
+  };
 };

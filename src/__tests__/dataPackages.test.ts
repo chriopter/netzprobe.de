@@ -5,13 +5,8 @@ const files = import.meta.glob('../../data/**/*', { eager: true, query: '?raw', 
 const manifest = JSON.parse(files['../../data/manifest.json']) as ManifestEntry[];
 const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model']);
 const jsonFiles = Object.entries(files)
-  .filter(([path]) => path.match(/^\.\.\/\.\.\/data\/[^/]+\/.*\.json$/))
+  .filter(([path]) => path.match(/^\.\.\/\.\.\/data\/.*\.json$/) && !path.endsWith('manifest.json'))
   .map(([path, raw]) => [path, JSON.parse(raw)] as const);
-const packageNames = Array.from(new Set(
-  Object.keys(files)
-    .map(path => path.match(/^\.\.\/\.\.\/data\/([^/]+)\//)?.[1])
-    .filter((name): name is string => Boolean(name)),
-)).sort();
 
 function dataFile(path: string) {
   return files[`../../data/${path}`];
@@ -21,31 +16,22 @@ function readDoc(entry: ManifestEntry) {
   return JSON.parse(dataFile(entry.description)) as DatasetDoc;
 }
 
-function packageNameFromDescription(description: string) {
-  return description.split('/')[0];
-}
-
 describe('data package manifest', () => {
-  it('keeps every data package in the strict package shape', () => {
-    expect(packageNames).not.toHaveLength(0);
+  it('keeps every manifest package in the strict package shape', () => {
+    expect(manifest).not.toHaveLength(0);
 
-    for (const packageName of packageNames) {
-      expect(dataFile(`${packageName}/description.json`), packageName).toBeDefined();
-      expect(dataFile(`${packageName}/model.ts`), packageName).toBeDefined();
-      expect(dataFile(`${packageName}/model.json`), packageName).toBeUndefined();
+    for (const entry of manifest) {
+      expect(dataFile(`${entry.path}/description.json`), entry.path).toBeDefined();
+      expect(dataFile(`${entry.path}/model.ts`), entry.path).toBeDefined();
+      expect(dataFile(`${entry.path}/model.json`), entry.path).toBeUndefined();
     }
   });
 
   it('points to existing package descriptions with domain and kind metadata', () => {
-    expect(manifest).not.toHaveLength(0);
-
     for (const entry of manifest) {
       expect(dataFile(entry.description), entry.description).toBeDefined();
 
       const doc = readDoc(entry);
-      const packageName = packageNameFromDescription(entry.description);
-      expect(entry.id, entry.description).toBe(packageName);
-      expect(doc.id, entry.description).toBe(packageName);
       expect(doc.id, entry.description).toBe(entry.id);
       expect('code' in doc, entry.description).toBe(false);
       expect(doc.domain, entry.description).toMatch(/^(last|erzeugung|modell)$/);
@@ -60,10 +46,9 @@ describe('data package manifest', () => {
       for (const script of doc.scripts ?? []) {
         expect(dataFile(script), script).toBeDefined();
       }
-      const packageName = packageNameFromDescription(entry.description);
-      expect(doc.scripts).toContain(`${packageName}/model.ts`);
-      expect(doc.scripts?.every(script => script.startsWith(`${packageName}/`)), doc.id).toBe(true);
-      if (doc.file) expect(doc.file).toBe(`${packageName}/data.json`);
+      expect(doc.scripts).toContain(`${entry.path}/model.ts`);
+      expect(doc.scripts?.every(script => script.startsWith(`${entry.path}/`)), doc.id).toBe(true);
+      if (doc.file) expect(doc.file).toBe(`${entry.path}/data.json`);
       expect(doc.file?.endsWith('/model.json'), doc.id).not.toBe(true);
     }
   });
@@ -71,9 +56,11 @@ describe('data package manifest', () => {
   it('does not keep a second identifier in package JSON files', () => {
     for (const [path, json] of jsonFiles) {
       expect('code' in json, path).toBe(false);
-      const packageName = path.match(/^\.\.\/\.\.\/data\/([^/]+)\//)?.[1];
       if (json && typeof json === 'object' && 'id' in json) {
-        expect(json.id, path).toBe(packageName);
+        const manifestEntry = manifest.find(entry => path.startsWith(`../../data/${entry.path}/`));
+        if (manifestEntry) {
+          expect(json.id, path).toBe(manifestEntry.id);
+        }
       }
     }
   });

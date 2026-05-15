@@ -1,6 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Activity,
+  BatteryCharging,
   BookOpen,
   CalendarDays,
   Car,
@@ -14,6 +15,7 @@ import {
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
+import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataCatalog';
 import { fmt0, twh, twh0 } from './format';
 import { cx, sidebarWidthClass } from './ui';
@@ -70,6 +72,10 @@ type ScenarioSidebarProps = {
   onE100StahlTargetChange: (mioTon: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (twh: number) => void;
+  onGenerationChange: (field: keyof Scenario['generation'], value: number) => void;
+  onStorageChange: (field: keyof Scenario['storage'], value: number) => void;
+  supplyPreset: Scenario['supplyPreset'];
+  onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
 };
 
 export type SidebarSectorId = 'verkehr' | 'waerme' | 'industrie';
@@ -114,6 +120,10 @@ export function ScenarioSidebar({
   onE100StahlTargetChange,
   onE100ChemieChange,
   onE100ChemieTargetChange,
+  onGenerationChange,
+  onStorageChange,
+  supplyPreset,
+  onSupplyPresetChange,
 }: ScenarioSidebarProps) {
   useEffect(() => {
     if (collapsed || typeof window === 'undefined') return;
@@ -220,30 +230,316 @@ export function ScenarioSidebar({
           onExpandedRowChange={onExpandedRowChange}
         />
 
-        <ReadonlyCard
-          title="Erzeugung"
-          icon={<Zap className="h-4 w-4"/>}
-          label="Historisch 2025"
-          meta={`Energy-Charts · ${generationMeta(data)}`}
-          docId={datasetIds.generationHistorical2025}
+        <ErzeugungSection
+          data={data}
+          scenario={scenario}
+          supplyPreset={supplyPreset}
+          onSupplyPresetChange={onSupplyPresetChange}
+          onGenerationChange={onGenerationChange}
+          onStorageChange={onStorageChange}
         />
 
         <ReadonlyCard
           title="Modell"
           icon={<SlidersHorizontal className="h-4 w-4"/>}
           label="Kernmodell"
-          meta="Stündliche Bilanzrechnung"
+          meta="Stündlicher Dispatch von Last, Erzeugung, Speicher und Handel"
           docId={datasetIds.coreModel}
-        >
-          <ReadonlyItem
-            label="Einspeisefaktoren 2025"
-            meta="PV/Wind aus beobachteter Einspeisung abgeleitet"
-            docId={datasetIds.feedInFactors2025}
-          />
-        </ReadonlyCard>
+        />
       </div>
     </div>
   </aside>;
+}
+
+type GenerationFieldKey = keyof Scenario['generation'];
+
+type GenerationFieldSpec = {
+  key: GenerationFieldKey;
+  label: string;
+  unit: string;
+  min: number;
+  max: number;
+  step: number;
+  baseline?: number;
+};
+
+type GenerationGroup = {
+  id: 'erneuerbar' | 'kernkraft' | 'konventionell' | 'handel';
+  title: string;
+  fields: GenerationFieldSpec[];
+  summary: (scenario: Scenario) => string;
+};
+
+function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] {
+  return [
+    { id: 'erneuerbar', title: 'Erneuerbar', fields: [
+      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW },
+      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW },
+      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW },
+      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW },
+      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW },
+    ], summary: (s) => `${fmt0.format(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW)} GW` },
+    { id: 'kernkraft', title: 'Kernkraft', fields: [
+      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW },
+    ], summary: (s) => `${fmt0.format(s.generation.kernkraftInstalledGW)} GW` },
+    { id: 'konventionell', title: 'Konventionell', fields: [
+      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW },
+      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW },
+    ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
+    { id: 'handel', title: 'Handel', fields: [
+      { key: 'importMaxGW', label: 'Import-Limit', unit: 'GW', min: erz.import.minGW, max: erz.import.maxGW, step: erz.import.stepGW, baseline: erz.import.default2025GW },
+      { key: 'exportMaxGW', label: 'Export-Limit', unit: 'GW', min: erz.export.minGW, max: erz.export.maxGW, step: erz.export.stepGW, baseline: erz.export.default2025GW },
+    ], summary: (s) => `${fmt0.format(s.generation.importMaxGW)} / ${fmt0.format(s.generation.exportMaxGW)} GW` },
+  ];
+}
+
+type StorageFieldKey = keyof Scenario['storage'];
+type StorageFieldSpec = { key: StorageFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number };
+
+type StorageGroup = {
+  id: 'batterie' | 'pumpspeicher' | 'h2';
+  title: string;
+  fields: StorageFieldSpec[];
+  summary: (scenario: Scenario) => string;
+};
+
+function storageGroups(sp: DataSet['speicher-modell']): StorageGroup[] {
+  return [
+    { id: 'batterie', title: 'Batterie · kurzfristig', fields: [
+      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.minPowerGW,   max: sp.storages.batterie.maxPowerGW,   step: sp.storages.batterie.stepPowerGW,   baseline: sp.storages.batterie.power2025GW },
+      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.minEnergyGWh, max: sp.storages.batterie.maxEnergyGWh, step: sp.storages.batterie.stepEnergyGWh, baseline: sp.storages.batterie.energy2025GWh },
+    ], summary: (s) => `${fmt0.format(s.storage.batteriePowerGW)} GW · ${fmt0.format(s.storage.batterieEnergyGWh)} GWh` },
+    { id: 'pumpspeicher', title: 'Pumpspeicher · mittelfristig', fields: [
+      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.minPowerGW,   max: sp.storages.pumpspeicher.maxPowerGW,   step: sp.storages.pumpspeicher.stepPowerGW,   baseline: sp.storages.pumpspeicher.power2025GW },
+      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.minEnergyGWh, max: sp.storages.pumpspeicher.maxEnergyGWh, step: sp.storages.pumpspeicher.stepEnergyGWh, baseline: sp.storages.pumpspeicher.energy2025GWh },
+    ], summary: (s) => `${s.storage.pumpspeicherPowerGW.toLocaleString('de-DE')} GW · ${fmt0.format(s.storage.pumpspeicherEnergyGWh)} GWh` },
+    { id: 'h2', title: 'Wasserstoff · saisonal', fields: [
+      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.minChargePowerGW,    max: sp.storages.h2.maxChargePowerGW,    step: sp.storages.h2.stepChargePowerGW,    baseline: sp.storages.h2.chargePower2025GW },
+      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.minDischargePowerGW, max: sp.storages.h2.maxDischargePowerGW, step: sp.storages.h2.stepDischargePowerGW, baseline: sp.storages.h2.dischargePower2025GW },
+      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.minEnergyGWh,        max: sp.storages.h2.maxEnergyGWh,        step: sp.storages.h2.stepEnergyGWh,        baseline: sp.storages.h2.energy2025GWh },
+    ], summary: (s) => `${fmt0.format(s.storage.h2ChargePowerGW)} / ${fmt0.format(s.storage.h2DischargePowerGW)} GW · ${fmt0.format(s.storage.h2EnergyGWh)} GWh` },
+  ];
+}
+
+function PresetPillRow<TId extends string>({
+  presets, activeId, onSelect,
+}: {
+  presets: ReadonlyArray<{ id: TId; label: string; description?: string }>;
+  activeId: TId | null;
+  onSelect: (id: TId) => void;
+}) {
+  return <div className="flex flex-wrap gap-1.5">
+    {presets.map(p => <button
+      key={p.id}
+      type="button"
+      title={p.description}
+      onClick={() => onSelect(p.id)}
+      className={cx(
+        'rounded-full px-3 py-1 text-xs font-medium transition',
+        p.id === activeId ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
+      )}
+    >{p.label}</button>)}
+  </div>;
+}
+
+function PillCategory({ children }: { children: ReactNode }) {
+  return <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">{children}</div>;
+}
+
+function ErzeugungSection({
+  data,
+  scenario,
+  supplyPreset,
+  onSupplyPresetChange,
+  onGenerationChange,
+  onStorageChange,
+}: {
+  data: DataSet | null;
+  scenario: Scenario;
+  supplyPreset: Scenario['supplyPreset'];
+  onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
+  onGenerationChange: (field: GenerationFieldKey, value: number) => void;
+  onStorageChange: (field: StorageFieldKey, value: number) => void;
+}) {
+  if (!data) return null;
+
+  const pillPresets = supplyPillIds.map(id => ({
+    id,
+    label: supplyPillLabels[id],
+    description: supplyPillDescriptions[id],
+  }));
+  const activeId: SupplyPillId = supplyPreset;
+  const activeWikiId = supplyPillWikiIds[activeId];
+  const fixPills = pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'custom');
+  const lastfolgendPills = pillPresets.filter(p => p.id !== 'historical-2025' && p.id !== 'custom');
+
+  return <SidebarCard title="Erzeugung" icon={<Zap className="h-4 w-4"/>} docId={activeWikiId}>
+    <div className="grid gap-2">
+      <div>
+        <PillCategory>Fix · Werte bleiben wie eingestellt</PillCategory>
+        <PresetPillRow presets={fixPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
+      </div>
+      <div>
+        <PillCategory>Lastfolgend · Werte passen sich der Last an</PillCategory>
+        <PresetPillRow presets={lastfolgendPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
+      </div>
+    </div>
+
+    <div className="mt-3 grid gap-2">
+      <SupplyGroupAccordions
+        data={data}
+        scenario={scenario}
+        onGenerationChange={onGenerationChange}
+        onStorageChange={onStorageChange}
+      />
+    </div>
+  </SidebarCard>;
+}
+
+type SupplyGroupId = 'erneuerbar' | 'kernkraft' | 'konventionell' | 'handel' | 'batterie' | 'pumpspeicher' | 'h2';
+
+function SupplyGroupAccordions({
+  data,
+  scenario,
+  onGenerationChange,
+  onStorageChange,
+}: {
+  data: DataSet;
+  scenario: Scenario;
+  onGenerationChange: (field: GenerationFieldKey, value: number) => void;
+  onStorageChange: (field: StorageFieldKey, value: number) => void;
+}) {
+  const [open, setOpen] = useState<Record<SupplyGroupId, boolean>>({
+    erneuerbar: true, kernkraft: false, konventionell: false, handel: false,
+    batterie: false, pumpspeicher: false, h2: false,
+  });
+  const toggle = (id: SupplyGroupId) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const genGroups = generationGroups(data['erzeugungs-modell']);
+  const stoGroups = storageGroups(data['speicher-modell']);
+
+  return <div className="grid gap-1.5">
+    {genGroups.map(group => <GroupAccordion
+      key={group.id}
+      title={group.title}
+      summary={group.summary(scenario)}
+      icon={<Zap className="h-3.5 w-3.5"/>}
+      open={open[group.id]}
+      onToggle={() => toggle(group.id)}
+    >
+      {group.fields.map(field => <CapacitySliderRow
+        key={field.key}
+        label={field.label}
+        unit={field.unit}
+        value={scenario.generation[field.key]}
+        min={field.min}
+        max={field.max}
+        step={field.step}
+        baseline={field.baseline}
+        onValue={value => onGenerationChange(field.key, value)}
+      />)}
+    </GroupAccordion>)}
+    {stoGroups.map(group => <GroupAccordion
+      key={group.id}
+      title={group.title}
+      summary={group.summary(scenario)}
+      icon={<BatteryCharging className="h-3.5 w-3.5"/>}
+      open={open[group.id]}
+      onToggle={() => toggle(group.id)}
+    >
+      {group.fields.map(field => <CapacitySliderRow
+        key={field.key}
+        label={field.label}
+        unit={field.unit}
+        value={scenario.storage[field.key]}
+        min={field.min}
+        max={field.max}
+        step={field.step}
+        baseline={field.baseline}
+        onValue={value => onStorageChange(field.key, value)}
+      />)}
+    </GroupAccordion>)}
+  </div>;
+}
+
+function GroupAccordion({
+  title,
+  summary,
+  icon,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  summary: string;
+  icon: ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const Chevron = open ? ChevronUp : ChevronDown;
+  return <section className={cx(
+    'overflow-hidden rounded-lg border bg-white transition',
+    open ? 'border-zinc-300' : 'border-zinc-200/80 hover:border-zinc-300',
+  )}>
+    <button
+      type="button"
+      className="grid w-full grid-cols-[24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2 text-left"
+      aria-expanded={open}
+      aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
+      onClick={onToggle}
+    >
+      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-600">{icon}</span>
+      <span className="text-sm font-semibold text-zinc-950">{title}</span>
+      <span className="whitespace-nowrap text-right text-xs font-medium tabular-nums text-zinc-500">{summary}</span>
+      <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
+    </button>
+    {open && <div className="border-t border-zinc-100 px-2 py-1">{children}</div>}
+  </section>;
+}
+
+function formatMultiplier(value: number, baseline: number | undefined): string | null {
+  if (!baseline || baseline <= 0) return null;
+  const ratio = value / baseline;
+  if (!Number.isFinite(ratio)) return null;
+  if (ratio < 0.05) return '0× 2025';
+  if (ratio < 0.995) return `${ratio.toFixed(2)}× 2025`;
+  if (ratio < 9.95) return `${ratio.toFixed(1)}× 2025`;
+  return `${Math.round(ratio)}× 2025`;
+}
+
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onValue }: {
+  label: string;
+  unit: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  baseline?: number;
+  onValue: (value: number) => void;
+}) {
+  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  const multiplier = formatMultiplier(value, baseline);
+  return <div className="grid gap-1 px-1 py-1.5">
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-xs font-medium text-zinc-950">{label}</span>
+      <span className="whitespace-nowrap text-xs tabular-nums text-zinc-500">
+        {value.toLocaleString('de-DE')} {unit}
+        {multiplier && <span className="ml-1.5 text-zinc-400">({multiplier})</span>}
+      </span>
+    </div>
+    <input
+      aria-label={label}
+      className="w-full"
+      style={{ ['--range-pct' as string]: `${pct}%` }}
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={event => onValue(Number(event.target.value))}
+    />
+  </div>;
 }
 
 type LoadConfigurationProps = {
@@ -360,38 +656,29 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     onExpandedRowChange('e100-pkw');
   };
 
+  // Pill state: nur-2025 (alle e100-* off, last-2025 on), e100 (alle e100-* on, last-2025 on), oder custom.
+  const allE100Off = !electrificationSelected;
+  const allE100On = sectorFlags.every(key => scenario.demand[key]);
+  const loadPillId: 'nur-2025' | 'e100' | null = scenario.demand['last-2025'] && allE100Off
+    ? 'nur-2025'
+    : scenario.demand['last-2025'] && allE100On
+      ? 'e100'
+      : null;
+  const loadPills: ReadonlyArray<{ id: 'nur-2025' | 'e100'; label: string; description: string }> = [
+    { id: 'nur-2025', label: 'Nur 2025', description: 'Historische Last 2025 ohne zusätzliche Elektrifizierung' },
+    { id: 'e100', label: 'Vollelektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },
+  ];
+  const selectLoadPill = (id: 'nur-2025' | 'e100') => {
+    if (id === 'nur-2025') selectHistorical();
+    else selectElectrification();
+  };
+
   return <SidebarCard title="Last" icon={<Activity className="h-4 w-4"/>} docId={datasetIds.loadHistorical2025}>
-      <div className="grid gap-2">
-        <ScenarioRadioItem
-          name="last-mode"
-          label="Historisch 2025"
-          meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh0(data.loadSumTWh)}` : ''}`}
-          checked={!electrificationSelected}
-          onSelect={selectHistorical}
-        />
+      <PresetPillRow presets={loadPills} activeId={loadPillId} onSelect={selectLoadPill}/>
 
-        <section className={cx(
-          'overflow-hidden rounded-lg transition',
-          electrificationSelected ? 'bg-zinc-50/60' : 'bg-white hover:bg-zinc-50/60',
-        )}>
-          <label className="flex cursor-pointer items-start gap-3 px-2.5 py-2.5">
-            <input
-              className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-950"
-              type="radio"
-              name="last-mode"
-              checked={electrificationSelected}
-              onChange={selectElectrification}
-            />
-            <span className="grid min-w-0 flex-1 gap-0.5">
-              <span className="flex min-w-0 items-center gap-1">
-                <span className="truncate text-sm font-semibold text-zinc-950">100 % Elektrifizierung</span>
-                <InfoLink id={datasetIds.fullElectrification} label="100 % Elektrifizierung im Wiki öffnen"/>
-              </span>
-              <span className="truncate text-xs text-zinc-500">Elektrifizierung aller Sektoren{data ? ` · ${twh0(electrificationSelected ? electrificationTotal : electrificationPotentialTotal)}` : ''}</span>
-            </span>
-          </label>
-
-          {electrificationSelected && <div className="border-t border-zinc-100 bg-zinc-50/35 py-2 pl-3 pr-1.5">
+      <div className="mt-1 grid gap-2">
+        <section className="overflow-hidden rounded-lg bg-zinc-50/60">
+          <div className="border-zinc-100 bg-zinc-50/35 py-2 pl-3 pr-1.5">
             <div className="grid gap-2 border-l border-zinc-300/80 pl-2.5">
               <BasisSubSection
                 checked={scenario.demand['last-2025']}
@@ -399,6 +686,11 @@ function LoadConfiguration(props: LoadConfigurationProps) {
                 docId={datasetIds.loadHistorical2025}
                 onChange={onHistoricalLoadChange}
               />
+              <div className="flex items-center gap-1.5 px-1 pt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                Elektrifizierungsbausteine
+                <InfoLink id={datasetIds.fullElectrification} label="100 % Elektrifizierung im Wiki öffnen"/>
+                {data && <span className="ml-auto text-[11px] tabular-nums text-zinc-500 normal-case tracking-normal">{twh0(electrificationTotal)} / {twh0(electrificationPotentialTotal)}</span>}
+              </div>
 
               {data && <AccordionSection
                 title="Verkehr"
@@ -522,7 +814,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
                 </div>
               </AccordionSection>}
             </div>
-          </div>}
+          </div>
         </section>
       </div>
     </SidebarCard>;

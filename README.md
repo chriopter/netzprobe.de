@@ -8,10 +8,13 @@ Live: https://netzprobe.de/
 
 ## Daten
 
-- `data/last-2025/` — historische Last.
-- `data/e100-pkw/`, `data/e100-heiz/`, `data/e100/` — Lastszenarien und Komposition.
-- `data/erzeugung-2025/` — historische Erzeugung.
-- `data/kernmodell/`, `data/einspeisefaktoren-2025/` — Modell und Modellannahmen.
+Datenpakete trennen sich in **Bausteine** (atomare Datensätze und Szenarien, direkt unter `data/<id>/`) und **Presets** (vorkonfigurierte Kombinationen, unter `data/preset/<id>/`). Das Wiki hebt Presets mit einem gelben Tag hervor.
+
+- `data/last-2025/`, `data/erzeugung-2025/`, `data/einspeisefaktoren-2025/` — historische Datensätze.
+- `data/e100-pkw/`, `data/e100-heiz/`, ... — Last-Bausteine (Sektor-Elektrifizierung).
+- `data/erz-pv/`, `data/erz-windon/`, ..., `data/speicher-batterie/`, ... — Erzeugungs- und Speicher-Bausteine.
+- `data/preset/e100/`, `data/preset/versorgung-100ee-noimport/`, ... — Presets.
+- `data/kernmodell/` — Dispatch-Engine.
 
 Jedes Paket hat immer `description.json` und `model.ts`. Datenwerte liegen optional in `data.json`, Generatoren optional in `generate.mjs`; `data/manifest.json` bestimmt die Reihenfolge.
 

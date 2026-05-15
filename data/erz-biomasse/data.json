@@ -1,0 +1,12 @@
+{
+  "id": "erz-biomasse",
+  "name": "Biomasse",
+  "installed2025GW": 4.8,
+  "defaultInstalledGW": 4.8,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 50,
+  "stepGW": 1,
+  "mode": "baseload",
+  "availability": 1.0,
+  "emissionGperKWh": 230
+}

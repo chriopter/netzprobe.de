@@ -1,0 +1,100 @@
+{
+  "id": "erz-handel",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Stromhandel",
+  "file": "erz-handel/data.json",
+  "scripts": [
+    "erz-handel/model.ts"
+  ],
+  "source": "Energy-Charts cross_border_flows 2025 (Import/Export Deutschland); MTGermany energy-simulation-de (Import-Emissionsfaktor, Dispatch-Reihenfolge).",
+  "sourceUrls": [
+    "https://api.energy-charts.info/cross_border_electricity?country=de",
+    "https://github.com/MTGermany/energy-simulation-de",
+    "https://app.electricitymaps.com/zone/DE"
+  ],
+  "period": "2025",
+  "resolution": "stündlich (Cap) / jährlich (Default)",
+  "unit": "GW, g/kWh",
+  "short": "Import-/Export-Caps für Stromhandel mit Nachbarländern und Dispatch-Reihenfolge bei Überschuss/Unterdeckung.",
+  "description": "Baustein für den grenzüberschreitenden Stromhandel und die Dispatch-Reihenfolge bei Über- und Unterdeckung. Import-Cap und Export-Cap sind getrennt slider-konfigurierbar. Import-Strom wird mit Nachbarland-Mittel 350 g/kWh bilanziert; Exporte werden der eigenen CO₂-Bilanz nicht zugerechnet. Dispatch-Reihenfolge regelt, wie Curtailment und Ramp-Up bei Mismatch verteilt werden.",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für Import-Cap (Default 13 GW, Max 200 GW) und Export-Cap (Default 25 GW, Max 200 GW). Defaults reproduzieren 2025-Saldo."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Bei Überschuss: zuerst Speicher, dann Export bis Cap, dann Curtailment windOff > windOn > pv > kernkraft. Bei Unterdeckung: zuerst Speicher entladen, dann Import bis Cap, dann Gas/Kohle ramp-up im Verhältnis 2:1, zuletzt Lastabwurf."
+    },
+    {
+      "label": "Formel",
+      "value": "Import-Emissionen(t) = importGW(t) × 350 g/kWh. Export ist emissionsneutral in eigener Bilanz."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/erz-handel/data.json, Adapter in data/erz-handel/model.ts.",
+    "Import- und Export-Cap getrennt: Default Import 13 GW (reproduziert 2025 Brutto-Import 76 TWh), Export 25 GW (NTC, real 2025 Export 54 TWh).",
+    "Slider erlaubt bis 200 GW für Stresstests (z.B. H₂-Import-Pipelines).",
+    "Emissionsfaktor Import 350 g/kWh berücksichtigt PL/CZ-Anteile im Nachbarland-Mittel.",
+    "Dispatch-Reihenfolge: curtailmentPriority absteigend nach Curtailment-Priorität (windOff zuerst), rampUpRatio gewichtet Ramp-Up unter Gas und Kohle."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "import.defaultMaxGW",
+      "unit": "GW",
+      "description": "Default Import-Cap."
+    },
+    {
+      "name": "import.maxGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Import."
+    },
+    {
+      "name": "import.emissionGperKWh",
+      "unit": "g/kWh",
+      "description": "Import-Strom Emissionsfaktor (Nachbarland-Mittel)."
+    },
+    {
+      "name": "export.defaultMaxGW",
+      "unit": "GW",
+      "description": "Default Export-Cap."
+    },
+    {
+      "name": "export.maxGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Export."
+    },
+    {
+      "name": "dispatchOrder.curtailmentPriority",
+      "unit": "Liste",
+      "description": "Reihenfolge der Curtailment-Quellen bei Überschuss."
+    },
+    {
+      "name": "dispatchOrder.rampUpPriority",
+      "unit": "Liste",
+      "description": "Quellen, die bei Unterdeckung hochfahren."
+    },
+    {
+      "name": "dispatchOrder.rampUpRatio",
+      "unit": "Verhältnis",
+      "description": "Verteilungsverhältnis Gas:Kohle beim Ramp-Up."
+    }
+  ],
+  "caveats": [
+    "Import-Cap und Export-Cap sind statische Jahres-Caps; reale NTCs schwanken stundenweise.",
+    "Importemissionen sind ein Nachbarland-Mittelwert; die tatsächliche Marginalquelle (z.B. PL Kohle vs. NO Wasser) kann deutlich abweichen.",
+    "Default Import 13 GW reproduziert 2025-Bilanz; reale Stunden-Maximum lag bei 25-30 GW.",
+    "Export-Emissionen werden ausgeklammert — bei strenger Bilanzierung müssten sie der Quelle (DE-Mix) zugeordnet werden."
+  ]
+}

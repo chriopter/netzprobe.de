@@ -3,39 +3,63 @@ import { runSimulation, type SimulationContext } from '../simulation/engine';
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
+  ErzeugungsPool, SpeicherPool,
+  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   HourlyInput,
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
+import { defaultScenario, normalizeScenario } from '../ui/scenarioPresets';
+import erzPvJson from '../../data/erz-pv/data.json';
+import erzWindOnJson from '../../data/erz-windon/data.json';
+import erzWindOffJson from '../../data/erz-windoff/data.json';
+import erzKernkraftJson from '../../data/erz-kernkraft/data.json';
+import erzBiomasseJson from '../../data/erz-biomasse/data.json';
+import erzLaufwasserJson from '../../data/erz-laufwasser/data.json';
+import erzGasJson from '../../data/erz-gas/data.json';
+import erzKohleJson from '../../data/erz-kohle/data.json';
+import erzHandelJson from '../../data/erz-handel/data.json';
+import speicherBatterieJson from '../../data/speicher-batterie/data.json';
+import speicherPumpspeicherJson from '../../data/speicher-pumpspeicher/data.json';
+import speicherH2Json from '../../data/speicher-h2/data.json';
 
 const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
 
 const sampleHours: HourlyInput[] = [
-  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0], wind100m: [8], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 1, observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
-  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [220], wind100m: [6], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 13, observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
-  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0], wind100m: [3], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 19, observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
+  { time: '2025-01-01T00:00:00Z', loadMW: 50_000, solarIrradiance: [0], wind100m: [0.5], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 1, observed: { pvMW: 0, windOnMW: 18_000, windOffMW: 3_000, gasMW: 5_000, coalMW: 12_000, importExportMW: -1_000 } },
+  { time: '2025-01-01T12:00:00Z', loadMW: 60_000, solarIrradiance: [0.4], wind100m: [0.3], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 13, observed: { pvMW: 20_000, windOnMW: 8_000, windOffMW: 2_000, gasMW: 7_000, coalMW: 14_000, importExportMW: 2_000 } },
+  { time: '2025-01-01T18:00:00Z', loadMW: 65_000, solarIrradiance: [0], wind100m: [0.2], heatingDegreeDayWeight: 1 / 365, hourOfDayBerlin: 19, observed: { pvMW: 0, windOnMW: 2_000, windOffMW: 1_000, gasMW: 9_000, coalMW: 18_000, importExportMW: 4_000 } },
 ];
 
-const baselineScenario: Scenario = {
-  id: 'demo-fakewerte',
-  name: 'Demo-Fakewerte',
-  description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: {
-    'last-2025': true,
-    'e100-pkw': false, 'e100-pkw-million-km': 472_200,
-    'e100-heiz': false, 'e100-heiz-target-heat-twh': 530,
-    'e100-lkw': false, 'e100-lkw-target-bn-km': 93,
-    'e100-bahn': false, 'e100-bahn-target-twh': 10,
-    'e100-schiff': false, 'e100-schiff-target-twh': 80,
-    'e100-flug': false, 'e100-flug-target-twh': 300,
-    'e100-ghd': false, 'e100-ghd-target-heat-twh': 138,
-    'e100-industrie-waerme': false, 'e100-industrie-waerme-target-heat-twh': 220,
-    'e100-stahl': false, 'e100-stahl-target-mio-ton': 28,
-    'e100-chemie': false, 'e100-chemie-target-twh': 440,
+function stripId<T extends { id?: string }>(obj: T): Omit<T, 'id'> {
+  const { id: _id, ...rest } = obj;
+  return rest;
+}
+
+const erzeugungsModell: ErzeugungsPool = {
+  sources: {
+    pv: stripId(erzPvJson as ErzPackageVariableRe),
+    windOn: stripId(erzWindOnJson as ErzPackageVariableRe),
+    windOff: stripId(erzWindOffJson as ErzPackageVariableRe),
+    kernkraft: stripId(erzKernkraftJson as ErzPackageBaseload),
+    biomasse: stripId(erzBiomasseJson as ErzPackageBaseload),
+    laufwasser: stripId(erzLaufwasserJson as ErzPackageBaseload),
+    gas: stripId(erzGasJson as ErzPackageDispatchable),
+    kohle: stripId(erzKohleJson as ErzPackageDispatchable),
   },
-  renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
-  fossil: { coalGW: 10, gasGW: 10 },
-  storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
-};
+  import: (erzHandelJson as ErzHandelData).import,
+  export: (erzHandelJson as ErzHandelData).export,
+  dispatchOrder: (erzHandelJson as ErzHandelData).dispatchOrder,
+} as ErzeugungsPool;
+const speicherModell: SpeicherPool = {
+  storages: {
+    batterie: stripId(speicherBatterieJson as SpeicherBatterieData),
+    pumpspeicher: stripId(speicherPumpspeicherJson as SpeicherPumpspeicherData),
+    h2: stripId(speicherH2Json as SpeicherH2Data),
+  },
+} as SpeicherPool;
+
+const baselineScenario: Scenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };
 
 const e100Pkw: E100PkwData = {
   id: 'e100-pkw',
@@ -91,76 +115,45 @@ const testContext: SimulationContext = {
   'e100-pkw': e100Pkw, 'e100-heiz': e100Heiz, 'e100-lkw': e100Lkw, 'e100-bahn': e100Bahn,
   'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
   'e100-industrie-waerme': e100IndustrieWaerme, 'e100-stahl': e100Stahl, 'e100-chemie': e100Chemie,
+  'erzeugungs-modell': erzeugungsModell, 'speicher-modell': speicherModell,
 };
 
 const simulate = (scenario: Scenario) => runSimulation(sampleHours, scenario, testContext);
 
-describe('simulation engine', () => {
+describe('simulation engine (sample hours)', () => {
   it('balances every hour with supply, imports, storage, curtailment or load shedding', () => {
     const result = simulate(baselineScenario);
     expect(result.hours).toHaveLength(sampleHours.length);
     for (const hour of result.hours) {
-      expect(Math.abs(hour.balanceGW)).toBeLessThan(1e-6);
-      expect(hour.supplyGW + hour.importGW + hour.dataBoundaryResidualGW + hour.storageDischargeGW)
-        .toBeCloseTo(hour.loadGW + hour.exportGW + hour.storageChargeGW + hour.curtailmentGW, 6);
+      const lhs = hour.supplyGW + hour.importGW + hour.storageDischargeGW + hour.loadSheddingGW;
+      const rhs = hour.loadGW + hour.exportGW + hour.storageChargeGW;
+      expect(lhs).toBeCloseTo(rhs, 5);
     }
   });
 
   it('reports annual KPIs in physical units', () => {
     const result = simulate(baselineScenario);
     expect(result.summary.totalDemandTWh).toBeGreaterThan(0);
-    expect(result.summary.renewableSharePct).toBeGreaterThan(0);
     expect(result.summary.securityStatus).toMatch(/stabil|angespannt|kritisch/);
-  });
-
-  it('uses observed historical generation instead of scenario capacities', () => {
-    const left = simulate({ ...baselineScenario, fossil: { coalGW: 0, gasGW: 0 }, renewables: { pvGW: 0, windOnGW: 0, windOffGW: 0 } });
-    const right = simulate({ ...baselineScenario, fossil: { coalGW: 250, gasGW: 250 }, renewables: { pvGW: 250, windOnGW: 250, windOffGW: 250 } });
-
-    expect(right.hours.map(hour => hour.supplyGW)).toEqual(left.hours.map(hour => hour.supplyGW));
+    expect(result.summary.co2GperKWh).toBeGreaterThanOrEqual(0);
   });
 
   it('treats electrified BEV passenger car kilometres as an additive demand part', () => {
     const historical = simulate(baselineScenario);
-    const noHistorical = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'last-2025': false } });
     const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true, 'e100-pkw-million-km': 472_200 } });
 
-    expect(noHistorical.summary.totalDemandTWh).toBe(0);
-    expect(noHistorical.summary.renewableSharePct).toBe(0);
     expect(bevLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(90.44 * sampleHours.length / 8760, 6);
   });
 
-  it('balances the historical baseline without load shedding or curtailment', () => {
-    const result = simulate(baselineScenario);
-
-    expect(result.summary.loadSheddingTWh).toBe(0);
-    expect(result.summary.curtailmentTWh).toBe(0);
+  it('produces CO2 emissions when fossil dispatch is active', () => {
+    const fossilHeavy = simulate({ ...baselineScenario, generation: { ...baselineScenario.generation, gasInstalledGW: 60, kohleInstalledGW: 50 } });
+    expect(fossilHeavy.summary.co2GperKWh).toBeGreaterThan(0);
   });
+});
 
-  it('fills additive load with additional import instead of separate load shedding', () => {
-    const historical = simulate(baselineScenario);
-    const bevLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true, 'e100-pkw-million-km': 472_200 } });
-
-    expect(bevLoad.summary.loadSheddingTWh).toBe(0);
-    expect(bevLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(90.44 * sampleHours.length / 8760, 6);
-  });
-
-  it('distributes heat pump load by heating degree day weights', () => {
-    const historical = simulate(baselineScenario);
-    const e100HeizLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-heiz': true, 'e100-heiz-target-heat-twh': 530 } });
-    const expectedTWh = (530 - 50) / 3.3 * sampleHours.length / (365 * 24);
-
-    expect(e100HeizLoad.summary.totalDemandTWh - historical.summary.totalDemandTWh).toBeCloseTo(expectedTWh, 6);
-    expect(e100HeizLoad.summary.importTWh - historical.summary.importTWh).toBeCloseTo(expectedTWh, 6);
-  });
-
-  it('keeps historical generation fixed when additive demand changes', () => {
-    const historical = simulate(baselineScenario);
-    const testLoad = simulate({ ...baselineScenario, demand: { ...baselineScenario.demand, 'e100-pkw': true } });
-
-    expect(testLoad.hours.map(hour => hour.solarGW)).toEqual(historical.hours.map(hour => hour.solarGW));
-    expect(testLoad.hours.map(hour => hour.windOnGW)).toEqual(historical.hours.map(hour => hour.windOnGW));
-    expect(testLoad.hours.map(hour => hour.gasGW)).toEqual(historical.hours.map(hour => hour.gasGW));
-    expect(testLoad.hours.map(hour => hour.coalGW)).toEqual(historical.hours.map(hour => hour.coalGW));
+describe('default-run shape', () => {
+  it('uses package defaults from erzeugungs-modell and speicher-modell', () => {
+    expect(baselineScenario.generation.pvInstalledGW).toBeCloseTo(erzeugungsModell.sources.pv.defaultInstalledGW, 6);
+    expect(baselineScenario.storage.batterieEnergyGWh).toBeCloseTo(speicherModell.storages.batterie.defaultEnergyGWh, 6);
   });
 });

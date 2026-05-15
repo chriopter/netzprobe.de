@@ -1,0 +1,13 @@
+{
+  "id": "erz-kohle",
+  "name": "Kohle",
+  "installed2025GW": 31,
+  "defaultInstalledGW": 31,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 310,
+  "stepGW": 5,
+  "mode": "dispatchable",
+  "availability": 0.9,
+  "minLoadFraction": 0.2,
+  "emissionGperKWh": 1170
+}

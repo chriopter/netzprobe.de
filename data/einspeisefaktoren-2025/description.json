@@ -1,6 +1,6 @@
 {
   "id": "einspeisefaktoren-2025",
-  "domain": "modell",
+  "domain": "erzeugung",
   "kind": "dataset",
   "title": "Einspeisefaktoren 2025",
   "file": "einspeisefaktoren-2025/data.json",
@@ -14,7 +14,7 @@
   "resolution": "stündlich",
   "unit": "dimensionslos",
   "short": "PV- und Wind-Einspeisefaktoren aus beobachteter Einspeisung und installierter Leistung.",
-  "description": "Stündliche Einspeisefaktoren für PV und Wind, abgeleitet aus tatsächlicher Einspeisung 2025 geteilt durch installierte Leistung. Aktuell als Reserve-Datensatz im DataSet enthalten; wird vom Kernmodell noch nicht aktiv genutzt, wird aber für zukünftige Erzeugungs-Skalierungs-Szenarien benötigt.",
+  "description": "Stündliche Einspeisefaktoren für PV und Wind, abgeleitet aus tatsächlicher Einspeisung 2025 geteilt durch installierte Leistung. Input fürs Erzeugungs-Modell: pro Stunde wird verfügbare RE = installedGW × Einspeisefaktor[t] berechnet.",
   "method": [
     "Datei: erzeugt durch data/einspeisefaktoren-2025/generate.mjs. Skript ohne Argument lädt installed_power aus der Energy-Charts-API; optional kann eine lokale installed_power.json übergeben werden. Adapter in data/einspeisefaktoren-2025/model.ts.",
     "PV-Faktor solarIrradiance: beobachtete pvMW je Stunde geteilt durch monatlich installierte PV-Leistung. Wert auf 0..1 begrenzt.",
@@ -34,6 +34,6 @@
   "caveats": [
     "Keine Rohwetterdaten, sondern empirische Faktoren aus Einspeisung und Bestand.",
     "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung leicht unterschätzen.",
-    "Aktuell vom Simulator nicht ausgewertet; vorgehalten für künftige Erzeugungs-Skalierungs-Szenarien."
+    "Wind Offshore nutzt denselben Faktor wie Wind Onshore — ein separater Offshore-Faktor ist nicht hinterlegt."
   ]
 }

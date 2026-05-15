@@ -1,0 +1,149 @@
+{
+  "id": "speicher-h2",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Wasserstoff",
+  "file": "speicher-h2/data.json",
+  "scripts": [
+    "speicher-h2/model.ts"
+  ],
+  "source": "Energy-Charts (H₂-Bestand 2025 quasi null); MTGermany energy-simulation-de (Eta, H₂-Konstanten).",
+  "sourceUrls": [
+    "https://www.energy-charts.info/",
+    "https://github.com/MTGermany/energy-simulation-de"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "GW, GWh",
+  "short": "Slider für Elektrolyse-, Rückverstromungs- und Speicherenergie für H₂; saisonaler Speicher mit 24 % Roundtrip-Wirkungsgrad.",
+  "description": "Baustein für Wasserstoff-Speicher mit getrennter Elektrolyse-Leistung (Laden) und Rückverstromungs-Leistung (Entladen) sowie unabhängiger Speicherenergie (Kavernen). Default-Werte praktisch null (2025-Bestand). Roundtrip 24 % (Elektrolyse + Speicher + Rückverstromung). Dispatch-Priorität 3 (saisonal, nach Batterie und Pumpspeicher).",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Drei Slider: Elektrolyse-Leistung (Default 0,1 GW, Max 300 GW), Rückverstromungs-Leistung (Default 0 GW, Max 300 GW), Speicherenergie (Default 0,1 GWh, Max 500.000 GWh = 500 TWh)."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Laden bei Überschuss in H₂-Kavernen, Entladen bei Unterdeckung. Reihenfolge 3 — als letzter Speicher eingesetzt, dient saisonalem Ausgleich."
+    },
+    {
+      "label": "Formel",
+      "value": "SoC(t+1) = SoC(t) + 0,24 × ΔLaden − ΔEntladen. Wirkungsgrad-Verluste fallen beim Laden an."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/speicher-h2/data.json, Adapter in data/speicher-h2/model.ts.",
+    "Roundtrip-Wirkungsgrad 24 % laut MTGermany: Elektrolyse 65 % × Speicher 95 % × Rückverstromung (BHKW 50 %, GuD 60 %).",
+    "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
+    "Initial-SoC 50 % bei Jahresbeginn.",
+    "Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "chargePower2025GW",
+      "unit": "GW",
+      "description": "Elektrolyse-Leistung Ende 2025."
+    },
+    {
+      "name": "defaultChargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Default Elektrolyse."
+    },
+    {
+      "name": "minChargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Minimum Elektrolyse."
+    },
+    {
+      "name": "maxChargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Elektrolyse."
+    },
+    {
+      "name": "stepChargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite Elektrolyse."
+    },
+    {
+      "name": "dischargePower2025GW",
+      "unit": "GW",
+      "description": "Rückverstromungs-Leistung Ende 2025."
+    },
+    {
+      "name": "defaultDischargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Default Rückverstromung."
+    },
+    {
+      "name": "minDischargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Minimum Rückverstromung."
+    },
+    {
+      "name": "maxDischargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Rückverstromung."
+    },
+    {
+      "name": "stepDischargePowerGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite Rückverstromung."
+    },
+    {
+      "name": "energy2025GWh",
+      "unit": "GWh",
+      "description": "Speicherenergie Ende 2025."
+    },
+    {
+      "name": "defaultEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Default Energie."
+    },
+    {
+      "name": "minEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Minimum Energie."
+    },
+    {
+      "name": "maxEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Maximum Energie (500 TWh)."
+    },
+    {
+      "name": "stepEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Schrittweite Energie."
+    },
+    {
+      "name": "roundtripEfficiency",
+      "unit": "Anteil",
+      "description": "Roundtrip-Wirkungsgrad (0,24)."
+    },
+    {
+      "name": "initialStateOfChargeFraction",
+      "unit": "Anteil",
+      "description": "Start-SoC (0,5)."
+    },
+    {
+      "name": "dispatchPriority",
+      "unit": "Rang",
+      "description": "Reihenfolge im Dispatch (3)."
+    }
+  ],
+  "caveats": [
+    "Roundtrip-Wirkungsgrad 24 % gilt für Power-to-Power-Pfad; bei stofflicher Nutzung von H₂ (Stahl, Chemie) ist der Pfad-Wirkungsgrad höher.",
+    "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
+    "Maximum 500 TWh Speicherenergie entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
+    "Modell trennt Lade-/Entlade-Leistung, nicht aber Elektrolyseur-Effizienz vs. Rückverstromung — Verluste vollständig beim Laden."
+  ]
+}

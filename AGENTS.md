@@ -10,6 +10,13 @@
 
 ## Datenpakete entwickeln
 
+Datenpakete teilen sich in zwei Klassen:
+
+- **Bausteine** (`kind: dataset` oder `kind: scenario`) — atomare Einheiten mit Parametern oder Beobachtungen. Direkt unter `data/<id>/`.
+- **Presets** (`kind: composition`) — vorkonfigurierte Kombinationen von Bausteinen. Unter `data/preset/<id>/`. Im Wiki mit gelbem „Preset"-Tag hervorgehoben.
+
+Engine-Code (`kind: model`) lebt in `data/kernmodell/`.
+
 Jeder fachliche Daten-, Szenario- oder Modellbaustein lebt als Paket unter `data/<paket>/`.
 Jedes Paket hat immer:
 
@@ -22,9 +29,10 @@ Optional:
 4. `generate.mjs` — Generator, wenn Werte berechnet werden. Skript schreibt nach stdout oder direkt nach `data.json`; Regeneration klar in `description.json` beschreiben.
 
 Außerdem nötig:
-- Eintrag in `data/manifest.json` in der Reihenfolge, in der die App es zeigen soll.
-- Paketordner, Manifest-`id`, `description.json.id` und der `model.ts`-Pfad in `scripts` müssen 1:1 denselben Paketnamen verwenden, z. B. `data/e100-pkw/`, `"id": "e100-pkw"`, `"scripts": ["e100-pkw/model.ts"]`.
-- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt der Paketordner sein.
+- Eintrag in `data/manifest.json` in der Reihenfolge, in der die App es zeigen soll. Jeder Eintrag hat `id`, `path` (Verzeichnis relativ zu `data/`) und `description` (Pfad zur Beschreibung).
+- Slug eindeutig; Top-Level-Pakete liegen flach in `data/<id>/`, Kompositions-/Preset-Pakete in `data/preset/<id>/` (z. B. `data/preset/e100/`, `data/preset/versorgung-100ee-noimport/`). Der Pfad wird im Manifest aufgelöst, die ID bleibt URL-stabil.
+- Paketordner-Basename, Manifest-`id`, `description.json.id` und der `model.ts`-Pfad in `scripts` (relativ zum `data/`-Root) müssen 1:1 denselben Paketnamen verwenden, z. B. `data/e100-pkw/`, `"id": "e100-pkw"`, `"scripts": ["e100-pkw/model.ts"]`.
+- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt der Paketordner-Basename sein.
 - App-Code referenziert Paket-IDs über `src/dataPackages.ts`; Scenario-State, Worker-Nachrichten und Core-Kontext verwenden die Paket-ID als Key, keine historischen Feature-Aliasse.
 - Loader-Anpassung in `src/loaders/defaultData.ts` und Typen in `src/types/data.ts`.
 - Test-Fixture in `src/__tests__/engine.test.ts` mit minimalem Plausibilitäts-Check.

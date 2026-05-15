@@ -1,0 +1,104 @@
+{
+  "id": "erz-kohle",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Kohle",
+  "file": "erz-kohle/data.json",
+  "scripts": [
+    "erz-kohle/model.ts"
+  ],
+  "source": "Energy-Charts installed_power 2025 (Stein- und Braunkohle Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Min-Last, Emissionsfaktor).",
+  "sourceUrls": [
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+    "https://github.com/MTGermany/energy-simulation-de",
+    "https://app.electricitymaps.com/zone/DE"
+  ],
+  "period": "2025",
+  "resolution": "stündlich (regelbar) / jährlich (installierte Leistung)",
+  "unit": "GW, g/kWh",
+  "short": "Slider für installierte Kohlekraftwerksleistung; dispatchable mit Min-Last 20 %.",
+  "description": "Baustein für Stein- und Braunkohle-Kraftwerke in Deutschland. Default 31 GW entspricht dem Bestand Ende 2025. Min-Last 20 % als Floor (Kohlekraftwerke laufen träger), Maximum 90 % der installierten Leistung. Emissionsfaktor 1170 g/kWh (Braunkohle-Anteil im Mix).",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für installierte GW Kohle. Default 31 GW, Maximum 100 GW, Schrittweite 1 GW."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Dispatchable: Min-Last installedGW × 0,9 × 0,2 als Floor; ramp-up bis installedGW × 0,9 im Verhältnis Gas:Kohle = 2:1."
+    },
+    {
+      "label": "Formel",
+      "value": "Emissionen(t) = supplyGW(t) × 1170 g/kWh. Curtailed vor Biomasse/Laufwasser, nach Gas."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/erz-kohle/data.json, Adapter in data/erz-kohle/model.ts.",
+    "Verfügbarkeit 90 % als Jahresanteil.",
+    "Min-Last 20 % als Floor — höher als Gas wegen Trägheit (Dampfkessel).",
+    "Ramp-Up im Verhältnis 1 zu Gas (2) bei Unterdeckung.",
+    "Emissionsfaktor 1170 g/kWh laut MTGermany — leicht erhöht gegenüber Steinkohle-Mittel wegen Braunkohle-Anteil im deutschen Mix."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "installed2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Stand Ende 2025."
+    },
+    {
+      "name": "defaultInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Default."
+    },
+    {
+      "name": "minInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Minimum."
+    },
+    {
+      "name": "maxInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Maximum."
+    },
+    {
+      "name": "stepGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite."
+    },
+    {
+      "name": "mode",
+      "unit": "Enum",
+      "description": "dispatchable."
+    },
+    {
+      "name": "availability",
+      "unit": "Anteil",
+      "description": "Jahresverfügbarkeit (0,9)."
+    },
+    {
+      "name": "minLoadFraction",
+      "unit": "Anteil",
+      "description": "Min-Last (0,2)."
+    },
+    {
+      "name": "emissionGperKWh",
+      "unit": "g/kWh",
+      "description": "Spezifische CO₂-Emissionen (Braunkohle-gewichtet)."
+    }
+  ],
+  "caveats": [
+    "Min-Last 20 % als Floor — keine Kaltstart-Restriktion modelliert; reale Anlagen brauchen 6-12 h Anfahrzeit.",
+    "Emissionsfaktor 1170 g/kWh mischt Stein- und Braunkohle; Braunkohle alleine 1200-1400 g/kWh, Steinkohle 950 g/kWh.",
+    "Kohleausstiegsgesetz (2030/2038) ist im Default nicht abgebildet — Slider lässt Modell jeden Pfad simulieren."
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "id": "speicher-pumpspeicher",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Pumpspeicher",
+  "file": "speicher-pumpspeicher/data.json",
+  "scripts": [
+    "speicher-pumpspeicher/model.ts"
+  ],
+  "source": "Energy-Charts (Pumpspeicher-Bestand Deutschland 2025); MTGermany energy-simulation-de (Eta, Initial-SoC).",
+  "sourceUrls": [
+    "https://www.energy-charts.info/",
+    "https://github.com/MTGermany/energy-simulation-de"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "GW, GWh",
+  "short": "Slider für Pumpspeicher-Leistung und -Energie; mittelfristiger Speicher mit 80 % Roundtrip-Wirkungsgrad.",
+  "description": "Baustein für Pumpspeicherwerke in Deutschland. Default 9,4 GW / 40 GWh entspricht dem Bestand Ende 2025 (Goldisthal, Markersbach, etc.). Wirkungsgrad 80 %, Dispatch-Priorität 2 (nach Batterie, vor H₂).",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für Leistung (Default 9,4 GW, Max 12 GW) und Energie (Default 40 GWh, Max 80 GWh). Maximum begrenzt durch topographisches Potenzial Deutschlands."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Wie Batterie: Laden bei Überschuss, Entladen bei Unterdeckung. Reihenfolge 2 — nach Batterie, vor H₂."
+    },
+    {
+      "label": "Formel",
+      "value": "SoC(t+1) = SoC(t) + 0,8 × ΔLaden − ΔEntladen."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/speicher-pumpspeicher/data.json, Adapter in data/speicher-pumpspeicher/model.ts.",
+    "Roundtrip-Wirkungsgrad 80 % entspricht MTGermany; reale Pumpspeicher 70-78 % je nach Anlage.",
+    "Initial-SoC 50 % bei Jahresbeginn.",
+    "Dispatch-Priorität 2 — wird nach Batterie eingesetzt."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "power2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Ende 2025."
+    },
+    {
+      "name": "defaultPowerGW",
+      "unit": "GW",
+      "description": "Slider-Default Leistung."
+    },
+    {
+      "name": "minPowerGW",
+      "unit": "GW",
+      "description": "Slider-Minimum Leistung."
+    },
+    {
+      "name": "maxPowerGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Leistung."
+    },
+    {
+      "name": "stepPowerGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite Leistung."
+    },
+    {
+      "name": "energy2025GWh",
+      "unit": "GWh",
+      "description": "Installierter Energieinhalt Ende 2025."
+    },
+    {
+      "name": "defaultEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Default Energie."
+    },
+    {
+      "name": "minEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Minimum Energie."
+    },
+    {
+      "name": "maxEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Maximum Energie."
+    },
+    {
+      "name": "stepEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Schrittweite Energie."
+    },
+    {
+      "name": "roundtripEfficiency",
+      "unit": "Anteil",
+      "description": "Roundtrip-Wirkungsgrad (0,8)."
+    },
+    {
+      "name": "initialStateOfChargeFraction",
+      "unit": "Anteil",
+      "description": "Start-SoC (0,5)."
+    },
+    {
+      "name": "dispatchPriority",
+      "unit": "Rang",
+      "description": "Reihenfolge im Dispatch (2)."
+    }
+  ],
+  "caveats": [
+    "Maximum 12 GW reflektiert topographisches Potenzial; weiterer Zubau begrenzt durch Naturschutz und Geländerestriktionen.",
+    "Wirkungsgrad 80 % ist optimistisch — reale Anlagen 70-78 %.",
+    "Saisonale Befüllung nicht modelliert; reale Pumpspeicher haben Frühjahrshochwasser-Bonus."
+  ]
+}

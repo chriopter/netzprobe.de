@@ -1,6 +1,6 @@
 import type { HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { e100DemandModules } from '../../data/e100/model';
+import { e100DemandModules } from '../../data/preset/e100/model';
 import type { DemandScenarioContext } from './demandModule';
 
 export function demandGW(row: HourlyInput, scenario: Scenario, context: DemandScenarioContext) {

@@ -21,7 +21,8 @@ function topLevelData(): Plugin {
     name: 'top-level-data',
     configureServer(server) {
       server.middlewares.use('/data', (req, res, next) => {
-        const requested = normalize(decodeURIComponent(req.url?.split('?')[0] ?? '/'));
+        const rawUrl = req.url ?? '/';
+        const requested = normalize(decodeURIComponent(rawUrl.split('?')[0]));
         const filePath = join(dataDir, requested);
         if (!filePath.startsWith(dataDir)) {
           res.statusCode = 403;
@@ -35,6 +36,7 @@ function topLevelData(): Plugin {
         }
         const extension = extname(filePath);
         if (extension === '.ts' || extension === '.tsx') return next();
+        if (rawUrl.includes('?')) return next();
         res.setHeader('Content-Type', extension === '.json' ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8');
         res.end(readFileSync(filePath));
       });

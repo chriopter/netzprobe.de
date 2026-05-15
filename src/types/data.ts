@@ -252,6 +252,193 @@ export type E100ChemieData = {
   summary: string;
 };
 
+export type ErzeugungsModellSourceId =
+  | 'pv' | 'windOn' | 'windOff' | 'kernkraft' | 'biomasse' | 'laufwasser' | 'gas' | 'kohle';
+
+export type ErzeugungsModellSourceMode = 'variable-re' | 'baseload' | 'dispatchable';
+
+export type ErzeugungsModellVariableReSource = {
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'variable-re';
+  factorPackage: 'einspeisefaktoren-2025';
+  factorField: 'solarIrradiance' | 'wind100m';
+  emissionGperKWh: number;
+};
+
+export type ErzeugungsModellBaseloadSource = {
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'baseload';
+  availability: number;
+  emissionGperKWh: number;
+};
+
+export type ErzeugungsModellDispatchableSource = {
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'dispatchable';
+  availability: number;
+  minLoadFraction: number;
+  emissionGperKWh: number;
+};
+
+export type ErzeugungsModellSource =
+  | ErzeugungsModellVariableReSource
+  | ErzeugungsModellBaseloadSource
+  | ErzeugungsModellDispatchableSource;
+
+export type ErzeugungsModellImport = {
+  default2025GW: number;
+  defaultMaxGW: number;
+  minGW: number;
+  maxGW: number;
+  stepGW: number;
+  emissionGperKWh: number;
+};
+
+export type ErzeugungsModellExport = {
+  default2025GW: number;
+  defaultMaxGW: number;
+  minGW: number;
+  maxGW: number;
+  stepGW: number;
+};
+
+export type ErzeugungsModellDispatchOrder = {
+  curtailmentPriority: ErzeugungsModellSourceId[];
+  rampUpPriority: ErzeugungsModellSourceId[];
+  rampUpRatio: Partial<Record<ErzeugungsModellSourceId, number>>;
+};
+
+// Aggregierter Pool aus den einzelnen erz-* Bausteinen.
+// Strukturidentisch wie früher ErzeugungsModellData.sources/.import/.export/.dispatchOrder,
+// damit das Kernmodell unverändert weiterläuft.
+export type ErzeugungsPool = {
+  sources: Record<ErzeugungsModellSourceId, ErzeugungsModellSource>;
+  import: ErzeugungsModellImport;
+  export: ErzeugungsModellExport;
+  dispatchOrder: ErzeugungsModellDispatchOrder;
+};
+
+// Generischer Typ für ein einzelnes erz-* Paket. Discriminated Union über `mode`.
+export type ErzPackageVariableRe = {
+  id: string;
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'variable-re';
+  factorPackage: 'einspeisefaktoren-2025';
+  factorField: 'solarIrradiance' | 'wind100m';
+  emissionGperKWh: number;
+};
+
+export type ErzPackageBaseload = {
+  id: string;
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'baseload';
+  availability: number;
+  emissionGperKWh: number;
+};
+
+export type ErzPackageDispatchable = {
+  id: string;
+  name: string;
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+  mode: 'dispatchable';
+  availability: number;
+  minLoadFraction: number;
+  emissionGperKWh: number;
+};
+
+export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPackageDispatchable;
+
+export type ErzHandelData = {
+  id: 'erz-handel';
+  name: string;
+  import: ErzeugungsModellImport;
+  export: ErzeugungsModellExport;
+  dispatchOrder: ErzeugungsModellDispatchOrder;
+};
+
+export type SpeicherModellStorageId = 'batterie' | 'pumpspeicher' | 'h2';
+
+export type SpeicherModellSymmetricStorage = {
+  name: string;
+  power2025GW: number;
+  defaultPowerGW: number;
+  minPowerGW: number;
+  maxPowerGW: number;
+  stepPowerGW: number;
+  energy2025GWh: number;
+  defaultEnergyGWh: number;
+  minEnergyGWh: number;
+  maxEnergyGWh: number;
+  stepEnergyGWh: number;
+  roundtripEfficiency: number;
+  initialStateOfChargeFraction: number;
+  dispatchPriority: number;
+};
+
+export type SpeicherModellAsymmetricStorage = {
+  name: string;
+  chargePower2025GW: number;
+  defaultChargePowerGW: number;
+  minChargePowerGW: number;
+  maxChargePowerGW: number;
+  stepChargePowerGW: number;
+  dischargePower2025GW: number;
+  defaultDischargePowerGW: number;
+  minDischargePowerGW: number;
+  maxDischargePowerGW: number;
+  stepDischargePowerGW: number;
+  energy2025GWh: number;
+  defaultEnergyGWh: number;
+  minEnergyGWh: number;
+  maxEnergyGWh: number;
+  stepEnergyGWh: number;
+  roundtripEfficiency: number;
+  initialStateOfChargeFraction: number;
+  dispatchPriority: number;
+};
+
+// Aggregierter Pool aus den einzelnen speicher-* Bausteinen.
+export type SpeicherPool = {
+  storages: {
+    batterie: SpeicherModellSymmetricStorage;
+    pumpspeicher: SpeicherModellSymmetricStorage;
+    h2: SpeicherModellAsymmetricStorage;
+  };
+};
+
+export type SpeicherBatterieData = SpeicherModellSymmetricStorage & { id: 'speicher-batterie' };
+export type SpeicherPumpspeicherData = SpeicherModellSymmetricStorage & { id: 'speicher-pumpspeicher' };
+export type SpeicherH2Data = SpeicherModellAsymmetricStorage & { id: 'speicher-h2' };
+
 export type SplitDataFile<T> = {
   source: string;
   generatedAt?: string;
@@ -285,6 +472,8 @@ export type DataSet = {
   'e100-industrie-waerme': E100IndustrieWaermeData;
   'e100-stahl': E100StahlData;
   'e100-chemie': E100ChemieData;
+  'erzeugungs-modell': ErzeugungsPool;
+  'speicher-modell': SpeicherPool;
   loadSumTWh?: number;
   generationSumTWh?: number;
   importSumTWh?: number;

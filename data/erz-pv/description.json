@@ -1,0 +1,103 @@
+{
+  "id": "erz-pv",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "PV",
+  "file": "erz-pv/data.json",
+  "scripts": [
+    "erz-pv/model.ts"
+  ],
+  "source": "Energy-Charts installed_power 2025 (installierte PV-Leistung Deutschland); MTGermany energy-simulation-de (Emissionsfaktor).",
+  "sourceUrls": [
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+    "https://github.com/MTGermany/energy-simulation-de",
+    "https://app.electricitymaps.com/zone/DE"
+  ],
+  "period": "2025",
+  "resolution": "stündlich (Faktor) / jährlich (installierte Leistung)",
+  "unit": "GW, g/kWh",
+  "short": "Slider für die installierte PV-Leistung; stündliche Einspeisung aus Solarstrahlung.",
+  "description": "Baustein für die installierte PV-Leistung in Deutschland. Default entspricht dem Energy-Charts-Bestand Ende 2025 (102,5 GW). Die stündliche Einspeisung berechnet sich aus installierter Leistung × Einspeisefaktor (Paket einspeisefaktoren-2025, Feld solarIrradiance). Emissionsfaktor 35 g/kWh aus electricitymaps DE.",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für installierte GW PV. Default 102,5 GW entspricht Energy-Charts Stand Ende 2025. Maximum 2000 GW, Schrittweite 10 GW."
+    },
+    {
+      "label": "Verteilung",
+      "value": "supplyGW(t) = installedGW × solarIrradiance[t]. Einspeisefaktor stammt aus dem Paket einspeisefaktoren-2025."
+    },
+    {
+      "label": "Formel",
+      "value": "Emissionen(t) = supplyGW(t) × 35 g/kWh. Bei Überschuss curtailed das Kernmodell PV als drittes nach Wind Offshore/Onshore."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt, kein Generator. Werte in data/erz-pv/data.json, Adapter in data/erz-pv/model.ts.",
+    "Installierte Leistung Ende 2025 laut Energy-Charts (Jahresmittel).",
+    "Einspeisefaktor solarIrradiance stündlich aus dem Paket einspeisefaktoren-2025; Wert pro Stunde zwischen 0 und etwa 0,9.",
+    "Emissionsfaktor 35 g/kWh laut MTGermany (Quelle: electricitymaps DE) — beinhaltet Modulherstellung und Wechselrichter-Verluste."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "installed2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Stand Ende 2025."
+    },
+    {
+      "name": "defaultInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Default (entspricht installed2025GW)."
+    },
+    {
+      "name": "minInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Minimum."
+    },
+    {
+      "name": "maxInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Maximum."
+    },
+    {
+      "name": "stepGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite."
+    },
+    {
+      "name": "mode",
+      "unit": "Enum",
+      "description": "variable-re: stündlich aus Einspeisefaktor berechnet."
+    },
+    {
+      "name": "factorPackage",
+      "unit": "Text",
+      "description": "Verweis auf das Paket mit Einspeisefaktoren."
+    },
+    {
+      "name": "factorField",
+      "unit": "Text",
+      "description": "Feld in den Einspeisefaktoren (solarIrradiance)."
+    },
+    {
+      "name": "emissionGperKWh",
+      "unit": "g/kWh",
+      "description": "Spezifische CO₂-Emissionen pro erzeugter kWh."
+    }
+  ],
+  "caveats": [
+    "PV-Einspeisefaktor ist deutschlandweiter Durchschnitt; regionale Unterschiede (Süd-Nord) nicht abgebildet.",
+    "Default-Wert 102,5 GW ist Jahresmittel 2025 — Zuwachs während des Jahres nicht stundenaufgelöst.",
+    "Emissionsfaktor 35 g/kWh enthält keine Recycling-Gutschrift; Lebenszyklus-Variation 15-50 g/kWh in der Literatur."
+  ]
+}

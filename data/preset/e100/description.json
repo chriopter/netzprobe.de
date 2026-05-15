@@ -3,7 +3,7 @@
   "domain": "last",
   "kind": "composition",
   "title": "100% Elektrifizierung",
-  "scripts": ["e100/model.ts"],
+  "scripts": ["preset/e100/model.ts"],
   "source": "Komposition aus e100-pkw, e100-lkw, e100-bahn, e100-schiff, e100-flug, e100-heiz, e100-ghd, e100-industrie-waerme, e100-stahl, e100-chemie.",
   "period": "2026",
   "resolution": "stündlich",

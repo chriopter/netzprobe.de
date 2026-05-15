@@ -1,0 +1,24 @@
+{
+  "id": "erz-handel",
+  "name": "Stromhandel",
+  "import": {
+    "default2025GW": 13,
+    "defaultMaxGW": 13,
+    "minGW": 0,
+    "maxGW": 200,
+    "stepGW": 5,
+    "emissionGperKWh": 350
+  },
+  "export": {
+    "default2025GW": 25,
+    "defaultMaxGW": 25,
+    "minGW": 0,
+    "maxGW": 250,
+    "stepGW": 5
+  },
+  "dispatchOrder": {
+    "curtailmentPriority": ["windOff", "windOn", "pv", "kernkraft"],
+    "rampUpPriority": ["gas", "kohle"],
+    "rampUpRatio": { "gas": 2, "kohle": 1 }
+  }
+}

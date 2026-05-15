@@ -5,38 +5,41 @@
   "title": "Kernmodell",
   "file": "kernmodell/data.json",
   "scripts": ["kernmodell/model.ts"],
-  "source": "Eigene Implementierung.",
+  "source": "Eigene Implementierung; Dispatch-Reihenfolge inspiriert von MTGermany energy-simulation-de.",
+  "sourceUrls": ["https://github.com/MTGermany/energy-simulation-de"],
   "period": "laufend",
   "resolution": "stündlich",
-  "unit": "GW, GWh, TWh",
-  "short": "Stündliche Bilanzrechnung aus Last, Erzeugung, Handelssaldo und Zusatzlasten.",
-  "description": "Kernmodell der Simulation: 2025 wird stündlich historisch auf null bilanziert. Zusatzlasten werden danach addiert und automatisch als zusätzlicher Import aufgefüllt; es gibt keinen Kraftwerks- oder Speicherdispatch.",
+  "unit": "GW, GWh, TWh, g/kWh",
+  "short": "Stündlicher Dispatch aus Last (Demand-Modell), Erzeugung (erz-* Bausteine), Speicher (speicher-* Bausteine), Import/Export (erz-handel) und CO₂-Bilanz.",
+  "description": "Iteriert pro Stunde über 8760 Stunden. Baut Erzeugungssockel aus skalierbarem Erzeugungs-Modell, gleicht Mismatch zur Last über Speicher, Handel, Curtailment und Lastabwurf aus. CO₂ wird pro Quelle aggregiert.",
   "overview": [
-    { "label": "Zeitschritt", "value": "1 Stunde" },
-    { "label": "Implementierung", "value": "data/kernmodell/model.ts; src/simulation/engine.ts wählt nur das aktive Core-Modell aus." }
+    { "label": "Zeitschritt", "value": "1 Stunde, 8760 Stunden pro Jahr." },
+    { "label": "Dispatch bei Überschuss", "value": "Speicher laden (Reihenfolge per dispatchPriority) → Export bis exportMaxGW → Curtailment in Reihenfolge curtailmentPriority → Fallback: Min-Last fossil reduzieren." },
+    { "label": "Dispatch bei Unterdeckung", "value": "Speicher entladen → Import bis importMaxGW → Gas/Kohle hochfahren im rampUpRatio → Lastabwurf." }
   ],
   "method": [
-    "Last bestimmen: historische Last plus aktive Zusatzlasten (PKW, Heiz).",
-    "Erzeugung übernehmen: beobachtete Energy-Charts-Reihen je Stunde, fixe Werte ohne Skalierung.",
-    "Handelssaldo übernehmen: historischer Import/Export aus Energy-Charts je Stunde.",
-    "Abgrenzungsrest berechnen: Last + Export − öffentliche Erzeugung − Import. Sorgt dafür, dass 2025 historisch exakt auf null bilanziert.",
-    "Zusatzlast-Defizite werden automatisch als zusätzlicher Import aufgefüllt; kein Kraftwerks- oder Speicherdispatch.",
-    "Jahreskennzahlen aus den Stundenwerten summieren (Last, Import, Export, Curtailment, Load-Shedding)."
+    "Last bestimmen: demandGW aus Demand-Modul (last-2025 plus aktive e100-Sektoren).",
+    "Erzeugungssockel bauen: variable RE als installedGW × einspeisefaktor[t], Baseload als installedGW × availability konstant, dispatchable startet auf Min-Last als Floor.",
+    "Mismatch = Sockel − Last. Bei Überschuss: Speicher laden → Export → Curtailment der RE in fester Reihenfolge → Notfall-Reduktion von Min-Last fossil → Biomasse/Laufwasser.",
+    "Bei Unterdeckung: Speicher entladen → Import bis Cap → Gas + Kohle gemeinsam hochfahren im Verhältnis rampUpRatio (2:1 Default) bis maxAvailable → Rest als loadSheddingGW.",
+    "CO₂ je Stunde: Σ supply_q × emissionGperKWh_q + import × Nachbarmix. Jahreswert dividiert durch Strom-Nachfrage = g/kWh.",
+    "Jahreskennzahlen: Last, Import, Export, Curtailment, Lastabwurf, Erneuerbarenanteil, CO₂ Mt/Jahr und g/kWh, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, Peak Load, monatliche Erzeugung."
   ],
   "fields": [
     { "name": "id", "unit": "Text", "description": "Technische Kennung." },
     { "name": "title", "unit": "Text", "description": "Name des Modellbausteins." },
     { "name": "source", "unit": "Text", "description": "Ursprung der Modelllogik." },
-    { "name": "modelPath", "unit": "Pfad", "description": "Implementierung im Datenpaket." },
+    { "name": "modelPath", "unit": "Pfad", "description": "Implementierungspfad im Datenpaket." },
     { "name": "timeStep", "unit": "Text", "description": "Zeitliche Auflösung." },
-    { "name": "generationMode", "unit": "Text", "description": "Behandlung der historischen Erzeugung." },
-    { "name": "balanceMode", "unit": "Text", "description": "Behandlung von historischer Bilanz und Zusatzlast." },
-    { "name": "notes", "unit": "Liste", "description": "Kurznotizen zur Rechenlogik." }
+    { "name": "inputs", "unit": "Liste", "description": "Pakete und Felder die der Kernmodell-Dispatch konsumiert." },
+    { "name": "outputs", "unit": "Liste", "description": "Stündliche und jährliche Ausgaben des Dispatch." },
+    { "name": "notes", "unit": "Liste", "description": "Default-Lauf-Kennzahlen und Modell-Annahmen." }
   ],
   "caveats": [
-    "Kein Kraftwerksdispatch für Zusatzlasten; Defizit wird als Import aufgefüllt.",
-    "Kein Speicherdispatch.",
-    "Abgrenzungsrest ist keine Erzeugung, sondern die historische Restgröße aus unterschiedlichen Datenabgrenzungen.",
-    "Keine Netzengpässe, Marktlogik oder Redispatch-Modellierung."
+    "Min-Last gas (10 %) und kohle (20 %) werden als Floor erzwungen — auch bei viel RE laufen ~9 GW fossil weiter. Drückt den Export im Default-Lauf nach unten (~3 TWh statt real ~54 TWh). Realistisches Marktverhalten würde Kraftwerke unter Mindestpreis abschalten; das modellieren wir nicht.",
+    "Curtailment-Fallback (greift nur wenn Speicher voll, Export am Cap und alle RE auf 0): reduziert Min-Last fossil, danach Biomasse und Laufwasser. Physikalisch fragwürdig (KWK-Wärmesenken, Wasser-Bypass), aber Sicherheitsventil zur Schließung der Bilanz. Greift im Default praktisch nie.",
+    "Import/Export-Cap sind harte Grenzen, kein preisgetriebener Handel. Default Import 13 GW reproduziert 2025-Brutto-Import; Export 25 GW orientiert sich am NTC.",
+    "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore (einspeisefaktoren-2025 hat keinen Offshore-Faktor).",
+    "Kein Netzmodell: keine regionalen Engpässe, keine Redispatch-Kosten, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen."
   ]
 }

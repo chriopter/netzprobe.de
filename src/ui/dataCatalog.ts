@@ -1,7 +1,8 @@
-import { dataManifestUrl, dataPackageIds } from '../dataPackages';
+import { dataManifestUrl, dataPackageIds, registerDataPackagePath } from '../dataPackages';
 
 export type ManifestEntry = {
   id: string;
+  path: string;
   description: string;
 };
 
@@ -30,5 +31,9 @@ export type DatasetDoc = {
 export const datasetIds = dataPackageIds;
 
 export const manifestUrl = dataManifestUrl;
-export const dataWikiHomeUrl = () => `${import.meta.env.BASE_URL}?view=daten`;
-export const dataWikiUrl = (id: string) => `${import.meta.env.BASE_URL}?view=daten&id=${encodeURIComponent(id)}`;
+export const dataWikiHomeUrl = () => `${import.meta.env.BASE_URL}wiki/`;
+export const dataWikiUrl = (id: string) => `${import.meta.env.BASE_URL}wiki/${encodeURIComponent(id)}`;
+
+export function applyManifestPaths(entries: ManifestEntry[]): void {
+  for (const entry of entries) registerDataPackagePath(entry.id, entry.path);
+}

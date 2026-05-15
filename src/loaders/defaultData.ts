@@ -1,23 +1,23 @@
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
+  ErzeugungsPool, SpeicherPool,
+  ErzPackageSource, ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile,
 } from '../types/data';
-import { dataPackageIds, dataPackageUrl } from '../dataPackages';
+import { dataManifestUrl, dataPackageIds, dataPackageUrl, registerDataPackagePath } from '../dataPackages';
 
-const loadUrl = dataPackageUrl(dataPackageIds.loadHistorical2025, 'data.json');
-const e100PkwUrl = dataPackageUrl(dataPackageIds.e100Pkw, 'data.json');
-const e100HeizUrl = dataPackageUrl(dataPackageIds.e100Heiz, 'data.json');
-const e100LkwUrl = dataPackageUrl(dataPackageIds.e100Lkw, 'data.json');
-const e100BahnUrl = dataPackageUrl(dataPackageIds.e100Bahn, 'data.json');
-const e100SchiffUrl = dataPackageUrl(dataPackageIds.e100Schiff, 'data.json');
-const e100FlugUrl = dataPackageUrl(dataPackageIds.e100Flug, 'data.json');
-const e100GhdUrl = dataPackageUrl(dataPackageIds.e100Ghd, 'data.json');
-const e100IndustrieWaermeUrl = dataPackageUrl(dataPackageIds.e100IndustrieWaerme, 'data.json');
-const e100StahlUrl = dataPackageUrl(dataPackageIds.e100Stahl, 'data.json');
-const e100ChemieUrl = dataPackageUrl(dataPackageIds.e100Chemie, 'data.json');
-const generationUrl = dataPackageUrl(dataPackageIds.generationHistorical2025, 'data.json');
-const factorsUrl = dataPackageUrl(dataPackageIds.feedInFactors2025, 'data.json');
+type ManifestEntryRaw = { id: string; path?: string; description: string };
+
+async function ensureManifestPaths(): Promise<void> {
+  const response = await fetch(dataManifestUrl);
+  if (!response.ok) return;
+  const entries = await response.json() as ManifestEntryRaw[];
+  for (const entry of entries) {
+    if (entry.path) registerDataPackagePath(entry.id, entry.path);
+  }
+}
 const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   timeZone: 'Europe/Berlin',
   year: 'numeric',
@@ -39,24 +39,44 @@ export async function loadJson<T>(url: string): Promise<T> {
 }
 
 export async function loadDefaultData(): Promise<DataSet> {
+  await ensureManifestPaths();
   const [
     loadData, e100Pkw, e100Heiz, e100Lkw, e100Bahn, e100Schiff, e100Flug,
     e100Ghd, e100IndustrieWaerme, e100Stahl, e100Chemie, generationData, factorData,
+    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle, erzHandel,
+    speicherBatterie, speicherPumpspeicher, speicherH2,
   ] = await Promise.all([
-    loadJson<SplitDataFile<LoadHour>>(loadUrl),
-    loadJson<E100PkwData>(e100PkwUrl),
-    loadJson<E100HeizData>(e100HeizUrl),
-    loadJson<E100LkwData>(e100LkwUrl),
-    loadJson<E100BahnData>(e100BahnUrl),
-    loadJson<E100SchiffData>(e100SchiffUrl),
-    loadJson<E100FlugData>(e100FlugUrl),
-    loadJson<E100GhdData>(e100GhdUrl),
-    loadJson<E100IndustrieWaermeData>(e100IndustrieWaermeUrl),
-    loadJson<E100StahlData>(e100StahlUrl),
-    loadJson<E100ChemieData>(e100ChemieUrl),
-    loadJson<SplitDataFile<GenerationHour>>(generationUrl),
-    loadJson<SplitDataFile<ModelFactorHour>>(factorsUrl),
+    loadJson<SplitDataFile<LoadHour>>(dataPackageUrl(dataPackageIds.loadHistorical2025, 'data.json')),
+    loadJson<E100PkwData>(dataPackageUrl(dataPackageIds.e100Pkw, 'data.json')),
+    loadJson<E100HeizData>(dataPackageUrl(dataPackageIds.e100Heiz, 'data.json')),
+    loadJson<E100LkwData>(dataPackageUrl(dataPackageIds.e100Lkw, 'data.json')),
+    loadJson<E100BahnData>(dataPackageUrl(dataPackageIds.e100Bahn, 'data.json')),
+    loadJson<E100SchiffData>(dataPackageUrl(dataPackageIds.e100Schiff, 'data.json')),
+    loadJson<E100FlugData>(dataPackageUrl(dataPackageIds.e100Flug, 'data.json')),
+    loadJson<E100GhdData>(dataPackageUrl(dataPackageIds.e100Ghd, 'data.json')),
+    loadJson<E100IndustrieWaermeData>(dataPackageUrl(dataPackageIds.e100IndustrieWaerme, 'data.json')),
+    loadJson<E100StahlData>(dataPackageUrl(dataPackageIds.e100Stahl, 'data.json')),
+    loadJson<E100ChemieData>(dataPackageUrl(dataPackageIds.e100Chemie, 'data.json')),
+    loadJson<SplitDataFile<GenerationHour>>(dataPackageUrl(dataPackageIds.generationHistorical2025, 'data.json')),
+    loadJson<SplitDataFile<ModelFactorHour>>(dataPackageUrl(dataPackageIds.feedInFactors2025, 'data.json')),
+    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzPv, 'data.json')),
+    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzWindOn, 'data.json')),
+    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzWindOff, 'data.json')),
+    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzKernkraft, 'data.json')),
+    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzBiomasse, 'data.json')),
+    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzLaufwasser, 'data.json')),
+    loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzGas, 'data.json')),
+    loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzKohle, 'data.json')),
+    loadJson<ErzHandelData>(dataPackageUrl(dataPackageIds.erzHandel, 'data.json')),
+    loadJson<SpeicherBatterieData>(dataPackageUrl(dataPackageIds.speicherBatterie, 'data.json')),
+    loadJson<SpeicherPumpspeicherData>(dataPackageUrl(dataPackageIds.speicherPumpspeicher, 'data.json')),
+    loadJson<SpeicherH2Data>(dataPackageUrl(dataPackageIds.speicherH2, 'data.json')),
   ]);
+
+  const erzeugungsModell = aggregateErzeugungsPool(
+    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle, erzHandel,
+  );
+  const speicherModell = aggregateSpeicherPool(speicherBatterie, speicherPumpspeicher, speicherH2);
 
   const generationByTime = new Map(generationData.hours.map((hour) => [hour.time, hour]));
   const factorsByTime = new Map(factorData.hours.map((hour) => [hour.time, hour]));
@@ -99,6 +119,8 @@ export async function loadDefaultData(): Promise<DataSet> {
     'e100-industrie-waerme': e100IndustrieWaerme,
     'e100-stahl': e100Stahl,
     'e100-chemie': e100Chemie,
+    'erzeugungs-modell': erzeugungsModell,
+    'speicher-modell': speicherModell,
     loadSumTWh: loadData.sumTWh,
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,
@@ -106,4 +128,55 @@ export async function loadDefaultData(): Promise<DataSet> {
     generationPartsTWh: generationData.sumPartsTWh,
     hours,
   };
+}
+
+export function aggregateErzeugungsPool(
+  pv: ErzPackageVariableRe,
+  windOn: ErzPackageVariableRe,
+  windOff: ErzPackageVariableRe,
+  kernkraft: ErzPackageBaseload,
+  biomasse: ErzPackageBaseload,
+  laufwasser: ErzPackageBaseload,
+  gas: ErzPackageDispatchable,
+  kohle: ErzPackageDispatchable,
+  handel: ErzHandelData,
+): ErzeugungsPool {
+  const toSource = (pkg: ErzPackageSource) => {
+    // Strip id from individual package shape - Pool sources use the legacy shape without id
+    const { id: _id, ...rest } = pkg as ErzPackageSource & { id?: string };
+    return rest as unknown as ErzPackageSource;
+  };
+  return {
+    sources: {
+      pv: toSource(pv),
+      windOn: toSource(windOn),
+      windOff: toSource(windOff),
+      kernkraft: toSource(kernkraft),
+      biomasse: toSource(biomasse),
+      laufwasser: toSource(laufwasser),
+      gas: toSource(gas),
+      kohle: toSource(kohle),
+    },
+    import: handel.import,
+    export: handel.export,
+    dispatchOrder: handel.dispatchOrder,
+  } as ErzeugungsPool;
+}
+
+export function aggregateSpeicherPool(
+  batterie: SpeicherBatterieData,
+  pumpspeicher: SpeicherPumpspeicherData,
+  h2: SpeicherH2Data,
+): SpeicherPool {
+  const strip = <T extends { id?: string }>(p: T) => {
+    const { id: _id, ...rest } = p;
+    return rest as Omit<T, 'id'>;
+  };
+  return {
+    storages: {
+      batterie: strip(batterie),
+      pumpspeicher: strip(pumpspeicher),
+      h2: strip(h2),
+    },
+  } as SpeicherPool;
 }

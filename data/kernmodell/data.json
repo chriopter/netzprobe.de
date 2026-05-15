@@ -1,18 +1,24 @@
 {
   "id": "kernmodell",
   "title": "Kernmodell",
-  "source": "Eigene stündliche Bilanzrechnung im Browser.",
+  "source": "Eigene stündliche Bilanzrechnung im Browser, Dispatch-Reihenfolge nach MTGermany energy-simulation-de.",
   "modelPath": "data/kernmodell/model.ts",
   "timeStep": "1 Stunde",
-  "generationMode": "Historische öffentliche Erzeugung bleibt reine Erzeugung. Historischer Import und Abgrenzungsrest werden separat als historischer Ausgleich geführt.",
-  "balanceMode": "Historisch 2025 bilanziert auf null. Zusatzlast wird nach der historischen Bilanz addiert und automatisch als zusätzlicher Import aufgefüllt.",
+  "inputs": [
+    "Demand: last-2025 plus aktive e100-Sektoren (demandGW aus src/simulation/demand.ts).",
+    "Erzeugung: erz-* Bausteine (erz-pv, erz-windon, erz-windoff, erz-kernkraft, erz-biomasse, erz-laufwasser, erz-gas, erz-kohle) skalieren installedGW × einspeisefaktoren-2025[t]; Baseload und Dispatchable per Mode-Tag.",
+    "Speicher: speicher-* Bausteine (speicher-batterie, speicher-pumpspeicher, speicher-h2) mit dispatchPriority-Reihenfolge, Roundtrip-Eta beim Laden.",
+    "Handel: importMaxGW / exportMaxGW aus Scenario; Import-Emissionsfaktor aus erz-handel."
+  ],
+  "outputs": [
+    "Pro Stunde: Erzeugung je Quelle (dispatched + curtailed), Speicher Charge/Discharge/SoC je Technologie, Import, Export, Lastabwurf, Bilanzrest, CO₂ (t/h).",
+    "Jahressumme: Last, Erneuerbarenanteil, Curtailment, Import, Export, Lastabwurf, CO₂ Mt und g/kWh, Peak-Last, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, monatliche Erzeugung."
+  ],
   "notes": [
-    "Last = historische Last plus aktive Zusatzlasten.",
-    "Erzeugung = beobachtete Energy-Charts-Erzeugung je Stunde.",
-    "Historischer Import/Export wird stündlich aus Energy-Charts übernommen.",
-    "Abgrenzungsrest wird stündlich aus Last + Export - öffentliche Erzeugung - Import abgeleitet.",
-    "Keine Kraftwerksoptimierung und kein Speicherdispatch.",
-    "Restdefizite werden als automatischer Import aufgefüllt.",
-    "Jahreskennzahlen werden aus Stundenwerten summiert."
+    "Default-Lauf reproduziert 2025 etwa 466 TWh Last, 55 % EE, 76 TWh Brutto-Import, 332 g/kWh CO₂.",
+    "Reihenfolge bei Überschuss: Speicher laden → Export → Curtailment RE → Min-Last fossil reduzieren.",
+    "Reihenfolge bei Unterdeckung: Speicher entladen → Import → Gas+Kohle hochfahren (2:1) → Lastabwurf.",
+    "Min-Last gas/kohle werden als Floor erzwungen — auch bei hoher RE laufen ~9 GW fossil. Senkt Default-Export gegenüber Realität.",
+    "Keine Marktlogik, kein Redispatch, kein Reservebedarf, kein Netzmodell."
   ]
 }

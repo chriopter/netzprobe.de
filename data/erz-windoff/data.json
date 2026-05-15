@@ -1,0 +1,13 @@
+{
+  "id": "erz-windoff",
+  "name": "Wind Offshore",
+  "installed2025GW": 9.4,
+  "defaultInstalledGW": 9.4,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 300,
+  "stepGW": 2,
+  "mode": "variable-re",
+  "factorPackage": "einspeisefaktoren-2025",
+  "factorField": "wind100m",
+  "emissionGperKWh": 13
+}

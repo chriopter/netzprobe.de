@@ -1,0 +1,12 @@
+{
+  "id": "erz-laufwasser",
+  "name": "Laufwasser",
+  "installed2025GW": 2.0,
+  "defaultInstalledGW": 2.0,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 20,
+  "stepGW": 0.5,
+  "mode": "baseload",
+  "availability": 1.0,
+  "emissionGperKWh": 11
+}

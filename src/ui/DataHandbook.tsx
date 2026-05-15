@@ -15,14 +15,26 @@ const domainLabels: Record<string, string> = {
 const kindLabels: Record<DatasetDoc['kind'], string> = {
   dataset: 'Datensatz',
   scenario: 'Szenario',
-  composition: 'Komposition',
+  composition: 'Preset',
   model: 'Modell',
 };
 
+function selectedIdFromUrl() {
+  const url = new URL(window.location.href);
+  const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
+  const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
+  const match = path.match(/^wiki\/([^/]+)\/?$/);
+  return match ? decodeURIComponent(match[1]) : url.searchParams.get('id');
+}
+
+function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
+  if (kind !== 'composition') return null;
+  return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800">Preset</span>;
+}
+
 export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const params = new URL(window.location.href).searchParams;
-  const selectedId = params.get('id');
+  const selectedId = selectedIdFromUrl();
   const selectedDataset = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
   const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
     (acc[doc.domain] ??= []).push(doc);
@@ -88,23 +100,29 @@ function DataHandbookNav({
       {sections.map(([domain, label]) => {
         const inDomain = grouped[domain];
         if (!inDomain?.length) return null;
-        const childrenByParentId = new Map<string, DatasetDoc[]>();
-        for (const doc of inDomain) {
-          if (!doc.parentId) continue;
-          const list = childrenByParentId.get(doc.parentId) ?? [];
-          list.push(doc);
-          childrenByParentId.set(doc.parentId, list);
-        }
-        const orphans = inDomain.filter(doc => !doc.parentId && !childrenByParentId.has(doc.id));
-        const parents = inDomain.filter(doc => !doc.parentId && childrenByParentId.has(doc.id));
+        const bausteine = inDomain.filter(doc => doc.kind !== 'composition' && doc.kind !== 'model');
+        const presets = inDomain.filter(doc => doc.kind === 'composition');
+        const models = inDomain.filter(doc => doc.kind === 'model');
+        const showGroups = (presets.length > 0 || models.length > 0) && bausteine.length > 0;
         return <TreeSection key={domain} title={label}>
-          {orphans.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
-          {parents.map(parentDoc => <div key={parentDoc.id} className="grid gap-1">
-            <TreeNode href={dataWikiUrl(parentDoc.id)} label={parentDoc.title} selected={selectedId === parentDoc.id} bullet/>
-            <div className="ml-3 grid gap-1 border-l border-zinc-100 pl-3">
-              {(childrenByParentId.get(parentDoc.id) ?? []).map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+          {!!bausteine.length && <>
+            {showGroups && <TreeSubheader>Bausteine</TreeSubheader>}
+            <div className={showGroups ? 'ml-2 grid gap-1 border-l border-zinc-100 pl-2' : 'grid gap-1'}>
+              {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
             </div>
-          </div>)}
+          </>}
+          {!!presets.length && <>
+            <TreeSubheader variant="preset">Presets</TreeSubheader>
+            <div className="ml-2 grid gap-1 border-l border-amber-200 pl-2">
+              {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+            </div>
+          </>}
+          {!!models.length && <>
+            {showGroups && <TreeSubheader>Engine</TreeSubheader>}
+            <div className={showGroups ? 'ml-2 grid gap-1 border-l border-zinc-100 pl-2' : 'grid gap-1'}>
+              {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+            </div>
+          </>}
         </TreeSection>;
       })}
     </div>
@@ -114,7 +132,10 @@ function DataHandbookNav({
 function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   return <div>
     <p className="text-xs font-medium uppercase text-zinc-400">{domainLabels[selected.domain] ?? selected.domain} · {kindLabels[selected.kind]}</p>
-    <h1 className="mt-2 text-4xl font-semibold leading-tight">{selected.title}</h1>
+    <h1 className="mt-2 flex flex-wrap items-center gap-x-3 text-4xl font-semibold leading-tight">
+      {selected.title}
+      <KindTag kind={selected.kind}/>
+    </h1>
     <section className="mt-9">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Übersicht</h2>
       <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600">{selected.description}</p>
@@ -205,6 +226,7 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
       <ul className="grid divide-y divide-zinc-100 border-b border-zinc-100 text-sm">
         {docs.map(entry => <li key={entry.id} className="min-w-0 py-4">
           <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
+          <KindTag kind={entry.kind}/>
           <code className="ml-2 break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">{entry.id}</code>
           <div className="mt-1 text-xs text-zinc-400">{domainLabels[entry.domain] ?? entry.domain} · {kindLabels[entry.kind]}</div>
           <p className="mt-1 leading-6 text-zinc-600">{entry.short}</p>
@@ -223,7 +245,7 @@ function TreeSection({ title, children }: { title: string; children: ReactNode }
   </section>;
 }
 
-function TreeNode({ href, label, selected, bullet = false, external = false }: { href: string; label: string; selected: boolean; bullet?: boolean; external?: boolean }) {
+function TreeNode({ href, label, selected, bullet = false, external = false, tag }: { href: string; label: string; selected: boolean; bullet?: boolean; external?: boolean; tag?: ReactNode }) {
   return <a
     href={href}
     target={external ? '_blank' : undefined}
@@ -233,8 +255,19 @@ function TreeNode({ href, label, selected, bullet = false, external = false }: {
       selected ? 'bg-zinc-100 font-medium text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
     )}
   >
-    <span className="block truncate">{bullet && <span className="mr-1 text-zinc-400">•</span>}{label}</span>
+    <span className="flex min-w-0 items-center gap-1">
+      {bullet && <span className="text-zinc-400">•</span>}
+      <span className="truncate">{label}</span>
+      {tag}
+    </span>
   </a>;
+}
+
+function TreeSubheader({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'preset' }) {
+  return <div className={cx(
+    'px-2 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide',
+    variant === 'preset' ? 'text-amber-700' : 'text-zinc-500',
+  )}>{children}</div>;
 }
 
 function InfoLine({ label, value }: { label: string; value: string }) {

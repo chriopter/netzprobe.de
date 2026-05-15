@@ -1,62 +1,33 @@
 [
-  {
-    "id": "last-2025",
-    "description": "last-2025/description.json"
-  },
-  {
-    "id": "e100",
-    "description": "e100/description.json"
-  },
-  {
-    "id": "e100-pkw",
-    "description": "e100-pkw/description.json"
-  },
-  {
-    "id": "e100-lkw",
-    "description": "e100-lkw/description.json"
-  },
-  {
-    "id": "e100-bahn",
-    "description": "e100-bahn/description.json"
-  },
-  {
-    "id": "e100-schiff",
-    "description": "e100-schiff/description.json"
-  },
-  {
-    "id": "e100-flug",
-    "description": "e100-flug/description.json"
-  },
-  {
-    "id": "e100-heiz",
-    "description": "e100-heiz/description.json"
-  },
-  {
-    "id": "e100-ghd",
-    "description": "e100-ghd/description.json"
-  },
-  {
-    "id": "e100-industrie-waerme",
-    "description": "e100-industrie-waerme/description.json"
-  },
-  {
-    "id": "e100-stahl",
-    "description": "e100-stahl/description.json"
-  },
-  {
-    "id": "e100-chemie",
-    "description": "e100-chemie/description.json"
-  },
-  {
-    "id": "erzeugung-2025",
-    "description": "erzeugung-2025/description.json"
-  },
-  {
-    "id": "kernmodell",
-    "description": "kernmodell/description.json"
-  },
-  {
-    "id": "einspeisefaktoren-2025",
-    "description": "einspeisefaktoren-2025/description.json"
-  }
+  { "id": "last-2025", "path": "last-2025", "description": "last-2025/description.json" },
+  { "id": "e100", "path": "preset/e100", "description": "preset/e100/description.json" },
+  { "id": "e100-pkw", "path": "e100-pkw", "description": "e100-pkw/description.json" },
+  { "id": "e100-lkw", "path": "e100-lkw", "description": "e100-lkw/description.json" },
+  { "id": "e100-bahn", "path": "e100-bahn", "description": "e100-bahn/description.json" },
+  { "id": "e100-schiff", "path": "e100-schiff", "description": "e100-schiff/description.json" },
+  { "id": "e100-flug", "path": "e100-flug", "description": "e100-flug/description.json" },
+  { "id": "e100-heiz", "path": "e100-heiz", "description": "e100-heiz/description.json" },
+  { "id": "e100-ghd", "path": "e100-ghd", "description": "e100-ghd/description.json" },
+  { "id": "e100-industrie-waerme", "path": "e100-industrie-waerme", "description": "e100-industrie-waerme/description.json" },
+  { "id": "e100-stahl", "path": "e100-stahl", "description": "e100-stahl/description.json" },
+  { "id": "e100-chemie", "path": "e100-chemie", "description": "e100-chemie/description.json" },
+  { "id": "erzeugung-2025", "path": "erzeugung-2025", "description": "erzeugung-2025/description.json" },
+  { "id": "versorgung-historisch-2025", "path": "preset/versorgung-historisch-2025", "description": "preset/versorgung-historisch-2025/description.json" },
+  { "id": "versorgung-100ee-noimport", "path": "preset/versorgung-100ee-noimport", "description": "preset/versorgung-100ee-noimport/description.json" },
+  { "id": "versorgung-50ee-50import", "path": "preset/versorgung-50ee-50import", "description": "preset/versorgung-50ee-50import/description.json" },
+  { "id": "versorgung-2025-skaliert", "path": "preset/versorgung-2025-skaliert", "description": "preset/versorgung-2025-skaliert/description.json" },
+  { "id": "erz-pv", "path": "erz-pv", "description": "erz-pv/description.json" },
+  { "id": "erz-windon", "path": "erz-windon", "description": "erz-windon/description.json" },
+  { "id": "erz-windoff", "path": "erz-windoff", "description": "erz-windoff/description.json" },
+  { "id": "erz-kernkraft", "path": "erz-kernkraft", "description": "erz-kernkraft/description.json" },
+  { "id": "erz-biomasse", "path": "erz-biomasse", "description": "erz-biomasse/description.json" },
+  { "id": "erz-laufwasser", "path": "erz-laufwasser", "description": "erz-laufwasser/description.json" },
+  { "id": "erz-gas", "path": "erz-gas", "description": "erz-gas/description.json" },
+  { "id": "erz-kohle", "path": "erz-kohle", "description": "erz-kohle/description.json" },
+  { "id": "erz-handel", "path": "erz-handel", "description": "erz-handel/description.json" },
+  { "id": "speicher-batterie", "path": "speicher-batterie", "description": "speicher-batterie/description.json" },
+  { "id": "speicher-pumpspeicher", "path": "speicher-pumpspeicher", "description": "speicher-pumpspeicher/description.json" },
+  { "id": "speicher-h2", "path": "speicher-h2", "description": "speicher-h2/description.json" },
+  { "id": "einspeisefaktoren-2025", "path": "einspeisefaktoren-2025", "description": "einspeisefaktoren-2025/description.json" },
+  { "id": "kernmodell", "path": "kernmodell", "description": "kernmodell/description.json" }
 ]

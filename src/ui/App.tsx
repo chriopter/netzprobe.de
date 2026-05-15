@@ -9,12 +9,48 @@ import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
-import { manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
+import { applyManifestPaths, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
-import { fmt0, pct, twh } from './format';
+import { fmt, fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
+import { applySupplyPreset } from './supplyPresets';
+import { demandGW } from '../simulation/demand';
+import { aggregateErzeugungsPool, aggregateSpeicherPool } from '../loaders/defaultData';
+import erzPv from '../../data/erz-pv/data.json';
+import erzWindOn from '../../data/erz-windon/data.json';
+import erzWindOff from '../../data/erz-windoff/data.json';
+import erzKernkraft from '../../data/erz-kernkraft/data.json';
+import erzBiomasse from '../../data/erz-biomasse/data.json';
+import erzLaufwasser from '../../data/erz-laufwasser/data.json';
+import erzGas from '../../data/erz-gas/data.json';
+import erzKohle from '../../data/erz-kohle/data.json';
+import erzHandel from '../../data/erz-handel/data.json';
+import speicherBatterie from '../../data/speicher-batterie/data.json';
+import speicherPumpspeicher from '../../data/speicher-pumpspeicher/data.json';
+import speicherH2 from '../../data/speicher-h2/data.json';
+import type {
+  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
+  ErzHandelData, SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
+} from '../types/data';
 import { cx, muted, shell, sidebarOffsetClass } from './ui';
+
+const erzeugungsModell = aggregateErzeugungsPool(
+  erzPv as ErzPackageVariableRe,
+  erzWindOn as ErzPackageVariableRe,
+  erzWindOff as ErzPackageVariableRe,
+  erzKernkraft as ErzPackageBaseload,
+  erzBiomasse as ErzPackageBaseload,
+  erzLaufwasser as ErzPackageBaseload,
+  erzGas as ErzPackageDispatchable,
+  erzKohle as ErzPackageDispatchable,
+  erzHandel as ErzHandelData,
+);
+const speicherModell = aggregateSpeicherPool(
+  speicherBatterie as SpeicherBatterieData,
+  speicherPumpspeicher as SpeicherPumpspeicherData,
+  speicherH2 as SpeicherH2Data,
+);
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
@@ -44,6 +80,29 @@ const scenarioNumberParams: Array<[string, keyof Scenario['demand']]> = [
   ['iwTWh', 'e100-industrie-waerme-target-heat-twh'],
   ['stahlMt', 'e100-stahl-target-mio-ton'],
   ['chemieTWh', 'e100-chemie-target-twh'],
+];
+
+const scenarioGenerationParams: Array<[string, keyof Scenario['generation']]> = [
+  ['pvGW', 'pvInstalledGW'],
+  ['windOnGW', 'windOnInstalledGW'],
+  ['windOffGW', 'windOffInstalledGW'],
+  ['kernGW', 'kernkraftInstalledGW'],
+  ['bioGW', 'biomasseInstalledGW'],
+  ['hydroGW', 'laufwasserInstalledGW'],
+  ['gasGW', 'gasInstalledGW'],
+  ['kohleGW', 'kohleInstalledGW'],
+  ['impGW', 'importMaxGW'],
+  ['expGW', 'exportMaxGW'],
+];
+
+const scenarioStorageParams: Array<[string, keyof Scenario['storage']]> = [
+  ['battP', 'batteriePowerGW'],
+  ['battE', 'batterieEnergyGWh'],
+  ['psP', 'pumpspeicherPowerGW'],
+  ['psE', 'pumpspeicherEnergyGWh'],
+  ['h2cP', 'h2ChargePowerGW'],
+  ['h2dP', 'h2DischargePowerGW'],
+  ['h2E', 'h2EnergyGWh'],
 ];
 
 function queryParams() {
@@ -108,9 +167,15 @@ function splitUrlList(value: string) {
   return value.split(/[,.]/).filter(Boolean);
 }
 
+const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', '100ee-noimport', '50ee-50import', '2025-skaliert'];
+
 function scenarioFromQueryParams(): Scenario {
   const params = queryParams();
   const scenario = normalizeScenario(defaultScenario);
+  const spRaw = params.get('sp');
+  // Migration: alte 'manual' Werte werden zu 'custom'.
+  const sp = spRaw === 'manual' ? 'custom' : spRaw;
+  if (sp && (validSupplyPresets as readonly string[]).includes(sp)) scenario.supplyPreset = sp as Scenario['supplyPreset'];
   const demand = scenario.demand as Record<string, boolean | number>;
   if (params.has('e')) {
     const enabled = new Set(splitUrlList(params.get('e') ?? ''));
@@ -123,11 +188,27 @@ function scenarioFromQueryParams(): Scenario {
     const value = Number(raw);
     if (Number.isFinite(value)) demand[key] = value;
   }
+  const generation = scenario.generation as Record<string, number>;
+  for (const [param, key] of scenarioGenerationParams) {
+    const raw = params.get(param);
+    if (raw === null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) generation[key] = value;
+  }
+  const storage = scenario.storage as Record<string, number>;
+  for (const [param, key] of scenarioStorageParams) {
+    const raw = params.get(param);
+    if (raw === null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) storage[key] = value;
+  }
   return scenario;
 }
 
 function syncScenarioParams(url: URL, scenario: Scenario) {
   url.searchParams.delete('s');
+  if (scenario.supplyPreset === scenarioBase.supplyPreset) url.searchParams.delete('sp');
+  else url.searchParams.set('sp', scenario.supplyPreset);
   const enabled = electrificationFlags.filter(key => scenario.demand[key]);
   if (enabled.length === 0) {
     url.searchParams.delete('e');
@@ -142,6 +223,14 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
   for (const [param, key] of scenarioNumberParams) {
     if (scenario.demand[key] === scenarioBase.demand[key]) url.searchParams.delete(param);
     else url.searchParams.set(param, String(scenario.demand[key]));
+  }
+  for (const [param, key] of scenarioGenerationParams) {
+    if (scenario.generation[key] === scenarioBase.generation[key]) url.searchParams.delete(param);
+    else url.searchParams.set(param, String(scenario.generation[key]));
+  }
+  for (const [param, key] of scenarioStorageParams) {
+    if (scenario.storage[key] === scenarioBase.storage[key]) url.searchParams.delete(param);
+    else url.searchParams.set(param, String(scenario.storage[key]));
   }
 }
 
@@ -218,6 +307,8 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
       'e100-industrie-waerme': data['e100-industrie-waerme'],
       'e100-stahl': data['e100-stahl'],
       'e100-chemie': data['e100-chemie'],
+      'erzeugungs-modell': data['erzeugungs-modell'],
+      'speicher-modell': data['speicher-modell'],
     });
     hasDataRef.current = true;
   }, [data]);
@@ -239,7 +330,10 @@ function useDatasetDocs() {
   const [docs, setDocs] = useState<DatasetDoc[]>([]);
   useEffect(() => {
     loadJson<ManifestEntry[]>(manifestUrl)
-      .then(entries => Promise.all(entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description)))))
+      .then(entries => {
+        applyManifestPaths(entries);
+        return Promise.all(entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description))));
+      })
       .then(setDocs)
       .catch(console.error);
   }, []);
@@ -248,8 +342,11 @@ function useDatasetDocs() {
 
 function urlView() {
   try {
-    const params = new URL(window.location.href).searchParams;
-    return { view: params.get('view'), path: params.get('path') };
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
+    const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
+    return { view: path === 'wiki' || path.startsWith('wiki/') ? 'daten' : params.get('view'), path: params.get('path') };
   } catch {
     return { view: null, path: null };
   }
@@ -323,7 +420,26 @@ function Dashboard() {
     window.history.replaceState(null, '', url);
   }, [scenario, periodPreset, customStart, customEnd, chartMode, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
-  const result = useWorkerSimulation(data, scenario);
+  const resolvedScenario = useMemo<Scenario>(() => {
+    if (!data || scenario.supplyPreset === 'custom') return scenario;
+    const demandContext = {
+      'e100-pkw': data['e100-pkw'],
+      'e100-heiz': data['e100-heiz'],
+      'e100-lkw': data['e100-lkw'],
+      'e100-bahn': data['e100-bahn'],
+      'e100-schiff': data['e100-schiff'],
+      'e100-flug': data['e100-flug'],
+      'e100-ghd': data['e100-ghd'],
+      'e100-industrie-waerme': data['e100-industrie-waerme'],
+      'e100-stahl': data['e100-stahl'],
+      'e100-chemie': data['e100-chemie'],
+    };
+    const annualDemandTWh = data.hours.reduce((sum, row) => sum + demandGW(row, scenario, demandContext), 0) / 1000;
+    const override = applySupplyPreset(scenario.supplyPreset, annualDemandTWh, data.hours, erzeugungsModell, speicherModell);
+    return { ...scenario, generation: override.generation, storage: override.storage };
+  }, [scenario, data]);
+
+  const result = useWorkerSimulation(data, resolvedScenario);
   useEffect(() => {
     if (!result || chartResult === result) return;
     if (!chartResult) {
@@ -407,12 +523,12 @@ function Dashboard() {
       ctx.font = '400 18px Inter, system-ui, sans-serif';
       ctx.fillText(`${formatDate(selectedPeriod.start)} - ${formatDate(selectedPeriod.end)} · ${chartMode === 'sunburst' ? 'Sunburst' : 'Linie'}`, 40, 84);
 
-      const kpis = [
+      const kpis: Array<[string, string, string]> = [
         ['Jahreslast', twh(result.summary.totalDemandTWh), '#18181b'],
         ['EE-Anteil', pct(result.summary.renewableSharePct), '#18181b'],
-        ['Unterdeckung', twh(result.summary.importTWh), result.summary.importTWh > 1 ? '#e11d48' : '#059669'],
+        ['Import', twh(result.summary.importTWh), '#18181b'],
+        ['Fehlend', twh(result.summary.loadSheddingTWh), result.summary.loadSheddingTWh > 0.1 ? '#e11d48' : '#059669'],
         ['Abregelung', twh(result.summary.curtailmentTWh), '#18181b'],
-        ['Zeitraum', `${sliced.length} h`, '#18181b'],
       ];
       const cardGap = 12;
       const cardWidth = Math.floor((width - 80 - cardGap * (kpis.length - 1)) / kpis.length);
@@ -464,12 +580,21 @@ function Dashboard() {
                   <span className={cx(muted, 'mt-0.5 block text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
                 </div>
               </div>
-              <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
-                <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-                <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
-                <InlineKpi label="Unterdeckung" value={twh(result.summary.importTWh)} tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
-                <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
-                <InlineKpi label="Zeitraum" value={`${sliced.length} h`}/>
+              <div className="grid min-w-0 gap-1.5">
+                <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                  <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+                  <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
+                  <InlineKpi label="Import" value={twh(result.summary.importTWh)}/>
+                  <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'}/>
+                  <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+                </div>
+                <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                  <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`}/>
+                  <InlineKpi label="CO₂ Jahr" value={`${fmt.format(result.summary.co2MtPerYear)} Mt`}/>
+                  <InlineKpi label="Export" value={twh(result.summary.exportTWh)}/>
+                  <InlineKpi label="Peak-Last" value={`${fmt0.format(result.summary.peakLoadGW)} GW`}/>
+                  <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
+                </div>
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
@@ -491,7 +616,12 @@ function Dashboard() {
 
       <ScenarioSidebar
         data={data}
-        scenario={scenario}
+        scenario={resolvedScenario}
+        supplyPreset={scenario.supplyPreset}
+        onSupplyPresetChange={(p) => setScenario(prev => {
+          if (p === 'custom') return { ...prev, supplyPreset: 'custom', generation: resolvedScenario.generation, storage: resolvedScenario.storage };
+          return { ...prev, supplyPreset: p };
+        })}
         selectedPeriod={selectedPeriod}
         periodPreset={periodPreset}
         customStart={customStart}
@@ -532,6 +662,18 @@ function Dashboard() {
         onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
         onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
+        onGenerationChange={(field, v) => setScenario(prev => ({
+          ...prev,
+          supplyPreset: 'custom',
+          generation: { ...resolvedScenario.generation, [field]: v },
+          storage: resolvedScenario.storage,
+        }))}
+        onStorageChange={(field, v) => setScenario(prev => ({
+          ...prev,
+          supplyPreset: 'custom',
+          generation: resolvedScenario.generation,
+          storage: { ...resolvedScenario.storage, [field]: v },
+        }))}
       />
 
     </div>
@@ -600,14 +742,15 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
   const contextItems = [
-    { label: 'Import', color: '#dc2626', active: true },
-    { label: 'Last', color: '#111827', active: true },
+    { label: 'Last', color: '#111827', glyph: '●' as const },
+    { label: 'Import', color: '#dc2626', glyph: '●' as const },
+    { label: 'Fehlend', color: '#b91c1c', glyph: '▨' as const },
   ];
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
   return <div className="mt-2.5 grid gap-1.5 border-t border-zinc-100 pt-2.5 text-xs">
     <div className="flex flex-wrap gap-1.5">
       {contextItems.map(item => <span key={item.label} className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-zinc-800 shadow-sm">
-        <span aria-hidden className="text-[10px]" style={{ color: item.active ? item.color : '#d4d4d8' }}>●</span>
+        <span aria-hidden className="text-[10px]" style={{ color: item.color }}>{item.glyph}</span>
         <span>{item.label}</span>
       </span>)}
     </div>
@@ -633,9 +776,16 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
 }
 
 function InlineKpi({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-600' : 'text-zinc-950';
-  return <div className="grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200/80 bg-zinc-50/70 px-2.5 py-1.5 leading-tight">
-    <span className="truncate whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em] text-zinc-500" title={label}>{label}</span>
+  const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-700' : 'text-zinc-950';
+  const isAlarm = tone === 'kritisch';
+  const containerClass = isAlarm
+    ? 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-red-300 px-2.5 py-1.5 leading-tight'
+    : 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200/80 bg-zinc-50/70 px-2.5 py-1.5 leading-tight';
+  const alarmStyle = isAlarm
+    ? { backgroundImage: 'repeating-linear-gradient(45deg, rgba(220,38,38,0.10) 0 6px, rgba(220,38,38,0.20) 6px 12px)' }
+    : undefined;
+  return <div className={containerClass} style={alarmStyle}>
+    <span className={cx('truncate whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em]', isAlarm ? 'text-red-700' : 'text-zinc-500')} title={label}>{label}</span>
     <span className={cx('whitespace-nowrap text-sm font-semibold tabular-nums', toneClass)}>{value}</span>
   </div>;
 }

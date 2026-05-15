@@ -2,7 +2,7 @@ import type { EChartsOption } from 'echarts';
 import type { SimHour } from '../simulation/engine';
 import { fmt } from './format';
 
-export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW';
+export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
 export type ChartMode = 'sunburst' | 'linie';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
@@ -12,6 +12,7 @@ export const MIX_GROUPS: MixGroup[] = [
     { key: 'hydroGW', label: 'Wasser', color: '#4338ca' },
     { key: 'biomassGW', label: 'Bio', color: '#16a34a' },
     { key: 'geothermalGW', label: 'Geo', color: '#3730a3' },
+    { key: 'nuclearGW', label: 'Kernkraft', color: '#ec4899' },
   ] },
   { id: 'fossil', label: 'Fossil', color: '#fb923c', leaves: [
     { key: 'coalGW', label: 'Kohle', color: '#57534e' },
@@ -166,6 +167,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
           lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
         }
         lines.push(`<span style="color:#dc2626">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
+        if (hour.loadSheddingGW > 0) lines.push(`<span style="color:#b91c1c">▨</span> Fehlend: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
         if (hour.exportGW > 0) lines.push(`<span style="color:#94a3b8">●</span> Export: <b>${fmt.format(hour.exportGW)} GW</b>`);
         if (hour.dataBoundaryResidualGW !== 0) lines.push(`<span style="color:#64748b">●</span> Abgrenzungsrest: <b>${fmt.format(hour.dataBoundaryResidualGW)} GW</b>`);
         lines.push(`<span style="color:#111827">●</span> Last: <b>${fmt.format(hour.loadGW)} GW</b>`);
@@ -177,6 +179,28 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     series: [
       ...supplySeries,
       areaSeries('Import', '#dc2626', chartHours.map((h) => h.importGW), mode),
+      {
+        name: 'Fehlend',
+        type: 'line' as const,
+        ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
+        stack: 'supply',
+        showSymbol: false,
+        smooth: false,
+        areaStyle: { color: '#b91c1c', opacity: 0.65 },
+        lineStyle: { color: '#7f1d1d', width: 1 },
+        itemStyle: {
+          color: '#b91c1c',
+          decal: {
+            symbol: 'rect',
+            symbolSize: 0.7,
+            dashArrayX: [4, 0],
+            dashArrayY: [3, 3],
+            rotation: -Math.PI / 4,
+            color: 'rgba(255,255,255,0.45)',
+          },
+        } as never,
+        data: chartHours.map((h) => h.loadSheddingGW),
+      },
       {
         name: 'Last',
         type: 'line' as const,

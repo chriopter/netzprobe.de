@@ -1,0 +1,17 @@
+{
+  "id": "speicher-pumpspeicher",
+  "name": "Pumpspeicher",
+  "power2025GW": 9.4,
+  "defaultPowerGW": 9.4,
+  "minPowerGW": 0,
+  "maxPowerGW": 100,
+  "stepPowerGW": 1,
+  "energy2025GWh": 40,
+  "defaultEnergyGWh": 40,
+  "minEnergyGWh": 0,
+  "maxEnergyGWh": 400,
+  "stepEnergyGWh": 10,
+  "roundtripEfficiency": 0.8,
+  "initialStateOfChargeFraction": 0.5,
+  "dispatchPriority": 2
+}

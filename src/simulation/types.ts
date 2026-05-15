@@ -1,31 +1,50 @@
 export type SimHour = {
   time: string;
   loadGW: number;
-  solarGW: number;
+  pvGW: number;
   windOnGW: number;
   windOffGW: number;
-  biomassGW: number;
-  hydroGW: number;
-  wasteGW: number;
-  oilGW: number;
-  geothermalGW: number;
-  otherGW: number;
-  coalGW: number;
+  kernkraftGW: number;
+  biomasseGW: number;
+  laufwasserGW: number;
   gasGW: number;
-  nuclearGW: number;
-  historicalImportGW: number;
-  historicalExportGW: number;
-  dataBoundaryResidualGW: number;
+  kohleGW: number;
+  pvCurtailedGW: number;
+  windOnCurtailedGW: number;
+  windOffCurtailedGW: number;
+  kernkraftCurtailedGW: number;
   importGW: number;
   exportGW: number;
   storageChargeGW: number;
   storageDischargeGW: number;
+  batterieChargeGW: number;
+  batterieDischargeGW: number;
+  pumpspeicherChargeGW: number;
+  pumpspeicherDischargeGW: number;
+  h2ChargeGW: number;
+  h2DischargeGW: number;
+  batterieSocGWh: number;
+  pumpspeicherSocGWh: number;
+  h2SocGWh: number;
   curtailmentGW: number;
   loadSheddingGW: number;
-  batteryGWh: number;
-  h2GWh: number;
   supplyGW: number;
   balanceGW: number;
+  co2Tph: number;
+  solarGW: number;
+  biomassGW: number;
+  hydroGW: number;
+  geothermalGW: number;
+  wasteGW: number;
+  oilGW: number;
+  otherGW: number;
+  coalGW: number;
+  nuclearGW: number;
+  historicalImportGW: number;
+  historicalExportGW: number;
+  dataBoundaryResidualGW: number;
+  batteryGWh: number;
+  h2GWh: number;
 };
 
 export type SimulationResult = {
@@ -33,24 +52,17 @@ export type SimulationResult = {
   summary: {
     totalDemandTWh: number;
     renewableSharePct: number;
+    renewableTWh: number;
     curtailmentTWh: number;
     importTWh: number;
     exportTWh: number;
     loadSheddingTWh: number;
+    hoursWithLoadShedding: number;
+    hoursWithCurtailmentOver50pct: number;
+    co2MtPerYear: number;
+    co2GperKWh: number;
+    peakLoadGW: number;
+    monthlySupplyTWh: number[];
     securityStatus: 'stabil' | 'angespannt' | 'kritisch';
   };
-};
-
-export type HistoricalGeneration = Pick<SimHour, 'solarGW' | 'windOnGW' | 'windOffGW' | 'biomassGW' | 'hydroGW' | 'wasteGW' | 'oilGW' | 'geothermalGW' | 'otherGW' | 'coalGW' | 'gasGW' | 'nuclearGW' | 'historicalImportGW' | 'historicalExportGW' | 'dataBoundaryResidualGW' | 'supplyGW'>;
-
-export type BalanceResult = {
-  importGW: number;
-  exportGW: number;
-  storageChargeGW: number;
-  storageDischargeGW: number;
-  curtailmentGW: number;
-  loadSheddingGW: number;
-  batteryGWh: number;
-  h2GWh: number;
-  balanceGW: number;
 };
