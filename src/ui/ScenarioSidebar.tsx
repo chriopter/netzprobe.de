@@ -158,12 +158,12 @@ export function ScenarioSidebar({
           <PanelLeftClose className="h-4 w-4" aria-hidden="true"/>
         </button>
         <div className="grid min-w-0 flex-1 gap-0.5">
-          <h1
-            className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950"
-            title={`Build ${__BUILD_COMMIT__} · ${new Date(__BUILD_TIME__).toLocaleString('de-DE')}`}
-          >
-            netzprobe.de
-          </h1>
+          <div className="group/title flex min-w-0 items-baseline gap-2">
+            <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">netzprobe.de</h1>
+            <span className="hidden shrink-0 text-[11px] font-medium text-zinc-400 group-hover/title:inline">
+              {__BUILD_COMMIT__} · {new Date(__BUILD_TIME__).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
           <a
             href={dataWikiHomeUrl()}
             target="_blank"
