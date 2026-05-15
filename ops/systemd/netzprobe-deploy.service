@@ -1,0 +1,11 @@
+[Unit]
+Description=Deploy Netzprobe from Git
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=APP_DIR=/root/netzprobe
+Environment=BRANCH=main
+WorkingDirectory=/root/netzprobe
+ExecStart=/root/netzprobe/bin/deploy-vps
