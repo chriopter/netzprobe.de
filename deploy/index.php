@@ -4,8 +4,8 @@ $log = function($message) use ($logFile) {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - " . $message . "\n", FILE_APPEND);
 };
 
-$secretFile = '/root/netzprobe/deploy/.secret';
-$deployScript = '/root/netzprobe/deploy/deploy';
+$secretFile = '/var/www/netzprobe/deploy/.secret';
+$deployScript = '/var/www/netzprobe/deploy/deploy';
 $maxPayloadBytes = 4096;
 
 $log('Webhook received');

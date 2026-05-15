@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="/root/netzprobe"
+APP_DIR="/var/www/netzprobe"
 BRANCH="main"
 LOCK_FILE="/tmp/netzprobe-deploy.lock"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

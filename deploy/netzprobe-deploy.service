@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-Environment=APP_DIR=/root/netzprobe
+Environment=APP_DIR=/var/www/netzprobe
 Environment=BRANCH=main
-WorkingDirectory=/root/netzprobe
-ExecStart=/root/netzprobe/deploy/deploy
+WorkingDirectory=/var/www/netzprobe
+ExecStart=/var/www/netzprobe/deploy/deploy
