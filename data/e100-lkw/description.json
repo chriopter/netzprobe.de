@@ -1,0 +1,61 @@
+{
+  "id": "e100-lkw",
+  "parentId": "e100",
+  "domain": "last",
+  "kind": "scenario",
+  "title": "LKW + Bus Elektrifizierung",
+  "file": "e100-lkw/data.json",
+  "scripts": ["e100-lkw/model.ts"],
+  "source": "BMDV Verkehr in Zahlen 2023/2024 (Inländerfahrleistung 2022, in 2023 vergleichbar: Lastkraftwagen 69,2 Mrd. km, Sattelzugmaschinen 19,7 Mrd. km, Kraftomnibusse 3,8 Mrd. km — Summe ~93 Mrd. km), KBA Pressemitteilung 21/2024 (Lkw bis 3,5 t 57,5 Mrd. km 2023), ICCT Real-World ZEV-Truck Report 2025, Hersteller-Realdaten elektrischer Lkw und Busse (Mercedes eActros 600, Volvo FH Electric, MAN, Solaris).",
+  "sourceUrls": [
+    "https://elib.dlr.de/202803/1/Verkehr%20in%20Zahlen%202023_2024_Download_final.pdf",
+    "https://www.kba.de/DE/Presse/Pressemitteilungen/Allgemein/2024/pm21_2024_Entw_Fahrleistung.html",
+    "https://theicct.org/wp-content/uploads/2025/08/ID-359-%E2%80%93-EU-goods-transport_report_final.pdf",
+    "https://www.solarserver.de/2025/04/17/aus-dem-realbetrieb-verbrauchswerte-von-elektro-lkw/",
+    "https://www.volvotrucks.de/de-de/news/press-releases/2022/jan/volvos-heavy-duty-electric-truck-is-put-to-the-test-excels-in-both-range-and-energy-efficiency.html",
+    "https://www.daimlertruck.com/en/newsroom/pressrelease/more-than-15000-kilometers-traveled-all-electric-mercedes-benz-eactros-600-testing-tour-throughout-europe-completed-successfully-52780594",
+    "https://www.bast.de/DE/Themen/Digitales/HF_1/Massnahmen/verkehrszaehlung/zaehl_node.html"
+  ],
+  "period": "2023",
+  "resolution": "Jahr × Stunde",
+  "unit": "Mrd. km, kWh/km, TWh",
+  "short": "Zusatzlast aus elektrifizierten Lkw-, Reisebus- und Linienbus-Kilometern.",
+  "description": "Zusätzlicher Strombedarf, wenn die schweren und leichten Straßennutzfahrzeuge - Lkw (N1-N3), Sattelzüge sowie Linien- und Reisebusse - vollständig elektrisch fahren. Bereits elektrisch gefahrene Kilometer werden als Mindestwert abgezogen, der Rest mit einem gewichteten Flottenverbrauch in Stromlast umgerechnet. Die Stundenverteilung folgt einem Werktags-Tagesgang des Schwerverkehrs mit Morgen- und Nachmittagspeak.",
+  "overview": [
+    { "label": "Verwendung", "value": "Slider zwischen 1,5 Mrd. km (bereits elektrisch, Mindestwert) und 140 Mrd. km. Default 93 Mrd. km entspricht der Summe aus Lastkraftwagen (69,2), Sattelzugmaschinen (19,7) und Kraftomnibussen (3,8) 2022 nach BMDV Verkehr in Zahlen 2023/2024; 2023 ist vergleichbar (KBA: Lkw bis 3,5 t 57,5 Mrd. km, Gesamt-Inländerfahrleistung 709,1 Mrd. km, -0,5 %)." },
+    { "label": "Verteilung", "value": "24-h-Tagesgang Werktag basierend auf BASt-Schwerverkehrs-Dauerzählstellen (SV-Anteil auf Bundesautobahnen), bimodal mit Peak 7-9 Uhr und 14-17 Uhr, Nachttal 22-5 Uhr (Nachtfahrverbot >7,5 t)." },
+    { "label": "Formel", "value": "Zusatzlast (TWh) = (Ziel − 1,5) Mrd. km × 0,6 kWh/km. Default: (93 − 1,5) × 0,6 = 54,9 TWh/Jahr." }
+  ],
+  "method": [
+    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/e100-lkw/data.json; Rechenlogik in data/e100-lkw/model.ts.",
+    "Referenz-Fahrleistung referenceBnKm: BMDV Verkehr in Zahlen 2023/2024, Inländerfahrleistung 2022 (jüngstes konsistent veröffentlichtes Jahr in ViZ): 69,2 Mrd. km Lastkraftwagen (alle Klassen) + 19,7 Mrd. km Sattelzugmaschinen + 3,8 Mrd. km Kraftomnibusse = 92,7 Mrd. km, gerundet 93 Mrd. km. 2023 ist nach KBA Pressemitteilung 21/2024 nahezu identisch.",
+    "Slider-Mindestwert alreadyElectricBnKm: rund 1,5 Mrd. km/a abgeleitet aus rund 79.000 batterieelektrischen Lkw zum 1.1.2024 (überwiegend N1-Transporter) × ca. 12.000 km/a plus rund 2.700 BEV-Busse × ca. 46.000 km/a sowie Obus-Linien Solingen/Esslingen/Eberswalde. Strom für diese Kilometer ist bereits in der historischen Last enthalten. Die drei eHighway-Pilotstrecken (ELISA Hessen, FESH Schleswig-Holstein, eWayBW Baden-Württemberg) sind Ende 2024 planmäßig ausgelaufen.",
+    "Flottenverbrauch kwhPerKm: 0,6 kWh/km als gewichteter Mix aus 57,5 Mrd. km Lkw bis 3,5 t (Transporter) × 0,30 kWh/km (Mercedes eSprinter / Ford E-Transit real 25-30 kWh/100 km) + 11,7 Mrd. km Lkw über 3,5 t / N2-N3 × 0,85 kWh/km + 19,7 Mrd. km Sattelzug × 1,15 kWh/km (ICCT 2025 Real-World 107-130 kWh/100 km, Mercedes eActros 600 European Tour 103-120 kWh/100 km, Volvo FH Electric Green-Truck-Test 110 kWh/100 km) + 3,8 Mrd. km Bus × 1,30 kWh/km (Solaris Urbino 12, MAN Lion's City E real 0,8-1,7 kWh/km abhängig von Heizungsbedarf). Ergibt ~55 TWh / 93 Mrd. km ≈ 0,59 kWh/km, gerundet 0,6 kWh/km. Alle Werte ab Netz inklusive Ladeverluste.",
+    "Slider-Maximum maxTargetBnKm: 140 Mrd. km auf Basis BMDV Verkehrsprognose 2040 (Güterverkehrsleistung +31 % auf 905 Mrd. tkm, Straßengüterverkehr +34 %) plus Aufschlag für Modal-Shift / längere Lkw-Achsen.",
+    "Stundenverteilung hourlyProfile.multipliers: BASt automatische Dauerzählstellen Bundesautobahnen, Schwerverkehrsanteil Werktag. Bimodaler Tagesgang mit Morgen- und Nachmittagspeak, Nachttal durch Sonntags- und Nachtfahrverbote für Lkw >7,5 t. 24 Stundenwerte, Summe exakt 24."
+  ],
+  "fields": [
+    { "name": "id", "unit": "Text", "description": "Technische Kennung." },
+    { "name": "title", "unit": "Text", "description": "Anzeigename." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "Belege." },
+    { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
+    { "name": "referenceBnKm", "unit": "Mrd. km", "description": "Fahrleistung Lkw + Sattelzug + Bus." },
+    { "name": "alreadyElectricBnKm", "unit": "Mrd. km", "description": "Bereits elektrisch gefahren; Slider-Minimum." },
+    { "name": "defaultTargetBnKm", "unit": "Mrd. km", "description": "Slider-Default." },
+    { "name": "maxTargetBnKm", "unit": "Mrd. km", "description": "Slider-Maximum." },
+    { "name": "stepBnKm", "unit": "Mrd. km", "description": "Slider-Schrittweite." },
+    { "name": "kwhPerKm", "unit": "kWh/km", "description": "Gewichteter Flottenverbrauch ab Netz inklusive Ladeverluste." },
+    { "name": "distribution", "unit": "Text", "description": "Verteilungstyp." },
+    { "name": "hourlyProfile", "unit": "Objekt", "description": "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs." },
+    { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
+  ],
+  "caveats": [
+    "Werktags-Tagesgang ohne Wochenend- und Saisongewichtung; reale Schwerlast schwankt zwischen Werktag, Samstag und Feiertag stark.",
+    "Pauschaler Flottenverbrauch ohne Topografie-, Beladungs- und Wintereffekte; insbesondere schwere Sattelzüge verbrauchen bei Kälte und Vollast deutlich mehr (bis 150 kWh/100 km laut ICCT 2025).",
+    "Depotladung über Nacht und Megawatt-Charger am Tag werden nicht unterschieden — das Verbrauchsprofil folgt unmittelbar der Fahrleistung.",
+    "Reisebusverkehr (Fernlinien, Tourismus) hat im Sommer einen abweichenden Tagesgang und ein anderes Saisonprofil als Linien- und Güterverkehr.",
+    "Oberleitungs-Lkw und H2-Brennstoffzellen-Lkw werden nicht separat modelliert; die deutschen eHighway-Tests (ELISA, FESH, eWayBW) sind Ende 2024 ausgelaufen. Das Szenario unterstellt durchgängig batterieelektrischen Antrieb mit AC/DC-Ladung.",
+    "Sattelzugmaschinen und ihre Auflieger werden in der KBA-Statistik nur über die Zugmaschine (19,7 Mrd. km 2022) gezählt; eine separate Auflieger-Kilometerleistung existiert nicht."
+  ]
+}

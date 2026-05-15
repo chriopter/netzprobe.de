@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { runSimulation } from '../simulation/engine';
-import type { E100PkwData, E100HeizData, HourlyInput } from '../types/data';
+import { runSimulation, type SimulationContext } from '../simulation/engine';
+import type {
+  E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
+  E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
+  HourlyInput,
+} from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
@@ -15,7 +19,19 @@ const baselineScenario: Scenario = {
   id: 'demo-fakewerte',
   name: 'Demo-Fakewerte',
   description: 'Offensichtliches Demoszenario mit runden Platzhalterwerten.',
-  demand: { 'last-2025': true, 'e100-pkw': false, 'e100-pkw-million-km': 472_200, 'e100-heiz': false, 'e100-heiz-target-heat-twh': 530 },
+  demand: {
+    'last-2025': true,
+    'e100-pkw': false, 'e100-pkw-million-km': 472_200,
+    'e100-heiz': false, 'e100-heiz-target-heat-twh': 530,
+    'e100-lkw': false, 'e100-lkw-target-bn-km': 93,
+    'e100-bahn': false, 'e100-bahn-target-twh': 10,
+    'e100-schiff': false, 'e100-schiff-target-twh': 80,
+    'e100-flug': false, 'e100-flug-target-twh': 300,
+    'e100-ghd': false, 'e100-ghd-target-heat-twh': 138,
+    'e100-industrie-waerme': false, 'e100-industrie-waerme-target-heat-twh': 220,
+    'e100-stahl': false, 'e100-stahl-target-mio-ton': 28,
+    'e100-chemie': false, 'e100-chemie-target-twh': 440,
+  },
   renewables: { pvGW: 100, windOnGW: 100, windOffGW: 10 },
   fossil: { coalGW: 10, gasGW: 10 },
   storage: { batteryPowerGW: 10, batteryEnergyGWh: 100, h2PowerGW: 10, h2EnergyGWh: 100, importLimitGW: 10 },
@@ -35,7 +51,7 @@ const e100Pkw: E100PkwData = {
   kwhPer100Km: 20,
   distribution: 'hourly-profile',
   hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers },
-  note: 'Test',
+  note: 'Test', summary: 'Test',
 };
 
 const e100Heiz: E100HeizData = {
@@ -59,10 +75,25 @@ const e100Heiz: E100HeizData = {
     days: [],
   },
   hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers },
-  note: 'Test',
+  note: 'Test', summary: 'Test',
 };
 
-const simulate = (scenario: Scenario) => runSimulation(sampleHours, scenario, e100Pkw, e100Heiz);
+const e100Lkw: E100LkwData = { id: 'e100-lkw', title: 'Lkw Test', source: 'Test', sourceUrls: [], referenceYear: 2023, referenceBnKm: 93, alreadyElectricBnKm: 1.5, defaultTargetBnKm: 93, maxTargetBnKm: 140, stepBnKm: 1, kwhPerKm: 0.6, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Bahn: E100BahnData = { id: 'e100-bahn', title: 'Bahn Test', source: 'Test', sourceUrls: [], referenceYear: 2023, dieselSubstitutionTWh: 2, modalShiftTWh: 8, defaultTargetTWh: 10, maxTargetTWh: 25, stepTWh: 0.5, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Schiff: E100SchiffData = { id: 'e100-schiff', title: 'Schiff Test', source: 'Test', sourceUrls: [], referenceYear: 2023, directElectrificationTWh: 1.2, eFuelSynthesisTWh: 78, alreadyElectricTWh: 0.3, defaultTargetTWh: 80, maxTargetTWh: 120, stepTWh: 1, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Flug: E100FlugData = { id: 'e100-flug', title: 'Flug Test', source: 'Test', sourceUrls: [], referenceYear: 2023, kerosineDemandMioT: 9.47, kerosineEnergyTWh: 114, ptlEfficiency: 0.38, alreadyElectricTWh: 0, defaultTargetTWh: 300, maxTargetTWh: 380, stepTWh: 5, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Ghd: E100GhdData = { id: 'e100-ghd', title: 'GHD Test', source: 'Test', sourceUrls: [], referenceYear: 2023, referenceHeatDemandTWh: 138, alreadyElectricHeatTWh: 7, defaultTargetHeatTWh: 138, maxTargetHeatTWh: 200, stepHeatTWh: 1, seasonalCop: 2.8, distribution: 'heating-degree-days', degreeDayProfile: { year: 2025, heatingLimitC: 15, indoorReferenceC: 20, monthlyMeanTemperatureC: [1.5, 2.6, 5.7, 9.6, 13.5, 16.6, 18.4, 18.0, 13.7, 9.4, 4.9, 2.0], days: [] }, hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100IndustrieWaerme: E100IndustrieWaermeData = { id: 'e100-industrie-waerme', title: 'Industrie Wärme Test', source: 'Test', sourceUrls: [], referenceYear: 2023, referenceHeatTWh: 220, alreadyElectricHeatTWh: 25, defaultTargetHeatTWh: 220, maxTargetHeatTWh: 320, stepHeatTWh: 5, electricityPerHeat: 0.69, temperatureMix: { ntShare: 0.30, mtShare: 0.45, htShare: 0.25, ntCop: 3.5, mtElectricFactor: 0.75, htEfficiency: 0.95 }, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Stahl: E100StahlData = { id: 'e100-stahl', title: 'Stahl Test', source: 'Test', sourceUrls: [], referenceYear: 2023, primarySteelMioTon: 25.6, hydrogenKgPerTonSteel: 60, electrolyzerKwhPerKgH2: 52, eafMwhPerTon: 0.6, mwhPerTon: 3.72, alreadyElectricTWh: 4.9, defaultTargetMioTon: 28, maxTargetMioTon: 35, stepMioTon: 0.5, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+const e100Chemie: E100ChemieData = { id: 'e100-chemie', title: 'Chemie Test', source: 'Test', sourceUrls: [], referenceYear: 2023, currentElectricityTWh: 55, processHeatSubstitutionTWh: 60, hydrogenAmmoniaTWh: 25, hydrogenMethanolTWh: 50, eOlefinsViaH2TWh: 225, additionalDirectElectricityTWh: 25, defaultTargetTotalTWh: 440, maxTargetTotalTWh: 600, stepTWh: 10, alreadyElectricTWh: 55, distribution: 'hourly-profile', hourlyProfile: { source: 'Test flat', multipliers: flatHourlyMultipliers }, note: 'Test', summary: 'Test' };
+
+const testContext: SimulationContext = {
+  'e100-pkw': e100Pkw, 'e100-heiz': e100Heiz, 'e100-lkw': e100Lkw, 'e100-bahn': e100Bahn,
+  'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
+  'e100-industrie-waerme': e100IndustrieWaerme, 'e100-stahl': e100Stahl, 'e100-chemie': e100Chemie,
+};
+
+const simulate = (scenario: Scenario) => runSimulation(sampleHours, scenario, testContext);
 
 describe('simulation engine', () => {
   it('balances every hour with supply, imports, storage, curtailment or load shedding', () => {

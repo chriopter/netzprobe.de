@@ -12,8 +12,40 @@
     "description": "e100-pkw/description.json"
   },
   {
+    "id": "e100-lkw",
+    "description": "e100-lkw/description.json"
+  },
+  {
+    "id": "e100-bahn",
+    "description": "e100-bahn/description.json"
+  },
+  {
+    "id": "e100-schiff",
+    "description": "e100-schiff/description.json"
+  },
+  {
+    "id": "e100-flug",
+    "description": "e100-flug/description.json"
+  },
+  {
     "id": "e100-heiz",
     "description": "e100-heiz/description.json"
+  },
+  {
+    "id": "e100-ghd",
+    "description": "e100-ghd/description.json"
+  },
+  {
+    "id": "e100-industrie-waerme",
+    "description": "e100-industrie-waerme/description.json"
+  },
+  {
+    "id": "e100-stahl",
+    "description": "e100-stahl/description.json"
+  },
+  {
+    "id": "e100-chemie",
+    "description": "e100-chemie/description.json"
   },
   {
     "id": "erzeugung-2025",

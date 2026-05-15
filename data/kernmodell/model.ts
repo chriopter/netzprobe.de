@@ -63,6 +63,14 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
   const demandContext: DemandScenarioContext = {
     'e100-pkw': input['e100-pkw'],
     'e100-heiz': input['e100-heiz'],
+    'e100-lkw': input['e100-lkw'],
+    'e100-bahn': input['e100-bahn'],
+    'e100-schiff': input['e100-schiff'],
+    'e100-flug': input['e100-flug'],
+    'e100-ghd': input['e100-ghd'],
+    'e100-industrie-waerme': input['e100-industrie-waerme'],
+    'e100-stahl': input['e100-stahl'],
+    'e100-chemie': input['e100-chemie'],
   };
 
   for (const row of input.hours) {

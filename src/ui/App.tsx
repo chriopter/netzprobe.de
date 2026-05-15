@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { AlertTriangle, Gauge, X, Zap } from 'lucide-react';
+import { X } from 'lucide-react';
 import { dataFileUrl } from '../dataPackages';
 import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
@@ -14,7 +14,7 @@ import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario, scenarioFromUrl } from './scenarioPresets';
-import { cx, muted, panel, shell } from './ui';
+import { cx, muted, shell } from './ui';
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
@@ -89,7 +89,20 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !data) return;
-    worker.postMessage({ type: 'init', input: data.hours, 'e100-pkw': data['e100-pkw'], 'e100-heiz': data['e100-heiz'] });
+    worker.postMessage({
+      type: 'init',
+      input: data.hours,
+      'e100-pkw': data['e100-pkw'],
+      'e100-heiz': data['e100-heiz'],
+      'e100-lkw': data['e100-lkw'],
+      'e100-bahn': data['e100-bahn'],
+      'e100-schiff': data['e100-schiff'],
+      'e100-flug': data['e100-flug'],
+      'e100-ghd': data['e100-ghd'],
+      'e100-industrie-waerme': data['e100-industrie-waerme'],
+      'e100-stahl': data['e100-stahl'],
+      'e100-chemie': data['e100-chemie'],
+    });
     hasDataRef.current = true;
   }, [data]);
 
@@ -191,19 +204,26 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   };
 
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1760px] gap-3 lg:grid-cols-[270px_minmax(0,1fr)_210px] xl:grid-cols-[280px_minmax(0,1fr)_220px]">
+    <div className="mx-auto grid w-full max-w-[1760px] gap-3 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
       <section className="flex min-w-0 flex-col gap-3 lg:order-2">
-        {!result ? <div className={cx(panel, 'grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-700')}>Lade Daten …</div> : <>
+        {!result ? <div className="grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-500">Lade Daten …</div> : <>
           <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-5">
-            <div className="mb-2 flex shrink-0 items-start justify-between gap-3">
-              <div>
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
+              <div className="min-w-0">
                 <h2 className="text-lg font-medium tracking-[-0.03em]">Energiemix vs. Last</h2>
                 <span className={cx(muted, 'text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
               </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+                <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
+                <InlineKpi label="Import" value={twh(result.summary.importTWh)} tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
+                <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+                <InlineKpi label="Zeitraum" value={`${sliced.length} h`}/>
+              </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div className="min-h-0 flex-1 overflow-visible">
-              <div id="mix-chart" className="h-full w-[128%] -translate-x-[11%]"/>
+            <div className="min-h-0 flex-1">
+              <div id="mix-chart" className="h-full w-full"/>
             </div>
             <MixLegend
               visibility={mixVisibility}
@@ -234,25 +254,25 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
         onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}
         onE100HeizTargetHeatTWhChange={(heatTWh) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz-target-heat-twh': heatTWh } }))}
+        onE100LkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-lkw': checked } }))}
+        onE100LkwTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-lkw-target-bn-km': v } }))}
+        onE100BahnChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-bahn': checked } }))}
+        onE100BahnTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-bahn-target-twh': v } }))}
+        onE100SchiffChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-schiff': checked } }))}
+        onE100SchiffTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-schiff-target-twh': v } }))}
+        onE100FlugChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-flug': checked } }))}
+        onE100FlugTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-flug-target-twh': v } }))}
+        onE100GhdChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-ghd': checked } }))}
+        onE100GhdTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-ghd-target-heat-twh': v } }))}
+        onE100IndustrieWaermeChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-industrie-waerme': checked } }))}
+        onE100IndustrieWaermeTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-industrie-waerme-target-heat-twh': v } }))}
+        onE100StahlChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl': checked } }))}
+        onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
+        onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
+        onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
       />
 
-      <aside className={cx(panel, 'lg:order-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto')}>
-        <div className="border-b border-zinc-200/80 px-4 py-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Ergebnisse</h2>
-        </div>
-        <div className="grid gap-3 p-4">
-          {result ? <>
-            <Kpi icon={<Zap/>} label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-            <Kpi icon={<Gauge/>} label="CO₂ / EE" value="offen" subValue={pct(result.summary.renewableSharePct)}/>
-            <Kpi icon={<AlertTriangle/>} label="Import" value={twh(result.summary.importTWh)} subValue="Unterdeckung aufgefüllt" tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
-            <section className="grid gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
-              <MetricLine label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
-              <MetricLine label="Zeitraum" value={`${sliced.length} h`}/>
-            </section>
-          </> : <span className="text-sm text-zinc-500">Lade Ergebnisse …</span>}
-        </div>
-      </aside>
-      {faqOpen && <DataFaq docs={datasetDocs} onClose={() => setFaqOpen(false)}/>} 
+      {faqOpen && <DataFaq docs={datasetDocs} onClose={() => setFaqOpen(false)}/>}
     </div>
   </main>;
 }
@@ -294,8 +314,8 @@ function DataFaq({ docs, onClose }: { docs: DatasetDoc[]; onClose: () => void })
 }
 
 function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
-  return <section className={cx(panel, 'min-w-0 p-4', className)}>
-    {title && <div className="mb-3 flex items-center justify-between gap-3">
+  return <section className={cx('min-w-0', className)}>
+    {title && <div className="mb-2 flex items-center justify-between gap-3">
       <h2 className="text-base font-medium tracking-[-0.02em]">{title}</h2>
       {meta && <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>}
     </div>}
@@ -337,22 +357,11 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
   </div>;
 }
 
-function Kpi({ icon, label, value, subValue, tone }: { icon: ReactNode; label: string; value: string; subValue?: string; tone?: string }) {
-  const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-600' : 'text-zinc-500';
-  return <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs text-zinc-500">{label}</span>
-      <span className={cx('[&_svg]:h-3.5 [&_svg]:w-3.5', toneClass)}>{icon}</span>
-    </div>
-    <strong className="mt-1 block text-2xl font-medium tracking-[-0.05em] text-zinc-950">{value}</strong>
-    {subValue && <span className="mt-1 block text-xs text-zinc-500">{subValue}</span>}
-  </div>;
-}
-
-function MetricLine({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-4 text-sm">
-    <span className="text-zinc-500">{label}</span>
-    <strong className="font-medium text-zinc-950">{value}</strong>
+function InlineKpi({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-600' : 'text-zinc-950';
+  return <div className="grid gap-0.5 leading-tight">
+    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{label}</span>
+    <span className={cx('text-sm font-medium tabular-nums', toneClass)}>{value}</span>
   </div>;
 }
 

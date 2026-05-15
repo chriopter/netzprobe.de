@@ -1,0 +1,61 @@
+{
+  "id": "e100-ghd",
+  "parentId": "e100",
+  "domain": "last",
+  "kind": "scenario",
+  "title": "GHD Heiz Elektrifizierung",
+  "file": "e100-ghd/data.json",
+  "scripts": ["e100-ghd/generate.mjs", "e100-ghd/model.ts"],
+  "source": "AGEB, UBA, BMWK Energiedaten, BWP, Fraunhofer ISE Annex 28, BDEW SLP G0, DWD.",
+  "sourceUrls": [
+    "https://ag-energiebilanzen.de/daten-und-fakten/anwendungsbilanzen/",
+    "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
+    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Publikationen/Energie/energiedaten-gesamtausgabe.html",
+    "https://www.waermepumpe.de/normen-technik/grossanlagen-gewerbe/",
+    "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html",
+    "https://www.bdew.de/energie/standardlastprofile-strom/",
+    "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html"
+  ],
+  "period": "2023 (Mengen), Klimanormale 1991-2020 auf Kalender 2025 (Profil)",
+  "resolution": "Tag x Stunde",
+  "unit": "TWh Waerme, TWh Strom, JAZ",
+  "short": "Zusatzlast aus Umstellung der GHD-Heizung und Warmwasser auf Waermepumpen.",
+  "description": "Zusaetzlicher Strombedarf beim Uebergang fossiler Heizung und Warmwassererzeugung im Sektor Gewerbe, Handel, Dienstleistungen auf Waermepumpen. Bereits elektrisch gedeckte Waerme bleibt unveraendert in der historischen Last und wird als Mindestwert abgezogen. Der verbleibende Waermebedarf wird ueber eine Jahresarbeitszahl in Stromlast umgerechnet und saisonal sowie tageszeitlich verteilt.",
+  "overview": [
+    { "label": "Verwendung", "value": "Slider zwischen 7 TWh (bereits elektrisch, Mindestwert) und 200 TWh in 1-TWh-Schritten. Default 138 TWh entspricht Raumwaerme plus Warmwasser des GHD-Sektors 2023 (AGEB Anwendungsbilanz, BDEW Statusreport Waerme)." },
+    { "label": "Verteilung", "value": "Tagesweise Gradtagszahl aus DWD-Klimanormalen wie bei e100-heiz; innerhalb des Tages BDEW-SLP-G0-Bueroprofil mit Nachtabsenkung und Plateau 8-18 Uhr." },
+    { "label": "Formel", "value": "Zusatzstrom (TWh) = (Ziel - 7 TWh) / JAZ. Default: (138 - 7) / 2,8 = 46,79 TWh/Jahr." }
+  ],
+  "method": [
+    "Datei: erzeugt durch data/e100-ghd/generate.mjs. Skript ausfuehren mit `node data/e100-ghd/generate.mjs > data/e100-ghd/data.json`; Rechenlogik in data/e100-ghd/model.ts.",
+    "Referenz-Waermebedarf referenceHeatDemandTWh: AGEB-Anwendungsbilanz GHD und BDEW-Statusreport Waerme; GHD-Endenergie 2023 rund 314 TWh, Waermeanwendungen rund 59,9 %. Quertrianguliert: Raumwaerme 2022 rund 106-115 TWh (BDEW Statusreport 2024), 2023 witterungsbedingt rund 5 % niedriger; Warmwasser GHD rund 20-25 TWh. Summe Raumwaerme + WW 2023 rund 138 TWh Endenergie.",
+    "Slider-Mindestwert alreadyElectricHeatTWh: rund 7 TWh aus Direktheizung, kleinen Bestands-Waermepumpen und elektrischen Boilern (Gastronomie, Pflege, Krankenhaus). Strom dafuer ist bereits in der historischen Last.",
+    "Jahresarbeitszahl seasonalCop: 2,8 als gewichteter Bestandsmix Grossgebaeude. Fraunhofer-ISE-Feldtest weist fuer Bestandsgebaeude im Mittel JAZ 3,1 (Luft/Wasser 3,4, Sole 4,3) aus; GHD-Bestand mit hoeheren Vorlauftemperaturen, Multisplit-Anteil und nicht-modernisierter Gebaeudehuelle liegt konservativ darunter. Quellen: Fraunhofer ISE WP-Feldtest Bestand und BWP-Branchenstudie.",
+    "Gradtagszahl-Tagesprofil degreeDayProfile: DWD-Klimanormale 1991-2020 (Deutschland-Mittel) als Monatsmittel-Ankerpunkte am 15. jedes Monats; lineare Interpolation; HDD = max(0, 20 - T) wenn T < 15. Identische Klimareihe wie e100-heiz, weil GHD-Raumwaerme dieselbe Klimaabhaengigkeit hat.",
+    "24-h-Tagesgang hourlyProfile.multipliers: BDEW-SLP G0 (Gewerbe allgemein) — starke Nachtabsenkung 0-5 Uhr (~0,4), Ramp 6-8 Uhr, Plateau 8-18 Uhr (~1,45-1,50), Abfall 19-23 Uhr. Summe 24, Tagesmittel 1,0."
+  ],
+  "fields": [
+    { "name": "id", "unit": "Text", "description": "Technische Kennung." },
+    { "name": "title", "unit": "Text", "description": "Anzeigename." },
+    { "name": "source", "unit": "Text", "description": "Quellenkurzname." },
+    { "name": "sourceUrls", "unit": "Liste", "description": "Belege." },
+    { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
+    { "name": "referenceHeatDemandTWh", "unit": "TWh", "description": "Raumwaerme + Warmwasser GHD-Sektor." },
+    { "name": "alreadyElectricHeatTWh", "unit": "TWh", "description": "Bereits elektrisch gedeckte Waerme (Direktheizung, kleine WPs, Boiler); Slider-Minimum." },
+    { "name": "defaultTargetHeatTWh", "unit": "TWh", "description": "Slider-Default." },
+    { "name": "maxTargetHeatTWh", "unit": "TWh", "description": "Slider-Maximum." },
+    { "name": "stepHeatTWh", "unit": "TWh", "description": "Slider-Schrittweite." },
+    { "name": "seasonalCop", "unit": "JAZ", "description": "Jahresarbeitszahl GHD-Bestandsmix." },
+    { "name": "distribution", "unit": "Text", "description": "Verteilungstyp." },
+    { "name": "degreeDayProfile", "unit": "Objekt", "description": "Monatsmittel-Ankerpunkte, Heizgrenze, Innenreferenz, 365 Tageseintraege mit Datum, Tagesmitteltemperatur, Gradtagszahl und Gewicht." },
+    { "name": "hourlyProfile", "unit": "Objekt", "description": "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24) nach BDEW SLP G0; Quellen und Quell-URLs." },
+    { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
+  ],
+  "caveats": [
+    "Nur GHD-Sektor — Haushalte (e100-heiz) und Industrieprozesswaerme nicht enthalten.",
+    "JAZ 2,8 als Jahresmittel; Grossgebaeude mit hohen Vorlauftemperaturen und Multisplit liegen real teils darunter, der Winterpeak ist daher leicht unterschaetzt.",
+    "Profil-Basis sind DWD-Klimanormale 1991-2020, kein konkretes Wetterjahr.",
+    "Tagesgang G0 ist ein Misch-SLP ueber alle Gewerbearten; Schichtbetriebe (Krankenhaus 24/7) und Einzelhandel (Spitze 10-20 Uhr) werden gemittelt.",
+    "Slider-Werte oberhalb 138 TWh decken Upside-Szenarien (Sanierungsstau, Lueftungs- und Prozesswaerme-Mitnahme) ab."
+  ]
+}

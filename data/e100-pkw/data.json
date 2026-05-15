@@ -25,11 +25,32 @@
       "https://www.bdew.de/energie/standardlastprofile-strom/"
     ],
     "multipliers": [
-      0.786, 0.503, 0.332, 0.222, 0.140, 0.096,
-      0.124, 0.197, 0.252, 0.275, 0.457, 0.704,
-      0.921, 1.100, 1.223, 1.560, 2.137, 2.542,
-      2.549, 2.225, 1.812, 1.548, 1.279, 1.016
+      0.786,
+      0.503,
+      0.332,
+      0.222,
+      0.140,
+      0.096,
+      0.124,
+      0.197,
+      0.252,
+      0.275,
+      0.457,
+      0.704,
+      0.921,
+      1.100,
+      1.223,
+      1.560,
+      2.137,
+      2.542,
+      2.549,
+      2.225,
+      1.812,
+      1.548,
+      1.279,
+      1.016
     ]
   },
-  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr)."
+  "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr).",
+  "summary": "20 kWh/100 km"
 }

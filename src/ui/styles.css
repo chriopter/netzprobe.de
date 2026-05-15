@@ -10,11 +10,64 @@
 }
 
 @layer base{
-  html{background:#f7f7f5;color:#18181b;font-feature-settings:'cv01','ss03'}
-  body{min-width:320px;background:#f7f7f5}
+  html{background:#ffffff;color:#18181b;font-feature-settings:'cv01','ss03'}
+  body{min-width:320px;background:#ffffff}
   button,a,input,select{font:inherit}
-  input[type='range']{width:100%;height:1.25rem;accent-color:#52525b}
-  input[type='range']::-webkit-slider-runnable-track{height:2px;border-radius:999px;background:#d4d4d8}
-  input[type='range']::-webkit-slider-thumb{margin-top:-6px}
-  input[type='range']::-moz-range-track{height:2px;border-radius:999px;background:#d4d4d8}
+
+  input[type='range']{
+    width:100%;
+    height:1.25rem;
+    appearance:none;
+    -webkit-appearance:none;
+    background:transparent;
+    cursor:pointer;
+  }
+  input[type='range']::-webkit-slider-runnable-track{
+    height:4px;
+    border-radius:999px;
+    background:linear-gradient(to right, #18181b 0 var(--range-pct,0%), #e4e4e7 var(--range-pct,0%) 100%);
+  }
+  input[type='range']::-moz-range-track{
+    height:4px;
+    border-radius:999px;
+    background:#e4e4e7;
+  }
+  input[type='range']::-moz-range-progress{
+    height:4px;
+    border-radius:999px;
+    background:#18181b;
+  }
+  input[type='range']::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:#18181b;
+    border:2px solid #ffffff;
+    box-shadow:0 0 0 1px #d4d4d8, 0 1px 2px rgba(0,0,0,.08);
+    margin-top:-5px;
+    transition:box-shadow .12s ease;
+  }
+  input[type='range']::-webkit-slider-thumb:hover{
+    box-shadow:0 0 0 4px rgba(24,24,27,.12), 0 1px 2px rgba(0,0,0,.08);
+  }
+  input[type='range']::-moz-range-thumb{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:#18181b;
+    border:2px solid #ffffff;
+    box-shadow:0 0 0 1px #d4d4d8, 0 1px 2px rgba(0,0,0,.08);
+    transition:box-shadow .12s ease;
+  }
+  input[type='range']::-moz-range-thumb:hover{
+    box-shadow:0 0 0 4px rgba(24,24,27,.12), 0 1px 2px rgba(0,0,0,.08);
+  }
+  input[type='range']:focus-visible::-webkit-slider-thumb{
+    box-shadow:0 0 0 4px rgba(24,24,27,.18), 0 1px 2px rgba(0,0,0,.08);
+  }
+  input[type='range']:focus-visible::-moz-range-thumb{
+    box-shadow:0 0 0 4px rgba(24,24,27,.18), 0 1px 2px rgba(0,0,0,.08);
+  }
 }
