@@ -535,7 +535,7 @@ function Dashboard() {
       ctx.fillText('Netzprobe · Energiemix vs. Last', 40, 54);
       ctx.fillStyle = '#71717a';
       ctx.font = '400 18px Inter, system-ui, sans-serif';
-      ctx.fillText(`${formatDate(selectedPeriod.start)} - ${formatDate(selectedPeriod.end)} · ${chartMode === 'sunburst' ? 'Sunburst' : 'Linie'}`, 40, 84);
+      ctx.fillText(`${formatDate(selectedPeriod.start)} - ${formatDate(selectedPeriod.end)} · ${chartMode === 'sunburst' ? 'Polar' : 'Linie'}`, 40, 84);
 
       const kpis: Array<[string, string, string]> = [
         ['Jahreslast', twh(result.summary.totalDemandTWh), '#18181b'],
@@ -733,7 +733,7 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
 }
 
 function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
-  const modes: Array<[ChartMode, string]> = [['sunburst', 'Sunburst'], ['linie', 'Linie']];
+  const modes: Array<[ChartMode, string]> = [['sunburst', 'Polar'], ['linie', 'Linie']];
   return <div className="inline-flex shrink-0 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-xs shadow-sm" aria-label="Diagrammform wählen">
     {modes.map(([value, label]) => <button
       key={value}

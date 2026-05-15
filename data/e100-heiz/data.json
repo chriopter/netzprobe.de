@@ -1,13 +1,17 @@
 {
   "id": "e100-heiz",
   "title": "Haushalte Elektrifizierung",
-  "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Staedte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat).",
+  "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); JAZ 3,3 als bewusste Mitte der empirischen Spannbreite Luft-Wasser 2,8-3,4 (pessimistisch: WPZ Buchs/OST 2,9 herstellerunabhaengig, Lokale Agenda 21 Lahr 2,8; mittig: UBA Climate Change 11/2024 3,1, Agora Energiewende 2023 3,2; optimistisch: Fraunhofer ISE WP-QS im Bestand 2025 3,4 mit Herstellerbeteiligung); Gradtagszahl-Profil aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Staedte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat).",
   "sourceUrls": [
     "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
+    "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/11_2024_cc_waermepumpensysteme.pdf",
     "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
     "https://ag-energiebilanzen.de/daten-und-fakten/",
     "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
     "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
+    "https://www.ise.fraunhofer.de/en/research-projects/wp-qs-im-bestand.html",
+    "https://www.ost.ch/en/research-and-consulting-services/technology/system-technology/ies-institute-for-energy-systems/heat-pump-test-center-wpz/heat-pump-field-test/",
+    "http://www.agenda-energie-lahr.de/WP_FeldtestPhase2.html",
     "https://archive-api.open-meteo.com/v1/era5",
     "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
   ],
