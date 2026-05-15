@@ -34,6 +34,7 @@ jobs:
   deploy:
     name: Trigger VPS
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Deploy-Webhook aufrufen
         env:
