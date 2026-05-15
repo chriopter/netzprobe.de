@@ -15,12 +15,12 @@
   "referenceYear": 2023,
   "currentElectricityTWh": 55,
   "processHeatSubstitutionTWh": 75,
-  "hydrogenAmmoniaTWh": 65,
-  "hydrogenMethanolTWh": 100,
-  "eOlefinsViaH2TWh": 360,
+  "hydrogenAmmoniaTWh": 35,
+  "hydrogenMethanolTWh": 60,
+  "eOlefinsViaH2TWh": 180,
   "additionalDirectElectricityTWh": 30,
-  "defaultTargetTotalTWh": 685,
-  "maxTargetTotalTWh": 750,
+  "defaultTargetTotalTWh": 440,
+  "maxTargetTotalTWh": 700,
   "stepTWh": 10,
   "alreadyElectricTWh": 55,
   "distribution": "hourly-profile",
@@ -58,5 +58,5 @@
     ]
   },
   "note": "Slider zeigt den Ziel-Gesamtstromverbrauch der Chemie inkl. der heutigen 55 TWh. Zusatzlast = max(0, Ziel − 55 TWh). Default 685 TWh entspricht der VCI/DECHEMA/FutureCamp/Prognos Roadmap 2050 'Treibhausgasneutralität Chemieindustrie Deutschland' (2019) im H2-Maximalpfad mit voller Inlandsproduktion und vollständiger Naphtha- und Ammoniak-Substitution: 55 TWh Status quo + 75 TWh Prozesswärme (HT-WP/E-Kessel) + 30 TWh Direktstrom-Zuwachs (Antriebe/IKT) + 65 TWh H2 für Ammoniak (rund 2,0 Mt NH3 mit voller Elektrolyse-Route) + 100 TWh H2 für Methanol (~1,3 Mt MeOH plus zusätzliche MtO-Vorstufe) + 360 TWh e-Olefine über Methanol-to-Olefins/MTA (HVC: Ethylen 4,1 Mt, Propylen 3,0 Mt, BTX ~2,8 Mt — größter H2-Block) = 685 TWh. Bandbreite alternativer Studien: VCI/VDI C4C 2023 reduzierte auf 325–508 TWh durch teilweise CCS- und Recycling-Mitnahme; C4C Update 2024 senkte nochmals auf 258–440 TWh, weil seit der Energiepreiskrise Produktionsrückgänge (Ammoniak −32 %, Methanol −40 %, Chlor −26 %) eingepreist sind. Slider lässt sich auf alle drei Pfade einstellen. Tagesgang ist Dauerlast (24/7-Kontibetrieb).",
-  "summary": "VCI 2050 · H2-max"
+  "summary": "VCI C4C 2024 · H2-max-Mix"
 }

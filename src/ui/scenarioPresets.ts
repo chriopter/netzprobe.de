@@ -58,7 +58,7 @@ export function normalizeScenario(scenario: Scenario): Scenario {
   const demand = (scenario.demand ?? {}) as Partial<Scenario['demand']>;
   const generation = (scenario.generation ?? {}) as Partial<Scenario['generation']>;
   const storage = (scenario.storage ?? {}) as Partial<Scenario['storage']>;
-  const validPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', '100ee-noimport', '50ee-50import', '2025-skaliert'];
+  const validPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '50ee-50import', '2025-skaliert'];
   // Migration: alte 'manual' Werte werden zu 'custom'.
   const rawPreset = (scenario.supplyPreset as string) === 'manual' ? 'custom' : scenario.supplyPreset;
   const supplyPreset = validPresets.includes(rawPreset as Scenario['supplyPreset'])

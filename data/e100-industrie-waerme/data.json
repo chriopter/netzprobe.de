@@ -19,7 +19,7 @@
   "defaultTargetHeatTWh": 220,
   "maxTargetHeatTWh": 320,
   "stepHeatTWh": 5,
-  "electricityPerHeat": 0.69,
+  "electricityPerHeat": 0.55,
   "temperatureMix": {
     "ntShare": 0.30,
     "mtShare": 0.45,

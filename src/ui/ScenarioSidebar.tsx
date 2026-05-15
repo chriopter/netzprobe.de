@@ -370,8 +370,9 @@ function ErzeugungSection({
   }));
   const activeId: SupplyPillId = supplyPreset;
   const activeWikiId = supplyPillWikiIds[activeId];
-  const fixPills = pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'custom');
-  const lastfolgendPills = pillPresets.filter(p => p.id !== 'historical-2025' && p.id !== 'custom');
+  const fixIds = new Set(['historical-2025', 'historical-2017', 'custom']);
+  const fixPills = pillPresets.filter(p => fixIds.has(p.id));
+  const lastfolgendPills = pillPresets.filter(p => !fixIds.has(p.id));
 
   return <SidebarCard title="Erzeugung" icon={<Zap className="h-4 w-4"/>} docId={activeWikiId}>
     <div className="grid gap-2">

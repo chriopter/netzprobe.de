@@ -1,5 +1,6 @@
 [
   { "id": "last-2025", "path": "last-2025", "description": "last-2025/description.json" },
+  { "id": "last-2017", "path": "last-2017", "description": "last-2017/description.json" },
   { "id": "e100", "path": "preset/e100", "description": "preset/e100/description.json" },
   { "id": "e100-pkw", "path": "e100-pkw", "description": "e100-pkw/description.json" },
   { "id": "e100-lkw", "path": "e100-lkw", "description": "e100-lkw/description.json" },
@@ -12,7 +13,9 @@
   { "id": "e100-stahl", "path": "e100-stahl", "description": "e100-stahl/description.json" },
   { "id": "e100-chemie", "path": "e100-chemie", "description": "e100-chemie/description.json" },
   { "id": "erzeugung-2025", "path": "erzeugung-2025", "description": "erzeugung-2025/description.json" },
+  { "id": "erzeugung-2017", "path": "erzeugung-2017", "description": "erzeugung-2017/description.json" },
   { "id": "versorgung-historisch-2025", "path": "preset/versorgung-historisch-2025", "description": "preset/versorgung-historisch-2025/description.json" },
+  { "id": "versorgung-historisch-2017", "path": "preset/versorgung-historisch-2017", "description": "preset/versorgung-historisch-2017/description.json" },
   { "id": "versorgung-100ee-noimport", "path": "preset/versorgung-100ee-noimport", "description": "preset/versorgung-100ee-noimport/description.json" },
   { "id": "versorgung-50ee-50import", "path": "preset/versorgung-50ee-50import", "description": "preset/versorgung-50ee-50import/description.json" },
   { "id": "versorgung-2025-skaliert", "path": "preset/versorgung-2025-skaliert", "description": "preset/versorgung-2025-skaliert/description.json" },

@@ -16,8 +16,9 @@ export function compute(
   erz: ErzeugungsPool,
   speicher: SpeicherPool,
 ): SupplyOverride {
-  // Halbierte Last → die 100ee-Logik dimensioniert RE auf die Hälfte; Rest wird via H₂-Import gedeckt.
-  const base = compute100Ee(demandTWh / 2, factors, erz, speicher);
+  // RE auf 50 % der Last auslegen. Mit Cushion 1.4 wäre direkter Faktor 0.5: 0.5 × 1.4 = 0.7 → zu viel RE.
+  // Daher RE-Auslegung auf 1/3 der Last × 1.4 = 0.467 ≈ 50 %. Trifft tatsächlich 50/50-Mix.
+  const base = compute100Ee(demandTWh / 3, factors, erz, speicher);
   return {
     generation: {
       ...base.generation,

@@ -7,6 +7,6 @@
   "maxInstalledGW": 50,
   "stepGW": 1,
   "mode": "baseload",
-  "availability": 1.0,
+  "availability": 0.86,
   "emissionGperKWh": 230
 }

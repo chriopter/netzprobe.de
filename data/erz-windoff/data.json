@@ -4,7 +4,7 @@
   "installed2025GW": 9.4,
   "defaultInstalledGW": 9.4,
   "minInstalledGW": 0,
-  "maxInstalledGW": 300,
+  "maxInstalledGW": 400,
   "stepGW": 2,
   "mode": "variable-re",
   "factorPackage": "einspeisefaktoren-2025",

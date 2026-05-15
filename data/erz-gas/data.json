@@ -8,6 +8,6 @@
   "stepGW": 5,
   "mode": "dispatchable",
   "availability": 0.9,
-  "minLoadFraction": 0.1,
+  "minLoadFraction": 0.05,
   "emissionGperKWh": 494
 }

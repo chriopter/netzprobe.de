@@ -167,7 +167,7 @@ function splitUrlList(value: string) {
   return value.split(/[,.]/).filter(Boolean);
 }
 
-const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', '100ee-noimport', '50ee-50import', '2025-skaliert'];
+const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '50ee-50import', '2025-skaliert'];
 
 function scenarioFromQueryParams(): Scenario {
   const params = queryParams();
@@ -291,12 +291,14 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
     };
   }, []);
 
+  const useHistorical2017 = scenario.supplyPreset === 'historical-2017';
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !data) return;
+    const hours = useHistorical2017 && data.hours2017 ? data.hours2017 : data.hours;
     worker.postMessage({
       type: 'init',
-      input: data.hours,
+      input: hours,
       'e100-pkw': data['e100-pkw'],
       'e100-heiz': data['e100-heiz'],
       'e100-lkw': data['e100-lkw'],
@@ -311,7 +313,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
       'speicher-modell': data['speicher-modell'],
     });
     hasDataRef.current = true;
-  }, [data]);
+  }, [data, useHistorical2017]);
 
   useEffect(() => {
     const worker = workerRef.current;

@@ -10,15 +10,17 @@ export type SupplyOverride = {
 const EE_PV_SHARE = 0.30;
 const EE_WIND_ON_SHARE = 0.45;
 const EE_WIND_OFF_SHARE = 0.15;
-// Cushion 1.5 deckt H₂-Roundtrip (η=0.24) für den Saisonal-Anteil; Curtail-Buffer + Direkt-RE-Anteil.
-const EE_CUSHION = 1.5;
+// Cushion 1.4 deckt H₂-Roundtrip (η=0.24) für den Saisonal-Anteil; Curtail-Buffer + Direkt-RE-Anteil.
+// 1.5 produzierte bei niedrigem Demand zu viel Curtailment (validierungs-Agent B); 1.4 ist Sweet-Spot.
+const EE_CUSHION = 1.4;
 // Speicher skalieren mit Jahres-Demand. Faustregeln: Batterie für tägliches Smoothing (~5 h Speicher bei 10 % Spitzenanteil),
-// H₂ für saisonal (~2 Wochen Dunkelflaute auf Peak-Last). Werte aus Agora/BMWK Zielbild 2045 skaliert.
+// H₂ für saisonal (~2 Wochen Dunkelflaute auf Peak-Last). Werte an Fraunhofer ISE „Wege..."-Benchmark gefittet.
 const EE_BATTERY_POWER_PER_TWH = 0.1;       // 47 GW @ 466 TWh, 120 GW @ 1211 TWh
 const EE_BATTERY_ENERGY_PER_TWH = 0.5;      // 233 GWh @ 466 TWh, 605 GWh @ 1211 TWh
 const EE_H2_CHARGE_PER_TWH = 0.06;          // 28 GW @ 466 TWh, 73 GW @ 1211 TWh
 const EE_H2_DISCHARGE_PER_TWH = 0.12;       // 56 GW @ 466 TWh, 145 GW @ 1211 TWh
-const EE_H2_ENERGY_FRACTION_OF_DEMAND = 0.1;
+// Saisonal-H₂-Speicher: Fraunhofer ISE-Benchmark ~130 TWh @ ~750 TWh Last = 0.17. 0.15 als robuster Mittelwert.
+const EE_H2_ENERGY_FRACTION_OF_DEMAND = 0.15;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));

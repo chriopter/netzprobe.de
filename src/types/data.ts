@@ -10,6 +10,7 @@ export type ObservedPower = {
   oilMW?: number;
   geothermalMW?: number;
   otherMW?: number;
+  nuclearMW?: number;
   importExportMW: number;
 };
 
@@ -480,4 +481,7 @@ export type DataSet = {
   generationSharesPct?: Record<string, number>;
   generationPartsTWh?: Record<string, number>;
   hours: HourlyInput[];
+  hours2017?: HourlyInput[];
+  loadSum2017TWh?: number;
+  generationSum2017TWh?: number;
 };

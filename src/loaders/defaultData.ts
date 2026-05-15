@@ -45,6 +45,7 @@ export async function loadDefaultData(): Promise<DataSet> {
     e100Ghd, e100IndustrieWaerme, e100Stahl, e100Chemie, generationData, factorData,
     erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle, erzHandel,
     speicherBatterie, speicherPumpspeicher, speicherH2,
+    load2017Data, generation2017Data,
   ] = await Promise.all([
     loadJson<SplitDataFile<LoadHour>>(dataPackageUrl(dataPackageIds.loadHistorical2025, 'data.json')),
     loadJson<E100PkwData>(dataPackageUrl(dataPackageIds.e100Pkw, 'data.json')),
@@ -71,6 +72,8 @@ export async function loadDefaultData(): Promise<DataSet> {
     loadJson<SpeicherBatterieData>(dataPackageUrl(dataPackageIds.speicherBatterie, 'data.json')),
     loadJson<SpeicherPumpspeicherData>(dataPackageUrl(dataPackageIds.speicherPumpspeicher, 'data.json')),
     loadJson<SpeicherH2Data>(dataPackageUrl(dataPackageIds.speicherH2, 'data.json')),
+    loadJson<SplitDataFile<LoadHour>>(dataPackageUrl(dataPackageIds.loadHistorical2017, 'data.json')),
+    loadJson<SplitDataFile<GenerationHour>>(dataPackageUrl(dataPackageIds.generationHistorical2017, 'data.json')),
   ]);
 
   const erzeugungsModell = aggregateErzeugungsPool(
@@ -107,8 +110,26 @@ export async function loadDefaultData(): Promise<DataSet> {
     };
   });
 
+  const generation2017ByTime = new Map(generation2017Data.hours.map((hour) => [hour.time, hour]));
+  const hours2017 = load2017Data.hours.map((loadHour) => {
+    const generation = generation2017ByTime.get(loadHour.time);
+    if (!generation) throw new Error(`Unvollständige Daten für ${loadHour.time}: erzeugung-2017`);
+    const { time: _generationTime, ...observed } = generation;
+    // 2017-Hours nutzen Pass-Through im Kernmodell — Faktor- und HDD-Felder werden nicht ausgewertet.
+    // Wir setzen Filler-Werte (0 Faktoren, weight 1/8760) damit die HourlyInput-Form passt.
+    return {
+      time: loadHour.time,
+      loadMW: loadHour.loadMW,
+      solarIrradiance: [0],
+      wind100m: [0],
+      heatingDegreeDayWeight: 1 / 8760,
+      hourOfDayBerlin: new Date(loadHour.time).getUTCHours(),
+      observed,
+    };
+  });
+
   return {
-    source: 'Energy-Charts 2025: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
+    source: 'Energy-Charts 2025 + 2017: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
     'e100-pkw': e100Pkw,
     'e100-heiz': e100Heiz,
     'e100-lkw': e100Lkw,
@@ -127,6 +148,9 @@ export async function loadDefaultData(): Promise<DataSet> {
     generationSharesPct: generationData.sumSharesPct,
     generationPartsTWh: generationData.sumPartsTWh,
     hours,
+    hours2017,
+    loadSum2017TWh: load2017Data.sumTWh,
+    generationSum2017TWh: generation2017Data.sumTWh,
   };
 }
 

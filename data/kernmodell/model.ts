@@ -201,7 +201,6 @@ function buildHistoricalHour(
   row: HourlyInput,
   loadGW: number,
   emissions: EmissionFactors,
-  importLimitGW: number,
 ): SimHour {
   const pvGW = row.observed.pvMW / 1000;
   const windOnGW = row.observed.windOnMW / 1000;
@@ -210,7 +209,7 @@ function buildHistoricalHour(
   const laufwasserGW = (row.observed.hydroMW ?? 0) / 1000;
   const gasGW = row.observed.gasMW / 1000;
   const kohleGW = row.observed.coalMW / 1000;
-  const kernkraftGW = 0;
+  const kernkraftGW = (row.observed.nuclearMW ?? 0) / 1000;
   const geothermalGW = (row.observed.geothermalMW ?? 0) / 1000;
   const wasteGW = (row.observed.wasteMW ?? 0) / 1000;
   const oilGW = (row.observed.oilMW ?? 0) / 1000;
@@ -224,8 +223,11 @@ function buildHistoricalHour(
   const dataBoundaryResidualGW = historicalLoadGW + observedExportGW - supplyTotal - observedImportGW;
 
   const extraLoadGW = Math.max(0, loadGW - historicalLoadGW);
-  // Cap: total stündlicher Import darf importLimitGW nicht überschreiten. Zusatzlast über das Cap → loadShedding.
-  const importCapHeadroomGW = Math.max(0, importLimitGW - observedImportGW);
+  // Historischer Pass-Through nutzt einen physikalisch motivierten NTC-Cap (~25 GW reales DE-Grid-Limit
+  // laut ENTSO-E 2025), nicht den User-Slider. So fängt zB e100-pkw (~138 TWh extra) noch in den NTC,
+  // während Vollelektrifizierung (2000+ TWh extra) das Cap deutlich übersteigt → Fehlend wird sichtbar.
+  const HISTORICAL_NTC_CAP_GW = 35;
+  const importCapHeadroomGW = Math.max(0, HISTORICAL_NTC_CAP_GW - observedImportGW);
   const automaticImportGW = Math.min(extraLoadGW, importCapHeadroomGW);
   const loadSheddingGW = Math.max(0, extraLoadGW - automaticImportGW);
   const importGW = observedImportGW + automaticImportGW;
@@ -305,7 +307,7 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
   const gasRatio = erz.dispatchOrder.rampUpRatio.gas ?? 1;
   const kohleRatio = erz.dispatchOrder.rampUpRatio.kohle ?? 1;
 
-  const isHistorical = scenario.supplyPreset === 'historical-2025';
+  const isHistorical = scenario.supplyPreset === 'historical-2025' || scenario.supplyPreset === 'historical-2017';
   const emissions: EmissionFactors = {
     pv: emPv, windOn: emWindOn, windOff: emWindOff,
     kern: emKern, biomasse: emBiomasse, laufwasser: emLaufwasser,
@@ -316,7 +318,7 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
     const loadGW = demandGW(row, scenario, demandContext);
 
     if (isHistorical) {
-      hours.push(buildHistoricalHour(row, loadGW, emissions, importLimitGW));
+      hours.push(buildHistoricalHour(row, loadGW, emissions));
       continue;
     }
 

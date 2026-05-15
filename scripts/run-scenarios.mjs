@@ -14,6 +14,8 @@ const readJson = (pkg) => JSON.parse(readFileSync(resolve(dataDir, pkg, 'data.js
 const loadData = readJson('last-2025');
 const generationData = readJson('erzeugung-2025');
 const factorData = readJson('einspeisefaktoren-2025');
+const loadData2017 = readJson('last-2017');
+const generationData2017 = readJson('erzeugung-2017');
 const e100Pkw = readJson('e100-pkw');
 const e100Heiz = readJson('e100-heiz');
 const e100Lkw = readJson('e100-lkw');
@@ -92,6 +94,24 @@ const hours = loadData.hours.map((loadHour) => {
   };
 });
 
+const generation2017ByTime = new Map(generationData2017.hours.map((hour) => [hour.time, hour]));
+const hours2017 = loadData2017.hours.map((loadHour) => {
+  const generation = generation2017ByTime.get(loadHour.time);
+  if (!generation) throw new Error(`missing 2017 generation for ${loadHour.time}`);
+  const { date, hour } = berlinDateAndHour(loadHour.time);
+  const heatingDegreeDay = heatingByDate.get(`2025-${date.slice(5)}`) ?? heatingByDate.get(date) ?? { weight: 0 };
+  const { time: _t, ...observed } = generation;
+  return {
+    time: loadHour.time,
+    loadMW: loadHour.loadMW,
+    solarIrradiance: 0,
+    wind100m: 0,
+    heatingDegreeDayWeight: heatingDegreeDay.weight,
+    hourOfDayBerlin: hour,
+    observed,
+  };
+});
+
 const context = {
   'e100-pkw': e100Pkw, 'e100-heiz': e100Heiz, 'e100-lkw': e100Lkw, 'e100-bahn': e100Bahn,
   'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
@@ -158,9 +178,13 @@ const verkehrPatch = {
   'e100-flug': true, 'e100-flug-target-twh': e100FlugMax,
 };
 
+const baseHistorical2017 = { ...baseHistorical, id: 'historical-2017', name: 'Historisch 2017', supplyPreset: 'historical-2017' };
+
 const scenarios = [
   { name: 'baseline-2025-historisch', scenario: baseHistorical },
+  { name: 'baseline-2017-historisch', scenario: baseHistorical2017, hours: hours2017 },
   { name: 'baseline-2025', scenario: base },
+  { name: 'pkw-100-historisch', scenario: withDemand(baseHistorical, { 'e100-pkw': true, 'e100-pkw-million-km': e100PkwMax }) },
   { name: 'e100-komplett-historisch', scenario: withDemand(baseHistorical, allMaxPatch) },
   { name: '100ee+verkehr', scenario: withPreset(withDemand(base, verkehrPatch), '100ee-noimport') },
   { name: '50ee+verkehr', scenario: withPreset(withDemand(base, verkehrPatch), '50ee-50import') },
@@ -188,8 +212,8 @@ const scenarios = [
 const fmt2 = (n) => Number(Number(n).toFixed(2));
 const fmt0 = (n) => Number(Number(n).toFixed(0));
 
-const results = scenarios.map(({ name, scenario }) => {
-  const result = runSimulation(hours, scenario, context);
+const results = scenarios.map(({ name, scenario, hours: hoursOverride }) => {
+  const result = runSimulation(hoursOverride ?? hours, scenario, context);
   const summary = result.summary;
   return {
     name,
