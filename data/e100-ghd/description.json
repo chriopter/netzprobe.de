@@ -58,7 +58,7 @@
     "Profil-Basis ist das reale Wetterjahr 2025; ein anderes Jahr ergäbe einen anderen Tagesgang.",
     "8-Städte-Mittel ist additiv auf DWD-Gebietsmittel DE pro Monat kalibriert; ländliche GHD-Standorte liegen ggf. leicht unter dem Großstadt-Niveau.",
     "Tagesgang G0 ist ein Misch-SLP ueber alle Gewerbearten; Schichtbetriebe (Krankenhaus 24/7) und Einzelhandel (Spitze 10-20 Uhr) werden gemittelt.",
-    "Sommerheizlast (Jun–Aug ~1 TWh) ist eine Modellartefakt-Folge der HDD-Schwelle bei kühlen Tagen; reale GHD-Anlagen würden bei kühlen Sommertagen kaum heizen, sondern eher kühlen.",
+    "Sommer-Heizspitzen (Jun–Aug ~1 TWh Gesamt, einzelne Tage bis ~7 GW Peak-Stunden-Last) sind ein Modellartefakt der starren DIN-Heizgrenze 15 °C — identische Mechanik wie bei e100-heiz auf demselben Klima-Profil. Reale Beispieltage 2025: 8.–11. Juni, 8. Juli, 22.–25. August mit Tagesmittel 12,6–15,0 °C. GHD-Anlagen wären saisonal aus, Gebäudemasse dämpft kurze Kühl-Stöße. Bewusst nicht gefixt (Überschlagsrechnung).",
     "Slider-Werte oberhalb 163 TWh decken Upside-Szenarien (Sanierungsstau, Lueftungs- und Prozesswaerme-Mitnahme) ab."
   ],
   "sections": [

@@ -57,7 +57,7 @@
     "JAZ ist Jahresmittel; reale Luft-Wasser-Wärmepumpen verlieren bei kalten Außentemperaturen Effizienz, der Winterpeak ist daher leicht unterschätzt.",
     "Profil-Basis ist das reale Wetterjahr 2025; ein anderes Jahr ergäbe einen anderen Tagesgang.",
     "8-Städte-Mittel ist additiv auf DWD-Gebietsmittel DE pro Monat kalibriert — Monatsniveaus stimmen exakt, intra-monatliche Streuung kommt aus den Großstadt-Reanalysen und liegt ggf. leicht unterhalb der ländlichen Werte.",
-    "Sommerheizlast (Jun–Aug ~2,5 TWh) ist eine Modellartefakt-Folge der HDD-Schwelle bei kühlen Tagen; reale Wärmepumpen würden bei kühlen Sommertagen kaum heizen, sondern eher kühlen.",
+    "Sommer-Heizspitzen (Jun–Aug ~2,5 TWh Gesamt, einzelne Tage bis ~17 GW Peak-Stunden-Last) sind ein Modellartefakt der starren DIN-Heizgrenze 15 °C. Reale Beispieltage 2025: 8.–11. Juni mit Tagesmittel 12,6–14,6 °C, 8. Juli 14,2 °C, 22.–25. August 13,6–15,0 °C — das Modell zählt diese als Heiztage und rechnet HDD = 20 − T. Reale Wärmepumpen wären saisonal aus, Gebäudemasse dämpft kurze Kühl-Stöße. Eine saisonale Heizgrenze, harte Jun–Aug-Pause oder ein gleitendes Tagesmittel würden das fixen; aktuell bewusst nicht implementiert (Überschlagsrechnung).",
     "Slider-Werte oberhalb 530 TWh decken Upside-Szenarien (Sanierungsstau, GHD-Mitnahme) ab."
   ],
   "sections": [
