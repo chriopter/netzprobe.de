@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import {
   Activity,
   BookOpen,
@@ -40,7 +40,11 @@ type ScenarioSidebarProps = {
   customStart: string;
   customEnd: string;
   collapsed: boolean;
+  openSectors: SidebarOpenSectors;
+  expandedRow: SidebarExpandedRow;
   onCollapsedChange: (collapsed: boolean) => void;
+  onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
+  onExpandedRowChange: (row: SidebarExpandedRow) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -67,7 +71,9 @@ type ScenarioSidebarProps = {
   onE100ChemieTargetChange: (twh: number) => void;
 };
 
-type SectorId = 'verkehr' | 'waerme' | 'industrie';
+export type SidebarSectorId = 'verkehr' | 'waerme' | 'industrie';
+export type SidebarOpenSectors = Record<SidebarSectorId, boolean>;
+export type SidebarExpandedRow = string | null;
 
 export function ScenarioSidebar({
   data,
@@ -77,7 +83,11 @@ export function ScenarioSidebar({
   customStart,
   customEnd,
   collapsed,
+  openSectors,
+  expandedRow,
   onCollapsedChange,
+  onOpenSectorsChange,
+  onExpandedRowChange,
   onPreset,
   onStart,
   onEnd,
@@ -195,6 +205,10 @@ export function ScenarioSidebar({
           onE100StahlTargetChange={onE100StahlTargetChange}
           onE100ChemieChange={onE100ChemieChange}
           onE100ChemieTargetChange={onE100ChemieTargetChange}
+          openSectors={openSectors}
+          expandedRow={expandedRow}
+          onOpenSectorsChange={onOpenSectorsChange}
+          onExpandedRowChange={onExpandedRowChange}
         />
 
         <ReadonlyCard
@@ -247,16 +261,14 @@ type LoadConfigurationProps = {
   onE100StahlTargetChange: (n: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (n: number) => void;
+  openSectors: SidebarOpenSectors;
+  expandedRow: SidebarExpandedRow;
+  onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
+  onExpandedRowChange: (row: SidebarExpandedRow) => void;
 };
 
 function LoadConfiguration(props: LoadConfigurationProps) {
-  const { data, scenario, onHistoricalLoadChange } = props;
-  const [openSectors, setOpenSectors] = useState<Record<SectorId, boolean>>({
-    verkehr: true,
-    waerme: false,
-    industrie: false,
-  });
-  const [expandedRow, setExpandedRow] = useState<string | null>('e100-pkw');
+  const { data, scenario, onHistoricalLoadChange, openSectors, expandedRow, onOpenSectorsChange, onExpandedRowChange } = props;
   const sectorFlags: Array<keyof Scenario['demand']> = [
     'e100-pkw', 'e100-heiz', 'e100-lkw', 'e100-bahn', 'e100-schiff', 'e100-flug',
     'e100-ghd', 'e100-industrie-waerme', 'e100-stahl', 'e100-chemie',
@@ -291,8 +303,8 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     props.onE100StahlChange(enabled);
     props.onE100ChemieChange(enabled);
   };
-  const toggleSector = (id: SectorId) => setOpenSectors(prev => ({ ...prev, [id]: !prev[id] }));
-  const toggleRow = (id: string) => setExpandedRow(current => current === id ? null : id);
+  const toggleSector = (id: SidebarSectorId) => onOpenSectorsChange({ ...openSectors, [id]: !openSectors[id] });
+  const toggleRow = (id: string) => onExpandedRowChange(expandedRow === id ? null : id);
 
   const transportTotal = data ? sumEnabled([
     [scenario.demand['e100-pkw'], e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw'])],
@@ -320,8 +332,8 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const selectElectrification = () => {
     onHistoricalLoadChange(true);
     setAllSectors(true);
-    setOpenSectors({ verkehr: true, waerme: false, industrie: false });
-    setExpandedRow('e100-pkw');
+    onOpenSectorsChange({ verkehr: true, waerme: false, industrie: false });
+    onExpandedRowChange('e100-pkw');
   };
 
   return <SidebarCard title="Last" icon={<Activity className="h-4 w-4"/>} docId={datasetIds.loadHistorical2025}>

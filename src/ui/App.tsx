@@ -18,17 +18,6 @@ import { cx, muted, shell, sidebarOffsetClass } from './ui';
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
-const chartModeStorageKey = 'netzprobe.chartMode';
-
-function storedChartMode(): ChartMode {
-  try {
-    return window.localStorage.getItem(chartModeStorageKey) === 'linie' ? 'linie' : 'sunburst';
-  } catch {
-    return 'sunburst';
-  }
-}
-
-
 function useChart(id: string, option: echarts.EChartsOption | undefined) {
   const chartRef = useRef<echarts.ECharts | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -159,7 +148,7 @@ function Dashboard() {
   const [customEnd, setCustomEnd] = useState('2025-12-31');
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
-  const [chartMode, setChartMode] = useState<ChartMode>(storedChartMode);
+  const [chartMode, setChartMode] = useState<ChartMode>('sunburst');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(max-width: 1023px)').matches;
@@ -168,14 +157,6 @@ function Dashboard() {
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
   }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(chartModeStorageKey, chartMode);
-    } catch {
-      // Speicherung ist Komfort, nicht Bedingung.
-    }
-  }, [chartMode]);
 
   const result = useWorkerSimulation(data, scenario);
   useEffect(() => {

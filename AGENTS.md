@@ -5,6 +5,7 @@
 - Code, Dateinamen, Typen, Tests, technische Identifier: Englisch.
 - UI-Text, README, Description-JSONs, Daten-Notes: Deutsch, knapp, sachlich.
 - Simulation getrennt von UI; rechenlastige Läufe im Web Worker.
+- Alles, was in der Sidebar oder sonstigen UI konfigurierbar ist, muss live in der URL codiert sein. Die URL ist der teilbare Zustand; keine Konfiguration ausschließlich in LocalStorage, SessionStorage oder Cookies speichern.
 - Start: `npm install`, dann `npm run dev`. Vor Commit: `npm test` und `npm run build`.
 
 ## Datenpakete entwickeln
