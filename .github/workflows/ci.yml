@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auschecken
+        uses: actions/checkout@v4
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Abhängigkeiten installieren
+        run: npm ci
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Trigger VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy-Webhook aufrufen
+        env:
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
+        run: |
+          PAYLOAD='{"ref":"refs/heads/main","repository":"chriopter/netzprobe","sha":"${{ github.sha }}"}'
+          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$DEPLOY_SECRET" | awk '{print $2}')"
+          curl --fail --silent --show-error --request POST https://deploy.netzprobe.de/ \
+            --header "Content-Type: application/json" \
+            --header "X-Hub-Signature-256: $SIG" \
+            --data "$PAYLOAD"
