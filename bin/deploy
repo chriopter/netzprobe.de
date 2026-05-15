@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DIR:-/root/netzprobe}"
+BRANCH="${BRANCH:-main}"
+LOCK_FILE="${LOCK_FILE:-/tmp/netzprobe-deploy.lock}"
+
+log() {
+  printf '[netzprobe-deploy] %s\n' "$*"
+}
+
+mkdir -p "$(dirname "$LOCK_FILE")"
+exec 9>"$LOCK_FILE"
+flock -n 9 || {
+  log "deployment already running"
+  exit 0
+}
+
+if [ ! -d "$APP_DIR/.git" ]; then
+  log "missing git checkout at $APP_DIR"
+  log "clone once with: git clone https://github.com/chriopter/netzprobe.git $APP_DIR"
+  exit 1
+fi
+
+cd "$APP_DIR"
+
+before="$(git rev-parse HEAD)"
+git pull --ff-only origin "$BRANCH"
+after="$(git rev-parse HEAD)"
+
+if [ "$before" = "$after" ]; then
+  log "already up to date: $after"
+  exit 0
+fi
+
+log "deploying $after"
+
+npm ci
+npm test
+npm run build
+
+log "built $APP_DIR/dist"

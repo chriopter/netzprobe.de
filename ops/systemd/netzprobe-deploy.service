@@ -8,4 +8,4 @@ Type=oneshot
 Environment=APP_DIR=/root/netzprobe
 Environment=BRANCH=main
 WorkingDirectory=/root/netzprobe
-ExecStart=/root/netzprobe/bin/deploy-vps
+ExecStart=/root/netzprobe/bin/deploy
