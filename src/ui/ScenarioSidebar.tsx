@@ -197,6 +197,7 @@ export function ScenarioSidebar({
           end={selectedPeriod.end}
           customStart={customStart}
           customEnd={customEnd}
+          loadYear={scenario.loadYear}
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
@@ -847,6 +848,7 @@ function PeriodControl({
   end,
   customStart,
   customEnd,
+  loadYear,
   onPreset,
   onStart,
   onEnd,
@@ -856,10 +858,13 @@ function PeriodControl({
   end: string;
   customStart: string;
   customEnd: string;
+  loadYear: 2025 | 2017;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
 }) {
+  const yearMin = `${loadYear}-01-01`;
+  const yearMax = `${loadYear}-12-31`;
   return <SidebarCard title="Zeitraum" icon={<CalendarDays className="h-4 w-4"/>}>
     <select
       className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400"
@@ -873,8 +878,8 @@ function PeriodControl({
     </select>
     <span className="text-xs text-zinc-500">{formatDate(start)} bis {formatDate(end)}</span>
     {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
-      <input aria-label="Startdatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min="2025-01-01" max="2025-12-31" value={customStart} onChange={event => onStart(event.target.value)}/>
-      <input aria-label="Enddatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min="2025-01-01" max="2025-12-31" value={customEnd} onChange={event => onEnd(event.target.value)}/>
+      <input aria-label="Startdatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
+      <input aria-label="Enddatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
     </div>}
   </SidebarCard>;
 }

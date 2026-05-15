@@ -264,10 +264,11 @@ function localDate(iso: string) {
   return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
 }
 
-function periodDates(preset: PeriodPreset, start: string, end: string) {
-  if (preset === '21d') return { start: '2025-01-01', end: '2025-01-21' };
-  if (preset === '90d') return { start: '2025-01-01', end: '2025-03-31' };
-  if (preset === 'year') return { start: '2025-01-01', end: '2025-12-31' };
+function periodDates(preset: PeriodPreset, start: string, end: string, year: 2025 | 2017 = 2025) {
+  const y = String(year);
+  if (preset === '21d') return { start: `${y}-01-01`, end: `${y}-01-21` };
+  if (preset === '90d') return { start: `${y}-01-01`, end: `${y}-03-31` };
+  if (preset === 'year') return { start: `${y}-01-01`, end: `${y}-12-31` };
   return { start, end: end < start ? start : end };
 }
 
@@ -452,7 +453,7 @@ function Dashboard() {
     return () => window.clearTimeout(timer);
   }, [result, chartResult]);
 
-  const selectedPeriod = periodDates(periodPreset, customStart, customEnd);
+  const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
   const chartSource = chartResult ?? result;
   const sliced = useMemo(() => chartSource?.hours.filter(hour => {
     const day = localDate(hour.time);
