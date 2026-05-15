@@ -293,10 +293,19 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   }, []);
 
   const useLoad2017 = scenario.loadYear === 2017;
+  const observationYear: 2017 | 2025 = scenario.supplyPreset === 'historical-2017'
+    ? 2017
+    : scenario.supplyPreset === 'historical-2025'
+      ? 2025
+      : scenario.loadYear;
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !data) return;
-    const hours = useLoad2017 && data.hours2017 ? data.hours2017 : data.hours;
+    const loadHours = useLoad2017 && data.hours2017 ? data.hours2017 : data.hours;
+    const obsHours = observationYear === 2017 && data.hours2017 ? data.hours2017 : data.hours;
+    const hours = loadHours === obsHours
+      ? loadHours
+      : loadHours.map((row, i) => ({ ...row, observed: obsHours[i]?.observed ?? row.observed }));
     worker.postMessage({
       type: 'init',
       input: hours,
@@ -314,7 +323,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
       'speicher-modell': data['speicher-modell'],
     });
     hasDataRef.current = true;
-  }, [data, useLoad2017]);
+  }, [data, useLoad2017, observationYear]);
 
   useEffect(() => {
     const worker = workerRef.current;
@@ -622,8 +631,6 @@ function Dashboard() {
         scenario={resolvedScenario}
         supplyPreset={scenario.supplyPreset}
         onSupplyPresetChange={(p) => setScenario(prev => {
-          if (p === 'historical-2017') return { ...prev, supplyPreset: p, loadYear: 2017 };
-          if (p === 'historical-2025') return { ...prev, supplyPreset: p, loadYear: 2025 };
           if (p === 'custom') return { ...prev, supplyPreset: 'custom', generation: resolvedScenario.generation, storage: resolvedScenario.storage };
           return { ...prev, supplyPreset: p };
         })}
@@ -647,12 +654,7 @@ function Dashboard() {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
-        onLoadYearChange={(year) => setScenario(prev => {
-          let supplyPreset = prev.supplyPreset;
-          if (year === 2017 && prev.supplyPreset === 'historical-2025') supplyPreset = 'historical-2017';
-          else if (year === 2025 && prev.supplyPreset === 'historical-2017') supplyPreset = 'historical-2025';
-          return { ...prev, loadYear: year, supplyPreset };
-        })}
+        onLoadYearChange={(year) => setScenario(prev => ({ ...prev, loadYear: year }))}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
         onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}
