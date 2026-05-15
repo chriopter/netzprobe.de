@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataCatalog';
-import { twh } from './format';
+import { fmt0, twh, twh0 } from './format';
 import { cx, sidebarWidthClass } from './ui';
 import { additionalTWh as e100PkwAdditionalTWh } from '../../data/e100-pkw/model';
 import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh } from '../../data/e100-heiz/model';
@@ -42,6 +42,7 @@ type ScenarioSidebarProps = {
   collapsed: boolean;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
+  actionBar?: ReactNode;
   onCollapsedChange: (collapsed: boolean) => void;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
@@ -85,6 +86,7 @@ export function ScenarioSidebar({
   collapsed,
   openSectors,
   expandedRow,
+  actionBar = null,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -156,7 +158,7 @@ export function ScenarioSidebar({
           <PanelLeftClose className="h-4 w-4" aria-hidden="true"/>
         </button>
         <div className="grid min-w-0 flex-1 gap-0.5">
-          <h1 className="text-2xl font-semibold leading-8 text-zinc-950">Netzprobe</h1>
+          <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">Netzprobe</h1>
           <a
             href={dataWikiHomeUrl()}
             target="_blank"
@@ -170,6 +172,8 @@ export function ScenarioSidebar({
       </div>
 
       <div className="grid gap-3">
+        {actionBar}
+
         <PeriodControl
           preset={periodPreset}
           start={selectedPeriod.start}
@@ -325,6 +329,21 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const transportEnabled = scenario.demand['e100-pkw'] || scenario.demand['e100-lkw'] || scenario.demand['e100-bahn'] || scenario.demand['e100-schiff'] || scenario.demand['e100-flug'];
   const heatEnabled = scenario.demand['e100-heiz'] || scenario.demand['e100-ghd'];
   const industryEnabled = scenario.demand['e100-industrie-waerme'] || scenario.demand['e100-stahl'] || scenario.demand['e100-chemie'];
+  const basisTotal = scenario.demand['last-2025'] && data?.loadSumTWh ? data.loadSumTWh : 0;
+  const electrificationTotal = basisTotal + transportTotal + heatTotal + industryTotal;
+  const electrificationPotentialTotal = data ? (
+    (data.loadSumTWh ?? 0)
+    + e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw'])
+    + e100LkwAdditionalTWh(scenario.demand['e100-lkw-target-bn-km'], data['e100-lkw'])
+    + e100BahnAdditionalTWh(scenario.demand['e100-bahn-target-twh'], data['e100-bahn'])
+    + e100SchiffAdditionalTWh(scenario.demand['e100-schiff-target-twh'], data['e100-schiff'])
+    + e100FlugAdditionalTWh(scenario.demand['e100-flug-target-twh'], data['e100-flug'])
+    + e100HeizAdditionalElectricityTWh(scenario.demand['e100-heiz-target-heat-twh'], data['e100-heiz'])
+    + e100GhdAdditionalElectricityTWh(scenario.demand['e100-ghd-target-heat-twh'], data['e100-ghd'])
+    + e100IndustrieAdditionalElectricityTWh(scenario.demand['e100-industrie-waerme-target-heat-twh'], data['e100-industrie-waerme'])
+    + e100StahlAdditionalTWh(scenario.demand['e100-stahl-target-mio-ton'], data['e100-stahl'])
+    + e100ChemieAdditionalTWh(scenario.demand['e100-chemie-target-twh'], data['e100-chemie'])
+  ) : 0;
   const selectHistorical = () => {
     onHistoricalLoadChange(true);
     setAllSectors(false);
@@ -341,7 +360,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         <ScenarioRadioItem
           name="last-mode"
           label="Historisch 2025"
-          meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh(data.loadSumTWh)}` : ''}`}
+          meta={`Energy-Charts${data?.loadSumTWh ? ` · ${twh0(data.loadSumTWh)}` : ''}`}
           checked={!electrificationSelected}
           onSelect={selectHistorical}
         />
@@ -363,7 +382,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
                 <span className="truncate text-sm font-semibold text-zinc-950">100 % Elektrifizierung</span>
                 <InfoLink id={datasetIds.fullElectrification} label="100 % Elektrifizierung im Wiki öffnen"/>
               </span>
-              <span className="truncate text-xs text-zinc-500">Verkehr, Wärme und Industrie additiv</span>
+              <span className="truncate text-xs text-zinc-500">Elektrifizierung aller Sektoren{data ? ` · ${twh0(electrificationSelected ? electrificationTotal : electrificationPotentialTotal)}` : ''}</span>
             </span>
           </label>
 
@@ -371,14 +390,14 @@ function LoadConfiguration(props: LoadConfigurationProps) {
             <div className="grid gap-2 border-l border-zinc-300/80 pl-2.5">
               <BasisSubSection
                 checked={scenario.demand['last-2025']}
-                meta={data?.loadSumTWh ? `Basis · ${twh(data.loadSumTWh)}` : 'Basislast'}
+                meta={data?.loadSumTWh ? `Basis · ${twh0(data.loadSumTWh)}` : 'Basislast'}
                 docId={datasetIds.loadHistorical2025}
                 onChange={onHistoricalLoadChange}
               />
 
               {data && <AccordionSection
                 title="Verkehr"
-                value={twh(transportTotal)}
+                value={twh0(transportTotal)}
                 icon={<Car className="h-4 w-4"/>}
                 checked={transportEnabled}
                 docId={datasetIds.e100Pkw}
@@ -432,7 +451,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
 
               {data && <AccordionSection
                 title="Wärme"
-                value={twh(heatTotal)}
+                value={twh0(heatTotal)}
                 icon={<Flame className="h-4 w-4"/>}
                 checked={heatEnabled}
                 docId={datasetIds.e100Heiz}
@@ -462,7 +481,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
 
               {data && <AccordionSection
                 title="Industrie"
-                value={twh(industryTotal)}
+                value={twh0(industryTotal)}
                 icon={<Factory className="h-4 w-4"/>}
                 checked={industryEnabled}
                 docId={datasetIds.e100IndustrieWaerme}
@@ -962,9 +981,10 @@ function sumEnabled(entries: Array<[boolean, number]>) {
 }
 
 function generationMeta(data: DataSet | null) {
-  const generation = data?.generationSumTWh ? twh(data.generationSumTWh) : '—';
-  const imported = data?.importSumTWh ? twh(data.importSumTWh) : '—';
-  return `${generation} Erzeugung · ${imported} Import`;
+  if (!data?.generationSumTWh) return '—';
+  const generation = twh0(data.generationSumTWh);
+  if (!data.importSumTWh) return generation;
+  return `${generation} · +${fmt0.format(data.importSumTWh)} Import`;
 }
 
 function formatPercent(value: number) {
