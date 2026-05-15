@@ -102,7 +102,7 @@ describe('mix chart options', () => {
     expect(radial.polar).toBeDefined();
     expect(radial.angleAxis).toBeDefined();
     expect(radial.radiusAxis).toBeDefined();
-    expect(radiusAxis.axisLabel.show).toBe(false);
+    expect(radiusAxis.axisLabel.show).toBe(true);
     expect(radial.xAxis).toBeUndefined();
     expect(radialSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBe('polar');
     expect(radialSeries.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
