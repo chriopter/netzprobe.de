@@ -6,8 +6,20 @@ $log = function($message) use ($logFile) {
 
 $secretFile = '/root/netzprobe/deploy/.secret';
 $deployScript = '/root/netzprobe/deploy/deploy';
+$maxPayloadBytes = 4096;
 
 $log('Webhook received');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    die('Method not allowed');
+}
+
+if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > $maxPayloadBytes) {
+    http_response_code(413);
+    $log('Payload too large');
+    die('Payload too large');
+}
 
 if (!file_exists($secretFile)) {
     http_response_code(500);
@@ -33,6 +45,18 @@ if (!hash_equals($expected, $signature)) {
 }
 
 $data = json_decode($payload, true);
+if (!is_array($data)) {
+    http_response_code(400);
+    $log('Invalid JSON');
+    die('Invalid JSON');
+}
+
+if (($data['repository'] ?? '') !== 'chriopter/netzprobe') {
+    http_response_code(403);
+    $log('Invalid repository ' . ($data['repository'] ?? 'unknown'));
+    die('Invalid repository');
+}
+
 if (($data['ref'] ?? '') !== 'refs/heads/main') {
     $log('Ignored ref ' . ($data['ref'] ?? 'unknown'));
     die('Not main branch');

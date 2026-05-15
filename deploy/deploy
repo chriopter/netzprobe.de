@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/root/netzprobe}"
-BRANCH="${BRANCH:-main}"
-LOCK_FILE="${LOCK_FILE:-/tmp/netzprobe-deploy.lock}"
+APP_DIR="/root/netzprobe"
+BRANCH="main"
+LOCK_FILE="/tmp/netzprobe-deploy.lock"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 log() {
   printf '[netzprobe-deploy] %s\n' "$*"
