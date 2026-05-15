@@ -120,7 +120,7 @@ const angleAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
 
 const radiusAxis = (unit = 'GW') => ({
   type: 'value' as const,
-  axisLabel: { show: false, color: '#71717a', formatter: `{value} ${unit}` },
+  axisLabel: { show: true, color: '#71717a', fontSize: 9, formatter: `{value} ${unit}` },
   axisLine: { show: false },
   axisTick: { show: false },
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
