@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { Menu, PanelLeftOpen } from 'lucide-react';
+import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
 import { dataFileUrl } from '../dataPackages';
 import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
@@ -12,11 +12,138 @@ import { DataHandbook } from './DataHandbook';
 import { manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt0, pct, twh } from './format';
-import { ScenarioSidebar, type PeriodPreset } from './ScenarioSidebar';
-import { defaultScenario, normalizeScenario, scenarioFromUrl } from './scenarioPresets';
+import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
+import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { cx, muted, shell, sidebarOffsetClass } from './ui';
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+
+const defaultExpandedRow: SidebarExpandedRow = 'e100-pkw';
+const defaultCustomStart = '2025-01-01';
+const defaultCustomEnd = '2025-12-31';
+const defaultChartMode: ChartMode = 'sunburst';
+const defaultPeriodPreset: PeriodPreset = 'year';
+const defaultOpenSections = 'verkehr';
+const defaultOpenSectors: SidebarOpenSectors = { verkehr: true, waerme: false, industrie: false };
+const listSeparator = '.';
+const scenarioBase = normalizeScenario(defaultScenario);
+const electrificationFlags: Array<keyof Scenario['demand']> = [
+  'e100-pkw', 'e100-heiz', 'e100-lkw', 'e100-bahn', 'e100-schiff', 'e100-flug',
+  'e100-ghd', 'e100-industrie-waerme', 'e100-stahl', 'e100-chemie',
+];
+const electrificationIds = new Set(electrificationFlags);
+const fullElectrificationId = 'e100';
+const scenarioNumberParams: Array<[string, keyof Scenario['demand']]> = [
+  ['pkwKm', 'e100-pkw-million-km'],
+  ['heizTWh', 'e100-heiz-target-heat-twh'],
+  ['lkwKm', 'e100-lkw-target-bn-km'],
+  ['bahnTWh', 'e100-bahn-target-twh'],
+  ['schiffTWh', 'e100-schiff-target-twh'],
+  ['flugTWh', 'e100-flug-target-twh'],
+  ['ghdTWh', 'e100-ghd-target-heat-twh'],
+  ['iwTWh', 'e100-industrie-waerme-target-heat-twh'],
+  ['stahlMt', 'e100-stahl-target-mio-ton'],
+  ['chemieTWh', 'e100-chemie-target-twh'],
+];
+
+function queryParams() {
+  try {
+    return new URL(window.location.href).searchParams;
+  } catch {
+    return new URLSearchParams();
+  }
+}
+
+function periodPresetFromUrl(): PeriodPreset {
+  const value = queryParams().get('p');
+  return value === '21d' || value === '90d' || value === 'custom' || value === 'year' ? value : defaultPeriodPreset;
+}
+
+function dateFromUrl(name: string, fallback: string) {
+  const value = queryParams().get(name);
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+}
+
+function chartModeFromUrl(): ChartMode {
+  return queryParams().get('chart') === 'linie' ? 'linie' : defaultChartMode;
+}
+
+function sidebarCollapsedFromUrl() {
+  const value = queryParams().get('sidebar');
+  if (value === 'open') return false;
+  if (value === 'closed') return true;
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function openSectorsFromUrl(): SidebarOpenSectors {
+  const values = new Set(splitUrlList(queryParams().get('sections') ?? 'verkehr'));
+  return {
+    verkehr: values.has('verkehr'),
+    waerme: values.has('waerme'),
+    industrie: values.has('industrie'),
+  };
+}
+
+function expandedRowFromUrl(): SidebarExpandedRow {
+  const value = queryParams().get('row');
+  return value === 'none' ? null : value || defaultExpandedRow;
+}
+
+function mixVisibilityFromUrl(): MixVisibility {
+  const hidden = new Set(splitUrlList(queryParams().get('legend') ?? ''));
+  return Object.fromEntries(
+    MIX_GROUPS.flatMap(group => group.leaves.map(leaf => [leaf.key, !hidden.has(leaf.key)])),
+  ) as MixVisibility;
+}
+
+function openSectionsParam(openSectors: SidebarOpenSectors) {
+  return (Object.entries(openSectors) as Array<[keyof SidebarOpenSectors, boolean]>)
+    .filter(([, open]) => open)
+    .map(([id]) => id)
+    .join(listSeparator);
+}
+
+function splitUrlList(value: string) {
+  return value.split(/[,.]/).filter(Boolean);
+}
+
+function scenarioFromQueryParams(): Scenario {
+  const params = queryParams();
+  const scenario = normalizeScenario(defaultScenario);
+  const demand = scenario.demand as Record<string, boolean | number>;
+  if (params.has('e')) {
+    const enabled = new Set(splitUrlList(params.get('e') ?? ''));
+    const fullElectrification = enabled.has(fullElectrificationId);
+    for (const key of electrificationFlags) demand[key] = fullElectrification || enabled.has(key);
+  }
+  for (const [param, key] of scenarioNumberParams) {
+    const raw = params.get(param);
+    if (raw === null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) demand[key] = value;
+  }
+  return scenario;
+}
+
+function syncScenarioParams(url: URL, scenario: Scenario) {
+  url.searchParams.delete('s');
+  const enabled = electrificationFlags.filter(key => scenario.demand[key]);
+  if (enabled.length === 0) {
+    url.searchParams.delete('e');
+  } else if (enabled.length === electrificationFlags.length) {
+    url.searchParams.set('e', fullElectrificationId);
+  } else {
+    const ids = enabled
+      .filter(key => electrificationIds.has(key))
+      .join(listSeparator);
+    url.searchParams.set('e', ids);
+  }
+  for (const [param, key] of scenarioNumberParams) {
+    if (scenario.demand[key] === scenarioBase.demand[key]) url.searchParams.delete(param);
+    else url.searchParams.set(param, String(scenario.demand[key]));
+  }
+}
 
 function useChart(id: string, option: echarts.EChartsOption | undefined) {
   const chartRef = useRef<echarts.ECharts | null>(null);
@@ -142,21 +269,59 @@ function DataHandbookRoute() {
 
 function Dashboard() {
   const [data, setData] = useState<DataSet | null>(null);
-  const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
-  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
-  const [customStart, setCustomStart] = useState('2025-01-01');
-  const [customEnd, setCustomEnd] = useState('2025-12-31');
+  const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
+  const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
+  const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
-  const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
-  const [chartMode, setChartMode] = useState<ChartMode>('sunburst');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 1023px)').matches;
-  });
+  const [mixVisibility, setMixVisibility] = useState<MixVisibility>(mixVisibilityFromUrl);
+  const [chartMode, setChartMode] = useState<ChartMode>(chartModeFromUrl);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(sidebarCollapsedFromUrl);
+  const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
+  const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    syncScenarioParams(url, scenario);
+
+    if (periodPreset === defaultPeriodPreset) url.searchParams.delete('p');
+    else url.searchParams.set('p', periodPreset);
+
+    if (customStart === defaultCustomStart) url.searchParams.delete('start');
+    else url.searchParams.set('start', customStart);
+
+    if (customEnd === defaultCustomEnd) url.searchParams.delete('end');
+    else url.searchParams.set('end', customEnd);
+
+    if (chartMode === defaultChartMode) url.searchParams.delete('chart');
+    else url.searchParams.set('chart', chartMode);
+
+    const defaultSidebarCollapsed = window.matchMedia('(max-width: 1023px)').matches;
+    if (sidebarCollapsed === defaultSidebarCollapsed) url.searchParams.delete('sidebar');
+    else url.searchParams.set('sidebar', sidebarCollapsed ? 'closed' : 'open');
+
+    const sections = openSectionsParam(openSectors);
+    if (sections === defaultOpenSections) url.searchParams.delete('sections');
+    else url.searchParams.set('sections', sections);
+
+    if (expandedRow === defaultExpandedRow) url.searchParams.delete('row');
+    else url.searchParams.set('row', expandedRow ?? 'none');
+
+    const hiddenLegend = MIX_GROUPS
+      .flatMap(group => group.leaves)
+      .filter(leaf => !mixVisibility[leaf.key])
+      .map(leaf => leaf.key)
+      .join(listSeparator);
+    if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
+    else url.searchParams.delete('legend');
+    window.history.replaceState(null, '', url);
+  }, [scenario, periodPreset, customStart, customEnd, chartMode, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const result = useWorkerSimulation(data, scenario);
   useEffect(() => {
@@ -192,6 +357,93 @@ function Dashboard() {
   };
 
   const openSidebar = () => setSidebarCollapsed(false);
+  const resetConfiguration = () => {
+    setScenario(normalizeScenario(defaultScenario));
+    setPeriodPreset(defaultPeriodPreset);
+    setCustomStart(defaultCustomStart);
+    setCustomEnd(defaultCustomEnd);
+    setMixVisibility(DEFAULT_MIX_VISIBILITY);
+    setChartMode(defaultChartMode);
+    setSidebarCollapsed(sidebarCollapsedFromUrl());
+    setOpenSectors(defaultOpenSectors);
+    setExpandedRow(defaultExpandedRow);
+    setActionStatus('Zurückgesetzt');
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const copyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setActionStatus('URL kopiert');
+    } catch {
+      setActionStatus('Kopieren nicht möglich');
+    }
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const copyChartScreenshot = async () => {
+    const canvas = document.querySelector<HTMLCanvasElement>('#mix-chart canvas');
+    if (!canvas || !result) {
+      setActionStatus('Chart nicht bereit');
+      window.setTimeout(() => setActionStatus(null), 1600);
+      return;
+    }
+    try {
+      const exportCanvas = document.createElement('canvas');
+      const width = Math.max(1200, Math.min(1800, canvas.width || 1200));
+      const chartRatio = canvas.height && canvas.width ? canvas.height / canvas.width : .62;
+      const chartWidth = width - 80;
+      const chartHeight = Math.round(chartWidth * chartRatio);
+      const headerHeight = 190;
+      exportCanvas.width = width;
+      exportCanvas.height = headerHeight + chartHeight + 48;
+      const ctx = exportCanvas.getContext('2d');
+      if (!ctx) throw new Error('Kein Canvas-Kontext');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      ctx.fillStyle = '#18181b';
+      ctx.font = '600 32px Inter, system-ui, sans-serif';
+      ctx.fillText('Netzprobe · Energiemix vs. Last', 40, 54);
+      ctx.fillStyle = '#71717a';
+      ctx.font = '400 18px Inter, system-ui, sans-serif';
+      ctx.fillText(`${formatDate(selectedPeriod.start)} - ${formatDate(selectedPeriod.end)} · ${chartMode === 'sunburst' ? 'Sunburst' : 'Linie'}`, 40, 84);
+
+      const kpis = [
+        ['Jahreslast', twh(result.summary.totalDemandTWh), '#18181b'],
+        ['EE-Anteil', pct(result.summary.renewableSharePct), '#18181b'],
+        ['Unterdeckung', twh(result.summary.importTWh), result.summary.importTWh > 1 ? '#e11d48' : '#059669'],
+        ['Abregelung', twh(result.summary.curtailmentTWh), '#18181b'],
+        ['Zeitraum', `${sliced.length} h`, '#18181b'],
+      ];
+      const cardGap = 12;
+      const cardWidth = Math.floor((width - 80 - cardGap * (kpis.length - 1)) / kpis.length);
+      kpis.forEach(([label, value, color], index) => {
+        const x = 40 + index * (cardWidth + cardGap);
+        ctx.fillStyle = '#fafafa';
+        roundRect(ctx, x, 112, cardWidth, 58, 10);
+        ctx.fill();
+        ctx.strokeStyle = '#e4e4e7';
+        ctx.stroke();
+        ctx.fillStyle = '#71717a';
+        ctx.font = '700 13px Inter, system-ui, sans-serif';
+        ctx.fillText(label.toUpperCase(), x + 14, 136);
+        ctx.fillStyle = color;
+        ctx.font = '600 22px Inter, system-ui, sans-serif';
+        ctx.fillText(value, x + 14, 160);
+      });
+
+      ctx.drawImage(canvas, 40, headerHeight, chartWidth, chartHeight);
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        exportCanvas.toBlob(result => result ? resolve(result) : reject(new Error('Kein Bild erzeugt')), 'image/png');
+      });
+      const ClipboardItemCtor = window.ClipboardItem;
+      if (!ClipboardItemCtor || !navigator.clipboard.write) throw new Error('Bild-Zwischenablage nicht verfügbar');
+      await navigator.clipboard.write([new ClipboardItemCtor({ 'image/png': blob })]);
+      setActionStatus('Plot kopiert');
+    } catch {
+      setActionStatus('Screenshot nicht möglich');
+    }
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
 
   return <main className={shell}>
     <div className={cx(
@@ -245,7 +497,17 @@ function Dashboard() {
         customStart={customStart}
         customEnd={customEnd}
         collapsed={sidebarCollapsed}
+        openSectors={openSectors}
+        expandedRow={expandedRow}
+        actionBar={<HeaderActions
+          status={actionStatus}
+          onReset={resetConfiguration}
+          onCopyUrl={copyShareUrl}
+          onScreenshot={copyChartScreenshot}
+        />}
         onCollapsedChange={setSidebarCollapsed}
+        onOpenSectorsChange={setOpenSectors}
+        onExpandedRowChange={setExpandedRow}
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}
@@ -274,6 +536,30 @@ function Dashboard() {
 
     </div>
   </main>;
+}
+
+function HeaderActions({ status, onReset, onCopyUrl, onScreenshot }: { status: string | null; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void }) {
+  return <div className="rounded-xl border border-zinc-200/80 bg-white p-2 shadow-[0_10px_26px_rgba(24,24,27,.04)]">
+    <div className="grid grid-cols-3 gap-1.5">
+      <IconAction label="Zurücksetzen" onClick={onReset}><RotateCcw className="h-3.5 w-3.5"/></IconAction>
+      <IconAction label="Link kopieren" onClick={onCopyUrl}><Link className="h-3.5 w-3.5"/></IconAction>
+      <IconAction label="Plot kopieren" onClick={onScreenshot}><Camera className="h-3.5 w-3.5"/></IconAction>
+    </div>
+    {status && <div className="mt-1.5 truncate rounded-md bg-zinc-100 px-2 py-1 text-center text-[11px] font-medium text-zinc-600">{status}</div>}
+  </div>;
+}
+
+function IconAction({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return <button
+    type="button"
+    aria-label={label}
+    title={label}
+    className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-xs font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
+    onClick={onClick}
+  >
+    {children}
+    <span className="truncate">{label}</span>
+  </button>;
 }
 
 function SidebarOpenButton({ onClick }: { onClick: () => void }) {
@@ -352,6 +638,20 @@ function InlineKpi({ label, value, tone }: { label: string; value: string; tone?
     <span className="truncate whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em] text-zinc-500" title={label}>{label}</span>
     <span className={cx('whitespace-nowrap text-sm font-semibold tabular-nums', toneClass)}>{value}</span>
   </div>;
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
 }
 
 function formatDate(date: string) {
