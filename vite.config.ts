@@ -1,4 +1,5 @@
 import { cpSync, existsSync, readFileSync, statSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
@@ -7,6 +8,13 @@ import tailwindcss from '@tailwindcss/vite';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 const dataDir = resolve(rootDir, 'data');
+const commitHash = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: rootDir, encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+})();
 
 function topLevelData(): Plugin {
   return {
@@ -39,6 +47,10 @@ function topLevelData(): Plugin {
 
 export default defineConfig({
   base: process.env.GITHUB_PAGES === 'true' ? '/netzprobe/' : '/',
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(commitHash),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [react(), tailwindcss(), topLevelData()],
   server: { port: 5177 },
   preview: { port: 4177 },
