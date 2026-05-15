@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts';
-import { X } from 'lucide-react';
+import { Menu, PanelLeftOpen } from 'lucide-react';
 import { dataFileUrl } from '../dataPackages';
 import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
@@ -9,12 +9,12 @@ import type { SimulationResult } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
-import { dataWikiUrl, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
+import { manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario, scenarioFromUrl } from './scenarioPresets';
-import { cx, muted, shell } from './ui';
+import { cx, muted, shell, sidebarOffsetClass } from './ui';
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
@@ -140,14 +140,18 @@ function urlView() {
 }
 
 export function App() {
-  const datasetDocs = useDatasetDocs();
   const [route] = useState(urlView);
   if (route.view === 'datei' && route.path) return <DataFileViewer path={route.path}/>;
-  if (route.view === 'daten') return <DataHandbook docs={datasetDocs}/>;
-  return <Dashboard datasetDocs={datasetDocs}/>;
+  if (route.view === 'daten') return <DataHandbookRoute/>;
+  return <Dashboard/>;
 }
 
-function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
+function DataHandbookRoute() {
+  const datasetDocs = useDatasetDocs();
+  return <DataHandbook docs={datasetDocs}/>;
+}
+
+function Dashboard() {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(() => normalizeScenario(scenarioFromUrl() ?? defaultScenario));
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('year');
@@ -156,7 +160,10 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(DEFAULT_MIX_VISIBILITY);
   const [chartMode, setChartMode] = useState<ChartMode>(storedChartMode);
-  const [faqOpen, setFaqOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 1023px)').matches;
+  });
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -203,26 +210,37 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
     setCustomEnd(date < customStart ? customStart : date);
   };
 
+  const openSidebar = () => setSidebarCollapsed(false);
+
   return <main className={shell}>
-    <div className="mx-auto grid w-full max-w-[1760px] gap-3 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-      <section className="flex min-w-0 flex-col gap-3 lg:order-2">
-        {!result ? <div className="grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-500">Lade Daten …</div> : <>
-          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-5">
-            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
-              <div className="min-w-0">
-                <h2 className="text-lg font-medium tracking-[-0.03em]">Energiemix vs. Last</h2>
-                <span className={cx(muted, 'text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+    <div className={cx(
+      'mx-auto w-full max-w-[1760px]',
+      sidebarCollapsed ? '' : sidebarOffsetClass,
+    )}>
+      <section className="flex min-w-0 flex-col gap-3">
+        {!result ? <div className="relative grid min-h-[calc(100vh-1.5rem)] place-items-center rounded-xl border border-zinc-200/80 bg-white text-zinc-500 shadow-[0_18px_45px_rgba(24,24,27,.06)]">
+          {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
+          Lade Daten …
+        </div> : <>
+          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-3">
+            <div className="mb-2.5 grid shrink-0 gap-2 border-b border-zinc-100 pb-2.5 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
+              <div className="flex min-w-0 items-start gap-2">
+                {sidebarCollapsed && <SidebarOpenButton onClick={openSidebar}/>}
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-zinc-950">Energiemix vs. Last</h2>
+                  <span className={cx(muted, 'mt-0.5 block text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
                 <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
                 <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
-                <InlineKpi label="Import" value={twh(result.summary.importTWh)} tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
+                <InlineKpi label="Unterdeckung" value={twh(result.summary.importTWh)} tone={result.summary.importTWh > 1 ? 'kritisch' : 'stabil'}/>
                 <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
                 <InlineKpi label="Zeitraum" value={`${sliced.length} h`}/>
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div className="min-h-0 flex-1">
+            <div className="min-h-0 flex-1 rounded-lg bg-white">
               <div id="mix-chart" className="h-full w-full"/>
             </div>
             <MixLegend
@@ -231,7 +249,7 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
             />
           </ChartPanel>
 
-          <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
+          <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂" className="p-4">
             <div id="storage-chart" className="h-[240px] w-full"/>
           </ChartPanel>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
@@ -245,10 +263,11 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         periodPreset={periodPreset}
         customStart={customStart}
         customEnd={customEnd}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}
-        onFaqOpen={() => setFaqOpen(true)}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
@@ -272,51 +291,40 @@ function Dashboard({ datasetDocs }: { datasetDocs: DatasetDoc[] }) {
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
       />
 
-      {faqOpen && <DataFaq docs={datasetDocs} onClose={() => setFaqOpen(false)}/>}
     </div>
   </main>;
 }
 
+function SidebarOpenButton({ onClick }: { onClick: () => void }) {
+  return <button
+    type="button"
+    aria-label="Sidebar öffnen"
+    aria-expanded={false}
+    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
+    onClick={onClick}
+  >
+    <Menu className="h-4 w-4 lg:hidden" aria-hidden="true"/>
+    <PanelLeftOpen className="hidden h-4 w-4 lg:block" aria-hidden="true"/>
+  </button>;
+}
+
 function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
   const modes: Array<[ChartMode, string]> = [['sunburst', 'Sunburst'], ['linie', 'Linie']];
-  return <div className="inline-flex shrink-0 rounded-full border border-zinc-200 bg-zinc-50 p-0.5 text-xs" aria-label="Diagrammform wählen">
+  return <div className="inline-flex shrink-0 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-xs shadow-sm" aria-label="Diagrammform wählen">
     {modes.map(([value, label]) => <button
       key={value}
       type="button"
       aria-pressed={mode === value}
-      className={cx('rounded-full px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white shadow-sm' : 'text-zinc-500 hover:bg-white hover:text-zinc-950')}
+      className={cx('rounded-md px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white shadow-sm' : 'text-zinc-500 hover:bg-white hover:text-zinc-950')}
       onClick={() => onChange(value)}
     >{label}</button>)}
   </div>;
 }
 
-function DataFaq({ docs, onClose }: { docs: DatasetDoc[]; onClose: () => void }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/20 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="data-faq-title" onClick={onClose}>
-    <section className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,.18)]" onClick={event => event.stopPropagation()}>
-      <div className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-3">
-        <div>
-          <h2 id="data-faq-title" className="text-lg font-medium tracking-[-0.03em] text-zinc-950">Daten-FAQ</h2>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">Kurzfassung der Dateien in <code>/data</code>.</p>
-        </div>
-        <button type="button" aria-label="Daten-FAQ schließen" className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950" onClick={onClose}>
-          <X className="h-3.5 w-3.5"/>
-        </button>
-      </div>
-      <dl className="mt-3 grid gap-3">
-        {(docs.length ? docs : []).map(doc => <a key={doc.id} className="block rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3 transition hover:border-zinc-300 hover:bg-white" href={dataWikiUrl(doc.id)} target="_blank" rel="noreferrer">
-          <dt className="font-mono text-[11px] text-zinc-700">{doc.file}</dt>
-          <dd className="mt-1 text-sm leading-5 text-zinc-600">{doc.short}</dd>
-        </a>)}
-      </dl>
-      <a className="mt-3 inline-flex text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950" href="https://github.com/chriopter/netzprobe/tree/main/data" target="_blank" rel="noreferrer">Datendateien auf GitHub ansehen</a>
-    </section>
-  </div>;
-}
-
 function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
-  return <section className={cx('min-w-0', className)}>
-    {title && <div className="mb-2 flex items-center justify-between gap-3">
-      <h2 className="text-base font-medium tracking-[-0.02em]">{title}</h2>
+  return <section className={cx('min-w-0 overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-[0_18px_45px_rgba(24,24,27,.06)]', className)}>
+    {title && <div className="mb-3 flex items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+      <h2 className="text-base font-semibold text-zinc-950">{title}</h2>
       {meta && <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>}
     </div>}
     {children}
@@ -329,9 +337,9 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
     { label: 'Last', color: '#111827', active: true },
   ];
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="mt-3 grid gap-2 border-t border-zinc-100 pt-3 text-xs">
+  return <div className="mt-2.5 grid gap-1.5 border-t border-zinc-100 pt-2.5 text-xs">
     <div className="flex flex-wrap gap-1.5">
-      {contextItems.map(item => <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-zinc-800 shadow-sm">
+      {contextItems.map(item => <span key={item.label} className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-zinc-800 shadow-sm">
         <span aria-hidden className="text-[10px]" style={{ color: item.active ? item.color : '#d4d4d8' }}>●</span>
         <span>{item.label}</span>
       </span>)}
@@ -344,7 +352,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
         type="button"
         aria-pressed={active}
         className={cx(
-          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition',
+          'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
           active ? 'border-zinc-200 bg-white text-zinc-800 shadow-sm' : 'border-transparent bg-transparent text-zinc-400',
         )}
         onClick={() => onToggleLeaf(leaf.key, !active)}
@@ -359,9 +367,9 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
 
 function InlineKpi({ label, value, tone }: { label: string; value: string; tone?: string }) {
   const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-600' : 'text-zinc-950';
-  return <div className="grid gap-0.5 leading-tight">
-    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{label}</span>
-    <span className={cx('text-sm font-medium tabular-nums', toneClass)}>{value}</span>
+  return <div className="grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200/80 bg-zinc-50/70 px-2.5 py-1.5 leading-tight">
+    <span className="truncate whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em] text-zinc-500" title={label}>{label}</span>
+    <span className={cx('whitespace-nowrap text-sm font-semibold tabular-nums', toneClass)}>{value}</span>
   </div>;
 }
 
