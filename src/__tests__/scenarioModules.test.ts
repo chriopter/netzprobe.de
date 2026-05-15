@@ -30,7 +30,7 @@ describe('data scenario modules', () => {
     expect(actualTWh).toBeCloseTo(targetTWh, 6);
   });
 
-  it('integrates e100-heiz to the configured annual default demand and keeps summer heating near zero', () => {
+  it('integrates e100-heiz to the configured annual default demand and keeps summer heating small', () => {
     const targetTWh = e100HeizAdditionalElectricityTWh(e100HeizData.defaultTargetHeatTWh, e100HeizData);
     const hours = e100HeizData.degreeDayProfile.days.flatMap(day =>
       Array.from({ length: 24 }, (_, hour) => emptyHour(hour, day.weight, `${day.date}T${String(hour).padStart(2, '0')}:00:00Z`)),
@@ -42,6 +42,6 @@ describe('data scenario modules', () => {
 
     expect(targetTWh).toBeCloseTo((530 - 50) / 3.3, 6);
     expect(actualTWh).toBeCloseTo(targetTWh, 6);
-    expect(summerTWh).toBeLessThan(0.001);
+    expect(summerTWh).toBeLessThan(targetTWh * 0.05);
   });
 });

@@ -39,8 +39,10 @@ export type DegreeDayProfile = {
   year: number;
   heatingLimitC: number;
   indoorReferenceC: number;
-  monthlyMeanTemperatureC: number[];
+  monthlyMeanTemperatureC?: number[];
   interpolation?: string;
+  temperatureSource?: string;
+  dwdMonthlyMeanC?: number[];
   annualHeatingDegreeDays?: number;
   heatingDays?: number;
   sumNote?: string;

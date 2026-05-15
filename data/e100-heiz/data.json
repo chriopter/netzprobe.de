@@ -1,15 +1,15 @@
 {
   "id": "e100-heiz",
-  "title": "Heiz Elektrifizierung",
-  "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus DWD-Klimanormalen 1991-2020 mit linearer Tagesinterpolation.",
+  "title": "Haushalte Elektrifizierung",
+  "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); Gradtagszahl-Profil aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Staedte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat).",
   "sourceUrls": [
     "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
     "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
     "https://ag-energiebilanzen.de/daten-und-fakten/",
     "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
     "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
-    "https://www.dwd.de/DE/leistungen/klimadatendeutschland/klarchivtagmonat.html",
-    "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html"
+    "https://archive-api.open-meteo.com/v1/era5",
+    "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
   ],
   "referenceYear": 2023,
   "referenceHeatDemandTWh": 530,
@@ -18,8 +18,9 @@
   "maxTargetHeatTWh": 700,
   "stepHeatTWh": 5,
   "seasonalCop": 3.3,
+  "summary": "JAZ 3,3",
   "distribution": "heating-degree-days",
-  "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen Gradtagszahlen, innerhalb des Tages moduliert das 24-h-Profil.",
+  "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das 24-h-Profil.",
   "hourlyProfile": {
     "source": "Bimodaler WP-Tagesgang nach BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Auf Grid-Aggregat gedaempft, Summe = 24.",
     "sourceUrls": [
@@ -60,2216 +61,2215 @@
     "year": 2025,
     "heatingLimitC": 15,
     "indoorReferenceC": 20,
-    "monthlyMeanTemperatureC": [
-      1.5,
-      2.6,
-      5.7,
-      9.6,
-      13.5,
-      16.6,
-      18.4,
-      18,
-      13.7,
-      9.4,
-      4.9,
-      2
+    "temperatureSource": "Open-Meteo ERA5, Tagesmittel 8 deutscher Großstädte (Hamburg, Berlin, München, Köln, Frankfurt, Leipzig, Stuttgart, Bremen), kalibriert aufs DWD-Gebietsmittel DE pro Monat (additiver Offset).",
+    "dwdMonthlyMeanC": [
+      1.99,
+      1.48,
+      6.04,
+      10.5,
+      12.8,
+      18.38,
+      18.35,
+      18.12,
+      14.64,
+      9.82,
+      5.03,
+      3.17
     ],
-    "interpolation": "Lineare Interpolation zwischen Monatsmittel-Ankerpunkten am 15. jedes Monats; HDD-Schwelle pro Tag.",
-    "annualHeatingDegreeDays": 3485.96,
-    "heatingDays": 266,
+    "annualHeatingDegreeDays": 3461.43,
+    "heatingDays": 262,
     "sumNote": "weight summiert ueber alle Tage auf 1; stuendliche Waermelast verteilt jeden Tagesanteil flach auf 24 Stunden.",
     "days": [
       {
         "date": "2025-01-01",
-        "meanTemperatureC": 1.74,
-        "heatingDegreeDay": 18.258,
-        "weight": 0.005237584618
+        "meanTemperatureC": 4.39,
+        "heatingDegreeDay": 15.61,
+        "weight": 0.004509696859
       },
       {
         "date": "2025-01-02",
-        "meanTemperatureC": 1.73,
-        "heatingDegreeDay": 18.274,
-        "weight": 0.005242174461
+        "meanTemperatureC": 3.45,
+        "heatingDegreeDay": 16.55,
+        "weight": 0.004781260924
       },
       {
         "date": "2025-01-03",
-        "meanTemperatureC": 1.71,
-        "heatingDegreeDay": 18.29,
-        "weight": 0.005246764304
+        "meanTemperatureC": 0.04,
+        "heatingDegreeDay": 19.96,
+        "weight": 0.005766402903
       },
       {
         "date": "2025-01-04",
-        "meanTemperatureC": 1.69,
-        "heatingDegreeDay": 18.306,
-        "weight": 0.005251354147
+        "meanTemperatureC": -1.31,
+        "heatingDegreeDay": 21.31,
+        "weight": 0.006156415123
       },
       {
         "date": "2025-01-05",
-        "meanTemperatureC": 1.68,
-        "heatingDegreeDay": 18.323,
-        "weight": 0.005256230855
+        "meanTemperatureC": 1.5,
+        "heatingDegreeDay": 18.5,
+        "weight": 0.005344611909
       },
       {
         "date": "2025-01-06",
-        "meanTemperatureC": 1.66,
-        "heatingDegreeDay": 18.339,
-        "weight": 0.005260820698
+        "meanTemperatureC": 7.89,
+        "heatingDegreeDay": 12.11,
+        "weight": 0.003498554066
       },
       {
         "date": "2025-01-07",
-        "meanTemperatureC": 1.65,
-        "heatingDegreeDay": 18.355,
-        "weight": 0.005265410541
+        "meanTemperatureC": 4.06,
+        "heatingDegreeDay": 15.94,
+        "weight": 0.00460503318
       },
       {
         "date": "2025-01-08",
-        "meanTemperatureC": 1.63,
-        "heatingDegreeDay": 18.371,
-        "weight": 0.005270000384
+        "meanTemperatureC": 1.79,
+        "heatingDegreeDay": 18.21,
+        "weight": 0.005260831506
       },
       {
         "date": "2025-01-09",
-        "meanTemperatureC": 1.61,
-        "heatingDegreeDay": 18.387,
-        "weight": 0.005274590227
+        "meanTemperatureC": 2.55,
+        "heatingDegreeDay": 17.45,
+        "weight": 0.005041269071
       },
       {
         "date": "2025-01-10",
-        "meanTemperatureC": 1.6,
-        "heatingDegreeDay": 18.403,
-        "weight": 0.00527918007
+        "meanTemperatureC": 0.15,
+        "heatingDegreeDay": 19.85,
+        "weight": 0.005734624129
       },
       {
         "date": "2025-01-11",
-        "meanTemperatureC": 1.58,
-        "heatingDegreeDay": 18.419,
-        "weight": 0.005283769913
+        "meanTemperatureC": -0.92,
+        "heatingDegreeDay": 20.92,
+        "weight": 0.006043744926
       },
       {
         "date": "2025-01-12",
-        "meanTemperatureC": 1.56,
-        "heatingDegreeDay": 18.435,
-        "weight": 0.005288359756
+        "meanTemperatureC": -1.21,
+        "heatingDegreeDay": 21.21,
+        "weight": 0.006127525329
       },
       {
         "date": "2025-01-13",
-        "meanTemperatureC": 1.55,
-        "heatingDegreeDay": 18.452,
-        "weight": 0.005293236465
+        "meanTemperatureC": -3.1,
+        "heatingDegreeDay": 23.1,
+        "weight": 0.006673542438
       },
       {
         "date": "2025-01-14",
-        "meanTemperatureC": 1.53,
-        "heatingDegreeDay": 18.468,
-        "weight": 0.005297826308
+        "meanTemperatureC": -1.7,
+        "heatingDegreeDay": 21.7,
+        "weight": 0.00626908532
       },
       {
         "date": "2025-01-15",
-        "meanTemperatureC": 1.52,
-        "heatingDegreeDay": 18.484,
-        "weight": 0.005302416151
+        "meanTemperatureC": 1.54,
+        "heatingDegreeDay": 18.46,
+        "weight": 0.005333055991
       },
       {
         "date": "2025-01-16",
-        "meanTemperatureC": 1.5,
-        "heatingDegreeDay": 18.5,
-        "weight": 0.005307005994
+        "meanTemperatureC": 1.66,
+        "heatingDegreeDay": 18.34,
+        "weight": 0.005298388238
       },
       {
         "date": "2025-01-17",
-        "meanTemperatureC": 1.54,
-        "heatingDegreeDay": 18.463,
-        "weight": 0.005296391982
+        "meanTemperatureC": -0.76,
+        "heatingDegreeDay": 20.76,
+        "weight": 0.005997521256
       },
       {
         "date": "2025-01-18",
-        "meanTemperatureC": 1.57,
-        "heatingDegreeDay": 18.427,
-        "weight": 0.005286064835
+        "meanTemperatureC": -1.43,
+        "heatingDegreeDay": 21.43,
+        "weight": 0.006191082876
       },
       {
         "date": "2025-01-19",
-        "meanTemperatureC": 1.61,
-        "heatingDegreeDay": 18.39,
-        "weight": 0.005275450823
+        "meanTemperatureC": -1.11,
+        "heatingDegreeDay": 21.11,
+        "weight": 0.006098635535
       },
       {
         "date": "2025-01-20",
-        "meanTemperatureC": 1.65,
-        "heatingDegreeDay": 18.353,
-        "weight": 0.005264836811
+        "meanTemperatureC": -1.36,
+        "heatingDegreeDay": 21.36,
+        "weight": 0.00617086002
       },
       {
         "date": "2025-01-21",
-        "meanTemperatureC": 1.68,
-        "heatingDegreeDay": 18.317,
-        "weight": 0.005254509664
+        "meanTemperatureC": -1.23,
+        "heatingDegreeDay": 21.23,
+        "weight": 0.006133303288
       },
       {
         "date": "2025-01-22",
-        "meanTemperatureC": 1.72,
-        "heatingDegreeDay": 18.28,
-        "weight": 0.005243895652
+        "meanTemperatureC": 0.22,
+        "heatingDegreeDay": 19.78,
+        "weight": 0.005714401273
       },
       {
         "date": "2025-01-23",
-        "meanTemperatureC": 1.76,
-        "heatingDegreeDay": 18.243,
-        "weight": 0.00523328164
+        "meanTemperatureC": 2.79,
+        "heatingDegreeDay": 17.21,
+        "weight": 0.004971933565
       },
       {
         "date": "2025-01-24",
-        "meanTemperatureC": 1.79,
-        "heatingDegreeDay": 18.207,
-        "weight": 0.005222954493
+        "meanTemperatureC": 5.09,
+        "heatingDegreeDay": 14.91,
+        "weight": 0.004307468301
       },
       {
         "date": "2025-01-25",
-        "meanTemperatureC": 1.83,
-        "heatingDegreeDay": 18.17,
-        "weight": 0.005212340481
+        "meanTemperatureC": 7.55,
+        "heatingDegreeDay": 12.45,
+        "weight": 0.003596779366
       },
       {
         "date": "2025-01-26",
-        "meanTemperatureC": 1.87,
-        "heatingDegreeDay": 18.133,
-        "weight": 0.005201726469
+        "meanTemperatureC": 4.87,
+        "heatingDegreeDay": 15.13,
+        "weight": 0.004371025848
       },
       {
         "date": "2025-01-27",
-        "meanTemperatureC": 1.9,
-        "heatingDegreeDay": 18.097,
-        "weight": 0.005191399323
+        "meanTemperatureC": 7.44,
+        "heatingDegreeDay": 12.56,
+        "weight": 0.003628558139
       },
       {
         "date": "2025-01-28",
-        "meanTemperatureC": 1.94,
-        "heatingDegreeDay": 18.06,
-        "weight": 0.005180785311
+        "meanTemperatureC": 6.1,
+        "heatingDegreeDay": 13.9,
+        "weight": 0.00401568138
       },
       {
         "date": "2025-01-29",
-        "meanTemperatureC": 1.98,
-        "heatingDegreeDay": 18.023,
-        "weight": 0.005170171299
+        "meanTemperatureC": 5.61,
+        "heatingDegreeDay": 14.39,
+        "weight": 0.004157241371
       },
       {
         "date": "2025-01-30",
-        "meanTemperatureC": 2.01,
-        "heatingDegreeDay": 17.987,
-        "weight": 0.005159844152
+        "meanTemperatureC": 4.66,
+        "heatingDegreeDay": 15.34,
+        "weight": 0.004431694415
       },
       {
         "date": "2025-01-31",
-        "meanTemperatureC": 2.05,
-        "heatingDegreeDay": 17.95,
-        "weight": 0.00514923014
+        "meanTemperatureC": 2.56,
+        "heatingDegreeDay": 17.44,
+        "weight": 0.005038380091
       },
       {
         "date": "2025-02-01",
-        "meanTemperatureC": 2.09,
-        "heatingDegreeDay": 17.913,
-        "weight": 0.005138616128
+        "meanTemperatureC": 0.33,
+        "heatingDegreeDay": 19.67,
+        "weight": 0.0056826225
       },
       {
         "date": "2025-02-02",
-        "meanTemperatureC": 2.12,
-        "heatingDegreeDay": 17.877,
-        "weight": 0.005128288981
+        "meanTemperatureC": -0.65,
+        "heatingDegreeDay": 20.65,
+        "weight": 0.005965742482
       },
       {
         "date": "2025-02-03",
-        "meanTemperatureC": 2.16,
-        "heatingDegreeDay": 17.84,
-        "weight": 0.005117674969
+        "meanTemperatureC": -1.4,
+        "heatingDegreeDay": 21.4,
+        "weight": 0.006182415938
       },
       {
         "date": "2025-02-04",
-        "meanTemperatureC": 2.2,
-        "heatingDegreeDay": 17.803,
-        "weight": 0.005107060957
+        "meanTemperatureC": -1.18,
+        "heatingDegreeDay": 21.18,
+        "weight": 0.006118858391
       },
       {
         "date": "2025-02-05",
-        "meanTemperatureC": 2.23,
-        "heatingDegreeDay": 17.767,
-        "weight": 0.00509673381
+        "meanTemperatureC": 0.12,
+        "heatingDegreeDay": 19.88,
+        "weight": 0.005743291068
       },
       {
         "date": "2025-02-06",
-        "meanTemperatureC": 2.27,
-        "heatingDegreeDay": 17.73,
-        "weight": 0.005086119798
+        "meanTemperatureC": 1.37,
+        "heatingDegreeDay": 18.63,
+        "weight": 0.005382168641
       },
       {
         "date": "2025-02-07",
-        "meanTemperatureC": 2.31,
-        "heatingDegreeDay": 17.693,
-        "weight": 0.005075505786
+        "meanTemperatureC": 1.44,
+        "heatingDegreeDay": 18.56,
+        "weight": 0.005361945785
       },
       {
         "date": "2025-02-08",
-        "meanTemperatureC": 2.34,
-        "heatingDegreeDay": 17.657,
-        "weight": 0.00506517864
+        "meanTemperatureC": 1.5,
+        "heatingDegreeDay": 18.5,
+        "weight": 0.005344611909
       },
       {
         "date": "2025-02-09",
-        "meanTemperatureC": 2.38,
-        "heatingDegreeDay": 17.62,
-        "weight": 0.005054564628
+        "meanTemperatureC": 0.34,
+        "heatingDegreeDay": 19.66,
+        "weight": 0.005679733521
       },
       {
         "date": "2025-02-10",
-        "meanTemperatureC": 2.42,
-        "heatingDegreeDay": 17.583,
-        "weight": 0.005043950616
+        "meanTemperatureC": 0.86,
+        "heatingDegreeDay": 19.14,
+        "weight": 0.005529506591
       },
       {
         "date": "2025-02-11",
-        "meanTemperatureC": 2.45,
-        "heatingDegreeDay": 17.547,
-        "weight": 0.005033623469
+        "meanTemperatureC": 1.51,
+        "heatingDegreeDay": 18.49,
+        "weight": 0.00534172293
       },
       {
         "date": "2025-02-12",
-        "meanTemperatureC": 2.49,
-        "heatingDegreeDay": 17.51,
-        "weight": 0.005023009457
+        "meanTemperatureC": 1.63,
+        "heatingDegreeDay": 18.37,
+        "weight": 0.005307055177
       },
       {
         "date": "2025-02-13",
-        "meanTemperatureC": 2.53,
-        "heatingDegreeDay": 17.473,
-        "weight": 0.005012395445
+        "meanTemperatureC": -0.16,
+        "heatingDegreeDay": 20.16,
+        "weight": 0.005824182491
       },
       {
         "date": "2025-02-14",
-        "meanTemperatureC": 2.56,
-        "heatingDegreeDay": 17.437,
-        "weight": 0.005002068298
+        "meanTemperatureC": -0.93,
+        "heatingDegreeDay": 20.93,
+        "weight": 0.006046633906
       },
       {
         "date": "2025-02-15",
-        "meanTemperatureC": 2.6,
-        "heatingDegreeDay": 17.4,
-        "weight": 0.004991454286
+        "meanTemperatureC": -1.15,
+        "heatingDegreeDay": 21.15,
+        "weight": 0.006110191453
       },
       {
         "date": "2025-02-16",
-        "meanTemperatureC": 2.71,
-        "heatingDegreeDay": 17.293,
-        "weight": 0.004960759711
+        "meanTemperatureC": -1.84,
+        "heatingDegreeDay": 21.84,
+        "weight": 0.006309531032
       },
       {
         "date": "2025-02-17",
-        "meanTemperatureC": 2.81,
-        "heatingDegreeDay": 17.186,
-        "weight": 0.004930065136
+        "meanTemperatureC": -3.34,
+        "heatingDegreeDay": 23.34,
+        "weight": 0.006742877944
       },
       {
         "date": "2025-02-18",
-        "meanTemperatureC": 2.92,
-        "heatingDegreeDay": 17.079,
-        "weight": 0.00489937056
+        "meanTemperatureC": -3.63,
+        "heatingDegreeDay": 23.63,
+        "weight": 0.006826658337
       },
       {
         "date": "2025-02-19",
-        "meanTemperatureC": 3.03,
-        "heatingDegreeDay": 16.972,
-        "weight": 0.004868675985
+        "meanTemperatureC": -2.49,
+        "heatingDegreeDay": 22.49,
+        "weight": 0.006497314694
       },
       {
         "date": "2025-02-20",
-        "meanTemperatureC": 3.13,
-        "heatingDegreeDay": 16.866,
-        "weight": 0.004838268275
+        "meanTemperatureC": 1.22,
+        "heatingDegreeDay": 18.78,
+        "weight": 0.005425503332
       },
       {
         "date": "2025-02-21",
-        "meanTemperatureC": 3.24,
-        "heatingDegreeDay": 16.759,
-        "weight": 0.0048075737
+        "meanTemperatureC": 6.82,
+        "heatingDegreeDay": 13.18,
+        "weight": 0.003807674863
       },
       {
         "date": "2025-02-22",
-        "meanTemperatureC": 3.35,
-        "heatingDegreeDay": 16.652,
-        "weight": 0.004776879125
+        "meanTemperatureC": 6.86,
+        "heatingDegreeDay": 13.14,
+        "weight": 0.003796118945
       },
       {
         "date": "2025-02-23",
-        "meanTemperatureC": 3.46,
-        "heatingDegreeDay": 16.545,
-        "weight": 0.00474618455
+        "meanTemperatureC": 7.43,
+        "heatingDegreeDay": 12.57,
+        "weight": 0.003631447119
       },
       {
         "date": "2025-02-24",
-        "meanTemperatureC": 3.56,
-        "heatingDegreeDay": 16.438,
-        "weight": 0.004715489974
+        "meanTemperatureC": 7.47,
+        "heatingDegreeDay": 12.53,
+        "weight": 0.003619891201
       },
       {
         "date": "2025-02-25",
-        "meanTemperatureC": 3.67,
-        "heatingDegreeDay": 16.331,
-        "weight": 0.004684795399
+        "meanTemperatureC": 7.84,
+        "heatingDegreeDay": 12.16,
+        "weight": 0.003512998963
       },
       {
         "date": "2025-02-26",
-        "meanTemperatureC": 3.78,
-        "heatingDegreeDay": 16.224,
-        "weight": 0.004654100824
+        "meanTemperatureC": 5.33,
+        "heatingDegreeDay": 14.67,
+        "weight": 0.004238132795
       },
       {
         "date": "2025-02-27",
-        "meanTemperatureC": 3.88,
-        "heatingDegreeDay": 16.117,
-        "weight": 0.004623406249
+        "meanTemperatureC": 3.86,
+        "heatingDegreeDay": 16.14,
+        "weight": 0.004662812768
       },
       {
         "date": "2025-02-28",
-        "meanTemperatureC": 3.99,
-        "heatingDegreeDay": 16.01,
-        "weight": 0.004592711674
+        "meanTemperatureC": 2.36,
+        "heatingDegreeDay": 17.64,
+        "weight": 0.00509615968
       },
       {
         "date": "2025-03-01",
-        "meanTemperatureC": 4.1,
-        "heatingDegreeDay": 15.903,
-        "weight": 0.004562017098
+        "meanTemperatureC": 2.6,
+        "heatingDegreeDay": 17.4,
+        "weight": 0.005026824174
       },
       {
         "date": "2025-03-02",
-        "meanTemperatureC": 4.2,
-        "heatingDegreeDay": 15.797,
-        "weight": 0.004531609388
+        "meanTemperatureC": 2.65,
+        "heatingDegreeDay": 17.35,
+        "weight": 0.005012379277
       },
       {
         "date": "2025-03-03",
-        "meanTemperatureC": 4.31,
-        "heatingDegreeDay": 15.69,
-        "weight": 0.004500914813
+        "meanTemperatureC": 3.15,
+        "heatingDegreeDay": 16.85,
+        "weight": 0.004867930306
       },
       {
         "date": "2025-03-04",
-        "meanTemperatureC": 4.42,
-        "heatingDegreeDay": 15.583,
-        "weight": 0.004470220238
+        "meanTemperatureC": 3.71,
+        "heatingDegreeDay": 16.29,
+        "weight": 0.004706147459
       },
       {
         "date": "2025-03-05",
-        "meanTemperatureC": 4.52,
-        "heatingDegreeDay": 15.476,
-        "weight": 0.004439525663
+        "meanTemperatureC": 5.33,
+        "heatingDegreeDay": 14.67,
+        "weight": 0.004238132795
       },
       {
         "date": "2025-03-06",
-        "meanTemperatureC": 4.63,
-        "heatingDegreeDay": 15.369,
-        "weight": 0.004408831087
+        "meanTemperatureC": 6.94,
+        "heatingDegreeDay": 13.06,
+        "weight": 0.00377300711
       },
       {
         "date": "2025-03-07",
-        "meanTemperatureC": 4.74,
-        "heatingDegreeDay": 15.262,
-        "weight": 0.004378136512
+        "meanTemperatureC": 7.85,
+        "heatingDegreeDay": 12.15,
+        "weight": 0.003510109983
       },
       {
         "date": "2025-03-08",
-        "meanTemperatureC": 4.84,
-        "heatingDegreeDay": 15.155,
-        "weight": 0.004347441937
+        "meanTemperatureC": 7.69,
+        "heatingDegreeDay": 12.31,
+        "weight": 0.003556333654
       },
       {
         "date": "2025-03-09",
-        "meanTemperatureC": 4.95,
-        "heatingDegreeDay": 15.048,
-        "weight": 0.004316747362
+        "meanTemperatureC": 7.91,
+        "heatingDegreeDay": 12.09,
+        "weight": 0.003492776107
       },
       {
         "date": "2025-03-10",
-        "meanTemperatureC": 5.06,
-        "heatingDegreeDay": 14.941,
-        "weight": 0.004286052787
+        "meanTemperatureC": 6.91,
+        "heatingDegreeDay": 13.09,
+        "weight": 0.003781674048
       },
       {
         "date": "2025-03-11",
-        "meanTemperatureC": 5.17,
-        "heatingDegreeDay": 14.834,
-        "weight": 0.004255358211
+        "meanTemperatureC": 5.81,
+        "heatingDegreeDay": 14.19,
+        "weight": 0.004099461783
       },
       {
         "date": "2025-03-12",
-        "meanTemperatureC": 5.27,
-        "heatingDegreeDay": 14.728,
-        "weight": 0.004224950501
+        "meanTemperatureC": 4.57,
+        "heatingDegreeDay": 15.43,
+        "weight": 0.00445769523
       },
       {
         "date": "2025-03-13",
-        "meanTemperatureC": 5.38,
-        "heatingDegreeDay": 14.621,
-        "weight": 0.004194255926
+        "meanTemperatureC": 3.5,
+        "heatingDegreeDay": 16.5,
+        "weight": 0.004766816027
       },
       {
         "date": "2025-03-14",
-        "meanTemperatureC": 5.49,
-        "heatingDegreeDay": 14.514,
-        "weight": 0.004163561351
+        "meanTemperatureC": 3.14,
+        "heatingDegreeDay": 16.86,
+        "weight": 0.004870819286
       },
       {
         "date": "2025-03-15",
-        "meanTemperatureC": 5.59,
-        "heatingDegreeDay": 14.407,
-        "weight": 0.004132866776
+        "meanTemperatureC": 3.55,
+        "heatingDegreeDay": 16.45,
+        "weight": 0.00475237113
       },
       {
         "date": "2025-03-16",
-        "meanTemperatureC": 5.7,
-        "heatingDegreeDay": 14.3,
-        "weight": 0.004102172201
+        "meanTemperatureC": 3.09,
+        "heatingDegreeDay": 16.91,
+        "weight": 0.004885264183
       },
       {
         "date": "2025-03-17",
-        "meanTemperatureC": 5.83,
-        "heatingDegreeDay": 14.174,
-        "weight": 0.004066027187
+        "meanTemperatureC": 2.71,
+        "heatingDegreeDay": 17.29,
+        "weight": 0.0049950454
       },
       {
         "date": "2025-03-18",
-        "meanTemperatureC": 5.95,
-        "heatingDegreeDay": 14.048,
-        "weight": 0.004029882173
+        "meanTemperatureC": 1.77,
+        "heatingDegreeDay": 18.23,
+        "weight": 0.005266609465
       },
       {
         "date": "2025-03-19",
-        "meanTemperatureC": 6.08,
-        "heatingDegreeDay": 13.923,
-        "weight": 0.003994024024
+        "meanTemperatureC": 4.06,
+        "heatingDegreeDay": 15.94,
+        "weight": 0.00460503318
       },
       {
         "date": "2025-03-20",
-        "meanTemperatureC": 6.2,
-        "heatingDegreeDay": 13.797,
-        "weight": 0.003957879011
+        "meanTemperatureC": 7.57,
+        "heatingDegreeDay": 12.43,
+        "weight": 0.003591001407
       },
       {
         "date": "2025-03-21",
-        "meanTemperatureC": 6.33,
-        "heatingDegreeDay": 13.671,
-        "weight": 0.003921733997
+        "meanTemperatureC": 9.89,
+        "heatingDegreeDay": 10.11,
+        "weight": 0.002920758184
       },
       {
         "date": "2025-03-22",
-        "meanTemperatureC": 6.45,
-        "heatingDegreeDay": 13.545,
-        "weight": 0.003885588983
+        "meanTemperatureC": 10.6,
+        "heatingDegreeDay": 9.4,
+        "weight": 0.002715640646
       },
       {
         "date": "2025-03-23",
-        "meanTemperatureC": 6.58,
-        "heatingDegreeDay": 13.419,
-        "weight": 0.003849443969
+        "meanTemperatureC": 9.81,
+        "heatingDegreeDay": 10.19,
+        "weight": 0.002943870019
       },
       {
         "date": "2025-03-24",
-        "meanTemperatureC": 6.71,
-        "heatingDegreeDay": 13.294,
-        "weight": 0.003813585821
+        "meanTemperatureC": 9.27,
+        "heatingDegreeDay": 10.73,
+        "weight": 0.003099874907
       },
       {
         "date": "2025-03-25",
-        "meanTemperatureC": 6.83,
-        "heatingDegreeDay": 13.168,
-        "weight": 0.003777440807
+        "meanTemperatureC": 8.39,
+        "heatingDegreeDay": 11.61,
+        "weight": 0.003354105095
       },
       {
         "date": "2025-03-26",
-        "meanTemperatureC": 6.96,
-        "heatingDegreeDay": 13.042,
-        "weight": 0.003741295793
+        "meanTemperatureC": 7.5,
+        "heatingDegreeDay": 12.5,
+        "weight": 0.003611224263
       },
       {
         "date": "2025-03-27",
-        "meanTemperatureC": 7.08,
-        "heatingDegreeDay": 12.916,
-        "weight": 0.003705150779
+        "meanTemperatureC": 7.01,
+        "heatingDegreeDay": 12.99,
+        "weight": 0.003752784254
       },
       {
         "date": "2025-03-28",
-        "meanTemperatureC": 7.21,
-        "heatingDegreeDay": 12.79,
-        "weight": 0.003669005765
+        "meanTemperatureC": 8.04,
+        "heatingDegreeDay": 11.96,
+        "weight": 0.003455219375
       },
       {
         "date": "2025-03-29",
-        "meanTemperatureC": 7.34,
-        "heatingDegreeDay": 12.665,
-        "weight": 0.003633147617
+        "meanTemperatureC": 8.22,
+        "heatingDegreeDay": 11.78,
+        "weight": 0.003403217745
       },
       {
         "date": "2025-03-30",
-        "meanTemperatureC": 7.46,
-        "heatingDegreeDay": 12.539,
-        "weight": 0.003597002603
+        "meanTemperatureC": 7.01,
+        "heatingDegreeDay": 12.99,
+        "weight": 0.003752784254
       },
       {
         "date": "2025-03-31",
-        "meanTemperatureC": 7.59,
-        "heatingDegreeDay": 12.413,
-        "weight": 0.003560857589
+        "meanTemperatureC": 6.96,
+        "heatingDegreeDay": 13.04,
+        "weight": 0.003767229151
       },
       {
         "date": "2025-04-01",
-        "meanTemperatureC": 7.71,
-        "heatingDegreeDay": 12.287,
-        "weight": 0.003524712575
+        "meanTemperatureC": 6.44,
+        "heatingDegreeDay": 13.56,
+        "weight": 0.00391745608
       },
       {
         "date": "2025-04-02",
-        "meanTemperatureC": 7.84,
-        "heatingDegreeDay": 12.161,
-        "weight": 0.003488567562
+        "meanTemperatureC": 8.54,
+        "heatingDegreeDay": 11.46,
+        "weight": 0.003310770404
       },
       {
         "date": "2025-04-03",
-        "meanTemperatureC": 7.96,
-        "heatingDegreeDay": 12.035,
-        "weight": 0.003452422548
+        "meanTemperatureC": 10.4,
+        "heatingDegreeDay": 9.6,
+        "weight": 0.002773420234
       },
       {
         "date": "2025-04-04",
-        "meanTemperatureC": 8.09,
-        "heatingDegreeDay": 11.91,
-        "weight": 0.003416564399
+        "meanTemperatureC": 11.43,
+        "heatingDegreeDay": 8.57,
+        "weight": 0.002475855355
       },
       {
         "date": "2025-04-05",
-        "meanTemperatureC": 8.22,
-        "heatingDegreeDay": 11.784,
-        "weight": 0.003380419385
+        "meanTemperatureC": 8.97,
+        "heatingDegreeDay": 11.03,
+        "weight": 0.003186544289
       },
       {
         "date": "2025-04-06",
-        "meanTemperatureC": 8.34,
-        "heatingDegreeDay": 11.658,
-        "weight": 0.003344274372
+        "meanTemperatureC": 4.19,
+        "heatingDegreeDay": 15.81,
+        "weight": 0.004567476448
       },
       {
         "date": "2025-04-07",
-        "meanTemperatureC": 8.47,
-        "heatingDegreeDay": 11.532,
-        "weight": 0.003308129358
+        "meanTemperatureC": 5.08,
+        "heatingDegreeDay": 14.92,
+        "weight": 0.00431035728
       },
       {
         "date": "2025-04-08",
-        "meanTemperatureC": 8.59,
-        "heatingDegreeDay": 11.406,
-        "weight": 0.003271984344
+        "meanTemperatureC": 7.09,
+        "heatingDegreeDay": 12.91,
+        "weight": 0.003729672419
       },
       {
         "date": "2025-04-09",
-        "meanTemperatureC": 8.72,
-        "heatingDegreeDay": 11.281,
-        "weight": 0.003236126195
+        "meanTemperatureC": 7.82,
+        "heatingDegreeDay": 12.18,
+        "weight": 0.003518776922
       },
       {
         "date": "2025-04-10",
-        "meanTemperatureC": 8.85,
-        "heatingDegreeDay": 11.155,
-        "weight": 0.003199981182
+        "meanTemperatureC": 7.88,
+        "heatingDegreeDay": 12.12,
+        "weight": 0.003501443045
       },
       {
         "date": "2025-04-11",
-        "meanTemperatureC": 8.97,
-        "heatingDegreeDay": 11.029,
-        "weight": 0.003163836168
+        "meanTemperatureC": 9.37,
+        "heatingDegreeDay": 10.63,
+        "weight": 0.003070985113
       },
       {
         "date": "2025-04-12",
-        "meanTemperatureC": 9.1,
-        "heatingDegreeDay": 10.903,
-        "weight": 0.003127691154
+        "meanTemperatureC": 12.23,
+        "heatingDegreeDay": 7.77,
+        "weight": 0.002244737002
       },
       {
         "date": "2025-04-13",
-        "meanTemperatureC": 9.22,
-        "heatingDegreeDay": 10.777,
-        "weight": 0.00309154614
+        "meanTemperatureC": 13.78,
+        "heatingDegreeDay": 6.22,
+        "weight": 0.001796945193
       },
       {
         "date": "2025-04-14",
-        "meanTemperatureC": 9.35,
-        "heatingDegreeDay": 10.652,
-        "weight": 0.003055687992
+        "meanTemperatureC": 13.25,
+        "heatingDegreeDay": 6.75,
+        "weight": 0.001950061102
       },
       {
         "date": "2025-04-15",
-        "meanTemperatureC": 9.47,
-        "heatingDegreeDay": 10.526,
-        "weight": 0.003019542978
+        "meanTemperatureC": 14.67,
+        "heatingDegreeDay": 5.33,
+        "weight": 0.001539826026
       },
       {
         "date": "2025-04-16",
-        "meanTemperatureC": 9.6,
-        "heatingDegreeDay": 10.4,
-        "weight": 0.002983397964
+        "meanTemperatureC": 14.59,
+        "heatingDegreeDay": 5.41,
+        "weight": 0.001562937861
       },
       {
         "date": "2025-04-17",
-        "meanTemperatureC": 9.73,
-        "heatingDegreeDay": 10.27,
-        "weight": 0.00294610549
+        "meanTemperatureC": 11.4,
+        "heatingDegreeDay": 8.6,
+        "weight": 0.002484522293
       },
       {
         "date": "2025-04-18",
-        "meanTemperatureC": 9.86,
-        "heatingDegreeDay": 10.14,
-        "weight": 0.002908813015
+        "meanTemperatureC": 8.74,
+        "heatingDegreeDay": 11.26,
+        "weight": 0.003252990816
       },
       {
         "date": "2025-04-19",
-        "meanTemperatureC": 9.99,
-        "heatingDegreeDay": 10.01,
-        "weight": 0.00287152054
+        "meanTemperatureC": 9.32,
+        "heatingDegreeDay": 10.68,
+        "weight": 0.00308543001
       },
       {
         "date": "2025-04-20",
-        "meanTemperatureC": 10.12,
-        "heatingDegreeDay": 9.88,
-        "weight": 0.002834228066
+        "meanTemperatureC": 10.83,
+        "heatingDegreeDay": 9.17,
+        "weight": 0.002649194119
       },
       {
         "date": "2025-04-21",
-        "meanTemperatureC": 10.25,
-        "heatingDegreeDay": 9.75,
-        "weight": 0.002796935591
+        "meanTemperatureC": 11.08,
+        "heatingDegreeDay": 8.92,
+        "weight": 0.002576969634
       },
       {
         "date": "2025-04-22",
-        "meanTemperatureC": 10.38,
-        "heatingDegreeDay": 9.62,
-        "weight": 0.002759643117
+        "meanTemperatureC": 11.63,
+        "heatingDegreeDay": 8.37,
+        "weight": 0.002418075766
       },
       {
         "date": "2025-04-23",
-        "meanTemperatureC": 10.51,
-        "heatingDegreeDay": 9.49,
-        "weight": 0.002722350642
+        "meanTemperatureC": 11.58,
+        "heatingDegreeDay": 8.42,
+        "weight": 0.002432520663
       },
       {
         "date": "2025-04-24",
-        "meanTemperatureC": 10.64,
-        "heatingDegreeDay": 9.36,
-        "weight": 0.002685058168
+        "meanTemperatureC": 10.66,
+        "heatingDegreeDay": 9.34,
+        "weight": 0.002698306769
       },
       {
         "date": "2025-04-25",
-        "meanTemperatureC": 10.77,
-        "heatingDegreeDay": 9.23,
-        "weight": 0.002647765693
+        "meanTemperatureC": 9.94,
+        "heatingDegreeDay": 10.06,
+        "weight": 0.002906313287
       },
       {
         "date": "2025-04-26",
-        "meanTemperatureC": 10.9,
-        "heatingDegreeDay": 9.1,
-        "weight": 0.002610473219
+        "meanTemperatureC": 10.21,
+        "heatingDegreeDay": 9.79,
+        "weight": 0.002828310843
       },
       {
         "date": "2025-04-27",
         "meanTemperatureC": 11.03,
         "heatingDegreeDay": 8.97,
-        "weight": 0.002573180744
+        "weight": 0.002591414531
       },
       {
         "date": "2025-04-28",
-        "meanTemperatureC": 11.16,
-        "heatingDegreeDay": 8.84,
-        "weight": 0.002535888269
+        "meanTemperatureC": 12.64,
+        "heatingDegreeDay": 7.36,
+        "weight": 0.002126288846
       },
       {
         "date": "2025-04-29",
-        "meanTemperatureC": 11.29,
-        "heatingDegreeDay": 8.71,
-        "weight": 0.002498595795
+        "meanTemperatureC": 14.2,
+        "heatingDegreeDay": 5.8,
+        "weight": 0.001675608058
       },
       {
         "date": "2025-04-30",
-        "meanTemperatureC": 11.42,
-        "heatingDegreeDay": 8.58,
-        "weight": 0.00246130332
+        "meanTemperatureC": 15.89,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-05-01",
-        "meanTemperatureC": 11.55,
-        "heatingDegreeDay": 8.45,
-        "weight": 0.002424010846
-      },
-      {
-        "date": "2025-05-02",
-        "meanTemperatureC": 11.68,
-        "heatingDegreeDay": 8.32,
-        "weight": 0.002386718371
-      },
-      {
-        "date": "2025-05-03",
-        "meanTemperatureC": 11.81,
-        "heatingDegreeDay": 8.19,
-        "weight": 0.002349425897
-      },
-      {
-        "date": "2025-05-04",
-        "meanTemperatureC": 11.94,
-        "heatingDegreeDay": 8.06,
-        "weight": 0.002312133422
-      },
-      {
-        "date": "2025-05-05",
-        "meanTemperatureC": 12.07,
-        "heatingDegreeDay": 7.93,
-        "weight": 0.002274840948
-      },
-      {
-        "date": "2025-05-06",
-        "meanTemperatureC": 12.2,
-        "heatingDegreeDay": 7.8,
-        "weight": 0.002237548473
-      },
-      {
-        "date": "2025-05-07",
-        "meanTemperatureC": 12.33,
-        "heatingDegreeDay": 7.67,
-        "weight": 0.002200255998
-      },
-      {
-        "date": "2025-05-08",
-        "meanTemperatureC": 12.46,
-        "heatingDegreeDay": 7.54,
-        "weight": 0.002162963524
-      },
-      {
-        "date": "2025-05-09",
-        "meanTemperatureC": 12.59,
-        "heatingDegreeDay": 7.41,
-        "weight": 0.002125671049
-      },
-      {
-        "date": "2025-05-10",
-        "meanTemperatureC": 12.72,
-        "heatingDegreeDay": 7.28,
-        "weight": 0.002088378575
-      },
-      {
-        "date": "2025-05-11",
-        "meanTemperatureC": 12.85,
-        "heatingDegreeDay": 7.15,
-        "weight": 0.0020510861
-      },
-      {
-        "date": "2025-05-12",
-        "meanTemperatureC": 12.98,
-        "heatingDegreeDay": 7.02,
-        "weight": 0.002013793626
-      },
-      {
-        "date": "2025-05-13",
-        "meanTemperatureC": 13.11,
-        "heatingDegreeDay": 6.89,
-        "weight": 0.001976501151
-      },
-      {
-        "date": "2025-05-14",
-        "meanTemperatureC": 13.24,
-        "heatingDegreeDay": 6.76,
-        "weight": 0.001939208677
-      },
-      {
-        "date": "2025-05-15",
-        "meanTemperatureC": 13.37,
-        "heatingDegreeDay": 6.63,
-        "weight": 0.001901916202
-      },
-      {
-        "date": "2025-05-16",
-        "meanTemperatureC": 13.5,
-        "heatingDegreeDay": 6.5,
-        "weight": 0.001864623728
-      },
-      {
-        "date": "2025-05-17",
-        "meanTemperatureC": 13.6,
-        "heatingDegreeDay": 6.4,
-        "weight": 0.001835937209
-      },
-      {
-        "date": "2025-05-18",
-        "meanTemperatureC": 13.7,
-        "heatingDegreeDay": 6.3,
-        "weight": 0.00180725069
-      },
-      {
-        "date": "2025-05-19",
-        "meanTemperatureC": 13.8,
-        "heatingDegreeDay": 6.2,
-        "weight": 0.001778564171
-      },
-      {
-        "date": "2025-05-20",
-        "meanTemperatureC": 13.9,
-        "heatingDegreeDay": 6.1,
-        "weight": 0.001749877652
-      },
-      {
-        "date": "2025-05-21",
-        "meanTemperatureC": 14,
-        "heatingDegreeDay": 6,
-        "weight": 0.001721191133
-      },
-      {
-        "date": "2025-05-22",
-        "meanTemperatureC": 14.1,
-        "heatingDegreeDay": 5.9,
-        "weight": 0.001692504614
-      },
-      {
-        "date": "2025-05-23",
-        "meanTemperatureC": 14.2,
-        "heatingDegreeDay": 5.8,
-        "weight": 0.001663818095
-      },
-      {
-        "date": "2025-05-24",
-        "meanTemperatureC": 14.3,
-        "heatingDegreeDay": 5.7,
-        "weight": 0.001635131576
-      },
-      {
-        "date": "2025-05-25",
-        "meanTemperatureC": 14.4,
-        "heatingDegreeDay": 5.6,
-        "weight": 0.001606445058
-      },
-      {
-        "date": "2025-05-26",
-        "meanTemperatureC": 14.5,
-        "heatingDegreeDay": 5.5,
-        "weight": 0.001577758539
-      },
-      {
-        "date": "2025-05-27",
-        "meanTemperatureC": 14.6,
-        "heatingDegreeDay": 5.4,
-        "weight": 0.00154907202
-      },
-      {
-        "date": "2025-05-28",
-        "meanTemperatureC": 14.7,
-        "heatingDegreeDay": 5.3,
-        "weight": 0.001520385501
-      },
-      {
-        "date": "2025-05-29",
-        "meanTemperatureC": 14.8,
-        "heatingDegreeDay": 5.2,
-        "weight": 0.001491698982
-      },
-      {
-        "date": "2025-05-30",
-        "meanTemperatureC": 14.9,
-        "heatingDegreeDay": 5.1,
-        "weight": 0.001463012463
-      },
-      {
-        "date": "2025-05-31",
-        "meanTemperatureC": 15,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-01",
-        "meanTemperatureC": 15.1,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-02",
-        "meanTemperatureC": 15.2,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-03",
-        "meanTemperatureC": 15.3,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-04",
-        "meanTemperatureC": 15.4,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-05",
-        "meanTemperatureC": 15.5,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-06",
-        "meanTemperatureC": 15.6,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-07",
-        "meanTemperatureC": 15.7,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-08",
-        "meanTemperatureC": 15.8,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-09",
-        "meanTemperatureC": 15.9,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-10",
-        "meanTemperatureC": 16,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-11",
-        "meanTemperatureC": 16.1,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-12",
-        "meanTemperatureC": 16.2,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-13",
-        "meanTemperatureC": 16.3,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-14",
-        "meanTemperatureC": 16.4,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-15",
-        "meanTemperatureC": 16.5,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-16",
-        "meanTemperatureC": 16.6,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-17",
-        "meanTemperatureC": 16.66,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-18",
-        "meanTemperatureC": 16.72,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-19",
-        "meanTemperatureC": 16.78,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-20",
-        "meanTemperatureC": 16.84,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-21",
-        "meanTemperatureC": 16.9,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-22",
-        "meanTemperatureC": 16.96,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-23",
         "meanTemperatureC": 17.02,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-06-24",
-        "meanTemperatureC": 17.08,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-25",
-        "meanTemperatureC": 17.14,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-26",
-        "meanTemperatureC": 17.2,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-27",
-        "meanTemperatureC": 17.26,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-28",
-        "meanTemperatureC": 17.32,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-29",
-        "meanTemperatureC": 17.38,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-06-30",
-        "meanTemperatureC": 17.44,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-01",
-        "meanTemperatureC": 17.5,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-02",
-        "meanTemperatureC": 17.56,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-03",
-        "meanTemperatureC": 17.62,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-04",
-        "meanTemperatureC": 17.68,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-05",
-        "meanTemperatureC": 17.74,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-06",
-        "meanTemperatureC": 17.8,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-07",
-        "meanTemperatureC": 17.86,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-08",
-        "meanTemperatureC": 17.92,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-09",
-        "meanTemperatureC": 17.98,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-10",
-        "meanTemperatureC": 18.04,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-11",
-        "meanTemperatureC": 18.1,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-12",
-        "meanTemperatureC": 18.16,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-13",
-        "meanTemperatureC": 18.22,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-14",
-        "meanTemperatureC": 18.28,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-15",
-        "meanTemperatureC": 18.34,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-16",
-        "meanTemperatureC": 18.4,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-17",
-        "meanTemperatureC": 18.39,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-18",
-        "meanTemperatureC": 18.37,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-19",
-        "meanTemperatureC": 18.36,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-20",
-        "meanTemperatureC": 18.35,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-21",
-        "meanTemperatureC": 18.34,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-22",
-        "meanTemperatureC": 18.32,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-23",
-        "meanTemperatureC": 18.31,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-24",
-        "meanTemperatureC": 18.3,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-25",
-        "meanTemperatureC": 18.28,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-26",
-        "meanTemperatureC": 18.27,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-27",
-        "meanTemperatureC": 18.26,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-28",
-        "meanTemperatureC": 18.25,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-29",
-        "meanTemperatureC": 18.23,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-30",
-        "meanTemperatureC": 18.22,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-07-31",
-        "meanTemperatureC": 18.21,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-01",
-        "meanTemperatureC": 18.19,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-02",
-        "meanTemperatureC": 18.18,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-03",
-        "meanTemperatureC": 18.17,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-04",
-        "meanTemperatureC": 18.15,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-05",
-        "meanTemperatureC": 18.14,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-06",
+        "date": "2025-05-02",
         "meanTemperatureC": 18.13,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-07",
-        "meanTemperatureC": 18.12,
+        "date": "2025-05-03",
+        "meanTemperatureC": 14.22,
+        "heatingDegreeDay": 5.78,
+        "weight": 0.001669830099
+      },
+      {
+        "date": "2025-05-04",
+        "meanTemperatureC": 9.82,
+        "heatingDegreeDay": 10.18,
+        "weight": 0.00294098104
+      },
+      {
+        "date": "2025-05-05",
+        "meanTemperatureC": 8.05,
+        "heatingDegreeDay": 11.95,
+        "weight": 0.003452330395
+      },
+      {
+        "date": "2025-05-06",
+        "meanTemperatureC": 8.48,
+        "heatingDegreeDay": 11.52,
+        "weight": 0.003328104281
+      },
+      {
+        "date": "2025-05-07",
+        "meanTemperatureC": 9.82,
+        "heatingDegreeDay": 10.18,
+        "weight": 0.00294098104
+      },
+      {
+        "date": "2025-05-08",
+        "meanTemperatureC": 10.15,
+        "heatingDegreeDay": 9.85,
+        "weight": 0.002845644719
+      },
+      {
+        "date": "2025-05-09",
+        "meanTemperatureC": 10.94,
+        "heatingDegreeDay": 9.06,
+        "weight": 0.002617415346
+      },
+      {
+        "date": "2025-05-10",
+        "meanTemperatureC": 12.26,
+        "heatingDegreeDay": 7.74,
+        "weight": 0.002236070064
+      },
+      {
+        "date": "2025-05-11",
+        "meanTemperatureC": 13.76,
+        "heatingDegreeDay": 6.24,
+        "weight": 0.001802723152
+      },
+      {
+        "date": "2025-05-12",
+        "meanTemperatureC": 13.38,
+        "heatingDegreeDay": 6.62,
+        "weight": 0.00191250437
+      },
+      {
+        "date": "2025-05-13",
+        "meanTemperatureC": 13.72,
+        "heatingDegreeDay": 6.28,
+        "weight": 0.00181427907
+      },
+      {
+        "date": "2025-05-14",
+        "meanTemperatureC": 14.69,
+        "heatingDegreeDay": 5.31,
+        "weight": 0.001534048067
+      },
+      {
+        "date": "2025-05-15",
+        "meanTemperatureC": 12.32,
+        "heatingDegreeDay": 7.68,
+        "weight": 0.002218736187
+      },
+      {
+        "date": "2025-05-16",
+        "meanTemperatureC": 11.37,
+        "heatingDegreeDay": 8.63,
+        "weight": 0.002493189231
+      },
+      {
+        "date": "2025-05-17",
+        "meanTemperatureC": 11.64,
+        "heatingDegreeDay": 8.36,
+        "weight": 0.002415186787
+      },
+      {
+        "date": "2025-05-18",
+        "meanTemperatureC": 11.65,
+        "heatingDegreeDay": 8.35,
+        "weight": 0.002412297808
+      },
+      {
+        "date": "2025-05-19",
+        "meanTemperatureC": 13.56,
+        "heatingDegreeDay": 6.44,
+        "weight": 0.00186050274
+      },
+      {
+        "date": "2025-05-20",
+        "meanTemperatureC": 15.29,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-08",
-        "meanTemperatureC": 18.1,
+        "date": "2025-05-21",
+        "meanTemperatureC": 14.43,
+        "heatingDegreeDay": 5.57,
+        "weight": 0.001609161532
+      },
+      {
+        "date": "2025-05-22",
+        "meanTemperatureC": 10.68,
+        "heatingDegreeDay": 9.32,
+        "weight": 0.00269252881
+      },
+      {
+        "date": "2025-05-23",
+        "meanTemperatureC": 8.69,
+        "heatingDegreeDay": 11.31,
+        "weight": 0.003267435713
+      },
+      {
+        "date": "2025-05-24",
+        "meanTemperatureC": 10.38,
+        "heatingDegreeDay": 9.62,
+        "weight": 0.002779198193
+      },
+      {
+        "date": "2025-05-25",
+        "meanTemperatureC": 12.82,
+        "heatingDegreeDay": 7.18,
+        "weight": 0.002074287217
+      },
+      {
+        "date": "2025-05-26",
+        "meanTemperatureC": 13.19,
+        "heatingDegreeDay": 6.81,
+        "weight": 0.001967394978
+      },
+      {
+        "date": "2025-05-27",
+        "meanTemperatureC": 13.48,
+        "heatingDegreeDay": 6.52,
+        "weight": 0.001883614575
+      },
+      {
+        "date": "2025-05-28",
+        "meanTemperatureC": 13.87,
+        "heatingDegreeDay": 6.13,
+        "weight": 0.001770944378
+      },
+      {
+        "date": "2025-05-29",
+        "meanTemperatureC": 12.69,
+        "heatingDegreeDay": 7.31,
+        "weight": 0.002111843949
+      },
+      {
+        "date": "2025-05-30",
+        "meanTemperatureC": 17.49,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-09",
-        "meanTemperatureC": 18.09,
+        "date": "2025-05-31",
+        "meanTemperatureC": 18.84,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-10",
-        "meanTemperatureC": 18.08,
+        "date": "2025-06-01",
+        "meanTemperatureC": 18.46,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-11",
-        "meanTemperatureC": 18.06,
+        "date": "2025-06-02",
+        "meanTemperatureC": 15.8,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-12",
+        "date": "2025-06-03",
+        "meanTemperatureC": 16.45,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-04",
+        "meanTemperatureC": 17.37,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-05",
+        "meanTemperatureC": 15.75,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-06",
+        "meanTemperatureC": 16.21,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-07",
+        "meanTemperatureC": 15.04,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-08",
+        "meanTemperatureC": 13.15,
+        "heatingDegreeDay": 6.85,
+        "weight": 0.001978950896
+      },
+      {
+        "date": "2025-06-09",
+        "meanTemperatureC": 12.6,
+        "heatingDegreeDay": 7.4,
+        "weight": 0.002137844764
+      },
+      {
+        "date": "2025-06-10",
+        "meanTemperatureC": 14.37,
+        "heatingDegreeDay": 5.63,
+        "weight": 0.001626495408
+      },
+      {
+        "date": "2025-06-11",
+        "meanTemperatureC": 14.6,
+        "heatingDegreeDay": 5.4,
+        "weight": 0.001560048882
+      },
+      {
+        "date": "2025-06-12",
+        "meanTemperatureC": 16.86,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-13",
+        "meanTemperatureC": 20.27,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-14",
+        "meanTemperatureC": 22.7,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-15",
+        "meanTemperatureC": 20.35,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-16",
+        "meanTemperatureC": 16.84,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-17",
+        "meanTemperatureC": 18.32,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-18",
+        "meanTemperatureC": 19.83,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-19",
+        "meanTemperatureC": 18.69,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-20",
+        "meanTemperatureC": 17.59,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-21",
+        "meanTemperatureC": 20.6,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-22",
+        "meanTemperatureC": 24.13,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-23",
+        "meanTemperatureC": 20.46,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-24",
+        "meanTemperatureC": 18.29,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-25",
+        "meanTemperatureC": 21.64,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-26",
+        "meanTemperatureC": 20.96,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-27",
+        "meanTemperatureC": 18.47,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-28",
+        "meanTemperatureC": 21.06,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-29",
+        "meanTemperatureC": 22.62,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-06-30",
+        "meanTemperatureC": 21.86,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-01",
+        "meanTemperatureC": 25.07,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-02",
+        "meanTemperatureC": 27.65,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-03",
+        "meanTemperatureC": 21.07,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-04",
+        "meanTemperatureC": 19.02,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-05",
+        "meanTemperatureC": 20.67,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-06",
+        "meanTemperatureC": 19.45,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-07",
+        "meanTemperatureC": 16.42,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-08",
+        "meanTemperatureC": 14.22,
+        "heatingDegreeDay": 5.78,
+        "weight": 0.001669830099
+      },
+      {
+        "date": "2025-07-09",
+        "meanTemperatureC": 15.4,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-10",
+        "meanTemperatureC": 16.76,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-11",
+        "meanTemperatureC": 17.42,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-12",
+        "meanTemperatureC": 17.57,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-13",
+        "meanTemperatureC": 18.76,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-14",
+        "meanTemperatureC": 19.32,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-15",
         "meanTemperatureC": 18.05,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-13",
-        "meanTemperatureC": 18.04,
+        "date": "2025-07-16",
+        "meanTemperatureC": 16.3,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
-        "date": "2025-08-14",
-        "meanTemperatureC": 18.03,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-15",
-        "meanTemperatureC": 18.01,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-16",
-        "meanTemperatureC": 18,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-17",
-        "meanTemperatureC": 17.86,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-18",
-        "meanTemperatureC": 17.72,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-19",
-        "meanTemperatureC": 17.58,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-20",
-        "meanTemperatureC": 17.45,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-21",
-        "meanTemperatureC": 17.31,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-22",
-        "meanTemperatureC": 17.17,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-23",
-        "meanTemperatureC": 17.03,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-24",
-        "meanTemperatureC": 16.89,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-25",
-        "meanTemperatureC": 16.75,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-26",
-        "meanTemperatureC": 16.61,
-        "heatingDegreeDay": 0,
-        "weight": 0
-      },
-      {
-        "date": "2025-08-27",
+        "date": "2025-07-17",
         "meanTemperatureC": 16.47,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
+        "date": "2025-07-18",
+        "meanTemperatureC": 19.02,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-19",
+        "meanTemperatureC": 21.07,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-20",
+        "meanTemperatureC": 22,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-21",
+        "meanTemperatureC": 18.63,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-22",
+        "meanTemperatureC": 17.1,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-23",
+        "meanTemperatureC": 17.87,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-24",
+        "meanTemperatureC": 17.96,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-25",
+        "meanTemperatureC": 18.17,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-26",
+        "meanTemperatureC": 17.84,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-27",
+        "meanTemperatureC": 17.22,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-28",
+        "meanTemperatureC": 15.99,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-29",
+        "meanTemperatureC": 15.27,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-30",
+        "meanTemperatureC": 15.43,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-07-31",
+        "meanTemperatureC": 15.71,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-01",
+        "meanTemperatureC": 16.13,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-02",
+        "meanTemperatureC": 15.14,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-03",
+        "meanTemperatureC": 14.83,
+        "heatingDegreeDay": 5.17,
+        "weight": 0.001493602355
+      },
+      {
+        "date": "2025-08-04",
+        "meanTemperatureC": 16.83,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-05",
+        "meanTemperatureC": 17.17,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-06",
+        "meanTemperatureC": 15.39,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-07",
+        "meanTemperatureC": 17.43,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-08",
+        "meanTemperatureC": 19.9,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-09",
+        "meanTemperatureC": 21,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-10",
+        "meanTemperatureC": 19.44,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-11",
+        "meanTemperatureC": 19.08,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-12",
+        "meanTemperatureC": 21.47,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-13",
+        "meanTemperatureC": 24.32,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-14",
+        "meanTemperatureC": 25.09,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-15",
+        "meanTemperatureC": 24.18,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-16",
+        "meanTemperatureC": 19.86,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-17",
+        "meanTemperatureC": 17.19,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-18",
+        "meanTemperatureC": 17.97,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-19",
+        "meanTemperatureC": 19.56,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-20",
+        "meanTemperatureC": 18.87,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-21",
+        "meanTemperatureC": 17.12,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-22",
+        "meanTemperatureC": 14.97,
+        "heatingDegreeDay": 5.03,
+        "weight": 0.001453156643
+      },
+      {
+        "date": "2025-08-23",
+        "meanTemperatureC": 13.94,
+        "heatingDegreeDay": 6.06,
+        "weight": 0.001750721523
+      },
+      {
+        "date": "2025-08-24",
+        "meanTemperatureC": 13.63,
+        "heatingDegreeDay": 6.37,
+        "weight": 0.001840279884
+      },
+      {
+        "date": "2025-08-25",
+        "meanTemperatureC": 14.56,
+        "heatingDegreeDay": 5.44,
+        "weight": 0.001571604799
+      },
+      {
+        "date": "2025-08-26",
+        "meanTemperatureC": 17.14,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
+        "date": "2025-08-27",
+        "meanTemperatureC": 20.08,
+        "heatingDegreeDay": 0,
+        "weight": 0
+      },
+      {
         "date": "2025-08-28",
-        "meanTemperatureC": 16.34,
+        "meanTemperatureC": 18.18,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-08-29",
-        "meanTemperatureC": 16.2,
+        "meanTemperatureC": 17.04,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-08-30",
-        "meanTemperatureC": 16.06,
+        "meanTemperatureC": 16.47,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-08-31",
-        "meanTemperatureC": 15.92,
+        "meanTemperatureC": 17.62,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-01",
-        "meanTemperatureC": 15.78,
+        "meanTemperatureC": 17.56,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-02",
-        "meanTemperatureC": 15.64,
+        "meanTemperatureC": 16.33,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-03",
-        "meanTemperatureC": 15.5,
+        "meanTemperatureC": 17.97,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-04",
-        "meanTemperatureC": 15.36,
+        "meanTemperatureC": 19.31,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-05",
-        "meanTemperatureC": 15.23,
+        "meanTemperatureC": 15.95,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-06",
-        "meanTemperatureC": 15.09,
+        "meanTemperatureC": 15.28,
         "heatingDegreeDay": 0,
         "weight": 0
       },
       {
         "date": "2025-09-07",
-        "meanTemperatureC": 14.95,
-        "heatingDegreeDay": 5.052,
-        "weight": 0.001449242934
+        "meanTemperatureC": 16.46,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-08",
-        "meanTemperatureC": 14.81,
-        "heatingDegreeDay": 5.19,
-        "weight": 0.00148883033
+        "meanTemperatureC": 16.59,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-09",
-        "meanTemperatureC": 14.67,
-        "heatingDegreeDay": 5.329,
-        "weight": 0.001528704591
+        "meanTemperatureC": 15.99,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-10",
-        "meanTemperatureC": 14.53,
-        "heatingDegreeDay": 5.468,
-        "weight": 0.001568578853
+        "meanTemperatureC": 14.77,
+        "heatingDegreeDay": 5.23,
+        "weight": 0.001510936232
       },
       {
         "date": "2025-09-11",
-        "meanTemperatureC": 14.39,
-        "heatingDegreeDay": 5.606,
-        "weight": 0.001608166249
+        "meanTemperatureC": 15.15,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-12",
-        "meanTemperatureC": 14.25,
-        "heatingDegreeDay": 5.745,
-        "weight": 0.00164804051
+        "meanTemperatureC": 14.16,
+        "heatingDegreeDay": 5.84,
+        "weight": 0.001687163976
       },
       {
         "date": "2025-09-13",
-        "meanTemperatureC": 14.12,
-        "heatingDegreeDay": 5.884,
-        "weight": 0.001687914771
+        "meanTemperatureC": 14.13,
+        "heatingDegreeDay": 5.87,
+        "weight": 0.001695830914
       },
       {
         "date": "2025-09-14",
-        "meanTemperatureC": 13.98,
-        "heatingDegreeDay": 6.023,
-        "weight": 0.001727789032
+        "meanTemperatureC": 14.11,
+        "heatingDegreeDay": 5.89,
+        "weight": 0.001701608873
       },
       {
         "date": "2025-09-15",
-        "meanTemperatureC": 13.84,
-        "heatingDegreeDay": 6.161,
-        "weight": 0.001767376429
+        "meanTemperatureC": 16.74,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-16",
-        "meanTemperatureC": 13.7,
-        "heatingDegreeDay": 6.3,
-        "weight": 0.00180725069
+        "meanTemperatureC": 14.24,
+        "heatingDegreeDay": 5.76,
+        "weight": 0.00166405214
       },
       {
         "date": "2025-09-17",
-        "meanTemperatureC": 13.56,
-        "heatingDegreeDay": 6.443,
-        "weight": 0.001848272412
+        "meanTemperatureC": 13.3,
+        "heatingDegreeDay": 6.7,
+        "weight": 0.001935616205
       },
       {
         "date": "2025-09-18",
-        "meanTemperatureC": 13.41,
-        "heatingDegreeDay": 6.587,
-        "weight": 0.001889580999
+        "meanTemperatureC": 16.62,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-19",
-        "meanTemperatureC": 13.27,
-        "heatingDegreeDay": 6.73,
-        "weight": 0.001930602721
+        "meanTemperatureC": 17.89,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-20",
-        "meanTemperatureC": 13.13,
-        "heatingDegreeDay": 6.873,
-        "weight": 0.001971624443
+        "meanTemperatureC": 19.62,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-21",
-        "meanTemperatureC": 12.98,
-        "heatingDegreeDay": 7.017,
-        "weight": 0.00201293303
+        "meanTemperatureC": 17.38,
+        "heatingDegreeDay": 0,
+        "weight": 0
       },
       {
         "date": "2025-09-22",
-        "meanTemperatureC": 12.84,
-        "heatingDegreeDay": 7.16,
-        "weight": 0.002053954752
+        "meanTemperatureC": 11.56,
+        "heatingDegreeDay": 8.44,
+        "weight": 0.002438298622
       },
       {
         "date": "2025-09-23",
-        "meanTemperatureC": 12.7,
-        "heatingDegreeDay": 7.303,
-        "weight": 0.002094976474
+        "meanTemperatureC": 10.87,
+        "heatingDegreeDay": 9.13,
+        "weight": 0.002637638202
       },
       {
         "date": "2025-09-24",
-        "meanTemperatureC": 12.55,
-        "heatingDegreeDay": 7.447,
-        "weight": 0.002136285061
+        "meanTemperatureC": 10.23,
+        "heatingDegreeDay": 9.77,
+        "weight": 0.002822532884
       },
       {
         "date": "2025-09-25",
-        "meanTemperatureC": 12.41,
-        "heatingDegreeDay": 7.59,
-        "weight": 0.002177306783
+        "meanTemperatureC": 9.66,
+        "heatingDegreeDay": 10.34,
+        "weight": 0.00298720471
       },
       {
         "date": "2025-09-26",
-        "meanTemperatureC": 12.27,
-        "heatingDegreeDay": 7.733,
-        "weight": 0.002218328505
+        "meanTemperatureC": 10.86,
+        "heatingDegreeDay": 9.14,
+        "weight": 0.002640527181
       },
       {
         "date": "2025-09-27",
-        "meanTemperatureC": 12.12,
-        "heatingDegreeDay": 7.877,
-        "weight": 0.002259637093
+        "meanTemperatureC": 12.26,
+        "heatingDegreeDay": 7.74,
+        "weight": 0.002236070064
       },
       {
         "date": "2025-09-28",
-        "meanTemperatureC": 11.98,
-        "heatingDegreeDay": 8.02,
-        "weight": 0.002300658815
+        "meanTemperatureC": 12.21,
+        "heatingDegreeDay": 7.79,
+        "weight": 0.002250514961
       },
       {
         "date": "2025-09-29",
-        "meanTemperatureC": 11.84,
-        "heatingDegreeDay": 8.163,
-        "weight": 0.002341680537
+        "meanTemperatureC": 11.47,
+        "heatingDegreeDay": 8.53,
+        "weight": 0.002464299437
       },
       {
         "date": "2025-09-30",
-        "meanTemperatureC": 11.69,
-        "heatingDegreeDay": 8.307,
-        "weight": 0.002382989124
+        "meanTemperatureC": 10.57,
+        "heatingDegreeDay": 9.43,
+        "weight": 0.002724307584
       },
       {
         "date": "2025-10-01",
-        "meanTemperatureC": 11.55,
-        "heatingDegreeDay": 8.45,
-        "weight": 0.002424010846
+        "meanTemperatureC": 8.6,
+        "heatingDegreeDay": 11.4,
+        "weight": 0.003293436528
       },
       {
         "date": "2025-10-02",
-        "meanTemperatureC": 11.41,
-        "heatingDegreeDay": 8.593,
-        "weight": 0.002465032568
+        "meanTemperatureC": 8.01,
+        "heatingDegreeDay": 11.99,
+        "weight": 0.003463886313
       },
       {
         "date": "2025-10-03",
-        "meanTemperatureC": 11.26,
-        "heatingDegreeDay": 8.737,
-        "weight": 0.002506341155
+        "meanTemperatureC": 8.27,
+        "heatingDegreeDay": 11.73,
+        "weight": 0.003388772848
       },
       {
         "date": "2025-10-04",
-        "meanTemperatureC": 11.12,
-        "heatingDegreeDay": 8.88,
-        "weight": 0.002547362877
+        "meanTemperatureC": 10.66,
+        "heatingDegreeDay": 9.34,
+        "weight": 0.002698306769
       },
       {
         "date": "2025-10-05",
-        "meanTemperatureC": 10.98,
-        "heatingDegreeDay": 9.023,
-        "weight": 0.002588384599
+        "meanTemperatureC": 9.91,
+        "heatingDegreeDay": 10.09,
+        "weight": 0.002914980225
       },
       {
         "date": "2025-10-06",
-        "meanTemperatureC": 10.83,
-        "heatingDegreeDay": 9.167,
-        "weight": 0.002629693186
+        "meanTemperatureC": 10.52,
+        "heatingDegreeDay": 9.48,
+        "weight": 0.002738752481
       },
       {
         "date": "2025-10-07",
-        "meanTemperatureC": 10.69,
-        "heatingDegreeDay": 9.31,
-        "weight": 0.002670714908
+        "meanTemperatureC": 12.16,
+        "heatingDegreeDay": 7.84,
+        "weight": 0.002264959858
       },
       {
         "date": "2025-10-08",
-        "meanTemperatureC": 10.55,
-        "heatingDegreeDay": 9.453,
-        "weight": 0.00271173663
+        "meanTemperatureC": 12.62,
+        "heatingDegreeDay": 7.38,
+        "weight": 0.002132066805
       },
       {
         "date": "2025-10-09",
-        "meanTemperatureC": 10.4,
-        "heatingDegreeDay": 9.597,
-        "weight": 0.002753045217
+        "meanTemperatureC": 12.01,
+        "heatingDegreeDay": 7.99,
+        "weight": 0.002308294549
       },
       {
         "date": "2025-10-10",
-        "meanTemperatureC": 10.26,
-        "heatingDegreeDay": 9.74,
-        "weight": 0.002794066939
+        "meanTemperatureC": 11.73,
+        "heatingDegreeDay": 8.27,
+        "weight": 0.002389185972
       },
       {
         "date": "2025-10-11",
-        "meanTemperatureC": 10.12,
-        "heatingDegreeDay": 9.883,
-        "weight": 0.002835088661
+        "meanTemperatureC": 12.38,
+        "heatingDegreeDay": 7.62,
+        "weight": 0.002201402311
       },
       {
         "date": "2025-10-12",
-        "meanTemperatureC": 9.97,
-        "heatingDegreeDay": 10.027,
-        "weight": 0.002876397249
+        "meanTemperatureC": 11.81,
+        "heatingDegreeDay": 8.19,
+        "weight": 0.002366074137
       },
       {
         "date": "2025-10-13",
-        "meanTemperatureC": 9.83,
-        "heatingDegreeDay": 10.17,
-        "weight": 0.002917418971
+        "meanTemperatureC": 11.22,
+        "heatingDegreeDay": 8.78,
+        "weight": 0.002536523922
       },
       {
         "date": "2025-10-14",
-        "meanTemperatureC": 9.69,
-        "heatingDegreeDay": 10.313,
-        "weight": 0.002958440693
+        "meanTemperatureC": 10.28,
+        "heatingDegreeDay": 9.72,
+        "weight": 0.002808087987
       },
       {
         "date": "2025-10-15",
-        "meanTemperatureC": 9.54,
-        "heatingDegreeDay": 10.457,
-        "weight": 0.00299974928
+        "meanTemperatureC": 10.31,
+        "heatingDegreeDay": 9.69,
+        "weight": 0.002799421049
       },
       {
         "date": "2025-10-16",
-        "meanTemperatureC": 9.4,
-        "heatingDegreeDay": 10.6,
-        "weight": 0.003040771002
+        "meanTemperatureC": 9.95,
+        "heatingDegreeDay": 10.05,
+        "weight": 0.002903424307
       },
       {
         "date": "2025-10-17",
-        "meanTemperatureC": 9.25,
-        "heatingDegreeDay": 10.745,
-        "weight": 0.003082366454
+        "meanTemperatureC": 9.73,
+        "heatingDegreeDay": 10.27,
+        "weight": 0.002966981854
       },
       {
         "date": "2025-10-18",
-        "meanTemperatureC": 9.11,
-        "heatingDegreeDay": 10.89,
-        "weight": 0.003123961907
+        "meanTemperatureC": 7.19,
+        "heatingDegreeDay": 12.81,
+        "weight": 0.003700782625
       },
       {
         "date": "2025-10-19",
-        "meanTemperatureC": 8.96,
-        "heatingDegreeDay": 11.035,
-        "weight": 0.003165557359
+        "meanTemperatureC": 6.27,
+        "heatingDegreeDay": 13.73,
+        "weight": 0.00396656873
       },
       {
         "date": "2025-10-20",
-        "meanTemperatureC": 8.82,
-        "heatingDegreeDay": 11.181,
-        "weight": 0.003207439677
+        "meanTemperatureC": 9.59,
+        "heatingDegreeDay": 10.41,
+        "weight": 0.003007427566
       },
       {
         "date": "2025-10-21",
-        "meanTemperatureC": 8.67,
-        "heatingDegreeDay": 11.326,
-        "weight": 0.003249035129
+        "meanTemperatureC": 11.9,
+        "heatingDegreeDay": 8.1,
+        "weight": 0.002340073322
       },
       {
         "date": "2025-10-22",
-        "meanTemperatureC": 8.53,
-        "heatingDegreeDay": 11.471,
-        "weight": 0.003290630581
+        "meanTemperatureC": 11.79,
+        "heatingDegreeDay": 8.21,
+        "weight": 0.002371852096
       },
       {
         "date": "2025-10-23",
-        "meanTemperatureC": 8.38,
-        "heatingDegreeDay": 11.616,
-        "weight": 0.003332226034
+        "meanTemperatureC": 11.68,
+        "heatingDegreeDay": 8.32,
+        "weight": 0.002403630869
       },
       {
         "date": "2025-10-24",
-        "meanTemperatureC": 8.24,
-        "heatingDegreeDay": 11.761,
-        "weight": 0.003373821486
+        "meanTemperatureC": 8.44,
+        "heatingDegreeDay": 11.56,
+        "weight": 0.003339660198
       },
       {
         "date": "2025-10-25",
-        "meanTemperatureC": 8.09,
-        "heatingDegreeDay": 11.906,
-        "weight": 0.003415416938
+        "meanTemperatureC": 8.04,
+        "heatingDegreeDay": 11.96,
+        "weight": 0.003455219375
       },
       {
         "date": "2025-10-26",
-        "meanTemperatureC": 7.95,
-        "heatingDegreeDay": 12.052,
-        "weight": 0.003457299256
+        "meanTemperatureC": 6.55,
+        "heatingDegreeDay": 13.45,
+        "weight": 0.003885677307
       },
       {
         "date": "2025-10-27",
-        "meanTemperatureC": 7.8,
-        "heatingDegreeDay": 12.197,
-        "weight": 0.003498894708
+        "meanTemperatureC": 6.79,
+        "heatingDegreeDay": 13.21,
+        "weight": 0.003816341801
       },
       {
         "date": "2025-10-28",
-        "meanTemperatureC": 7.66,
-        "heatingDegreeDay": 12.342,
-        "weight": 0.003540490161
+        "meanTemperatureC": 8.63,
+        "heatingDegreeDay": 11.37,
+        "weight": 0.003284769589
       },
       {
         "date": "2025-10-29",
-        "meanTemperatureC": 7.51,
-        "heatingDegreeDay": 12.487,
-        "weight": 0.003582085613
+        "meanTemperatureC": 10.13,
+        "heatingDegreeDay": 9.87,
+        "weight": 0.002851422678
       },
       {
         "date": "2025-10-30",
-        "meanTemperatureC": 7.37,
-        "heatingDegreeDay": 12.632,
-        "weight": 0.003623681066
+        "meanTemperatureC": 9.85,
+        "heatingDegreeDay": 10.15,
+        "weight": 0.002932314101
       },
       {
         "date": "2025-10-31",
-        "meanTemperatureC": 7.22,
-        "heatingDegreeDay": 12.777,
-        "weight": 0.003665276518
+        "meanTemperatureC": 7.35,
+        "heatingDegreeDay": 12.65,
+        "weight": 0.003654558954
       },
       {
         "date": "2025-11-01",
-        "meanTemperatureC": 7.08,
-        "heatingDegreeDay": 12.923,
-        "weight": 0.003707158836
+        "meanTemperatureC": 10.41,
+        "heatingDegreeDay": 9.59,
+        "weight": 0.002770531254
       },
       {
         "date": "2025-11-02",
-        "meanTemperatureC": 6.93,
-        "heatingDegreeDay": 13.068,
-        "weight": 0.003748754288
+        "meanTemperatureC": 9.85,
+        "heatingDegreeDay": 10.15,
+        "weight": 0.002932314101
       },
       {
         "date": "2025-11-03",
-        "meanTemperatureC": 6.79,
-        "heatingDegreeDay": 13.213,
-        "weight": 0.00379034974
+        "meanTemperatureC": 8.38,
+        "heatingDegreeDay": 11.62,
+        "weight": 0.003356994075
       },
       {
         "date": "2025-11-04",
-        "meanTemperatureC": 6.64,
-        "heatingDegreeDay": 13.358,
-        "weight": 0.003831945193
+        "meanTemperatureC": 9.88,
+        "heatingDegreeDay": 10.12,
+        "weight": 0.002923647163
       },
       {
         "date": "2025-11-05",
-        "meanTemperatureC": 6.5,
-        "heatingDegreeDay": 13.503,
-        "weight": 0.003873540645
+        "meanTemperatureC": 8.55,
+        "heatingDegreeDay": 11.45,
+        "weight": 0.003307881425
       },
       {
         "date": "2025-11-06",
-        "meanTemperatureC": 6.35,
-        "heatingDegreeDay": 13.648,
-        "weight": 0.003915136097
+        "meanTemperatureC": 6.31,
+        "heatingDegreeDay": 13.69,
+        "weight": 0.003955012813
       },
       {
         "date": "2025-11-07",
-        "meanTemperatureC": 6.21,
-        "heatingDegreeDay": 13.794,
-        "weight": 0.003957018415
+        "meanTemperatureC": 4.93,
+        "heatingDegreeDay": 15.07,
+        "weight": 0.004353691971
       },
       {
         "date": "2025-11-08",
-        "meanTemperatureC": 6.06,
-        "heatingDegreeDay": 13.939,
-        "weight": 0.003998613867
+        "meanTemperatureC": 4.87,
+        "heatingDegreeDay": 15.13,
+        "weight": 0.004371025848
       },
       {
         "date": "2025-11-09",
-        "meanTemperatureC": 5.92,
-        "heatingDegreeDay": 14.084,
-        "weight": 0.00404020932
+        "meanTemperatureC": 6.72,
+        "heatingDegreeDay": 13.28,
+        "weight": 0.003836564657
       },
       {
         "date": "2025-11-10",
-        "meanTemperatureC": 5.77,
-        "heatingDegreeDay": 14.229,
-        "weight": 0.004081804772
+        "meanTemperatureC": 6.72,
+        "heatingDegreeDay": 13.28,
+        "weight": 0.003836564657
       },
       {
         "date": "2025-11-11",
-        "meanTemperatureC": 5.63,
-        "heatingDegreeDay": 14.374,
-        "weight": 0.004123400225
+        "meanTemperatureC": 7.62,
+        "heatingDegreeDay": 12.38,
+        "weight": 0.00357655651
       },
       {
         "date": "2025-11-12",
-        "meanTemperatureC": 5.48,
-        "heatingDegreeDay": 14.519,
-        "weight": 0.004164995677
+        "meanTemperatureC": 7.75,
+        "heatingDegreeDay": 12.25,
+        "weight": 0.003538999778
       },
       {
         "date": "2025-11-13",
-        "meanTemperatureC": 5.34,
-        "heatingDegreeDay": 14.665,
-        "weight": 0.004206877995
+        "meanTemperatureC": 10.63,
+        "heatingDegreeDay": 9.37,
+        "weight": 0.002706973707
       },
       {
         "date": "2025-11-14",
-        "meanTemperatureC": 5.19,
-        "heatingDegreeDay": 14.81,
-        "weight": 0.004248473447
+        "meanTemperatureC": 10.15,
+        "heatingDegreeDay": 9.85,
+        "weight": 0.002845644719
       },
       {
         "date": "2025-11-15",
-        "meanTemperatureC": 5.05,
-        "heatingDegreeDay": 14.955,
-        "weight": 0.004290068899
+        "meanTemperatureC": 8.15,
+        "heatingDegreeDay": 11.85,
+        "weight": 0.003423440601
       },
       {
         "date": "2025-11-16",
-        "meanTemperatureC": 4.9,
-        "heatingDegreeDay": 15.1,
-        "weight": 0.004331664352
+        "meanTemperatureC": 7.16,
+        "heatingDegreeDay": 12.84,
+        "weight": 0.003709449563
       },
       {
         "date": "2025-11-17",
-        "meanTemperatureC": 4.8,
-        "heatingDegreeDay": 15.197,
-        "weight": 0.004359490275
+        "meanTemperatureC": 3.77,
+        "heatingDegreeDay": 16.23,
+        "weight": 0.004688813583
       },
       {
         "date": "2025-11-18",
-        "meanTemperatureC": 4.71,
-        "heatingDegreeDay": 15.293,
-        "weight": 0.004387029333
+        "meanTemperatureC": 1.7,
+        "heatingDegreeDay": 18.3,
+        "weight": 0.005286832321
       },
       {
         "date": "2025-11-19",
-        "meanTemperatureC": 4.61,
-        "heatingDegreeDay": 15.39,
-        "weight": 0.004414855256
+        "meanTemperatureC": 1.77,
+        "heatingDegreeDay": 18.23,
+        "weight": 0.005266609465
       },
       {
         "date": "2025-11-20",
-        "meanTemperatureC": 4.51,
-        "heatingDegreeDay": 15.487,
-        "weight": 0.00444268118
+        "meanTemperatureC": 1.11,
+        "heatingDegreeDay": 18.89,
+        "weight": 0.005457282106
       },
       {
         "date": "2025-11-21",
-        "meanTemperatureC": 4.42,
-        "heatingDegreeDay": 15.583,
-        "weight": 0.004470220238
+        "meanTemperatureC": -1.55,
+        "heatingDegreeDay": 21.55,
+        "weight": 0.006225750629
       },
       {
         "date": "2025-11-22",
-        "meanTemperatureC": 4.32,
-        "heatingDegreeDay": 15.68,
-        "weight": 0.004498046161
+        "meanTemperatureC": -2.74,
+        "heatingDegreeDay": 22.74,
+        "weight": 0.006569539179
       },
       {
         "date": "2025-11-23",
-        "meanTemperatureC": 4.22,
-        "heatingDegreeDay": 15.777,
-        "weight": 0.004525872085
+        "meanTemperatureC": -2.49,
+        "heatingDegreeDay": 22.49,
+        "weight": 0.006497314694
       },
       {
         "date": "2025-11-24",
-        "meanTemperatureC": 4.13,
-        "heatingDegreeDay": 15.873,
-        "weight": 0.004553411143
+        "meanTemperatureC": 1.36,
+        "heatingDegreeDay": 18.64,
+        "weight": 0.005385057621
       },
       {
         "date": "2025-11-25",
-        "meanTemperatureC": 4.03,
-        "heatingDegreeDay": 15.97,
-        "weight": 0.004581237066
+        "meanTemperatureC": 1.75,
+        "heatingDegreeDay": 18.25,
+        "weight": 0.005272387424
       },
       {
         "date": "2025-11-26",
-        "meanTemperatureC": 3.93,
-        "heatingDegreeDay": 16.067,
-        "weight": 0.004609062989
+        "meanTemperatureC": 1.42,
+        "heatingDegreeDay": 18.58,
+        "weight": 0.005367723744
       },
       {
         "date": "2025-11-27",
-        "meanTemperatureC": 3.84,
-        "heatingDegreeDay": 16.163,
-        "weight": 0.004636602047
+        "meanTemperatureC": 1.42,
+        "heatingDegreeDay": 18.58,
+        "weight": 0.005367723744
       },
       {
         "date": "2025-11-28",
-        "meanTemperatureC": 3.74,
-        "heatingDegreeDay": 16.26,
-        "weight": 0.004664427971
+        "meanTemperatureC": 4.09,
+        "heatingDegreeDay": 15.91,
+        "weight": 0.004596366242
       },
       {
         "date": "2025-11-29",
-        "meanTemperatureC": 3.64,
-        "heatingDegreeDay": 16.357,
-        "weight": 0.004692253894
+        "meanTemperatureC": 5.81,
+        "heatingDegreeDay": 14.19,
+        "weight": 0.004099461783
       },
       {
         "date": "2025-11-30",
-        "meanTemperatureC": 3.55,
-        "heatingDegreeDay": 16.453,
-        "weight": 0.004719792952
+        "meanTemperatureC": 5.45,
+        "heatingDegreeDay": 14.55,
+        "weight": 0.004203465042
       },
       {
         "date": "2025-12-01",
-        "meanTemperatureC": 3.45,
-        "heatingDegreeDay": 16.55,
-        "weight": 0.004747618875
+        "meanTemperatureC": 3.17,
+        "heatingDegreeDay": 16.83,
+        "weight": 0.004862152347
       },
       {
         "date": "2025-12-02",
-        "meanTemperatureC": 3.35,
-        "heatingDegreeDay": 16.647,
-        "weight": 0.004775444799
+        "meanTemperatureC": 2.59,
+        "heatingDegreeDay": 17.41,
+        "weight": 0.005029713153
       },
       {
         "date": "2025-12-03",
-        "meanTemperatureC": 3.26,
-        "heatingDegreeDay": 16.743,
-        "weight": 0.004802983857
+        "meanTemperatureC": 2.84,
+        "heatingDegreeDay": 17.16,
+        "weight": 0.004957488668
       },
       {
         "date": "2025-12-04",
-        "meanTemperatureC": 3.16,
-        "heatingDegreeDay": 16.84,
-        "weight": 0.00483080978
+        "meanTemperatureC": 1.93,
+        "heatingDegreeDay": 18.07,
+        "weight": 0.005220385794
       },
       {
         "date": "2025-12-05",
-        "meanTemperatureC": 3.06,
-        "heatingDegreeDay": 16.937,
-        "weight": 0.004858635704
+        "meanTemperatureC": 1.8,
+        "heatingDegreeDay": 18.2,
+        "weight": 0.005257942527
       },
       {
         "date": "2025-12-06",
-        "meanTemperatureC": 2.97,
-        "heatingDegreeDay": 17.033,
-        "weight": 0.004886174762
+        "meanTemperatureC": 3.69,
+        "heatingDegreeDay": 16.31,
+        "weight": 0.004711925418
       },
       {
         "date": "2025-12-07",
-        "meanTemperatureC": 2.87,
-        "heatingDegreeDay": 17.13,
-        "weight": 0.004914000685
+        "meanTemperatureC": 7.18,
+        "heatingDegreeDay": 12.82,
+        "weight": 0.003703671604
       },
       {
         "date": "2025-12-08",
-        "meanTemperatureC": 2.77,
-        "heatingDegreeDay": 17.227,
-        "weight": 0.004941826608
+        "meanTemperatureC": 10.87,
+        "heatingDegreeDay": 9.13,
+        "weight": 0.002637638202
       },
       {
         "date": "2025-12-09",
-        "meanTemperatureC": 2.68,
-        "heatingDegreeDay": 17.323,
-        "weight": 0.004969365666
+        "meanTemperatureC": 10.13,
+        "heatingDegreeDay": 9.87,
+        "weight": 0.002851422678
       },
       {
         "date": "2025-12-10",
-        "meanTemperatureC": 2.58,
-        "heatingDegreeDay": 17.42,
-        "weight": 0.00499719159
+        "meanTemperatureC": 9.37,
+        "heatingDegreeDay": 10.63,
+        "weight": 0.003070985113
       },
       {
         "date": "2025-12-11",
-        "meanTemperatureC": 2.48,
-        "heatingDegreeDay": 17.517,
-        "weight": 0.005025017513
+        "meanTemperatureC": 7.27,
+        "heatingDegreeDay": 12.73,
+        "weight": 0.003677670789
       },
       {
         "date": "2025-12-12",
-        "meanTemperatureC": 2.39,
-        "heatingDegreeDay": 17.613,
-        "weight": 0.005052556571
+        "meanTemperatureC": 4.51,
+        "heatingDegreeDay": 15.49,
+        "weight": 0.004475029106
       },
       {
         "date": "2025-12-13",
-        "meanTemperatureC": 2.29,
-        "heatingDegreeDay": 17.71,
-        "weight": 0.005080382495
+        "meanTemperatureC": 5,
+        "heatingDegreeDay": 15,
+        "weight": 0.004333469115
       },
       {
         "date": "2025-12-14",
-        "meanTemperatureC": 2.19,
-        "heatingDegreeDay": 17.807,
-        "weight": 0.005108208418
+        "meanTemperatureC": 4.35,
+        "heatingDegreeDay": 15.65,
+        "weight": 0.004521252777
       },
       {
         "date": "2025-12-15",
-        "meanTemperatureC": 2.1,
-        "heatingDegreeDay": 17.903,
-        "weight": 0.005135747476
+        "meanTemperatureC": 3.7,
+        "heatingDegreeDay": 16.3,
+        "weight": 0.004709036439
       },
       {
         "date": "2025-12-16",
-        "meanTemperatureC": 2,
-        "heatingDegreeDay": 18,
-        "weight": 0.005163573399
+        "meanTemperatureC": 2.63,
+        "heatingDegreeDay": 17.37,
+        "weight": 0.005018157236
       },
       {
         "date": "2025-12-17",
-        "meanTemperatureC": 1.98,
-        "heatingDegreeDay": 18.016,
-        "weight": 0.005168163242
+        "meanTemperatureC": 2.9,
+        "heatingDegreeDay": 17.1,
+        "weight": 0.004940154792
       },
       {
         "date": "2025-12-18",
-        "meanTemperatureC": 1.97,
-        "heatingDegreeDay": 18.032,
-        "weight": 0.005172753085
+        "meanTemperatureC": 5.64,
+        "heatingDegreeDay": 14.36,
+        "weight": 0.004148574433
       },
       {
         "date": "2025-12-19",
-        "meanTemperatureC": 1.95,
-        "heatingDegreeDay": 18.048,
-        "weight": 0.005177342928
+        "meanTemperatureC": 7.18,
+        "heatingDegreeDay": 12.82,
+        "weight": 0.003703671604
       },
       {
         "date": "2025-12-20",
-        "meanTemperatureC": 1.94,
-        "heatingDegreeDay": 18.065,
-        "weight": 0.005182219637
+        "meanTemperatureC": 4.94,
+        "heatingDegreeDay": 15.06,
+        "weight": 0.004350802992
       },
       {
         "date": "2025-12-21",
-        "meanTemperatureC": 1.92,
-        "heatingDegreeDay": 18.081,
-        "weight": 0.00518680948
+        "meanTemperatureC": 4.37,
+        "heatingDegreeDay": 15.63,
+        "weight": 0.004515474818
       },
       {
         "date": "2025-12-22",
-        "meanTemperatureC": 1.9,
-        "heatingDegreeDay": 18.097,
-        "weight": 0.005191399323
+        "meanTemperatureC": 2.45,
+        "heatingDegreeDay": 17.55,
+        "weight": 0.005070158865
       },
       {
         "date": "2025-12-23",
-        "meanTemperatureC": 1.89,
-        "heatingDegreeDay": 18.113,
-        "weight": 0.005195989166
+        "meanTemperatureC": 1.74,
+        "heatingDegreeDay": 18.26,
+        "weight": 0.005275276403
       },
       {
         "date": "2025-12-24",
-        "meanTemperatureC": 1.87,
-        "heatingDegreeDay": 18.129,
-        "weight": 0.005200579009
+        "meanTemperatureC": -0.67,
+        "heatingDegreeDay": 20.67,
+        "weight": 0.005971520441
       },
       {
         "date": "2025-12-25",
-        "meanTemperatureC": 1.85,
-        "heatingDegreeDay": 18.145,
-        "weight": 0.005205168852
+        "meanTemperatureC": -3.48,
+        "heatingDegreeDay": 23.48,
+        "weight": 0.006783323655
       },
       {
         "date": "2025-12-26",
-        "meanTemperatureC": 1.84,
-        "heatingDegreeDay": 18.161,
-        "weight": 0.005209758695
+        "meanTemperatureC": -3.25,
+        "heatingDegreeDay": 23.25,
+        "weight": 0.006716877129
       },
       {
         "date": "2025-12-27",
-        "meanTemperatureC": 1.82,
-        "heatingDegreeDay": 18.177,
-        "weight": 0.005214348538
+        "meanTemperatureC": -0.75,
+        "heatingDegreeDay": 20.75,
+        "weight": 0.005994632276
       },
       {
         "date": "2025-12-28",
-        "meanTemperatureC": 1.81,
-        "heatingDegreeDay": 18.194,
-        "weight": 0.005219225246
+        "meanTemperatureC": -1.2,
+        "heatingDegreeDay": 21.2,
+        "weight": 0.00612463635
       },
       {
         "date": "2025-12-29",
-        "meanTemperatureC": 1.79,
-        "heatingDegreeDay": 18.21,
-        "weight": 0.005223815089
+        "meanTemperatureC": -0.64,
+        "heatingDegreeDay": 20.64,
+        "weight": 0.005962853503
       },
       {
         "date": "2025-12-30",
-        "meanTemperatureC": 1.77,
-        "heatingDegreeDay": 18.226,
-        "weight": 0.005228404932
+        "meanTemperatureC": -0.9,
+        "heatingDegreeDay": 20.9,
+        "weight": 0.006037966967
       },
       {
         "date": "2025-12-31",
-        "meanTemperatureC": 1.76,
-        "heatingDegreeDay": 18.242,
-        "weight": 0.005232994775
+        "meanTemperatureC": -0.94,
+        "heatingDegreeDay": 20.94,
+        "weight": 0.006049522885
       }
     ]
-  },
-  "summary": "JAZ 3,3"
+  }
 }
