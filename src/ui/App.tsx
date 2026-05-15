@@ -6,7 +6,7 @@ import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../simulation/engine';
-import { DEFAULT_MIX_VISIBILITY, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
+import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
 import { applyManifestPaths, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
@@ -151,9 +151,9 @@ function expandedRowFromUrl(): SidebarExpandedRow {
 
 function mixVisibilityFromUrl(): MixVisibility {
   const hidden = new Set(splitUrlList(queryParams().get('legend') ?? ''));
-  return Object.fromEntries(
-    MIX_GROUPS.flatMap(group => group.leaves.map(leaf => [leaf.key, !hidden.has(leaf.key)])),
-  ) as MixVisibility;
+  const supply = MIX_GROUPS.flatMap(group => group.leaves.map(leaf => [leaf.key, !hidden.has(leaf.key)] as const));
+  const extras = EXTRA_LEAVES.map(leaf => [leaf.key, !hidden.has(leaf.key)] as const);
+  return Object.fromEntries([...supply, ...extras]) as MixVisibility;
 }
 
 function openSectionsParam(openSectors: SidebarOpenSectors) {
@@ -422,8 +422,10 @@ function Dashboard() {
     if (expandedRow === defaultExpandedRow) url.searchParams.delete('row');
     else url.searchParams.set('row', expandedRow ?? 'none');
 
-    const hiddenLegend = MIX_GROUPS
-      .flatMap(group => group.leaves)
+    const hiddenLegend = [
+      ...MIX_GROUPS.flatMap(group => group.leaves),
+      ...EXTRA_LEAVES,
+    ]
       .filter(leaf => !mixVisibility[leaf.key])
       .map(leaf => leaf.key)
       .join(listSeparator);
@@ -754,18 +756,25 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 }
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
-  const contextItems = [
-    { label: 'Last', color: '#111827', glyph: '●' as const },
-    { label: 'Import', color: '#dc2626', glyph: '●' as const },
-    { label: 'Fehlend', color: '#b91c1c', glyph: '▨' as const },
-  ];
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
   return <div className="mt-2.5 grid gap-1.5 border-t border-zinc-100 pt-2.5 text-xs">
     <div className="flex flex-wrap gap-1.5">
-      {contextItems.map(item => <span key={item.label} className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-zinc-800 shadow-sm">
-        <span aria-hidden className="text-[10px]" style={{ color: item.color }}>{item.glyph}</span>
-        <span>{item.label}</span>
-      </span>)}
+      {EXTRA_LEAVES.map(item => {
+        const active = visibility[item.key];
+        return <button
+          key={item.key}
+          type="button"
+          aria-pressed={active}
+          className={cx(
+            'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
+            active ? 'border-zinc-200 bg-white text-zinc-800 shadow-sm' : 'border-transparent bg-transparent text-zinc-400',
+          )}
+          onClick={() => onToggleLeaf(item.key, !active)}
+        >
+          <span aria-hidden className="text-[10px]" style={{ color: active ? item.color : '#d4d4d8' }}>{item.glyph}</span>
+          <span>{item.label}</span>
+        </button>;
+      })}
     </div>
     <div className="flex flex-wrap gap-1.5">
       {leaves.map(leaf => {
