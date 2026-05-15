@@ -622,6 +622,8 @@ function Dashboard() {
         scenario={resolvedScenario}
         supplyPreset={scenario.supplyPreset}
         onSupplyPresetChange={(p) => setScenario(prev => {
+          if (p === 'historical-2017') return { ...prev, supplyPreset: p, loadYear: 2017 };
+          if (p === 'historical-2025') return { ...prev, supplyPreset: p, loadYear: 2025 };
           if (p === 'custom') return { ...prev, supplyPreset: 'custom', generation: resolvedScenario.generation, storage: resolvedScenario.storage };
           return { ...prev, supplyPreset: p };
         })}
@@ -645,7 +647,12 @@ function Dashboard() {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
-        onLoadYearChange={(year) => setScenario(prev => ({ ...prev, loadYear: year }))}
+        onLoadYearChange={(year) => setScenario(prev => {
+          let supplyPreset = prev.supplyPreset;
+          if (year === 2017 && prev.supplyPreset === 'historical-2025') supplyPreset = 'historical-2017';
+          else if (year === 2025 && prev.supplyPreset === 'historical-2017') supplyPreset = 'historical-2025';
+          return { ...prev, loadYear: year, supplyPreset };
+        })}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
         onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}
