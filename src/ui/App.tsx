@@ -291,11 +291,11 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
     };
   }, []);
 
-  const useHistorical2017 = scenario.supplyPreset === 'historical-2017';
+  const useLoad2017 = scenario.loadYear === 2017;
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !data) return;
-    const hours = useHistorical2017 && data.hours2017 ? data.hours2017 : data.hours;
+    const hours = useLoad2017 && data.hours2017 ? data.hours2017 : data.hours;
     worker.postMessage({
       type: 'init',
       input: hours,
@@ -313,7 +313,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
       'speicher-modell': data['speicher-modell'],
     });
     hasDataRef.current = true;
-  }, [data, useHistorical2017]);
+  }, [data, useLoad2017]);
 
   useEffect(() => {
     const worker = workerRef.current;
@@ -644,6 +644,7 @@ function Dashboard() {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
+        onLoadYearChange={(year) => setScenario(prev => ({ ...prev, loadYear: year }))}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
         onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}

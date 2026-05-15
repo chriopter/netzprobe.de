@@ -17,6 +17,7 @@ export const defaultScenario: Scenario = {
   name: 'Historisch 2025',
   description: 'Historische Energy-Charts-Daten 2025 ohne additive Elektrifizierungsbausteine.',
   supplyPreset: 'historical-2025',
+  loadYear: 2025,
   demand: {
     'last-2025': true,
     'e100-pkw': false, 'e100-pkw-million-km': 472_200,
@@ -64,9 +65,11 @@ export function normalizeScenario(scenario: Scenario): Scenario {
   const supplyPreset = validPresets.includes(rawPreset as Scenario['supplyPreset'])
     ? (rawPreset as Scenario['supplyPreset'])
     : 'historical-2025';
+  const loadYear: Scenario['loadYear'] = scenario.loadYear === 2017 ? 2017 : 2025;
   return {
     ...scenario,
     supplyPreset,
+    loadYear,
     demand: {
       'last-2025': demand['last-2025'] ?? true,
       'e100-pkw': demand['e100-pkw'] ?? false,

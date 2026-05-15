@@ -52,6 +52,7 @@ type ScenarioSidebarProps = {
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
   onHistoricalLoadChange: (checked: boolean) => void;
+  onLoadYearChange: (year: 2025 | 2017) => void;
   onE100PkwChange: (checked: boolean) => void;
   onE100PkwMillionKmChange: (millionKm: number) => void;
   onE100HeizChange: (checked: boolean) => void;
@@ -100,6 +101,7 @@ export function ScenarioSidebar({
   onStart,
   onEnd,
   onHistoricalLoadChange,
+  onLoadYearChange,
   onE100PkwChange,
   onE100PkwMillionKmChange,
   onE100HeizChange,
@@ -203,7 +205,9 @@ export function ScenarioSidebar({
         <LoadConfiguration
           data={data}
           scenario={scenario}
+          onSupplyPresetChange={onSupplyPresetChange}
           onHistoricalLoadChange={onHistoricalLoadChange}
+          onLoadYearChange={onLoadYearChange}
           onE100PkwChange={onE100PkwChange}
           onE100PkwMillionKmChange={onE100PkwMillionKmChange}
           onE100HeizChange={onE100HeizChange}
@@ -546,7 +550,9 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onVal
 type LoadConfigurationProps = {
   data: DataSet | null;
   scenario: Scenario;
+  onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
   onHistoricalLoadChange: (checked: boolean) => void;
+  onLoadYearChange: (year: 2025 | 2017) => void;
   onE100PkwChange: (checked: boolean) => void;
   onE100PkwMillionKmChange: (millionKm: number) => void;
   onE100HeizChange: (checked: boolean) => void;
@@ -574,7 +580,9 @@ type LoadConfigurationProps = {
 };
 
 function LoadConfiguration(props: LoadConfigurationProps) {
-  const { data, scenario, onHistoricalLoadChange, openSectors, expandedRow, onOpenSectorsChange, onExpandedRowChange } = props;
+  const { data, scenario, onHistoricalLoadChange, onLoadYearChange, openSectors, expandedRow, onOpenSectorsChange, onExpandedRowChange } = props;
+  const is2017 = scenario.loadYear === 2017;
+  const loadSumTWh = is2017 ? data?.loadSum2017TWh : data?.loadSumTWh;
   const sectorFlags: Array<keyof Scenario['demand']> = [
     'e100-pkw', 'e100-heiz', 'e100-lkw', 'e100-bahn', 'e100-schiff', 'e100-flug',
     'e100-ghd', 'e100-industrie-waerme', 'e100-stahl', 'e100-chemie',
@@ -631,10 +639,10 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const transportEnabled = scenario.demand['e100-pkw'] || scenario.demand['e100-lkw'] || scenario.demand['e100-bahn'] || scenario.demand['e100-schiff'] || scenario.demand['e100-flug'];
   const heatEnabled = scenario.demand['e100-heiz'] || scenario.demand['e100-ghd'];
   const industryEnabled = scenario.demand['e100-industrie-waerme'] || scenario.demand['e100-stahl'] || scenario.demand['e100-chemie'];
-  const basisTotal = scenario.demand['last-2025'] && data?.loadSumTWh ? data.loadSumTWh : 0;
+  const basisTotal = scenario.demand['last-2025'] && loadSumTWh ? loadSumTWh : 0;
   const electrificationTotal = basisTotal + transportTotal + heatTotal + industryTotal;
   const electrificationPotentialTotal = data ? (
-    (data.loadSumTWh ?? 0)
+    (loadSumTWh ?? 0)
     + e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw'])
     + e100LkwAdditionalTWh(scenario.demand['e100-lkw-target-bn-km'], data['e100-lkw'])
     + e100BahnAdditionalTWh(scenario.demand['e100-bahn-target-twh'], data['e100-bahn'])
@@ -649,28 +657,40 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const selectHistorical = () => {
     onHistoricalLoadChange(true);
     setAllSectors(false);
+    onLoadYearChange(2025);
+  };
+  const selectHistorical2017 = () => {
+    onHistoricalLoadChange(true);
+    setAllSectors(false);
+    onLoadYearChange(2017);
   };
   const selectElectrification = () => {
     onHistoricalLoadChange(true);
     setAllSectors(true);
     onOpenSectorsChange({ verkehr: true, waerme: false, industrie: false });
     onExpandedRowChange('e100-pkw');
+    onLoadYearChange(2025);
   };
 
-  // Pill state: nur-2025 (alle e100-* off, last-2025 on), e100 (alle e100-* on, last-2025 on), oder custom.
+  // Pill state: nur-2025/nur-2017 (alle e100-* off, last-2025 on, je nach loadYear), e100 (alle e100-* on, last-2025 on, loadYear=2025), oder custom.
   const allE100Off = !electrificationSelected;
   const allE100On = sectorFlags.every(key => scenario.demand[key]);
-  const loadPillId: 'nur-2025' | 'e100' | null = scenario.demand['last-2025'] && allE100Off
-    ? 'nur-2025'
-    : scenario.demand['last-2025'] && allE100On
-      ? 'e100'
-      : null;
-  const loadPills: ReadonlyArray<{ id: 'nur-2025' | 'e100'; label: string; description: string }> = [
-    { id: 'nur-2025', label: 'Nur 2025', description: 'Historische Last 2025 ohne zusätzliche Elektrifizierung' },
+  type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100';
+  const loadPillId: LoadPillId | null = scenario.demand['last-2025'] && allE100Off && is2017
+    ? 'nur-2017'
+    : scenario.demand['last-2025'] && allE100Off && !is2017
+      ? 'nur-2025'
+      : scenario.demand['last-2025'] && allE100On && !is2017
+        ? 'e100'
+        : null;
+  const loadPills: ReadonlyArray<{ id: LoadPillId; label: string; description: string }> = [
+    { id: 'nur-2025', label: 'Nur 2025', description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
+    { id: 'nur-2017', label: 'Nur 2017', description: 'Historische Last 2017 (~507 TWh); unabhängig von Erzeugungspreset' },
     { id: 'e100', label: 'Vollelektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },
   ];
-  const selectLoadPill = (id: 'nur-2025' | 'e100') => {
+  const selectLoadPill = (id: LoadPillId) => {
     if (id === 'nur-2025') selectHistorical();
+    else if (id === 'nur-2017') selectHistorical2017();
     else selectElectrification();
   };
 

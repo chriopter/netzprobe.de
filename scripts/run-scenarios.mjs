@@ -178,7 +178,7 @@ const verkehrPatch = {
   'e100-flug': true, 'e100-flug-target-twh': e100FlugMax,
 };
 
-const baseHistorical2017 = { ...baseHistorical, id: 'historical-2017', name: 'Historisch 2017', supplyPreset: 'historical-2017' };
+const baseHistorical2017 = { ...baseHistorical, id: 'historical-2017', name: 'Historisch 2017', supplyPreset: 'historical-2017', loadYear: 2017 };
 
 const scenarios = [
   { name: 'baseline-2025-historisch', scenario: baseHistorical },
