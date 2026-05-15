@@ -158,7 +158,7 @@ export function ScenarioSidebar({
           <PanelLeftClose className="h-4 w-4" aria-hidden="true"/>
         </button>
         <div className="grid min-w-0 flex-1 gap-0.5">
-          <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">netzprobe.de</h1>
+          <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">Netzprobe</h1>
           <a
             href={dataWikiHomeUrl()}
             target="_blank"
