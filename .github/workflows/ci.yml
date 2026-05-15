@@ -35,6 +35,9 @@ jobs:
     name: Trigger VPS
     runs-on: ubuntu-latest
     needs: build
+    environment:
+      name: production
+      url: https://netzprobe.de/
     steps:
       - name: Deploy-Webhook aufrufen
         env:
