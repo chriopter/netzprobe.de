@@ -3,7 +3,7 @@
   "parentId": "e100",
   "domain": "last",
   "kind": "scenario",
-  "title": "LKW + Bus Elektrifizierung",
+  "title": "Lkw + Bus Elektrifizierung",
   "file": "e100-lkw/data.json",
   "scripts": ["e100-lkw/model.ts"],
   "source": "BMDV Verkehr in Zahlen 2023/2024 (Inländerfahrleistung 2022, in 2023 vergleichbar: Lastkraftwagen 69,2 Mrd. km, Sattelzugmaschinen 19,7 Mrd. km, Kraftomnibusse 3,8 Mrd. km — Summe ~93 Mrd. km), KBA Pressemitteilung 21/2024 (Lkw bis 3,5 t 57,5 Mrd. km 2023), ICCT Real-World ZEV-Truck Report 2025, Hersteller-Realdaten elektrischer Lkw und Busse (Mercedes eActros 600, Volvo FH Electric, MAN, Solaris).",

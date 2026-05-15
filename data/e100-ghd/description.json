@@ -3,7 +3,7 @@
   "parentId": "e100",
   "domain": "last",
   "kind": "scenario",
-  "title": "GHD Heiz Elektrifizierung",
+  "title": "GHD Elektrifizierung",
   "file": "e100-ghd/data.json",
   "scripts": ["e100-ghd/generate.mjs", "e100-ghd/model.ts"],
   "source": "AGEB, UBA, BMWK Energiedaten, BWP, Fraunhofer ISE Annex 28, BDEW SLP G0, DWD.",

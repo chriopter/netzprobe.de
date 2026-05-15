@@ -3,7 +3,7 @@
   "parentId": "e100",
   "domain": "last",
   "kind": "scenario",
-  "title": "Industrie-Prozesswärme Elektrifizierung",
+  "title": "Prozesswärme Elektrifizierung",
   "file": "e100-industrie-waerme/data.json",
   "scripts": ["e100-industrie-waerme/model.ts"],
   "source": "AGEB Anwendungsbilanz Industrie 2023 (sonstige Industrie ohne Stahl/Chemie rund 220 TWh Endenergie Wärme); Fraunhofer ISI/RWTH IOB Wärmewende-Studie 2023; Wuppertal Institut/sci4climate.NRW 4-Stufen-Modell 2023; IEA HPT Annex 58 (Hochtemperatur-Wärmepumpen); dena Technologie-Fakten HT-WP; BV Glas; VDP Papierindustrie.",

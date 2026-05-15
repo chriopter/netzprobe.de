@@ -3,7 +3,7 @@
   "parentId": "e100",
   "domain": "last",
   "kind": "scenario",
-  "title": "Heiz Elektrifizierung",
+  "title": "Haushalte Elektrifizierung",
   "file": "e100-heiz/data.json",
   "scripts": ["e100-heiz/generate.mjs", "e100-heiz/model.ts"],
   "source": "UBA, AGEB, BWP, Fraunhofer ISE, DWD, When2Heat, WPuQ Hamelin.",
