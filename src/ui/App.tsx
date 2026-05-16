@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
-import { dataFileUrl } from '../dataPackages';
-import { loadDefaultData, loadJson } from '../loaders/defaultData';
+import { dataFileUrl } from './dataPackages';
+import { loadDefaultData, loadJson } from './defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../simulation/engine';
@@ -15,19 +15,19 @@ import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type Sideb
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { applySupplyPreset } from './supplyPresets';
 import { demandGW } from '../simulation/demand';
-import { aggregateErzeugungsPool, aggregateSpeicherPool } from '../loaders/defaultData';
-import erzPv from '../../data/erz-pv/data.json';
-import erzWindOn from '../../data/erz-windon/data.json';
-import erzWindOff from '../../data/erz-windoff/data.json';
-import erzKernkraft from '../../data/erz-kernkraft/data.json';
-import erzBiomasse from '../../data/erz-biomasse/data.json';
-import erzLaufwasser from '../../data/erz-laufwasser/data.json';
-import erzGas from '../../data/erz-gas/data.json';
-import erzKohle from '../../data/erz-kohle/data.json';
-import erzHandel from '../../data/erz-handel/data.json';
-import speicherBatterie from '../../data/speicher-batterie/data.json';
-import speicherPumpspeicher from '../../data/speicher-pumpspeicher/data.json';
-import speicherH2 from '../../data/speicher-h2/data.json';
+import { aggregateErzeugungsPool, aggregateSpeicherPool } from './defaultData';
+import erzPv from '../../data/erzeugung/pv/data.json';
+import erzWindOn from '../../data/erzeugung/windon/data.json';
+import erzWindOff from '../../data/erzeugung/windoff/data.json';
+import erzKernkraft from '../../data/erzeugung/kernkraft/data.json';
+import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
+import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
+import erzGas from '../../data/erzeugung/gas/data.json';
+import erzKohle from '../../data/erzeugung/kohle/data.json';
+import erzHandel from '../../data/erzeugung/handel/data.json';
+import speicherBatterie from '../../data/speicher/batterie/data.json';
+import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
+import speicherH2 from '../../data/speicher/h2/data.json';
 import type {
   ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
   ErzHandelData, SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,

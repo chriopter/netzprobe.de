@@ -1,16 +1,16 @@
 import type { Scenario } from '../types/scenario';
-import erzPv from '../../data/erz-pv/data.json';
-import erzWindOn from '../../data/erz-windon/data.json';
-import erzWindOff from '../../data/erz-windoff/data.json';
-import erzKernkraft from '../../data/erz-kernkraft/data.json';
-import erzBiomasse from '../../data/erz-biomasse/data.json';
-import erzLaufwasser from '../../data/erz-laufwasser/data.json';
-import erzGas from '../../data/erz-gas/data.json';
-import erzKohle from '../../data/erz-kohle/data.json';
-import erzHandel from '../../data/erz-handel/data.json';
-import speicherBatterie from '../../data/speicher-batterie/data.json';
-import speicherPumpspeicher from '../../data/speicher-pumpspeicher/data.json';
-import speicherH2 from '../../data/speicher-h2/data.json';
+import erzPv from '../../data/erzeugung/pv/data.json';
+import erzWindOn from '../../data/erzeugung/windon/data.json';
+import erzWindOff from '../../data/erzeugung/windoff/data.json';
+import erzKernkraft from '../../data/erzeugung/kernkraft/data.json';
+import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
+import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
+import erzGas from '../../data/erzeugung/gas/data.json';
+import erzKohle from '../../data/erzeugung/kohle/data.json';
+import erzHandel from '../../data/erzeugung/handel/data.json';
+import speicherBatterie from '../../data/speicher/batterie/data.json';
+import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
+import speicherH2 from '../../data/speicher/h2/data.json';
 
 export const defaultScenario: Scenario = {
   id: 'historical-2025',
@@ -49,7 +49,7 @@ export const defaultScenario: Scenario = {
     // kompensiert dass der einspeisefaktoren-2025-windFactor aus gemittelten
     // 62 GW onshore + 9 GW offshore stammt — ohne Korrektur würde Offshore
     // dieselben ~1745 VLH wie Onshore zugeordnet bekommen statt realer 4000+
-    // VLH (15 MW-Nordsee-Klasse). Siehe data/kernmodell/model.ts:96-113.
+    // VLH (15 MW-Nordsee-Klasse). Siehe data/kern/model.ts:96-113.
     pvCapacityFactorMultiplier: 1.0,
     windOnCapacityFactorMultiplier: 1.0,
     windOffCapacityFactorMultiplier: 1.8,

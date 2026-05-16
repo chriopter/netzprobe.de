@@ -21,31 +21,31 @@ function readJson<T>(packageName: string): T {
   return JSON.parse(readFileSync(resolve(dataDir, packageName, 'data.json'), 'utf8')) as T;
 }
 
-const loadData = readJson<SplitDataFile<LoadHour>>('last-2025');
-const generationData = readJson<SplitDataFile<GenerationHour>>('erzeugung-2025');
-const factorData = readJson<SplitDataFile<ModelFactorHour>>('einspeisefaktoren-2025');
-const e100Pkw = readJson<E100PkwData>('e100-pkw');
-const e100Heiz = readJson<E100HeizData>('e100-heiz');
-const e100Lkw = readJson<E100LkwData>('e100-lkw');
-const e100Bahn = readJson<E100BahnData>('e100-bahn');
-const e100Schiff = readJson<E100SchiffData>('e100-schiff');
-const e100Flug = readJson<E100FlugData>('e100-flug');
-const e100Ghd = readJson<E100GhdData>('e100-ghd');
-const e100IndustrieWaerme = readJson<E100IndustrieWaermeData>('e100-industrie-waerme');
-const e100Stahl = readJson<E100StahlData>('e100-stahl');
-const e100Chemie = readJson<E100ChemieData>('e100-chemie');
-const erzPv = readJson<ErzPackageVariableRe>('erz-pv');
-const erzWindOn = readJson<ErzPackageVariableRe>('erz-windon');
-const erzWindOff = readJson<ErzPackageVariableRe>('erz-windoff');
-const erzKernkraft = readJson<ErzPackageBaseload>('erz-kernkraft');
-const erzBiomasse = readJson<ErzPackageBaseload>('erz-biomasse');
-const erzLaufwasser = readJson<ErzPackageBaseload>('erz-laufwasser');
-const erzGas = readJson<ErzPackageDispatchable>('erz-gas');
-const erzKohle = readJson<ErzPackageDispatchable>('erz-kohle');
-const erzHandel = readJson<ErzHandelData>('erz-handel');
-const speicherBatterie = readJson<SpeicherBatterieData>('speicher-batterie');
-const speicherPumpspeicher = readJson<SpeicherPumpspeicherData>('speicher-pumpspeicher');
-const speicherH2 = readJson<SpeicherH2Data>('speicher-h2');
+const loadData = readJson<SplitDataFile<LoadHour>>('last/2025');
+const generationData = readJson<SplitDataFile<GenerationHour>>('erzeugung/2025');
+const factorData = readJson<SplitDataFile<ModelFactorHour>>('erzeugung/einspeisefaktoren-2025');
+const e100Pkw = readJson<E100PkwData>('last/e100-pkw');
+const e100Heiz = readJson<E100HeizData>('last/e100-heiz');
+const e100Lkw = readJson<E100LkwData>('last/e100-lkw');
+const e100Bahn = readJson<E100BahnData>('last/e100-bahn');
+const e100Schiff = readJson<E100SchiffData>('last/e100-schiff');
+const e100Flug = readJson<E100FlugData>('last/e100-flug');
+const e100Ghd = readJson<E100GhdData>('last/e100-ghd');
+const e100IndustrieWaerme = readJson<E100IndustrieWaermeData>('last/e100-industrie-waerme');
+const e100Stahl = readJson<E100StahlData>('last/e100-stahl');
+const e100Chemie = readJson<E100ChemieData>('last/e100-chemie');
+const erzPv = readJson<ErzPackageVariableRe>('erzeugung/pv');
+const erzWindOn = readJson<ErzPackageVariableRe>('erzeugung/windon');
+const erzWindOff = readJson<ErzPackageVariableRe>('erzeugung/windoff');
+const erzKernkraft = readJson<ErzPackageBaseload>('erzeugung/kernkraft');
+const erzBiomasse = readJson<ErzPackageBaseload>('erzeugung/biomasse');
+const erzLaufwasser = readJson<ErzPackageBaseload>('erzeugung/laufwasser');
+const erzGas = readJson<ErzPackageDispatchable>('erzeugung/gas');
+const erzKohle = readJson<ErzPackageDispatchable>('erzeugung/kohle');
+const erzHandel = readJson<ErzHandelData>('erzeugung/handel');
+const speicherBatterie = readJson<SpeicherBatterieData>('speicher/batterie');
+const speicherPumpspeicher = readJson<SpeicherPumpspeicherData>('speicher/pumpspeicher');
+const speicherH2 = readJson<SpeicherH2Data>('speicher/h2');
 
 function stripId<T extends { id?: string }>(obj: T): Omit<T, 'id'> {
   const { id: _id, ...rest } = obj;

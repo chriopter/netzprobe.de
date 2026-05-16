@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import e100PkwDataJson from '../../data/e100-pkw/data.json';
-import e100HeizDataJson from '../../data/e100-heiz/data.json';
-import { additionalTWh as e100PkwAdditionalTWh, hourlyLoadGW as e100PkwHourlyLoadGW } from '../../data/e100-pkw/model';
-import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh, hourlyLoadGW as e100HeizHourlyLoadGW } from '../../data/e100-heiz/model';
+import e100PkwDataJson from '../../data/last/e100-pkw/data.json';
+import e100HeizDataJson from '../../data/last/e100-heiz/data.json';
+import { additionalTWh as e100PkwAdditionalTWh, hourlyLoadGW as e100PkwHourlyLoadGW } from '../../data/last/e100-pkw/model';
+import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh, hourlyLoadGW as e100HeizHourlyLoadGW } from '../../data/last/e100-heiz/model';
 import type { E100HeizData, E100PkwData, HourlyInput } from '../types/data';
 
 const e100PkwData = e100PkwDataJson as E100PkwData;

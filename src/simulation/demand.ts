@@ -1,7 +1,7 @@
 import type { HourlyInput } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { e100DemandModules } from '../../data/preset/e100/model';
-import type { DemandScenarioContext } from './demandModule';
+import { e100DemandModules } from '../../data/presets/e100/model';
+import type { DemandScenarioContext } from './demandContext';
 
 // LHV von H2 in kWh/kg, als Konversion Strom → kg H2 für Stahl-DRI.
 const H2_LHV_KWH_PER_KG = 33.33;

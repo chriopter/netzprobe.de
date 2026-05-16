@@ -1,0 +1,123 @@
+{
+  "id": "batterie",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Batterie",
+  "file": "speicher/batterie/data.json",
+  "scripts": [
+    "speicher/batterie/model.ts"
+  ],
+  "source": "Energy-Charts (Batterie-Bestand 2025); MTGermany energy-simulation-de (Eta, Initial-SoC).",
+  "sourceUrls": [
+    "https://www.energy-charts.info/",
+    "https://github.com/MTGermany/energy-simulation-de"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "GW, GWh",
+  "short": "Slider für Batterie-Leistung und -Energie; kurzfristiger Speicher mit 80 % Roundtrip-Wirkungsgrad.",
+  "description": "Baustein für Batterie-Großspeicher in Deutschland. Default 10 GW / 25 GWh entspricht dem Bestand Ende 2025. Lade- und Entlade-Leistung sind symmetrisch (gleicher Slider). Roundtrip-Wirkungsgrad 80 %, Initial-SoC 50 %, Dispatch-Priorität 1 (wird zuerst geladen und entladen).",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für Leistung (Default 10 GW, Max 500 GW) und Energie (Default 25 GWh, Max 5.000 GWh)."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Bei Überschuss: Laden bis Leistung-Cap und freier Energie. Bei Unterdeckung: Entladen bis Leistung-Cap und verfügbarem SoC. Reihenfolge: Batterie zuerst (Priorität 1)."
+    },
+    {
+      "label": "Formel",
+      "value": "SoC(t+1) = SoC(t) + η × ΔLaden − ΔEntladen mit η = 0,8. Default-Lauf zyklet wenige Prozent vom Energieinhalt."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/speicher/batterie/data.json, Adapter in data/speicher/batterie/model.ts.",
+    "Roundtrip-Wirkungsgrad 80 % wird vollständig beim Laden angewandt: ΔSoC = η × Laden, Entladen 1:1.",
+    "Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.",
+    "Dispatch-Priorität 1 — wird vor Pumpspeicher und H₂ geladen/entladen."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "power2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Ende 2025."
+    },
+    {
+      "name": "defaultPowerGW",
+      "unit": "GW",
+      "description": "Slider-Default Leistung."
+    },
+    {
+      "name": "minPowerGW",
+      "unit": "GW",
+      "description": "Slider-Minimum Leistung."
+    },
+    {
+      "name": "maxPowerGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Leistung."
+    },
+    {
+      "name": "stepPowerGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite Leistung."
+    },
+    {
+      "name": "energy2025GWh",
+      "unit": "GWh",
+      "description": "Installierter Energieinhalt Ende 2025."
+    },
+    {
+      "name": "defaultEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Default Energie."
+    },
+    {
+      "name": "minEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Minimum Energie."
+    },
+    {
+      "name": "maxEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Maximum Energie."
+    },
+    {
+      "name": "stepEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Schrittweite Energie."
+    },
+    {
+      "name": "roundtripEfficiency",
+      "unit": "Anteil",
+      "description": "Roundtrip-Wirkungsgrad (0,8)."
+    },
+    {
+      "name": "initialStateOfChargeFraction",
+      "unit": "Anteil",
+      "description": "Start-SoC am Jahresbeginn (0,5)."
+    },
+    {
+      "name": "dispatchPriority",
+      "unit": "Rang",
+      "description": "Reihenfolge im Dispatch (1 = zuerst)."
+    }
+  ],
+  "caveats": [
+    "Keine Selbstentladung modelliert.",
+    "Wirkungsgrad vollständig beim Laden — getrennte Lade-/Entlade-Effizienz nicht abgebildet.",
+    "Keine Mindest-SoC oder DoD-Restriktionen — Batterie kann zwischen 0 und Max schwingen.",
+    "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung."
+  ]
+}

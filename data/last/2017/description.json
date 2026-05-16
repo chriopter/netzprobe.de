@@ -1,0 +1,44 @@
+{
+  "id": "last-2017",
+  "domain": "last",
+  "kind": "dataset",
+  "title": "Historisch 2017",
+  "file": "last/2017/data.json",
+  "scripts": [
+    "last/2017/model.ts"
+  ],
+  "source": "Energy-Charts public_power API: stündliche Last 2017, aus 15-min Werten gemittelt.",
+  "sourceUrls": [
+    "https://api.energy-charts.info/public_power?country=de&start=2017-01-01T00:00%2B01:00&end=2018-01-01T00:00%2B01:00"
+  ],
+  "period": "2017",
+  "resolution": "stündlich",
+  "unit": "MW",
+  "short": "Historische deutsche Stromlast 2017 (~507 TWh).",
+  "description": "Feste historische Stromlast Deutschlands 2017, stündlich aufgelöst. Wird vom versorgung-historisch-2017-Preset als Basis-Last konsumiert; e100-Sektoren werden auch hier additiv aufgesetzt.",
+  "method": [
+    "Bezug aus Energy-Charts public_power API für Deutschland, 2017-01-01 bis 2018-01-01.",
+    "15-Minuten-Werte werden auf Stundenwerte gemittelt; loadMW ist Netzlast inklusive Pumpspeicher-Verbrauch.",
+    "Generiert über das gemeinsame Script data/erzeugung/2017/generate.mjs, das gleichzeitig erzeugung-2017/data.json schreibt."
+  ],
+  "fields": [
+    {
+      "name": "year",
+      "unit": "Jahr",
+      "description": "2017."
+    },
+    {
+      "name": "sumTWh",
+      "unit": "TWh",
+      "description": "Jahres-Brutto-Last 2017 (~507 TWh)."
+    },
+    {
+      "name": "hours[]",
+      "unit": "MW",
+      "description": "Stündliche Netzlast aus 15-min Werten."
+    }
+  ],
+  "caveats": [
+    "Last 2017 ist ~9% höher als 2025 — vor Effizienzgewinnen + Industrie-Drosselung."
+  ]
+}

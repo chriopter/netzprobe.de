@@ -1,0 +1,50 @@
+{
+  "id": "versorgung-historisch-2025",
+  "domain": "erzeugung",
+  "kind": "composition",
+  "title": "Versorgung: Historisch 2025",
+  "scripts": [
+    "presets/versorgung-historisch-2025/model.ts"
+  ],
+  "source": "Energy-Charts 2025 (installierte Leistung, Bestand Speicher).",
+  "sourceUrls": [
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+    "https://www.energy-charts.info/"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "GW, GWh",
+  "short": "Beobachtete Erzeugung und Bestand 2025: setzt alle Bausteine auf ihre Default-Werte.",
+  "description": "Preset, das die Versorgungs-Slider auf die 2025-Defaults aller erz-* und speicher-* Bausteine snappt. Kein Auto-Sizing, keine Anpassung an die Last. Damit reproduziert das Modell den 2025-Mix von Deutschland.",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Pill aktivieren: alle Erzeugungs- und Speicher-Slider snappen zu den 2025-Defaults aus erz-* und speicher-*."
+    },
+    {
+      "label": "Annahmen",
+      "value": "PV 102,5 GW, Wind Onshore 62,8 GW, Wind Offshore 9,4 GW, Kernkraft 0 GW, Biomasse 4,8 GW, Laufwasser 2 GW, Gas 35,5 GW, Kohle 31 GW. Batterie 10 GW/25 GWh, Pumpspeicher 9,4 GW/40 GWh, H₂ praktisch null. Import-Cap 13 GW, Export-Cap 25 GW."
+    },
+    {
+      "label": "Effekt",
+      "value": "Reproduziert 2025 etwa: 466 TWh Last, 55 % EE-Anteil, 332 g/kWh CO₂. Slider können jederzeit von der Default-Position weg bewegt werden — Pill wird dann inaktiv."
+    }
+  ],
+  "method": [
+    "compute(demand, factors, erz, speicher) → SupplyOverride mit allen Default-Werten aus dem ErzeugungsPool und SpeicherPool.",
+    "Datei: data/presets/versorgung-historisch-2025/model.ts.",
+    "Demand-Parameter wird nicht genutzt — das Preset passt sich nicht an die Last an."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung (versorgung-historisch-2025)."
+    }
+  ],
+  "caveats": [
+    "Statisch: Slider snappen zu den 2025-Defaults, keine Skalierung an Demand.",
+    "Bei aktivierter E100-Last unterdeckt das Preset — Modell rechnet Lastabwurf.",
+    "H₂-Werte praktisch null entsprechen 2025-Realität, sind aber für Zukunftsszenarien unrealistisch."
+  ]
+}

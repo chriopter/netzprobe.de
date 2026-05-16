@@ -42,31 +42,31 @@ function readJson(pkg) {
   return JSON.parse(readFileSync(join(rootDir, 'data', pkg, 'data.json'), 'utf8'));
 }
 
-const loadData = readJson('last-2025');
-const generationData = readJson('erzeugung-2025');
-const factorData = readJson('einspeisefaktoren-2025');
-const e100Pkw = readJson('e100-pkw');
-const e100Heiz = readJson('e100-heiz');
-const e100Lkw = readJson('e100-lkw');
-const e100Bahn = readJson('e100-bahn');
-const e100Schiff = readJson('e100-schiff');
-const e100Flug = readJson('e100-flug');
-const e100Ghd = readJson('e100-ghd');
-const e100IndustrieWaerme = readJson('e100-industrie-waerme');
-const e100Stahl = readJson('e100-stahl');
-const e100Chemie = readJson('e100-chemie');
-const erzPv = readJson('erz-pv');
-const erzWindOn = readJson('erz-windon');
-const erzWindOff = readJson('erz-windoff');
-const erzKernkraft = readJson('erz-kernkraft');
-const erzBiomasse = readJson('erz-biomasse');
-const erzLaufwasser = readJson('erz-laufwasser');
-const erzGas = readJson('erz-gas');
-const erzKohle = readJson('erz-kohle');
-const erzHandel = readJson('erz-handel');
-const speicherBatterie = readJson('speicher-batterie');
-const speicherPumpspeicher = readJson('speicher-pumpspeicher');
-const speicherH2 = readJson('speicher-h2');
+const loadData = readJson('last/2025');
+const generationData = readJson('erzeugung/2025');
+const factorData = readJson('erzeugung/einspeisefaktoren-2025');
+const e100Pkw = readJson('last/e100-pkw');
+const e100Heiz = readJson('last/e100-heiz');
+const e100Lkw = readJson('last/e100-lkw');
+const e100Bahn = readJson('last/e100-bahn');
+const e100Schiff = readJson('last/e100-schiff');
+const e100Flug = readJson('last/e100-flug');
+const e100Ghd = readJson('last/e100-ghd');
+const e100IndustrieWaerme = readJson('last/e100-industrie-waerme');
+const e100Stahl = readJson('last/e100-stahl');
+const e100Chemie = readJson('last/e100-chemie');
+const erzPv = readJson('erzeugung/pv');
+const erzWindOn = readJson('erzeugung/windon');
+const erzWindOff = readJson('erzeugung/windoff');
+const erzKernkraft = readJson('erzeugung/kernkraft');
+const erzBiomasse = readJson('erzeugung/biomasse');
+const erzLaufwasser = readJson('erzeugung/laufwasser');
+const erzGas = readJson('erzeugung/gas');
+const erzKohle = readJson('erzeugung/kohle');
+const erzHandel = readJson('erzeugung/handel');
+const speicherBatterie = readJson('speicher/batterie');
+const speicherPumpspeicher = readJson('speicher/pumpspeicher');
+const speicherH2 = readJson('speicher/h2');
 
 const stripId = (o) => { const { id: _, ...r } = o; return r; };
 

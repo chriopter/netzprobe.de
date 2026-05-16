@@ -1,0 +1,124 @@
+{
+  "id": "pumpspeicher",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Pumpspeicher",
+  "file": "speicher/pumpspeicher/data.json",
+  "scripts": [
+    "speicher/pumpspeicher/model.ts"
+  ],
+  "source": "Energy-Charts (Pumpspeicher DE-LU-Bestand 2025); ENTSO-E Transparency Platform (DE-LU Marktgebiet 2023 9,93 GW); Vattenfall Goldisthal Powerplant-Datasheet; BMWK/dena Zubaupotenzial-Studien.",
+  "sourceUrls": [
+    "https://www.energy-charts.info/",
+    "https://transparency.entsoe.eu/",
+    "https://powerplants.vattenfall.com/de/goldisthal/",
+    "https://de.wikipedia.org/wiki/Liste_von_Pumpspeicherkraftwerken"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "GW, GWh",
+  "short": "Slider für Pumpspeicher-Leistung und -Energie; mittelfristiger Speicher mit 80 % Roundtrip-Wirkungsgrad.",
+  "description": "Baustein für Pumpspeicherwerke. Default 9,4 GW / 45 GWh entspricht dem DE-LU-Marktgebiets-Bestand Ende 2025: 9,4 GW (Goldisthal 1,06 GW + Markersbach + weitere DE-Anlagen ~6,8 GW DE-only + Vianden Luxembourg 1,3 GW im DE-LU-Marktgebiet bilanziell) und ~45 GWh nutzbare Energie (Goldisthal 8,5 GWh + Markersbach 4 GWh + weitere DE ~27 GWh + Vianden 4,9 GWh = ~44,4 GWh, gerundet 45 GWh). Wirkungsgrad 80 %, Dispatch-Priorität 2 (nach Batterie, vor H₂).",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für Leistung (Default 9,4 GW, Max 15 GW) und Energie (Default 45 GWh, Max 100 GWh). Maximum reflektiert DE-LU-Bestand plus realistisches Zubau-Potenzial (Studien BMWK/dena 2024: +3-5 GW machbar, höhere Ausbauten durch Naturschutz/Topografie begrenzt)."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Wie Batterie: Laden bei Überschuss, Entladen bei Unterdeckung. Reihenfolge 2 — nach Batterie, vor H₂."
+    },
+    {
+      "label": "Formel",
+      "value": "SoC(t+1) = SoC(t) + 0,8 × ΔLaden − ΔEntladen."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/speicher/pumpspeicher/data.json, Adapter in data/speicher/pumpspeicher/model.ts.",
+    "Roundtrip-Wirkungsgrad 80 % entspricht MTGermany; reale Pumpspeicher 70-78 % je nach Anlage.",
+    "Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.",
+    "Dispatch-Priorität 2 — wird nach Batterie eingesetzt."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "power2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Ende 2025."
+    },
+    {
+      "name": "defaultPowerGW",
+      "unit": "GW",
+      "description": "Slider-Default Leistung."
+    },
+    {
+      "name": "minPowerGW",
+      "unit": "GW",
+      "description": "Slider-Minimum Leistung."
+    },
+    {
+      "name": "maxPowerGW",
+      "unit": "GW",
+      "description": "Slider-Maximum Leistung."
+    },
+    {
+      "name": "stepPowerGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite Leistung."
+    },
+    {
+      "name": "energy2025GWh",
+      "unit": "GWh",
+      "description": "Installierter Energieinhalt Ende 2025."
+    },
+    {
+      "name": "defaultEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Default Energie."
+    },
+    {
+      "name": "minEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Minimum Energie."
+    },
+    {
+      "name": "maxEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Maximum Energie."
+    },
+    {
+      "name": "stepEnergyGWh",
+      "unit": "GWh",
+      "description": "Slider-Schrittweite Energie."
+    },
+    {
+      "name": "roundtripEfficiency",
+      "unit": "Anteil",
+      "description": "Roundtrip-Wirkungsgrad (0,8)."
+    },
+    {
+      "name": "initialStateOfChargeFraction",
+      "unit": "Anteil",
+      "description": "Start-SoC (0,5)."
+    },
+    {
+      "name": "dispatchPriority",
+      "unit": "Rang",
+      "description": "Reihenfolge im Dispatch (2)."
+    }
+  ],
+  "caveats": [
+    "Maximum 15 GW / 100 GWh reflektiert DE-LU-Marktgebietsbestand (9,4 GW) plus aggressives Zubaupotenzial (+5-6 GW); weiterer Zubau topographisch und durch Naturschutz limitiert. Default 9,4 GW schließt Vianden Luxembourg ein (gehört bilanziell zum DE-LU-Marktgebiet); DE-only wären ~6,8 GW.",
+    "Wirkungsgrad 80 % ist optimistisch — reale Anlagen 70-78 %.",
+    "Saisonale Befüllung nicht modelliert; reale Pumpspeicher haben Frühjahrshochwasser-Bonus."
+  ]
+}

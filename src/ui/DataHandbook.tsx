@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { dataFileUrl } from '../dataPackages';
+import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';

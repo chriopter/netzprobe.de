@@ -1,10 +1,10 @@
 import type { ErzeugungsPool, ModelFactorHour, SpeicherPool } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { compute as computeHistorisch2025 } from '../../data/preset/versorgung-historisch-2025/model';
-import { compute as computeHistorisch2017 } from '../../data/preset/versorgung-historisch-2017/model';
-import { compute as compute100Ee } from '../../data/preset/versorgung-100ee-noimport/model';
-import { compute as compute50Ee } from '../../data/preset/versorgung-50ee-50import/model';
-import { compute as compute2025Skaliert } from '../../data/preset/versorgung-2025-skaliert/model';
+import { compute as computeHistorisch2025 } from '../../data/presets/versorgung-historisch-2025/model';
+import { compute as computeHistorisch2017 } from '../../data/presets/versorgung-historisch-2017/model';
+import { compute as compute100Ee } from '../../data/presets/versorgung-100ee-noimport/model';
+import { compute as compute50Ee } from '../../data/presets/versorgung-50ee-50import/model';
+import { compute as compute2025Skaliert } from '../../data/presets/versorgung-2025-skaliert/model';
 
 export type SupplyPresetId = 'historical-2025' | 'historical-2017' | '100ee-noimport' | '50ee-50import' | '2025-skaliert';
 export type SupplyPillId = SupplyPresetId | 'custom';
@@ -41,7 +41,7 @@ export const supplyPillWikiIds: Record<SupplyPillId, string> = {
   '100ee-noimport': 'versorgung-100ee-noimport',
   '50ee-50import': 'versorgung-50ee-50import',
   '2025-skaliert': 'versorgung-2025-skaliert',
-  'custom': 'kernmodell',
+  'custom': 'kern',
 };
 
 // Aliases for backward-compatible imports in ScenarioSidebar.

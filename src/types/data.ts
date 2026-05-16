@@ -384,7 +384,7 @@ export type ErzPackageDispatchable = {
 export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPackageDispatchable;
 
 export type ErzHandelData = {
-  id: 'erz-handel';
+  id: 'handel';
   name: string;
   import: ErzeugungsModellImport;
   export: ErzeugungsModellExport;
@@ -441,9 +441,9 @@ export type SpeicherPool = {
   };
 };
 
-export type SpeicherBatterieData = SpeicherModellSymmetricStorage & { id: 'speicher-batterie' };
-export type SpeicherPumpspeicherData = SpeicherModellSymmetricStorage & { id: 'speicher-pumpspeicher' };
-export type SpeicherH2Data = SpeicherModellAsymmetricStorage & { id: 'speicher-h2' };
+export type SpeicherBatterieData = SpeicherModellSymmetricStorage & { id: 'batterie' };
+export type SpeicherPumpspeicherData = SpeicherModellSymmetricStorage & { id: 'pumpspeicher' };
+export type SpeicherH2Data = SpeicherModellAsymmetricStorage & { id: 'h2' };
 
 export type SplitDataFile<T> = {
   source: string;

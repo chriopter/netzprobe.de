@@ -10,18 +10,18 @@ import type {
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { defaultScenario, normalizeScenario } from '../ui/scenarioPresets';
-import erzPvJson from '../../data/erz-pv/data.json';
-import erzWindOnJson from '../../data/erz-windon/data.json';
-import erzWindOffJson from '../../data/erz-windoff/data.json';
-import erzKernkraftJson from '../../data/erz-kernkraft/data.json';
-import erzBiomasseJson from '../../data/erz-biomasse/data.json';
-import erzLaufwasserJson from '../../data/erz-laufwasser/data.json';
-import erzGasJson from '../../data/erz-gas/data.json';
-import erzKohleJson from '../../data/erz-kohle/data.json';
-import erzHandelJson from '../../data/erz-handel/data.json';
-import speicherBatterieJson from '../../data/speicher-batterie/data.json';
-import speicherPumpspeicherJson from '../../data/speicher-pumpspeicher/data.json';
-import speicherH2Json from '../../data/speicher-h2/data.json';
+import erzPvJson from '../../data/erzeugung/pv/data.json';
+import erzWindOnJson from '../../data/erzeugung/windon/data.json';
+import erzWindOffJson from '../../data/erzeugung/windoff/data.json';
+import erzKernkraftJson from '../../data/erzeugung/kernkraft/data.json';
+import erzBiomasseJson from '../../data/erzeugung/biomasse/data.json';
+import erzLaufwasserJson from '../../data/erzeugung/laufwasser/data.json';
+import erzGasJson from '../../data/erzeugung/gas/data.json';
+import erzKohleJson from '../../data/erzeugung/kohle/data.json';
+import erzHandelJson from '../../data/erzeugung/handel/data.json';
+import speicherBatterieJson from '../../data/speicher/batterie/data.json';
+import speicherPumpspeicherJson from '../../data/speicher/pumpspeicher/data.json';
+import speicherH2Json from '../../data/speicher/h2/data.json';
 
 const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
 

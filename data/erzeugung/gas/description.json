@@ -1,0 +1,104 @@
+{
+  "id": "gas",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "title": "Gas",
+  "file": "erzeugung/gas/data.json",
+  "scripts": [
+    "erzeugung/gas/model.ts"
+  ],
+  "source": "Energy-Charts installed_power 2025 (Gas-Kraftwerke Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Min-Last, Emissionsfaktor).",
+  "sourceUrls": [
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+    "https://github.com/MTGermany/energy-simulation-de",
+    "https://app.electricitymaps.com/zone/DE"
+  ],
+  "period": "2025",
+  "resolution": "stündlich (regelbar) / jährlich (installierte Leistung)",
+  "unit": "GW, g/kWh",
+  "short": "Slider für installierte Gas-Kraftwerksleistung; dispatchable mit Min-Last 10 %.",
+  "description": "Baustein für Erdgas-Kraftwerke (GuD und Spitzenlast) in Deutschland. Default 35,5 GW entspricht dem Bestand Ende 2025. Min-Last 10 % als Floor, Maximum 90 % der installierten Leistung (Verfügbarkeit). Emissionsfaktor 494 g/kWh.",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider für installierte GW Gas. Default 35,5 GW, Maximum 200 GW, Schrittweite 2 GW."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Dispatchable: Min-Last installedGW × 0,9 × 0,1 als Floor (immer aktiv); ramp-up bis installedGW × 0,9 in Verhältnis Gas:Kohle = 2:1."
+    },
+    {
+      "label": "Formel",
+      "value": "Emissionen(t) = supplyGW(t) × 494 g/kWh. Curtailed bei Überschuss vor Biomasse/Laufwasser."
+    }
+  ],
+  "method": [
+    "Datei: handgepflegt. Werte in data/erzeugung/gas/data.json, Adapter in data/erzeugung/gas/model.ts.",
+    "Verfügbarkeit 90 % — Revisionsfenster und planbare Ausfälle.",
+    "Min-Last 10 % als Floor: muss immer mitlaufen, dispatcht nicht unter diesen Wert.",
+    "Ramp-Up bei Unterdeckung im Verhältnis 2:1 zu Kohle (höhere Ramp-Rate von Gas).",
+    "Emissionsfaktor 494 g/kWh laut MTGermany (electricitymaps DE) — Mix aus GuD-Anlagen und Spitzenlast-Turbinen."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "name",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "installed2025GW",
+      "unit": "GW",
+      "description": "Installierte Leistung Stand Ende 2025."
+    },
+    {
+      "name": "defaultInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Default."
+    },
+    {
+      "name": "minInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Minimum."
+    },
+    {
+      "name": "maxInstalledGW",
+      "unit": "GW",
+      "description": "Slider-Maximum."
+    },
+    {
+      "name": "stepGW",
+      "unit": "GW",
+      "description": "Slider-Schrittweite."
+    },
+    {
+      "name": "mode",
+      "unit": "Enum",
+      "description": "dispatchable: Floor plus ramp-up."
+    },
+    {
+      "name": "availability",
+      "unit": "Anteil",
+      "description": "Jahresverfügbarkeit (0,9)."
+    },
+    {
+      "name": "minLoadFraction",
+      "unit": "Anteil",
+      "description": "Min-Last als Anteil der verfügbaren Leistung (0,1)."
+    },
+    {
+      "name": "emissionGperKWh",
+      "unit": "g/kWh",
+      "description": "Spezifische CO₂-Emissionen."
+    }
+  ],
+  "caveats": [
+    "Min-Last 10 % als Floor — keine Kaltstart-Restriktion oder Vorhaltezeit modelliert.",
+    "Emissionsfaktor mischt GuD (370 g/kWh) und Gasturbine (550 g/kWh); reale Marginal-Effizienz variiert.",
+    "Methan-Slip in Vorkette (Förderung, Transport) nicht im Emissionsfaktor enthalten — reale Lebenszyklus-Bilanz höher."
+  ]
+}

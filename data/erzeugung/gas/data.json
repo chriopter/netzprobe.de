@@ -1,0 +1,13 @@
+{
+  "id": "gas",
+  "name": "Gas",
+  "installed2025GW": 35.5,
+  "defaultInstalledGW": 35.5,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 360,
+  "stepGW": 5,
+  "mode": "dispatchable",
+  "availability": 0.9,
+  "minLoadFraction": 0.05,
+  "emissionGperKWh": 494
+}

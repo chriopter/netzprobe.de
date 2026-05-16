@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { dataFileUrl } from '../dataPackages';
+import { dataFileUrl } from './dataPackages';
 import { JsonTree } from './JsonTree';
 
 export function DataFileViewer({ path }: { path: string }) {

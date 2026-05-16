@@ -26,16 +26,16 @@ import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWiki
 import { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataCatalog';
 import { fmt0, twh, twh0 } from './format';
 import { cx, sidebarWidthClass } from './ui';
-import { additionalTWh as e100PkwAdditionalTWh } from '../../data/e100-pkw/model';
-import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh } from '../../data/e100-heiz/model';
-import { additionalTWh as e100LkwAdditionalTWh } from '../../data/e100-lkw/model';
-import { additionalTWh as e100BahnAdditionalTWh } from '../../data/e100-bahn/model';
-import { additionalTWh as e100SchiffAdditionalTWh } from '../../data/e100-schiff/model';
-import { additionalTWh as e100FlugAdditionalTWh } from '../../data/e100-flug/model';
-import { additionalElectricityTWh as e100GhdAdditionalElectricityTWh } from '../../data/e100-ghd/model';
-import { additionalElectricityTWh as e100IndustrieAdditionalElectricityTWh } from '../../data/e100-industrie-waerme/model';
-import { additionalTWh as e100StahlAdditionalTWh } from '../../data/e100-stahl/model';
-import { additionalTWh as e100ChemieAdditionalTWh } from '../../data/e100-chemie/model';
+import { additionalTWh as e100PkwAdditionalTWh } from '../../data/last/e100-pkw/model';
+import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh } from '../../data/last/e100-heiz/model';
+import { additionalTWh as e100LkwAdditionalTWh } from '../../data/last/e100-lkw/model';
+import { additionalTWh as e100BahnAdditionalTWh } from '../../data/last/e100-bahn/model';
+import { additionalTWh as e100SchiffAdditionalTWh } from '../../data/last/e100-schiff/model';
+import { additionalTWh as e100FlugAdditionalTWh } from '../../data/last/e100-flug/model';
+import { additionalElectricityTWh as e100GhdAdditionalElectricityTWh } from '../../data/last/e100-ghd/model';
+import { additionalElectricityTWh as e100IndustrieAdditionalElectricityTWh } from '../../data/last/e100-industrie-waerme/model';
+import { additionalTWh as e100StahlAdditionalTWh } from '../../data/last/e100-stahl/model';
+import { additionalTWh as e100ChemieAdditionalTWh } from '../../data/last/e100-chemie/model';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 

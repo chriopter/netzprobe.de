@@ -1,4 +1,4 @@
-import { dataManifestUrl, dataPackageIds, registerDataPackagePath } from '../dataPackages';
+import { dataManifestUrl, dataPackageIds, registerDataPackagePath } from './dataPackages';
 
 export type ManifestEntry = {
   id: string;

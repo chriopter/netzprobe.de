@@ -1,0 +1,154 @@
+{
+  "id": "e100-heiz",
+  "parentId": "e100",
+  "domain": "last",
+  "kind": "scenario",
+  "title": "Haushalte Elektrifizierung",
+  "file": "last/e100-heiz/data.json",
+  "scripts": [
+    "last/e100-heiz/generate.mjs",
+    "last/e100-heiz/model.ts"
+  ],
+  "source": "UBA, AGEB, BWP, Fraunhofer ISE, WPZ Buchs (OST Rapperswil), Lokale Agenda 21 Lahr, DWD, When2Heat, WPuQ Hamelin.",
+  "sourceUrls": [
+    "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
+    "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/11_2024_cc_waermepumpensysteme.pdf",
+    "https://ag-energiebilanzen.de/daten-und-fakten/",
+    "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
+    "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
+    "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html",
+    "https://www.ise.fraunhofer.de/en/research-projects/wp-qs-im-bestand.html",
+    "https://www.ost.ch/en/research-and-consulting-services/technology/system-technology/ies-institute-for-energy-systems/heat-pump-test-center-wpz/heat-pump-field-test/",
+    "https://www.ost.ch/fileadmin/dateiliste/3_forschung_dienstleistung/institute/ies/wpz/sonstige_wichtige_dokumente/2021_bericht_feldmessungen.pdf",
+    "http://www.agenda-energie-lahr.de/WP_FeldtestPhase2.html",
+    "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html",
+    "https://www.nature.com/articles/s41597-019-0199-y",
+    "https://www.nature.com/articles/s41597-022-01156-1"
+  ],
+  "period": "2023 (Mengen), reale Tagesmitteltemperaturen 2025 (Profil)",
+  "resolution": "Tag × Stunde",
+  "unit": "TWh Wärme, TWh Strom, JAZ",
+  "short": "Zusatzlast aus Umstellung fossiler Heizung und Warmwasser auf Wärmepumpen.",
+  "description": "Zusätzlicher Strombedarf beim Übergang von fossilen Heizungen und Warmwassererzeugern auf Wärmepumpen in privaten Haushalten. Bereits elektrisch gedeckte Wärme bleibt unverändert in der historischen Last und wird als Mindestwert abgezogen. Der verbleibende Wärmebedarf wird über eine Jahresarbeitszahl in Stromlast umgerechnet und saisonal sowie tageszeitlich verteilt.",
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "Slider zwischen 50 TWh (bereits elektrisch, Mindestwert) und 700 TWh. Default 530 TWh entspricht der Summe aus Raumwärme und Warmwasser privater Haushalte 2023 (UBA/AGEB)."
+    },
+    {
+      "label": "Verteilung",
+      "value": "Tagesweise Gradtagszahl aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Städte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat); innerhalb des Tages bimodaler 24-h-Tagesgang. Sommer enthält reale Kühl-Spitzen-Tage, Mai/September spreizen real statt glatt."
+    },
+    {
+      "label": "Formel",
+      "value": "Zusatzstrom (TWh) = (Ziel − 50 TWh) / JAZ. Default: (530 − 50) / 3,3 = 145,45 TWh/Jahr."
+    }
+  ],
+  "method": [
+    "Datei: erzeugt durch data/e100-heiz/generate.mjs. Skript ausführen mit `node data/e100-heiz/generate.mjs > data/e100-heiz/data.json`; Rechenlogik in data/e100-heiz/model.ts.",
+    "Referenz-Wärmebedarf referenceHeatDemandTWh: UBA-Anwendungsbilanz private Haushalte 2023, Raumwärme 445 TWh + Warmwasser 85 TWh = 530 TWh.",
+    "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus etwa 1,8 Mio. Wärmepumpen im Betrieb plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
+    "Jahresarbeitszahl seasonalCop: 3,3 als bewusste Mitte der empirischen Spannbreite. Realistischer Korridor für Luft-Wasser-WP im Bestand 2,8-3,4 — pessimistisches Ende: WPZ Buchs/OST Rapperswil (CH, seit 2015, herstellerunabhängig) 2,9; Lokale Agenda 21 Lahr (Phase 1+2, 2006-2013) 2,8. Optimistisches Ende: Fraunhofer ISE WP-QS im Bestand (2025, 77 Anlagen, 9 Hersteller beteiligt, mögliche Selektion) 3,4. Mittlere Quellen: UBA Climate Change 11/2024 3,1. Sole-Wasser deutlich höher (4,3-4,4), Anteil im Bestand etwa 25%. Mischwert berücksichtigt Bestandsanlagen mit höheren Vorlauftemperaturen und Neuanlagen (3,5-4,0).",
+    "Gradtagszahl-Tagesprofil degreeDayProfile: reale Tagesmitteltemperaturen 2025 aus Open-Meteo ERA5-Reanalyse, gemittelt über 8 deutsche Großstädte (Hamburg, Berlin, München, Köln, Frankfurt, Leipzig, Stuttgart, Bremen), additiv kalibriert pro Monat auf das DWD-Gebietsmittel DE 2025 (monthly regional_averages_tm). HDD = max(0, 20 − T) wenn T < 15. Weights = HDD-Tag / Jahressumme HDD; Summe 1. Vorteil ggü. Klimanormalen: realistische intra-monatliche Streuung — vereinzelte Kühl-Spitzen-Tage im Sommer (~2 TWh) und realistische Mai/September-Übergänge statt scharfer Schwelle.",
+    "24-h-Tagesgang hourlyProfile.multipliers: bimodal aus BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Peak/Tal-Spreizung auf Grid-Aggregat (1,45 / 0,57) gedämpft. Summe 24, Tagesmittel 1,0."
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "unit": "Text",
+      "description": "Technische Kennung."
+    },
+    {
+      "name": "title",
+      "unit": "Text",
+      "description": "Anzeigename."
+    },
+    {
+      "name": "source",
+      "unit": "Text",
+      "description": "Quellenkurzname."
+    },
+    {
+      "name": "sourceUrls",
+      "unit": "Liste",
+      "description": "Belege."
+    },
+    {
+      "name": "referenceYear",
+      "unit": "Jahr",
+      "description": "Bezugsjahr."
+    },
+    {
+      "name": "referenceHeatDemandTWh",
+      "unit": "TWh",
+      "description": "Raumwärme + Warmwasser privater Haushalte."
+    },
+    {
+      "name": "alreadyElectricHeatTWh",
+      "unit": "TWh",
+      "description": "Bereits elektrisch gedeckte Wärme (WP, Direktheizung, Boiler); Slider-Minimum."
+    },
+    {
+      "name": "defaultTargetHeatTWh",
+      "unit": "TWh",
+      "description": "Slider-Default."
+    },
+    {
+      "name": "maxTargetHeatTWh",
+      "unit": "TWh",
+      "description": "Slider-Maximum."
+    },
+    {
+      "name": "stepHeatTWh",
+      "unit": "TWh",
+      "description": "Slider-Schrittweite."
+    },
+    {
+      "name": "seasonalCop",
+      "unit": "JAZ",
+      "description": "Jahresarbeitszahl."
+    },
+    {
+      "name": "distribution",
+      "unit": "Text",
+      "description": "Verteilungstyp."
+    },
+    {
+      "name": "degreeDayProfile",
+      "unit": "Objekt",
+      "description": "Monatsmittel-Ankerpunkte, Heizgrenze, Innenreferenz, 365 Tageseinträge mit Datum, Tagesmitteltemperatur, Gradtagszahl und Gewicht."
+    },
+    {
+      "name": "hourlyProfile",
+      "unit": "Objekt",
+      "description": "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs."
+    },
+    {
+      "name": "note",
+      "unit": "Text",
+      "description": "Rechenhinweis."
+    }
+  ],
+  "caveats": [
+    "Nur private Haushalte — GHD und Industrie nicht enthalten.",
+    "JAZ ist Jahresmittel; reale Luft-Wasser-Wärmepumpen verlieren bei kalten Außentemperaturen Effizienz, der Winterpeak ist daher leicht unterschätzt.",
+    "JAZ-Unsicherheit: Quellen-Spannbreite L/W 2,8-3,4 ist substanziell (±15% um den Mittelwert 3,3). Pessimistische Quellen (WPZ Buchs 2,9, Lahr 2,8) und optimistische (Fraunhofer ISE 3,4) divergieren methodisch — Fraunhofer-Sample ist herstellerrekrutiert mit möglichem Positiv-Bias, Schweizer WPZ-Buchs misst herstellerunabhängig. Vollelektrifizierungs-Szenarien rechnen implizit mit, dass schwer elektrifizierbare Altbauten (Denkmal, Mehrfamilienbestand mit hoher VL) nicht WP, sondern Fernwärme/Hybrid bekommen — daher pessimistische Quellen vermutlich überzeichnen.",
+    "Profil-Basis ist das reale Wetterjahr 2025; ein anderes Jahr ergäbe einen anderen Tagesgang.",
+    "8-Städte-Mittel ist additiv auf DWD-Gebietsmittel DE pro Monat kalibriert — Monatsniveaus stimmen exakt, intra-monatliche Streuung kommt aus den Großstadt-Reanalysen und liegt ggf. leicht unterhalb der ländlichen Werte.",
+    "Sommer-Heizspitzen (Jun–Aug ~2,5 TWh Gesamt, einzelne Tage bis ~17 GW Peak-Stunden-Last) sind ein Modellartefakt der starren DIN-Heizgrenze 15 °C. Reale Beispieltage 2025: 8.–11. Juni mit Tagesmittel 12,6–14,6 °C, 8. Juli 14,2 °C, 22.–25. August 13,6–15,0 °C — das Modell zählt diese als Heiztage und rechnet HDD = 20 − T. Reale Wärmepumpen wären saisonal aus, Gebäudemasse dämpft kurze Kühl-Stöße. Eine saisonale Heizgrenze, harte Jun–Aug-Pause oder ein gleitendes Tagesmittel würden das fixen; aktuell bewusst nicht implementiert (Überschlagsrechnung).",
+    "Slider-Werte oberhalb 530 TWh decken Upside-Szenarien (Sanierungsstau, GHD-Mitnahme) ab."
+  ],
+  "sections": [
+    {
+      "title": "Methodenwechsel: Klimanormale → reales Wetterjahr 2025",
+      "items": [
+        "Altes Verfahren (DWD-Klimanormale 1991–2020 als 12 Monatsanker + lineare Interpolation) produzierte einen scharfen Heizlast-Abbruch im Mai-Juni-Übergang: die interpolierte Tagesmitteltemperatur kreuzte die 15-°C-Heizgrenze genau bei Tag 150, Jun–Aug lagen exakt auf 0 TWh.",
+        "Neues Verfahren: Open-Meteo ERA5-Tagesmittel von 8 deutschen Großstädten (Hamburg, Berlin, München, Köln, Frankfurt, Leipzig, Stuttgart, Bremen), additiv kalibriert auf das DWD-Gebietsmittel DE pro Monat — Monatsniveau exakt, intra-monatliche Streuung real.",
+        "Jahressumme bleibt unverändert: 145,5 TWh Strom. HDD-Jahressumme 3.486 → 3.461 (−0,7 %), Heiztage 266 → 262.",
+        "Monatsverlauf TWh (alt → neu): Jan 23,7→23,5 · Feb 20,1→21,8 (Kältewelle Mitte Feb) · Mär 18,4→18,2 · Apr 13,1→11,8 (warmer Apr) · Mai 8,3→8,8 · Jun 0,0→1,1 · Jul 0,0→0,2 · Aug 0,0→1,2 · Sep 6,7→4,9 (warmer Sep) · Okt 13,7→13,3 · Nov 18,6→18,9 · Dez 22,9→21,9.",
+        "Peak-Tag: alt 16. Jan (T=1,5 °C, HDD 18,5) → neu 18. Feb (T=−3,6 °C, HDD 23,6, reale Kältewelle).",
+        "Peak-Stunden-Leistung: 45,8 GW → 58,9 GW (+29 %). Klimanormalen unterschätzten den realen Worst-Case-Heiztag deutlich — der wichtigere Befund für Netz/Reserve-Planung."
+      ]
+    }
+  ]
+}

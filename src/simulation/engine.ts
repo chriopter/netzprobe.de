@@ -5,7 +5,7 @@ import type {
   HourlyInput,
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import { kernmodellCoreModel } from '../../data/kernmodell/model';
+import { kernmodellCoreModel } from '../../data/kern/model';
 import type { CoreModel, CoreModelInput } from './coreModel';
 import type { SimulationResult } from './types';
 

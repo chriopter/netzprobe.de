@@ -1,0 +1,13 @@
+{
+  "id": "pv",
+  "name": "Photovoltaik",
+  "installed2025GW": 102.5,
+  "defaultInstalledGW": 102.5,
+  "minInstalledGW": 0,
+  "maxInstalledGW": 2000,
+  "stepGW": 10,
+  "mode": "variable-re",
+  "factorPackage": "einspeisefaktoren-2025",
+  "factorField": "solarIrradiance",
+  "emissionGperKWh": 35
+}
