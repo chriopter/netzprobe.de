@@ -68,6 +68,13 @@ Regeln:
 - Keine Wiederholung: Was schon in `title`, `short`, `source` oder `fields` steht, gehört nicht nochmal in `description` oder `overview`.
 - Keine Marketingsprache.
 
+## Commits
+
+- Format: 2-3 Zeilen Zusammenfassung, dann Leerzeile, dann Detail-Auflistung (Bullets).
+- Erste Zeile: kurze imperativische Kernaussage (was, nicht wie). Subject ≤ 72 Zeichen.
+- Body-Bullets: konkrete Änderungen pro Datei oder Bereich, jeweils ein Punkt.
+- Kein `Co-Authored-By`-Trailer.
+
 ## Dokumentation
 
 Nur eine `README.md` und eine `AGENTS.md` auf Top-Level. Keine geschachtelten Doku-Dateien.

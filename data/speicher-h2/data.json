@@ -16,7 +16,7 @@
   "minEnergyGWh": 0,
   "maxEnergyGWh": 500000,
   "stepEnergyGWh": 5000,
-  "roundtripEfficiency": 0.24,
+  "roundtripEfficiency": 0.34,
   "initialStateOfChargeFraction": 0.5,
   "dispatchPriority": 3
 }

@@ -8,5 +8,5 @@
   "stepGW": 0.5,
   "mode": "baseload",
   "availability": 0.9,
-  "emissionGperKWh": 5
+  "emissionGperKWh": 12
 }

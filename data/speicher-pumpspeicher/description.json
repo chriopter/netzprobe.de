@@ -7,20 +7,22 @@
   "scripts": [
     "speicher-pumpspeicher/model.ts"
   ],
-  "source": "Energy-Charts (Pumpspeicher-Bestand Deutschland 2025); MTGermany energy-simulation-de (Eta, Initial-SoC).",
+  "source": "Energy-Charts (Pumpspeicher DE-LU-Bestand 2025); ENTSO-E Transparency Platform (DE-LU Marktgebiet 2023 9,93 GW); Vattenfall Goldisthal Powerplant-Datasheet; BMWK/dena Zubaupotenzial-Studien.",
   "sourceUrls": [
     "https://www.energy-charts.info/",
-    "https://github.com/MTGermany/energy-simulation-de"
+    "https://transparency.entsoe.eu/",
+    "https://powerplants.vattenfall.com/de/goldisthal/",
+    "https://de.wikipedia.org/wiki/Liste_von_Pumpspeicherkraftwerken"
   ],
   "period": "2025",
   "resolution": "stündlich",
   "unit": "GW, GWh",
   "short": "Slider für Pumpspeicher-Leistung und -Energie; mittelfristiger Speicher mit 80 % Roundtrip-Wirkungsgrad.",
-  "description": "Baustein für Pumpspeicherwerke in Deutschland. Default 9,4 GW / 40 GWh entspricht dem Bestand Ende 2025 (Goldisthal, Markersbach, etc.). Wirkungsgrad 80 %, Dispatch-Priorität 2 (nach Batterie, vor H₂).",
+  "description": "Baustein für Pumpspeicherwerke. Default 9,4 GW / 45 GWh entspricht dem DE-LU-Marktgebiets-Bestand Ende 2025: 9,4 GW (Goldisthal 1,06 GW + Markersbach + weitere DE-Anlagen ~6,8 GW DE-only + Vianden Luxembourg 1,3 GW im DE-LU-Marktgebiet bilanziell) und ~45 GWh nutzbare Energie (Goldisthal 8,5 GWh + Markersbach 4 GWh + weitere DE ~27 GWh + Vianden 4,9 GWh = ~44,4 GWh, gerundet 45 GWh). Wirkungsgrad 80 %, Dispatch-Priorität 2 (nach Batterie, vor H₂).",
   "overview": [
     {
       "label": "Verwendung",
-      "value": "Slider für Leistung (Default 9,4 GW, Max 12 GW) und Energie (Default 40 GWh, Max 80 GWh). Maximum begrenzt durch topographisches Potenzial Deutschlands."
+      "value": "Slider für Leistung (Default 9,4 GW, Max 15 GW) und Energie (Default 45 GWh, Max 100 GWh). Maximum reflektiert DE-LU-Bestand plus realistisches Zubau-Potenzial (Studien BMWK/dena 2024: +3-5 GW machbar, höhere Ausbauten durch Naturschutz/Topografie begrenzt)."
     },
     {
       "label": "Verteilung",
@@ -115,7 +117,7 @@
     }
   ],
   "caveats": [
-    "Maximum 12 GW reflektiert topographisches Potenzial; weiterer Zubau begrenzt durch Naturschutz und Geländerestriktionen.",
+    "Maximum 15 GW / 100 GWh reflektiert DE-LU-Marktgebietsbestand (9,4 GW) plus aggressives Zubaupotenzial (+5-6 GW); weiterer Zubau topographisch und durch Naturschutz limitiert. Default 9,4 GW schließt Vianden Luxembourg ein (gehört bilanziell zum DE-LU-Marktgebiet); DE-only wären ~6,8 GW.",
     "Wirkungsgrad 80 % ist optimistisch — reale Anlagen 70-78 %.",
     "Saisonale Befüllung nicht modelliert; reale Pumpspeicher haben Frühjahrshochwasser-Bonus."
   ]

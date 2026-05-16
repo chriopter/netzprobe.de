@@ -7,13 +7,13 @@
     "minGW": 0,
     "maxGW": 200,
     "stepGW": 5,
-    "emissionGperKWh": 350
+    "emissionGperKWh": 300
   },
   "export": {
     "default2025GW": 25,
     "defaultMaxGW": 25,
     "minGW": 0,
-    "maxGW": 250,
+    "maxGW": 200,
     "stepGW": 5
   },
   "dispatchOrder": {

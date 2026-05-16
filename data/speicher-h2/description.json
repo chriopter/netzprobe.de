@@ -7,16 +7,19 @@
   "scripts": [
     "speicher-h2/model.ts"
   ],
-  "source": "Energy-Charts (H₂-Bestand 2025 quasi null); MTGermany energy-simulation-de (Eta, H₂-Konstanten).",
+  "source": "Energy-Charts (H₂-Bestand 2025 quasi null); Fraunhofer IKTS Faktencheck Wasserstoff (Roundtrip-Korridor 30-42 %); Fraunhofer ISE Wasserstoff-Balance (Power-to-Power); IEA Future of Hydrogen 2019 (30-42 % je nach Pfad); BNetzA Szenariorahmen 2025.",
   "sourceUrls": [
     "https://www.energy-charts.info/",
-    "https://github.com/MTGermany/energy-simulation-de"
+    "https://www.ikts.fraunhofer.de/content/dam/ikts/abteilungen/umwelt_und_verfahrenstechnik/technologieoekonomik_nachhaltigkeitsanalyse/oekonomische_analyse_nachhaltigkeit/Fraunhofer_IKTS_Faktencheck_Wasserstoff.pdf",
+    "https://www.ise.fraunhofer.de/de/forschungsprojekte/wasserstoff-balance-im-energiesystem.html",
+    "https://www.iea.org/reports/the-future-of-hydrogen",
+    "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/Versorgungssicherheit/NEP_Strom/start.html"
   ],
   "period": "2025",
   "resolution": "stündlich",
   "unit": "GW, GWh",
-  "short": "Slider für Elektrolyse-, Rückverstromungs- und Speicherenergie für H₂; saisonaler Speicher mit 24 % Roundtrip-Wirkungsgrad.",
-  "description": "Baustein für Wasserstoff-Speicher mit getrennter Elektrolyse-Leistung (Laden) und Rückverstromungs-Leistung (Entladen) sowie unabhängiger Speicherenergie (Kavernen). Default-Werte praktisch null (2025-Bestand). Roundtrip 24 % (Elektrolyse + Speicher + Rückverstromung). Dispatch-Priorität 3 (saisonal, nach Batterie und Pumpspeicher).",
+  "short": "Slider für Elektrolyse-, Rückverstromungs- und Speicherenergie für H₂; saisonaler Speicher mit 34 % Roundtrip-Wirkungsgrad.",
+  "description": "Baustein für Wasserstoff-Speicher mit getrennter Elektrolyse-Leistung (Laden) und Rückverstromungs-Leistung (Entladen) sowie unabhängiger Speicherenergie (Kavernen). Default-Werte praktisch null (2025-Bestand). Roundtrip 34 % als Konsens-Mittelwert moderner Power-to-Power-Anlagen (Elektrolyse 65 % × Speicher 95 % × Rückverstromung 55 %). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE, IEA 30-42 %). Dispatch-Priorität 3 (saisonal, nach Batterie und Pumpspeicher).",
   "overview": [
     {
       "label": "Verwendung",
@@ -28,12 +31,12 @@
     },
     {
       "label": "Formel",
-      "value": "SoC(t+1) = SoC(t) + 0,24 × ΔLaden − ΔEntladen. Wirkungsgrad-Verluste fallen beim Laden an."
+      "value": "SoC(t+1) = SoC(t) + 0,34 × ΔLaden − ΔEntladen. Wirkungsgrad-Verluste fallen beim Laden an."
     }
   ],
   "method": [
     "Datei: handgepflegt. Werte in data/speicher-h2/data.json, Adapter in data/speicher-h2/model.ts.",
-    "Roundtrip-Wirkungsgrad 24 % laut MTGermany: Elektrolyse 65 % × Speicher 95 % × Rückverstromung (BHKW 50 %, GuD 60 %).",
+    "Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.",
     "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
     "Initial-SoC 50 % bei Jahresbeginn.",
     "Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher."
@@ -127,7 +130,7 @@
     {
       "name": "roundtripEfficiency",
       "unit": "Anteil",
-      "description": "Roundtrip-Wirkungsgrad (0,24)."
+      "description": "Roundtrip-Wirkungsgrad (0,34)."
     },
     {
       "name": "initialStateOfChargeFraction",
@@ -141,7 +144,8 @@
     }
   ],
   "caveats": [
-    "Roundtrip-Wirkungsgrad 24 % gilt für Power-to-Power-Pfad; bei stofflicher Nutzung von H₂ (Stahl, Chemie) ist der Pfad-Wirkungsgrad höher.",
+    "Roundtrip-Wirkungsgrad 34 % gilt für Power-to-Power-Pfad; bei stofflicher Nutzung von H₂ (Stahl, Chemie) ist der Pfad-Wirkungsgrad höher.",
+    "Plausibler Korridor 30-42 %: Worst-Case 30 % (alte Elektrolyse + 50 % BHKW) bis Best-Case 42 % (PEM-Hochtemperatur + 65 % Brennstoffzelle/H2-GuD); aktuelle Großanlagen liegen bei 33-36 %.",
     "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
     "Maximum 500 TWh Speicherenergie entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
     "Modell trennt Lade-/Entlade-Leistung, nicht aber Elektrolyseur-Effizienz vs. Rückverstromung — Verluste vollständig beim Laden."

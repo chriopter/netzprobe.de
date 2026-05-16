@@ -6,10 +6,9 @@
   "scripts": [
     "preset/versorgung-100ee-noimport/model.ts"
   ],
-  "source": "Eigene Komposition; Mix-Anteile orientiert an BMWK-Langfristszenarien T45-Strom und Agora Energiewende Zielbild 2045.",
+  "source": "Eigene Komposition; Mix-Anteile orientiert an BMWK-Langfristszenarien T45-Strom.",
   "sourceUrls": [
-    "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php",
-    "https://www.agora-energiewende.de/"
+    "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php"
   ],
   "period": "laufend",
   "resolution": "stündlich",
@@ -49,7 +48,7 @@
     }
   ],
   "caveats": [
-    "Mix-Anteile (30/45/15) sind heuristisch; reale Langfristszenarien (T45, Agora) streuen je nach Annahme zur Volllast-Verteilung.",
+    "Mix-Anteile (30/45/15) sind heuristisch; reale Langfristszenarien (T45) streuen je nach Annahme zur Volllast-Verteilung.",
     "Cushion 1,2 deckt Speicherverluste und Curtailment grob ab; reale Anforderung hängt von Speichergröße und Saisonalität ab.",
     "Speicher-Sizing nach Daumenregel (Batterie 30 GWh/100 GW PV; H₂ 10 % Demand) — keine optimierte Dimensionierung.",
     "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore — siehe erz-windoff Caveats."
