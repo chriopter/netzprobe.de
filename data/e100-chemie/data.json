@@ -19,6 +19,7 @@
   "hydrogenMethanolTWh": 60,
   "eOlefinsViaH2TWh": 180,
   "additionalDirectElectricityTWh": 30,
+  "h2SystemEfficiency": 0.55,
   "defaultTargetTotalTWh": 440,
   "maxTargetTotalTWh": 700,
   "stepTWh": 10,

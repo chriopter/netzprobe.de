@@ -36,6 +36,7 @@
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
     { "name": "directElectrificationTWh", "unit": "TWh", "description": "Strom für direkte Batterie-Elektrifizierung Binnenfracht, Hafenbetrieb, Küste." },
     { "name": "eFuelSynthesisTWh", "unit": "TWh", "description": "Strom für PtL-Synthese (e-Methanol/e-Ammoniak) der Hochseebunkerung." },
+    { "name": "eFuelSystemEfficiency", "unit": "Anteil", "description": "System-η Strom → fertiger e-MeOH/e-Ammoniak-Schiffsfuel (LHV). Default 0,50 (Wind-to-Methanol-Studie 2020, IEA Renewables 2024). Wird genutzt um H2-Import in Strom-Einsparung umzurechnen: 1 TWh importierter H2 ersetzt (1/0,50)=2,0 TWh inländischen Synthese-Strom." },
     { "name": "alreadyElectricTWh", "unit": "TWh", "description": "Bereits elektrisch (Landstrom, Schiffsstrom); Slider-Minimum." },
     { "name": "defaultTargetTWh", "unit": "TWh", "description": "Slider-Default." },
     { "name": "maxTargetTWh", "unit": "TWh", "description": "Slider-Maximum." },
@@ -45,7 +46,7 @@
     { "name": "note", "unit": "Text", "description": "Rechenhinweis." }
   ],
   "caveats": [
-    "PtL-Wirkungsgrad als Punktwert 50 % (strom-zu-Fuel-LHV); Literaturbandbreite 50-62 % je nach CO2-Quelle (DAC vs. Punktquelle) und Synthesepfad (Methanol vs. Ammoniak); IEA Renewables 2024 und Wind-to-Methanol-Studie 2020.",
+    "PtL-Wirkungsgrad als Punktwert 50 % (strom-zu-Fuel-LHV); Literaturbandbreite 50-62 % je nach CO2-Quelle (DAC vs. Punktquelle) und Synthesepfad (Methanol vs. Ammoniak); IEA Renewables 2024 und Wind-to-Methanol-Studie 2020. Wert ist in `eFuelSystemEfficiency` festgehalten und wird vom kernmodell für die H2-Import-Substitutionslogik gelesen.",
     "Standortabgrenzung unscharf: in deutschen Häfen gebunkerte Kraftstoffe werden weltweit verfahren, der Stromaufwand der Synthese muss nicht zwangsläufig in Deutschland anfallen. BAFA-Mineralölinfo 2023 zeigt rückläufige Bunkerprodukte (Heizöl schwer Inland 0,55 Mio. t); reale DE-Bunkermenge liegt bei 1-3 Mio. t/Jahr.",
     "Tagesprofil ist generisch flach; reale Elektrolyse-Fahrweise hängt von Strompreis und PPA-Verträgen ab, kann saisonal stark schwanken.",
     "Direktstrom-Anteil von rund 30 % der Inlandsschifffahrt ist obere Abschätzung; lange Binnenstrecken (Rhein, Donau) bleiben bei Drop-in-Kraftstoffen, Batteriegewicht/-volumen limitiert.",

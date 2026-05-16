@@ -48,6 +48,7 @@
     { "name": "hydrogenMethanolTWh", "unit": "TWh", "description": "Strombedarf für grüne Methanol-Synthese (Elektrolyse + Synthese)." },
     { "name": "eOlefinsViaH2TWh", "unit": "TWh", "description": "Strombedarf für e-Olefine/Aromaten über Methanol-to-Olefins/MTA-Route." },
     { "name": "additionalDirectElectricityTWh", "unit": "TWh", "description": "Strom-Direktzuwachs (Antriebe, IKT) über heutigen Bedarf hinaus." },
+    { "name": "h2SystemEfficiency", "unit": "Anteil", "description": "System-η Strom → H2-Endprodukt-Mix (NH3 via Haber-Bosch, MeOH via Methanol-Synthese, Olefine via MtO). Default 0,55 als gewichteter Mittelwert über die drei chemischen Pfade (DEA Technology Catalogue 2024, Fraunhofer ISE PtX-Atlas). Wird vom kernmodell für die H2-Import-Substitutionslogik verwendet: 1 TWh importierter H2 ersetzt (1/0,55)=1,82 TWh inländischen Synthese-Strom." },
     { "name": "defaultTargetTotalTWh", "unit": "TWh", "description": "Slider-Default als Ziel-Gesamtstromverbrauch." },
     { "name": "maxTargetTotalTWh", "unit": "TWh", "description": "Slider-Maximum." },
     { "name": "stepTWh", "unit": "TWh", "description": "Slider-Schrittweite." },

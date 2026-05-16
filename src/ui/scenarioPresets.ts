@@ -30,6 +30,7 @@ export const defaultScenario: Scenario = {
     'e100-industrie-waerme': false, 'e100-industrie-waerme-target-heat-twh': 220,
     'e100-stahl': false, 'e100-stahl-target-mio-ton': 28,
     'e100-chemie': false, 'e100-chemie-target-twh': 685,
+    'h2-import-twh': 0,
   },
   generation: {
     pvInstalledGW: erzPv.defaultInstalledGW,
@@ -43,6 +44,15 @@ export const defaultScenario: Scenario = {
     importMaxGW: erzHandel.import.defaultMaxGW,
     exportMaxGW: erzHandel.export.defaultMaxGW,
     importEmissionGperKWh: erzHandel.import.emissionGperKWh,
+    // Capacity-Factor-Multipliers — Default 1.0 für PV und Wind onshore
+    // (heutige Flottenwerte aus einspeisefaktoren-2025). Offshore-Default 1.8
+    // kompensiert dass der einspeisefaktoren-2025-windFactor aus gemittelten
+    // 62 GW onshore + 9 GW offshore stammt — ohne Korrektur würde Offshore
+    // dieselben ~1745 VLH wie Onshore zugeordnet bekommen statt realer 4000+
+    // VLH (15 MW-Nordsee-Klasse). Siehe data/kernmodell/model.ts:96-113.
+    pvCapacityFactorMultiplier: 1.0,
+    windOnCapacityFactorMultiplier: 1.0,
+    windOffCapacityFactorMultiplier: 1.8,
   },
   storage: {
     batteriePowerGW: speicherBatterie.defaultPowerGW,
@@ -92,6 +102,7 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       'e100-stahl-target-mio-ton': demand['e100-stahl-target-mio-ton'] ?? 28,
       'e100-chemie': demand['e100-chemie'] ?? false,
       'e100-chemie-target-twh': demand['e100-chemie-target-twh'] ?? 685,
+      'h2-import-twh': demand['h2-import-twh'] ?? 0,
     },
     generation: {
       pvInstalledGW: generation.pvInstalledGW ?? defaultScenario.generation.pvInstalledGW,
@@ -105,6 +116,9 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       importMaxGW: generation.importMaxGW ?? defaultScenario.generation.importMaxGW,
       exportMaxGW: generation.exportMaxGW ?? defaultScenario.generation.exportMaxGW,
       importEmissionGperKWh: generation.importEmissionGperKWh ?? defaultScenario.generation.importEmissionGperKWh,
+      pvCapacityFactorMultiplier: generation.pvCapacityFactorMultiplier ?? defaultScenario.generation.pvCapacityFactorMultiplier,
+      windOnCapacityFactorMultiplier: generation.windOnCapacityFactorMultiplier ?? defaultScenario.generation.windOnCapacityFactorMultiplier,
+      windOffCapacityFactorMultiplier: generation.windOffCapacityFactorMultiplier ?? defaultScenario.generation.windOffCapacityFactorMultiplier,
     },
     storage: {
       batteriePowerGW: storage.batteriePowerGW ?? defaultScenario.storage.batteriePowerGW,

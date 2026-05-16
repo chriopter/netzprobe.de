@@ -187,6 +187,11 @@ const SCENARIOS: Array<{ name: string; build: () => Scenario }> = [
   { name: '10-industrie-heavy', build: () => withDemand(withGeneration(baseline, {
     pvInstalledGW: 200, windOnInstalledGW: 150, windOffInstalledGW: 50,
   }), { 'e100-industrie-waerme': true, 'e100-stahl': true, 'e100-chemie': true }) },
+  { name: '11-h2-import-saves-strom', build: () => withDemand(baseline, {
+    'e100-pkw': true, 'e100-heiz': true, 'e100-lkw': true,
+    'e100-stahl': true, 'e100-chemie': true, 'e100-schiff': true, 'e100-flug': true,
+    'h2-import-twh': 200,
+  }) },
 ];
 
 describe('simulation regression (10 diverse scenarios)', () => {

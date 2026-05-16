@@ -136,6 +136,8 @@ export type E100SchiffData = {
   referenceYear: number;
   directElectrificationTWh: number;
   eFuelSynthesisTWh: number;
+  /** System-η Strom → e-Methanol/e-Ammoniak (Schiffsfuel, LHV). */
+  eFuelSystemEfficiency: number;
   alreadyElectricTWh: number;
   defaultTargetTWh: number;
   maxTargetTWh: number;
@@ -154,6 +156,7 @@ export type E100FlugData = {
   referenceYear: number;
   kerosineDemandMioT: number;
   kerosineEnergyTWh: number;
+  /** System-η Strom → PtL-Kerosin (LHV). Genutzt von h2ImportReductionGW. */
   ptlEfficiency: number;
   alreadyElectricTWh: number;
   defaultTargetTWh: number;
@@ -243,6 +246,8 @@ export type E100ChemieData = {
   hydrogenMethanolTWh: number;
   eOlefinsViaH2TWh: number;
   additionalDirectElectricityTWh: number;
+  /** System-η Strom → fertiges H2-Endprodukt (NH3, MeOH, Olefine-Mix). */
+  h2SystemEfficiency: number;
   defaultTargetTotalTWh: number;
   maxTargetTotalTWh: number;
   stepTWh: number;

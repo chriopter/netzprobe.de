@@ -58,6 +58,6 @@
       1.000
     ]
   },
-  "note": "Zusatzlast = max(0, Ziel-Mio. t Primärstahl) * 3,72 MWh/t. Mengeneinheit: Mio. t * MWh/t = TWh. Default 28 Mio. t * 3,72 MWh/t = 104,2 TWh/Jahr. Strombedarf je Tonne = 60 kg H2/t * 52 kWh/kg H2 / 1000 + 0,6 MWh/t EAF = 3,12 + 0,6 = 3,72 MWh/t. Sekundärstahl (Schrott-EAF, rund 9,8 Mio. t * 0,5 MWh/t = 4,9 TWh) ist bereits in der historischen Last enthalten und wird hier nicht zusätzlich gerechnet. Stundenverteilung: konstant 1,0 (24/7-Dauerbetrieb).",
+  "note": "Zusatzlast = max(0, Ziel-Mio. t Primärstahl * 3,72 MWh/t - alreadyElectricTWh). Strombedarf je Tonne = 60 kg H2/t * 52 kWh/kg H2 / 1000 + 0,6 MWh/t EAF = 3,12 + 0,6 = 3,72 MWh/t. Default 28 Mio. t * 3,72 MWh/t - 4,9 TWh = 99,3 TWh/Jahr. Sekundärstahl (Schrott-EAF, rund 9,8 Mio. t * 0,5 MWh/t = 4,9 TWh) ist bereits in der historischen Last enthalten und wird vom Bruttobedarf abgezogen, um Doppelzählung zu vermeiden. Stundenverteilung: konstant 1,0 (24/7-Dauerbetrieb).",
   "summary": "DRI-H2 + EAF · 3,72 MWh/t"
 }

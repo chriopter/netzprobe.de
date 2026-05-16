@@ -47,7 +47,7 @@
     { "name": "referenceYear", "unit": "Jahr", "description": "Bezugsjahr." },
     { "name": "kerosineDemandMioT", "unit": "Mio. t", "description": "Kerosinabsatz ab deutschen Flughäfen." },
     { "name": "kerosineEnergyTWh", "unit": "TWh thermisch", "description": "Endenergie aus Heizwert × Menge." },
-    { "name": "ptlEfficiency", "unit": "Anteil", "description": "Power-to-Liquid Konversionswirkungsgrad Strom → e-Kerosin." },
+    { "name": "ptlEfficiency", "unit": "Anteil", "description": "Power-to-Liquid Konversionswirkungsgrad Strom → e-Kerosin (LHV). Default 0,38 (Fischer-Tropsch + DAC). Wird vom kernmodell für die H2-Import-Substitutionslogik gelesen: 1 TWh importierter H2 ersetzt (1/0,38)=2,63 TWh inländischen PtL-Strom — Flug ist der Pfad mit dem höchsten Strom-Einsparungs-Hebel pro TWh H2-Import." },
     { "name": "alreadyElectricTWh", "unit": "TWh", "description": "Bereits elektrisch gedeckter Anteil; Slider-Minimum." },
     { "name": "defaultTargetTWh", "unit": "TWh", "description": "Slider-Default." },
     { "name": "maxTargetTWh", "unit": "TWh", "description": "Slider-Maximum." },

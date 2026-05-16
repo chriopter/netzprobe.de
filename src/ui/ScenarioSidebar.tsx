@@ -80,6 +80,7 @@ type ScenarioSidebarProps = {
   onE100StahlTargetChange: (mioTon: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (twh: number) => void;
+  onH2ImportTWhChange: (twh: number) => void;
   onGenerationChange: (field: keyof Scenario['generation'], value: number) => void;
   onStorageChange: (field: keyof Scenario['storage'], value: number) => void;
   supplyPreset: Scenario['supplyPreset'];
@@ -129,6 +130,7 @@ export function ScenarioSidebar({
   onE100StahlTargetChange,
   onE100ChemieChange,
   onE100ChemieTargetChange,
+  onH2ImportTWhChange,
   onGenerationChange,
   onStorageChange,
   supplyPreset,
@@ -245,6 +247,7 @@ export function ScenarioSidebar({
           onE100StahlTargetChange={onE100StahlTargetChange}
           onE100ChemieChange={onE100ChemieChange}
           onE100ChemieTargetChange={onE100ChemieTargetChange}
+          onH2ImportTWhChange={onH2ImportTWhChange}
           openSectors={openSectors}
           expandedRow={expandedRow}
           onOpenSectorsChange={onOpenSectorsChange}
@@ -718,6 +721,7 @@ type LoadConfigurationProps = {
   onE100StahlTargetChange: (n: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (n: number) => void;
+  onH2ImportTWhChange: (twh: number) => void;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
@@ -979,6 +983,11 @@ function LoadConfiguration(props: LoadConfigurationProps) {
                   />
                 </div>
               </AccordionSection>}
+
+              {data && <H2ImportRow
+                value={scenario.demand['h2-import-twh']}
+                onValue={props.onH2ImportTWhChange}
+              />}
             </div>
           </div>
         </section>
@@ -1232,6 +1241,55 @@ type SectorRowProps = {
   onValue: (value: number) => void;
   onToggleExpand: () => void;
 };
+
+function H2ImportRow({ value, onValue }: { value: number; onValue: (v: number) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const min = 0;
+  const max = 500;
+  const step = 5;
+  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  const Chevron = expanded ? ChevronUp : ChevronDown;
+  return <div className={cx('group transition', expanded ? 'bg-zinc-50/80' : 'bg-white hover:bg-zinc-50/60')}>
+    <div className="grid grid-cols-[18px_minmax(0,1fr)_64px_16px] items-center gap-1.5 px-2 py-2.5">
+      <span aria-hidden className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-700">H₂</span>
+      <button
+        type="button"
+        className="text-left text-xs font-medium leading-4 text-zinc-950"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(e => !e)}
+        title="H₂-Importmenge in TWh H₂/Jahr. Wird priority-basiert auf Sektoren mit niedrigstem η verteilt (Flug→Schiff→Chemie→Stahl) und reduziert deren Elektrolyse-Strom-Aufwand."
+      >H₂-Import</button>
+      <span className={cx('whitespace-nowrap text-right text-xs tabular-nums', value > 0 ? 'font-semibold text-zinc-950' : 'text-zinc-400')}>{value} TWh</span>
+      <Chevron aria-hidden="true" className="h-3.5 w-3.5 text-zinc-400"/>
+    </div>
+    {expanded && <div className="grid gap-1.5 px-2 pb-3 pl-7">
+      <input
+        aria-label="H2-Import"
+        className="w-full"
+        style={{ ['--range-pct' as string]: `${pct}%` }}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={event => onValue(Number(event.target.value))}
+      />
+      <div className="flex items-baseline gap-1 text-[10px] leading-4 text-zinc-500">
+        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title="H₂-Import in TWh H₂/Jahr"/>
+        <span>TWh H₂/a</span>
+      </div>
+      <p className="text-[10px] leading-4 text-zinc-500">
+        Importierter H₂ ersetzt heimischen Elektrolyse-Strom. Allokation priorisiert
+        Sektoren mit niedrigem System-η: Flug (PtL η=0.38) → Schiff (e-MeOH 0.50) →
+        Chemie (NH₃/MeOH 0.55) → Stahl-DRI (0.62). System-Wirkungsgrade nach
+        DEA Technology Catalogue 2024, Fraunhofer ISE PtX-Atlas, Agora H2-Hochlauf.
+        Importrate-Annahmen: BMWK H₂-Importstrategie 2024 sieht 50-70 % bis 2030,
+        Ariadne/Agora 60-250 TWh in 2045-Szenarien.
+        Überschüssiger Import (über den max-Bedarf hinaus) wird nicht weiter angerechnet.
+      </p>
+    </div>}
+  </div>;
+}
 
 function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;

@@ -16,6 +16,7 @@
   "referenceYear": 2023,
   "directElectrificationTWh": 1.2,
   "eFuelSynthesisTWh": 78,
+  "eFuelSystemEfficiency": 0.50,
   "alreadyElectricTWh": 0.3,
   "defaultTargetTWh": 80,
   "maxTargetTWh": 120,

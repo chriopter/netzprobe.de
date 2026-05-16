@@ -832,6 +832,7 @@ function Dashboard() {
         onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
         onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
+        onH2ImportTWhChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'h2-import-twh': v } }))}
         onGenerationChange={(field, v) => setScenario(prev => ({
           ...prev,
           supplyPreset: 'custom',

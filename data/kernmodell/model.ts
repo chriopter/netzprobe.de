@@ -93,9 +93,31 @@ function buildSupply(row: HourlyInput, scenario: Scenario, erz: ErzeugungsPool):
   const solarFactor = row.solarIrradiance[0] ?? 0;
   const windFactor = row.wind100m[0] ?? 0;
 
-  const pvAvailableGW = scenario.generation.pvInstalledGW * solarFactor;
-  const windOnAvailableGW = scenario.generation.windOnInstalledGW * windFactor;
-  const windOffAvailableGW = scenario.generation.windOffInstalledGW * windFactor;
+  // Capacity-Factor-Multiplier auf solarFactor / windFactor — bildet
+  // technologischen Fortschritt zwischen heutiger Flotte (einspeisefaktoren-2025
+  // ist der Energy-Charts-Realwert 2025: PV ~702 kWh/kWp/a, Wind onshore+offshore
+  // gemischt ~1745 VLH) und einer Neubau-Flotte ab.
+  //
+  // - PV: Default 1.0 (Bestand mit Aufdach-Anlagen aller Bauart). 1.5 ≈ moderne
+  //   bifaziale Module + Süd-Tracker (~1100 kWh/kWp/a, BSW Solar / Fraunhofer ISE).
+  // - Wind onshore: Default 1.0 (Bestandsflotte, viele 1.5-3 MW Altanlagen). 1.4 ≈
+  //   Neubau 4-6 MW Klasse mit ~2400 VLH (BWE Neubau-Statistik 2024).
+  // - Wind offshore: Default 1.8 — kompensiert dass `windFactor` in
+  //   `einspeisefaktoren-2025` aus dem GEMITTELTEN 73-GW-Wind-Bestand stammt
+  //   (62 GW onshore + 9 GW offshore), wodurch der Offshore-Vorteil sonst
+  //   verschluckt würde. 1.8 hebt den Faktor auf reale Offshore-VLH (~4000 für
+  //   15 MW-Klasse / Nordsee, BSH/Fraunhofer IWES). Wer rein historisch
+  //   simulieren will, setzt 1.0.
+  //
+  // `Math.min(1, …)` cap'd den Stunden-Faktor bei 100% Nennleistung — keine
+  // Anlage liefert über Nameplate. Auf Jahressumme verliert das einzelne
+  // Spitzenstunden, der durchschnittliche Multiplier-Effekt bleibt korrekt.
+  const pvMult = scenario.generation.pvCapacityFactorMultiplier;
+  const windOnMult = scenario.generation.windOnCapacityFactorMultiplier;
+  const windOffMult = scenario.generation.windOffCapacityFactorMultiplier;
+  const pvAvailableGW = scenario.generation.pvInstalledGW * Math.min(1, solarFactor * pvMult);
+  const windOnAvailableGW = scenario.generation.windOnInstalledGW * Math.min(1, windFactor * windOnMult);
+  const windOffAvailableGW = scenario.generation.windOffInstalledGW * Math.min(1, windFactor * windOffMult);
   const kernkraftAvailableGW = scenario.generation.kernkraftInstalledGW * kernkraft.availability;
   const biomasseGW = scenario.generation.biomasseInstalledGW * biomasse.availability;
   const laufwasserGW = scenario.generation.laufwasserInstalledGW * laufwasser.availability;

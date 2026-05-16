@@ -24,6 +24,14 @@ export type Scenario = {
     'e100-stahl-target-mio-ton': number;
     'e100-chemie': boolean;
     'e100-chemie-target-twh': number;
+    /**
+     * H2-Importmenge in TWh H2 (LHV) pro Jahr. Wird auf die aktivierten H2-
+     * konsumierenden Sektoren (Stahl/Chemie/Schiff/Flug) verteilt und reduziert
+     * dort jeweils den Elektrolyse-Strombedarf proportional zum H2-Anteil
+     * dieses Sektors. 0 = kein Import, alle H2-Mengen werden inland aus
+     * Elektrolyse-Strom erzeugt (Modell-Defaults).
+     */
+    'h2-import-twh': number;
   };
   supplyPreset: 'custom' | 'historical-2025' | 'historical-2017' | '100ee-noimport' | '50ee-50import' | '2025-skaliert';
   loadYear: 2025 | 2017;
@@ -39,6 +47,18 @@ export type Scenario = {
     importMaxGW: number;
     exportMaxGW: number;
     importEmissionGperKWh: number;
+    /**
+     * Multiplier auf die einspeisefaktoren-2025-Werte, um modernere Anlagen-
+     * Flotten als die aktuelle DE-2025-Realflotte zu modellieren. Defaults =
+     * 1.0 (heutiger Flottenschnitt). Höhere Werte beschreiben Neubau-Mix:
+     * PV ~1.5 (Aufdach modern + Freifläche bifazial 1100 kWh/kWp/a vs. heute
+     * 702), Wind Onshore ~1.4 (~2400 VLH neubau vs. heute 1745 gemischt),
+     * Wind Offshore default 1.8 (~4000 VLH 15 MW-Klasse vs. heute auf
+     * gemischtem Faktor abgebildet).
+     */
+    pvCapacityFactorMultiplier: number;
+    windOnCapacityFactorMultiplier: number;
+    windOffCapacityFactorMultiplier: number;
   };
   storage: {
     batteriePowerGW: number;

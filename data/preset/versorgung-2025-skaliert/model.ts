@@ -43,6 +43,12 @@ export function compute(
       importMaxGW: snap(erz.import.defaultMaxGW * factor, erz.import.minGW, erz.import.maxGW, erz.import.stepGW),
       exportMaxGW: snap(erz.export.defaultMaxGW * factor, erz.export.minGW, erz.export.maxGW, erz.export.stepGW),
       importEmissionGperKWh: erz.import.emissionGperKWh,
+      // CF-Multipliers: 1.0 = heutige Flottenrealität, Offshore-Default 1.8
+      // korrigiert den gemittelten einspeisefaktoren-2025-windFactor auf reale
+      // Offshore-VLH (siehe data/kernmodell/model.ts:96-113).
+      pvCapacityFactorMultiplier: 1.0,
+      windOnCapacityFactorMultiplier: 1.0,
+      windOffCapacityFactorMultiplier: 1.8,
     },
     storage: {
       batteriePowerGW: snap(speicher.storages.batterie.defaultPowerGW * factor, speicher.storages.batterie.minPowerGW, speicher.storages.batterie.maxPowerGW, speicher.storages.batterie.stepPowerGW),
