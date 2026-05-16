@@ -2,12 +2,13 @@ import type { EChartsOption } from 'echarts';
 import type { SimHour } from '../simulation/engine';
 import { fmt } from './format';
 
-export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'loadGW' | 'loadSheddingGW';
+export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'storageDischargeGW' | 'loadGW' | 'loadSheddingGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
 export type ExtraLeaf = { key: MixLeafKey; label: string; color: string; glyph: '●' | '▨' };
 export const EXTRA_LEAVES: ExtraLeaf[] = [
   { key: 'loadGW', label: 'Last', color: '#111827', glyph: '●' },
   { key: 'importGW', label: 'Import', color: '#dc2626', glyph: '●' },
+  { key: 'storageDischargeGW', label: 'Speicher (Batterie/PSP/H₂)', color: '#14b8a6', glyph: '●' },
   { key: 'loadSheddingGW', label: 'Fehlend', color: '#b91c1c', glyph: '▨' },
 ];
 export type ChartMode = 'sunburst' | 'linie';
@@ -173,6 +174,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
           const detail = active.map(leaf => `<span style="color:${leaf.color}">●</span> ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
           lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
         }
+        if (visibility.storageDischargeGW && hour.storageDischargeGW > 0) lines.push(`<span style="color:#0d9488">●</span> Speicher: <b>${fmt.format(hour.storageDischargeGW)} GW</b><br/><span style="opacity:.75"><span style="color:#14b8a6">●</span> Batterie ${fmt.format(hour.batterieDischargeGW)} · <span style="color:#0284c7">●</span> PSP ${fmt.format(hour.pumpspeicherDischargeGW)} · <span style="color:#06b6d4">●</span> H₂ ${fmt.format(hour.h2DischargeGW)}</span>`);
         if (visibility.importGW) lines.push(`<span style="color:#dc2626">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
         if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(`<span style="color:#b91c1c">▨</span> Fehlend: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
         if (hour.exportGW > 0) lines.push(`<span style="color:#94a3b8">●</span> Export: <b>${fmt.format(hour.exportGW)} GW</b>`);
@@ -185,6 +187,11 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     ...coordinate,
     series: [
       ...supplySeries,
+      ...(visibility.storageDischargeGW ? [
+        areaSeries('Batterie ←', '#14b8a6', chartHours.map((h) => h.batterieDischargeGW), mode),
+        areaSeries('Pumpspeicher ←', '#0284c7', chartHours.map((h) => h.pumpspeicherDischargeGW), mode),
+        areaSeries('H₂ ←', '#06b6d4', chartHours.map((h) => h.h2DischargeGW), mode),
+      ] : []),
       ...(visibility.importGW ? [areaSeries('Import', '#dc2626', chartHours.map((h) => h.importGW), mode)] : []),
       ...(visibility.loadSheddingGW ? [{
         name: 'Fehlend',

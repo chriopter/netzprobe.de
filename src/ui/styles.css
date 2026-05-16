@@ -9,6 +9,11 @@
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+@keyframes indeterminate{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(400%)}
+}
+
 @layer base{
   html{background:#ffffff;color:#18181b;font-feature-settings:'cv01','ss03'}
   body{min-width:320px;background:#ffffff}

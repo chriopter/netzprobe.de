@@ -34,7 +34,7 @@
   "method": [
     "Datei: handgepflegt. Werte in data/speicher-batterie/data.json, Adapter in data/speicher-batterie/model.ts.",
     "Roundtrip-Wirkungsgrad 80 % wird vollständig beim Laden angewandt: ΔSoC = η × Laden, Entladen 1:1.",
-    "Initial-SoC 50 % bei Jahresbeginn.",
+    "Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.",
     "Dispatch-Priorität 1 — wird vor Pumpspeicher und H₂ geladen/entladen."
   ],
   "fields": [

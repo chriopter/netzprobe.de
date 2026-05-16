@@ -36,7 +36,7 @@
   "method": [
     "Datei: handgepflegt. Werte in data/speicher-pumpspeicher/data.json, Adapter in data/speicher-pumpspeicher/model.ts.",
     "Roundtrip-Wirkungsgrad 80 % entspricht MTGermany; reale Pumpspeicher 70-78 % je nach Anlage.",
-    "Initial-SoC 50 % bei Jahresbeginn.",
+    "Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.",
     "Dispatch-Priorität 2 — wird nach Batterie eingesetzt."
   ],
   "fields": [

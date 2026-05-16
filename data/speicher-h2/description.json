@@ -38,7 +38,7 @@
     "Datei: handgepflegt. Werte in data/speicher-h2/data.json, Adapter in data/speicher-h2/model.ts.",
     "Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.",
     "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
-    "Initial-SoC 50 % bei Jahresbeginn.",
+    "Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht. Ohne Warm-up würde der konfigurierte SoC × Kapazität (bei H₂ bis zu 500 TWh × 50 % = 250 TWh) als Phantasie-Energie ins Modell laufen, auch wenn das Szenario gar keinen Überschuss zum Laden bietet.",
     "Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher."
   ],
   "fields": [

@@ -421,8 +421,49 @@ function SupplyGroupAccordions({
   });
   const toggle = (id: SupplyGroupId) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
+  // Snapshot der zuletzt aktiven Werte je Gruppe, um beim Wiedereinschalten zu
+  // restaurieren statt auf 2025-Baseline zurückzufallen.
+  const [savedGen, setSavedGen] = useState<Partial<Record<SupplyGroupId, Record<string, number>>>>({});
+  const [savedSto, setSavedSto] = useState<Partial<Record<SupplyGroupId, Record<string, number>>>>({});
+
   const genGroups = generationGroups(data['erzeugungs-modell']);
   const stoGroups = storageGroups(data['speicher-modell']);
+
+  const isGenEnabled = (group: GenerationGroup) => group.fields.some(f => scenario.generation[f.key] > 0);
+  const setGenEnabled = (group: GenerationGroup, checked: boolean) => {
+    if (checked) {
+      const saved = savedGen[group.id];
+      for (const f of group.fields) {
+        const value = saved?.[f.key] ?? f.baseline ?? f.max;
+        onGenerationChange(f.key, value);
+      }
+    } else {
+      const snapshot: Record<string, number> = {};
+      for (const f of group.fields) {
+        snapshot[f.key] = scenario.generation[f.key];
+        onGenerationChange(f.key, 0);
+      }
+      setSavedGen(prev => ({ ...prev, [group.id]: snapshot }));
+    }
+  };
+
+  const isStoEnabled = (group: StorageGroup) => group.fields.some(f => scenario.storage[f.key] > 0);
+  const setStoEnabled = (group: StorageGroup, checked: boolean) => {
+    if (checked) {
+      const saved = savedSto[group.id];
+      for (const f of group.fields) {
+        const value = saved?.[f.key] ?? f.baseline ?? f.max;
+        onStorageChange(f.key, value);
+      }
+    } else {
+      const snapshot: Record<string, number> = {};
+      for (const f of group.fields) {
+        snapshot[f.key] = scenario.storage[f.key];
+        onStorageChange(f.key, 0);
+      }
+      setSavedSto(prev => ({ ...prev, [group.id]: snapshot }));
+    }
+  };
 
   return <div className="grid gap-1.5">
     {genGroups.map(group => <GroupAccordion
@@ -432,6 +473,8 @@ function SupplyGroupAccordions({
       icon={<Zap className="h-3.5 w-3.5"/>}
       open={open[group.id]}
       onToggle={() => toggle(group.id)}
+      checked={isGenEnabled(group)}
+      onChecked={(c) => setGenEnabled(group, c)}
     >
       {group.fields.map(field => <CapacitySliderRow
         key={field.key}
@@ -452,6 +495,8 @@ function SupplyGroupAccordions({
       icon={<BatteryCharging className="h-3.5 w-3.5"/>}
       open={open[group.id]}
       onToggle={() => toggle(group.id)}
+      checked={isStoEnabled(group)}
+      onChecked={(c) => setStoEnabled(group, c)}
     >
       {group.fields.map(field => <CapacitySliderRow
         key={field.key}
@@ -474,6 +519,8 @@ function GroupAccordion({
   icon,
   open,
   onToggle,
+  checked,
+  onChecked,
   children,
 }: {
   title: string;
@@ -481,25 +528,48 @@ function GroupAccordion({
   icon: ReactNode;
   open: boolean;
   onToggle: () => void;
+  checked?: boolean;
+  onChecked?: (checked: boolean) => void;
   children: ReactNode;
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
+  const hasCheckbox = onChecked !== undefined;
   return <section className={cx(
     'overflow-hidden rounded-lg border bg-white transition',
     open ? 'border-zinc-300' : 'border-zinc-200/80 hover:border-zinc-300',
   )}>
-    <button
-      type="button"
-      className="grid w-full grid-cols-[24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2 text-left"
-      aria-expanded={open}
-      aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
-      onClick={onToggle}
-    >
+    <div className={cx(
+      'grid w-full items-center gap-1.5 px-2.5 py-2',
+      hasCheckbox ? 'grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px]' : 'grid-cols-[24px_minmax(72px,1fr)_auto_16px]',
+    )}>
+      {hasCheckbox && <input
+        className="h-4 w-4 accent-zinc-950"
+        type="checkbox"
+        checked={!!checked}
+        onChange={event => onChecked!(event.target.checked)}
+        aria-label={`${title} aktivieren`}
+      />}
       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-600">{icon}</span>
-      <span className="text-sm font-semibold text-zinc-950">{title}</span>
-      <span className="whitespace-nowrap text-right text-xs font-medium tabular-nums text-zinc-500">{summary}</span>
-      <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
-    </button>
+      <button
+        type="button"
+        className="text-left text-sm font-semibold text-zinc-950"
+        aria-expanded={open}
+        aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
+        onClick={onToggle}
+      >{title}</button>
+      <button
+        type="button"
+        className="whitespace-nowrap text-right text-xs font-medium tabular-nums text-zinc-500"
+        onClick={onToggle}
+      >{summary}</button>
+      <button
+        type="button"
+        aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
+        onClick={onToggle}
+      >
+        <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
+      </button>
+    </div>
     {open && <div className="border-t border-zinc-100 px-2 py-1">{children}</div>}
   </section>;
 }

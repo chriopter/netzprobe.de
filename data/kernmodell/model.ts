@@ -277,8 +277,6 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
   const erz = input['erzeugungs-modell'];
   const speicher = input['speicher-modell'];
   const slots = storageSlots(speicher, scenario);
-  let storage = initialStorageState(speicher, scenario);
-  const hours: SimHour[] = [];
   const demandContext: DemandScenarioContext = {
     'e100-pkw': input['e100-pkw'],
     'e100-heiz': input['e100-heiz'],
@@ -314,13 +312,17 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
     gas: emGas, kohle: emKohle, importGperKWh: importEmissionGperKWh,
   };
 
-  for (const row of input.hours) {
-    const loadGW = demandGW(row, scenario, demandContext);
+  const runLoop = (initialStorage: StorageState): { hours: SimHour[]; finalStorage: StorageState } => {
+    const storage: StorageState = { ...initialStorage };
+    const hours: SimHour[] = [];
 
-    if (isHistorical) {
-      hours.push(buildHistoricalHour(row, loadGW, emissions));
-      continue;
-    }
+    for (const row of input.hours) {
+      const loadGW = demandGW(row, scenario, demandContext);
+
+      if (isHistorical) {
+        hours.push(buildHistoricalHour(row, loadGW, emissions));
+        continue;
+      }
 
     const build = buildSupply(row, scenario, erz);
 
@@ -476,7 +478,25 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
       batteryGWh: storage.batterie,
       h2GWh: storage.h2,
     });
+    }
+
+    return { hours, finalStorage: storage };
+  };
+
+  // Warm-up-Pass: kalibriert Initial-SoC auf Steady-State, sodass am Jahresende
+  // ≈ derselbe SoC herauskommt wie am Anfang. Verhindert "Phantasie-Energie"
+  // wenn der konfigurierte Initial-Anteil × Kapazität durch das Szenario gar
+  // nicht erzielbar wäre. Historische Pässe brauchen das nicht (kein Storage-Dispatch).
+  // Skippt den Warm-up wenn die initiale Phantasie-Energie klein ist (< 1 TWh);
+  // bei reinen Batterie/PSP-Szenarien ist Initial-SoC sowieso nahe Steady-State.
+  let seedStorage = initialStorageState(speicher, scenario);
+  const PHANTOM_ENERGY_THRESHOLD_GWH = 1000;
+  const initialSocTotalGWh = seedStorage.batterie + seedStorage.pumpspeicher + seedStorage.h2;
+  if (!isHistorical && initialSocTotalGWh > PHANTOM_ENERGY_THRESHOLD_GWH) {
+    seedStorage = runLoop(seedStorage).finalStorage;
   }
+
+  const { hours } = runLoop(seedStorage);
 
   const sum = (fn: (h: SimHour) => number) => hours.reduce((total, hour) => total + fn(hour), 0) / 1000;
   const demandTWh = sum(hour => hour.loadGW);

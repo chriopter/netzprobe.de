@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import * as echarts from 'echarts';
 import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
 import { dataFileUrl } from '../dataPackages';
@@ -256,7 +256,7 @@ function useChart(id: string, option: echarts.EChartsOption | undefined) {
       chartRef.current = chart;
       cleanupRef.current = () => window.removeEventListener('resize', resize);
     }
-    chartRef.current.setOption(option, { notMerge: true, lazyUpdate: true });
+    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true });
   }, [id, option]);
 }
 
@@ -272,18 +272,25 @@ function periodDates(preset: PeriodPreset, start: string, end: string, year: 202
   return { start, end: end < start ? start : end };
 }
 
-function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
+function useWorkerSimulation(data: DataSet | null, scenario: Scenario): { result: SimulationResult | null; isPending: boolean } {
   const [result, setResult] = useState<SimulationResult | null>(null);
+  const [inFlight, setInFlight] = useState(false);
+  const [isTransitioning, startTransition] = useTransition();
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
   const hasDataRef = useRef(false);
+  const hasFiredFirstRef = useRef(false);
 
   useEffect(() => {
     const worker = new Worker(new URL('../simulation/worker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
     worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
       if (event.data.requestId !== requestRef.current) return;
-      setResult(event.data.result);
+      setInFlight(false);
+      // Setze das Result als non-urgent State-Update: React darf Slider-Events
+      // dazwischen ranlassen, der Chart kommt nach. Macht den Slider responsiv
+      // auch wenn die Reconciliation 50-100ms braucht.
+      startTransition(() => setResult(event.data.result));
     };
     return () => {
       worker.terminate();
@@ -328,14 +335,23 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario) {
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !hasDataRef.current) return;
-    const timer = window.setTimeout(() => {
+    setInFlight(true);
+    const fire = () => {
       const requestId = ++requestRef.current;
       worker.postMessage({ type: 'run', requestId, scenario });
-    }, 80);
+    };
+    // Beim ersten Lauf (Page-Load) sofort feuern — kein Slider-Drag möglich,
+    // 150 ms warten wäre nur künstliche Latenz. Danach Trailing-Debounce.
+    if (!hasFiredFirstRef.current) {
+      hasFiredFirstRef.current = true;
+      fire();
+      return;
+    }
+    const timer = window.setTimeout(fire, 150);
     return () => window.clearTimeout(timer);
   }, [data, scenario]);
 
-  return result;
+  return { result, isPending: inFlight || isTransitioning };
 }
 
 function useDatasetDocs() {
@@ -453,23 +469,25 @@ function Dashboard() {
     return { ...scenario, generation: override.generation, storage: override.storage };
   }, [scenario, data]);
 
-  const result = useWorkerSimulation(data, resolvedScenario);
+  const { result, isPending } = useWorkerSimulation(data, resolvedScenario);
   useEffect(() => {
     if (!result || chartResult === result) return;
     if (!chartResult) {
       setChartResult(result);
       return;
     }
-    const timer = window.setTimeout(() => setChartResult(result), 650);
+    const timer = window.setTimeout(() => setChartResult(result), 80);
     return () => window.clearTimeout(timer);
   }, [result, chartResult]);
 
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
-  const chartSource = chartResult ?? result;
-  const sliced = useMemo(() => chartSource?.hours.filter(hour => {
+  // Defer chart-source updates: Slider-Tick triggert sofortige KPI-Updates, der
+  // Chart läuft hinterher und blockiert Input nicht.
+  const deferredChartSource = useDeferredValue<SimulationResult | null>(chartResult ?? result);
+  const sliced = useMemo(() => deferredChartSource?.hours.filter(hour => {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
-  }) ?? [], [chartSource, selectedPeriod.start, selectedPeriod.end]);
+  }) ?? [], [deferredChartSource, selectedPeriod.start, selectedPeriod.end]);
   const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, chartMode) : undefined, [sliced, mixVisibility, chartMode]);
   const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
 
@@ -612,8 +630,17 @@ function Dashboard() {
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div className="min-h-0 flex-1 rounded-lg bg-white">
+            <div className="relative min-h-0 flex-1 rounded-lg bg-white">
               <div id="mix-chart" className="h-full w-full"/>
+              <div
+                aria-hidden={!isPending}
+                className={cx(
+                  'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden rounded-t-lg bg-zinc-100/60 transition-opacity duration-150',
+                  isPending ? 'opacity-100' : 'opacity-0',
+                )}
+              >
+                <div className="h-full w-1/3 animate-[indeterminate_1.1s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-zinc-950 to-transparent"/>
+              </div>
             </div>
             <MixLegend
               visibility={mixVisibility}

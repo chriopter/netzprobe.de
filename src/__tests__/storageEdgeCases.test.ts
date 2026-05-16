@@ -226,6 +226,35 @@ describe('storage edge cases', () => {
     }
   });
 
+  it('warm-up pass converges initial SoC so pure-deficit scenario does not borrow phantom energy', () => {
+    // Permanent-Defizit-Szenario: nur WindOff (geringer CF), kein Import.
+    // Ohne Warm-up: H2 startet bei 50% × 500 TWh = 250 TWh und drained langsam → Load-Shedding erst spät.
+    // Mit Warm-up: erste Pass entlädt komplett, zweite startet bei ~0 → Load-Shedding ab Stunde 1.
+    const scenario: Scenario = {
+      ...baseScenario,
+      generation: { ...baseScenario.generation,
+        pvInstalledGW: 0, windOnInstalledGW: 0, windOffInstalledGW: 5,
+        kernkraftInstalledGW: 0, biomasseInstalledGW: 0, laufwasserInstalledGW: 0,
+        gasInstalledGW: 0, kohleInstalledGW: 0,
+        importMaxGW: 0,
+      },
+      storage: { ...baseScenario.storage,
+        batteriePowerGW: 0, batterieEnergyGWh: 0,
+        pumpspeicherPowerGW: 0, pumpspeicherEnergyGWh: 0,
+        h2ChargePowerGW: 0, h2DischargePowerGW: 100, h2EnergyGWh: 2200,
+      },
+    };
+    // 24h mit Last 50 GW, kein PV (nachts), keine Erzeugung außer minimal Wind
+    const hours: HourlyInput[] = Array.from({ length: 24 }, (_, i) =>
+      hour(`2025-01-01T${String(i).padStart(2, '0')}:00:00Z`, { load: 50, pvF: 0, windF: 0.1 })
+    );
+    const r = runSimulation(hours, scenario, ctx);
+    // Mit Warm-up: H2 wurde im warm-up entladen, kann im main-pass nicht entladen → Load-Shedding ab Stunde 1
+    expect(r.hours[0].loadSheddingGW).toBeGreaterThan(40);
+    expect(r.hours[0].h2DischargeGW).toBeCloseTo(0, 6);
+    expect(r.hours[0].h2SocGWh).toBeCloseTo(0, 3);
+  });
+
   it('dispatches storages in priority order (Batterie → Pumpspeicher → H2)', () => {
     // Big surplus with all 3 storages having capacity left.
     // Batterie should fill first.
