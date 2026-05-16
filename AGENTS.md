@@ -77,6 +77,26 @@ Regeln:
 - Body-Bullets: konkrete Änderungen pro Datei oder Bereich, jeweils ein Punkt.
 - Kein `Co-Authored-By`-Trailer.
 
+## Changelog
+
+`CHANGELOG.md` listet user-sichtbare Änderungen, händisch gepflegt. Eintrag dann anlegen, wenn etwas „release-würdiges" fertig ist (neues Feature, sichtbare Verhaltensänderung, nutzerrelevanter Bugfix) — nicht pro Commit.
+
+Mechanik:
+
+1. Alten Marker am Dateiende lesen: `<!-- last: <sha> -->`.
+2. Seit dem Marker passierte Commits durchsehen: `git log <alter-sha>..HEAD --oneline`.
+3. Neuen Block **direkt unter** dem Einleitungs-Paragraphen einfügen, **über** allen bestehenden `##`-Blöcken:
+   - Überschrift `## YYYY-MM-DD` (heute, `date +%Y-%m-%d`).
+   - Bullet-Liste mit den Änderungen.
+4. Alten Marker entfernen, neuen ans Dateiende setzen: `<!-- last: $(git rev-parse --short HEAD) -->`.
+
+Stil:
+
+- Kompakt aber informativ: ein Satz pro Bullet, Substantiv + Verb, kein Marketing.
+- User-Perspektive: „Neuer Schieberegler für H2-Import", nicht „Refactor scenario presets".
+- Interne Refactors, Build-Hygiene, Tests weglassen — außer sie sind für Nutzer merklich (z. B. Performance).
+- Bei vielen Änderungen thematisch gruppieren (z. B. „Daten", „UI", „Simulation") statt chronologisch.
+
 ## Dokumentation
 
 Nur eine `README.md` und eine `AGENTS.md` auf Top-Level. Keine geschachtelten Doku-Dateien.

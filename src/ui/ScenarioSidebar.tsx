@@ -10,11 +10,13 @@ import {
   Database,
   Factory,
   Flame,
+  History,
   Info,
   PanelLeftClose,
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
+import { ChangelogModal } from './ChangelogModal';
 
 // Lucide hat aus Markenrechtsgründen kein GitHub-Logo — eigenes inline-SVG.
 function GithubMark({ className }: { className?: string }) {
@@ -136,6 +138,7 @@ export function ScenarioSidebar({
   supplyPreset,
   onSupplyPresetChange,
 }: ScenarioSidebarProps) {
+  const [changelogOpen, setChangelogOpen] = useState(false);
   useEffect(() => {
     if (collapsed || typeof window === 'undefined') return;
     const mql = window.matchMedia('(max-width: 1023px)');
@@ -203,8 +206,17 @@ export function ScenarioSidebar({
             <BookOpen className="h-3 w-3"/>
             Wiki
           </a>
+          <button
+            type="button"
+            onClick={() => setChangelogOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+          >
+            <History className="h-3 w-3"/>
+            Changelog
+          </button>
         </div>
       </div>
+      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)}/>
 
       <div className="grid gap-3">
         {actionBar}
