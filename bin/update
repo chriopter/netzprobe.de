@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Updated alle Pakete auf den aktuell neuesten "latest"-Tag.
+# Weil package.json komplett auf "latest" steht, reicht es, das Lock-File
+# zu verwerfen und npm neu auflösen zu lassen — das ist robust gegen
+# Registry-Hänger und braucht kein extra Tool (npm-check-updates etc.).
+# Anschließend laufen Type-Check, Tests und Build als Sanity-Gate.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+echo "→ alte Lock-Datei verwerfen"
+rm -f package-lock.json
+
+echo "→ npm install (frisch auflösen)"
+npm install
+
+echo "→ Type-Check"
+npx tsc --noEmit
+
+echo "→ Tests"
+npm test
+
+echo "→ Build"
+npm run build
+
+echo ""
+echo "✓ Alle Pakete aktualisiert, Type-Check + Tests + Build grün."

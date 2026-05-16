@@ -20,7 +20,11 @@ Jedes Paket hat immer `description.json` und `model.ts`. Datenwerte liegen optio
 
 ## Stack
 
-Vite, TypeScript, React, Tailwind, ECharts. Simulation läuft im Browser im Web Worker. Kein Backend.
+- **Runtime:** React + React DOM, ECharts (Charts im OffscreenCanvas-Worker), Lucide (Icons)
+- **Build & Dev:** Vite + `@vitejs/plugin-react`, TypeScript, Tailwind + `@tailwindcss/vite`, tsx (Skript-Runner)
+- **Tests:** Vitest
+
+Simulation und Charts laufen in Web Workern, das UI bleibt responsiv. Kein Backend, statisch hostbar.
 
 ## Entwicklung
 

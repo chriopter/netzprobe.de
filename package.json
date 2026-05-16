@@ -12,11 +12,10 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
-    "simulate": "tsx scripts/run-scenarios.mjs"
+    "simulate": "tsx test/scenarios/run.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "claude": "^0.1.1",
     "echarts": "latest",
     "lucide-react": "latest",
     "react": "latest",
@@ -26,11 +25,11 @@
     "vitest": "latest"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
-    "@types/node": "^25.8.0",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "tailwindcss": "^4.3.0",
-    "tsx": "^4.22.0"
+    "@tailwindcss/vite": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "tsx": "latest"
   }
 }

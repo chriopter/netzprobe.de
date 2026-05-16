@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Startet den Vite-Dev-Server (Host 0.0.0.0, Default-Port aus vite.config.ts).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec npm run dev
