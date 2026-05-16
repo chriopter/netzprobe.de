@@ -20,23 +20,27 @@
   "resolution": "Jahr × Stunde",
   "unit": "Mio. km, kWh/100 km, TWh",
   "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
-  "description": "Zusätzlicher Strombedarf, wenn ein größerer Teil der privaten Pkw-Kilometer elektrisch gefahren wird. Bereits elektrisch gefahrene Kilometer werden als Mindestwert abgezogen, der Rest mit einem pauschalen Flottenverbrauch in Stromlast umgerechnet. Die Stundenverteilung folgt einem empirischen Heimladeprofil mit ausgeprägtem Abendpeak.",
+  "description": [
+    "**Bezugsjahr 2023:** private Pkw fahren rund `472.200 Mio. km`. Davon sind etwa `20.000 Mio. km` bereits elektrisch gefahren und damit schon in der historischen Stromlast enthalten; dieser Sockel ist das Slider-Minimum.",
+    "Für zusätzliche elektrische Kilometer setzt das Modell `20 kWh/100 km` Strom ab Netz an, inklusive AC-Ladeverlusten. Der Wert liegt im Flottenmittel-Korridor (`18–22 kWh/100 km`); Einzelmodelle streuen segment- und wetterabhängig zwischen `14` und `28 kWh/100 km`. Eine vollständige Elektrifizierung der 2023er privaten Pkw-Fahrleistung ergibt so rund `90 TWh/a` Zusatzlast — sie ersetzt etwa das Dreifache an fossiler Kraftstoff-Endenergie, weil der Antriebsstrang-Wirkungsgrad vom Verbrenner (`~25 %`) zum BEV (`75–85 %`) um Faktor 3 steigt.",
+    "Die Stundenlast folgt nicht dem Zeitpunkt der Fahrt, sondern dem Laden. Das hinterlegte **24-h-Heimladeprofil** bildet ungesteuertes Laden mit Abendpeak `17–21 Uhr` und Nachttal `4–6 Uhr` ab; Smart Charging, öffentliches Laden und saisonal höherer Winterverbrauch bleiben außen vor."
+  ],
   "overview": [
     {
       "label": "Verwendung",
-      "value": "Slider zwischen 20.000 Mio. km (bereits elektrisch, Mindestwert) und 708.300 Mio. km. Default 472.200 Mio. km entspricht der Pkw-Fahrleistung privater Haushalte 2023."
+      "value": "**Slider:** `20.000` bis `708.300 Mio. km`. Der Default `472.200 Mio. km` steht für die private Pkw-Fahrleistung im Bezugsjahr; das Minimum ist der bereits elektrische Sockel. Das Maximum lässt Kopfraum für Mobilitätswachstum und gewerbliche Pkw (~`120.000 Mio. km/a`), die im Default nicht enthalten sind."
     },
     {
       "label": "Verteilung",
-      "value": "24-h-Heimladeprofil, Wochenmittel, Abendpeak 17–21 Uhr und Nachttal 4–6 Uhr."
+      "value": "**Profil:** 24-h-Heimladeprofil als Wochenmittel. Hauptlast am Abend `17–21 Uhr`, Nachttal `4–6 Uhr`; keine saisonale Modulation."
     },
     {
       "label": "Formel",
-      "value": "Zusatzlast (TWh) = (Ziel − 20.000) Mio. km × 20 kWh/100 km / 100.000. Default: (472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/Jahr."
+      "value": "**Rechnung:** `Zusatzlast = max(0, Ziel − 20.000) × 20 / 100.000`. Default: `(472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/a`."
     }
   ],
   "method": [
-    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/e100-pkw/data.json; Rechenlogik in data/e100-pkw/model.ts.",
+    "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in data/last/e100-pkw/data.json; Rechenlogik in data/last/e100-pkw/model.ts.",
     "Referenz-Fahrleistung referenceMillionKm: Destatis-Pkw-Fahrleistung privater Haushalte 2023, 472.200 Mio. km.",
     "Slider-Mindestwert alreadyElectricMillionKm: 1,4 Mio. BEV (KBA-Bestand Ende 2023) × rund 11.000 km/a plus 0,9 Mio. PHEV × rund 14.000 km/a × 40 % elektrischer Anteil ≈ 20.000 Mio. km. Strom für diese Kilometer ist bereits in der historischen Last enthalten; das Szenario modelliert nur die darüber hinausgehende Elektrifizierung.",
     "Flottenverbrauch kwhPer100Km: 20 kWh/100 km ab Netz, inklusive AC-Ladeverlusten. Reale BEV liegen zwischen 18 und 22 kWh/100 km; Saison- und Temperatureffekte (höherer Winterverbrauch durch Heizung) sind nicht modelliert.",
@@ -115,10 +119,10 @@
     }
   ],
   "caveats": [
+    "Modelliert sind nur private Pkw (~472 Mrd. km/a, Destatis Haushalte); gewerbliche und dienstliche Pkw (~120 Mrd. km/a Differenz zur KBA-Gesamtfahrleistung) bleiben außen vor.",
     "Ungesteuertes Heimladen — Smart-Charging und §14a-Steuerung würden Last in die Nacht verschieben.",
-    "Kein Saisonprofil; Tagesgang ist über das Jahr konstant.",
-    "PHEV-Stromkilometer im Abzug pauschal mit 40 % elektrischer Quote.",
-    "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert.",
-    "Der Mindestwert ist eine gerundete Bestandsableitung; höhere Elektrobestände nach 2023 senken die Zusatzlast nur um wenige TWh."
+    "Kein Saisonprofil; realer Winterverbrauch liegt 20–30 % höher (Heizung, Kalt-Batterie).",
+    "PHEV-Stromquote pauschal 40 % — am oberen Rand der Realweltdaten (ICCT/Plötz: faktisch 20–35 %).",
+    "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert; Mieter ohne Heim-Wallbox laden in der Praxis mit anderem Tagesprofil."
   ]
 }
