@@ -1,12 +1,11 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
-import * as echarts from 'echarts';
 import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
 import { dataFileUrl } from '../dataPackages';
 import { loadDefaultData, loadJson } from '../loaders/defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
-import type { SimulationResult } from '../simulation/engine';
-import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, buildMixChartOption, buildStorageChartOption, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
+import type { SimulationResult, SimHour } from '../simulation/engine';
+import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
 import { applyManifestPaths, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
@@ -234,30 +233,140 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
   }
 }
 
-function useChart(id: string, option: echarts.EChartsOption | undefined) {
-  const chartRef = useRef<echarts.ECharts | null>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
+// Shared chart-worker für Mix- und Storage-Chart. OffscreenCanvas-basiert:
+// Canvas-Element wird per transferControlToOffscreen() an den Worker übergeben,
+// dort läuft die ECharts-Render-Pipeline. Hält den Main-Thread frei für React +
+// Slider-Events.
+let chartWorkerInstance: Worker | null = null;
+// Set der Chart-IDs, deren letzte Daten-Sendung noch nicht im Canvas
+// committed ist. Wird beim postMessage('mix-data'/'storage-data') ergänzt
+// und vom 'rendered'-Reply des Workers wieder entfernt. UI-Loading-Indicator
+// bleibt sichtbar, solange Einträge drin sind.
+const pendingRenders = new Set<'mix' | 'storage'>();
+const pendingListeners = new Set<() => void>();
+function notifyPending() { for (const l of pendingListeners) l(); }
+
+function getChartWorker(): Worker {
+  if (!chartWorkerInstance) {
+    chartWorkerInstance = new Worker(new URL('./chart-worker.ts', import.meta.url), { type: 'module' });
+    chartWorkerInstance.addEventListener('message', (event: MessageEvent<{ type: 'rendered'; id: 'mix' | 'storage' }>) => {
+      if (event.data?.type === 'rendered') {
+        pendingRenders.delete(event.data.id);
+        notifyPending();
+      }
+    });
+  }
+  return chartWorkerInstance;
+}
+
+function useChartPending(): boolean {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const l = () => setTick((t) => t + 1);
+    pendingListeners.add(l);
+    return () => { pendingListeners.delete(l); };
+  }, []);
+  // tick wird genutzt um Re-Renders zu triggern; der eigentliche Zustand kommt aus pendingRenders
+  void tick;
+  return pendingRenders.size > 0;
+}
+
+// HMR-Cleanup: bei Hot-Reload den alten Worker terminieren, sonst akkumulieren
+// sich Worker-Instanzen während der Entwicklung.
+if (typeof import.meta !== 'undefined' && (import.meta as { hot?: { dispose: (cb: () => void) => void } }).hot) {
+  (import.meta as unknown as { hot: { dispose: (cb: () => void) => void } }).hot.dispose(() => {
+    chartWorkerInstance?.terminate();
+    chartWorkerInstance = null;
+    pendingRenders.clear();
+  });
+}
+
+function useOffscreenChart(
+  containerId: string,
+  chartId: 'mix' | 'storage',
+  sendData: (() => void) | null,
+  dataDeps: ReadonlyArray<unknown>,
+) {
+  const initedRef = useRef(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => () => {
-    cleanupRef.current?.();
-    chartRef.current?.dispose();
-    chartRef.current = null;
-    cleanupRef.current = null;
-  }, []);
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+    if (initedRef.current) {
+      getChartWorker().postMessage({ type: 'dispose', id: chartId });
+      initedRef.current = false;
+    }
+  }, [chartId]);
 
   useEffect(() => {
-    if (!option) return;
-    const el = document.getElementById(id);
+    if (!sendData) return;
+    const worker = getChartWorker();
+    const el = document.getElementById(containerId);
     if (!el) return;
-    if (!chartRef.current) {
-      const chart = echarts.init(el);
-      const resize = () => chart.resize();
-      window.addEventListener('resize', resize);
-      chartRef.current = chart;
-      cleanupRef.current = () => window.removeEventListener('resize', resize);
+    if (!initedRef.current) {
+      // Frisches Canvas-Element ins Container-Div einsetzen und an Worker
+      // übergeben. transferControlToOffscreen() kann pro Canvas nur einmal
+      // aufgerufen werden — daher die initedRef-Schranke.
+      while (el.firstChild) el.removeChild(el.firstChild);
+      const canvas = document.createElement('canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.display = 'block';
+      el.appendChild(canvas);
+      const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const initW = Math.max(1, rect.width);
+      const initH = Math.max(1, rect.height);
+      // Canvas-interne Auflösung VOR transferControlToOffscreen setzen — die
+      // OffscreenCanvas erbt die Dimensionen vom Source-Canvas, und ECharts
+      // ändert sie nach init nicht mehr eigenständig. Ohne diesen Schritt
+      // bleibt das Canvas bei den 300×150-Defaults und der Chart wird nicht
+      // korrekt aufgespannt.
+      canvas.width = Math.round(initW * dpr);
+      canvas.height = Math.round(initH * dpr);
+      const offscreen = canvas.transferControlToOffscreen();
+      worker.postMessage({
+        type: 'init',
+        id: chartId,
+        canvas: offscreen,
+        width: initW,
+        height: initH,
+        dpr,
+      }, [offscreen]);
+      initedRef.current = true;
+
+      // TODO: DPR-Wechsel beim Monitor-Wechsel wird nicht getrackt. ECharts hat
+      // keine API um DPR ohne Re-Init zu ändern, und transferControlToOffscreen
+      // ist Einmal-Operation. Fix wäre komplettes Re-Mount via Key-Change.
+      const ro = new ResizeObserver(() => {
+        const r = el.getBoundingClientRect();
+        const w = Math.max(1, r.width);
+        const h = Math.max(1, r.height);
+        worker.postMessage({ type: 'resize', id: chartId, width: w, height: h });
+      });
+      ro.observe(el);
+      resizeObserverRef.current = ro;
     }
-    chartRef.current.setOption(option, { notMerge: false, lazyUpdate: true });
-  }, [id, option]);
+    sendData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerId, chartId, ...dataDeps]);
+}
+
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode) {
+  useOffscreenChart(containerId, 'mix', hours && hours.length ? () => {
+    pendingRenders.add('mix');
+    notifyPending();
+    getChartWorker().postMessage({ type: 'mix-data', hours, visibility, mode });
+  } : null, [hours, visibility, mode]);
+}
+
+function useStorageChart(containerId: string, hours: SimHour[] | undefined) {
+  useOffscreenChart(containerId, 'storage', hours && hours.length ? () => {
+    pendingRenders.add('storage');
+    notifyPending();
+    getChartWorker().postMessage({ type: 'storage-data', hours });
+  } : null, [hours]);
 }
 
 function localDate(iso: string) {
@@ -469,7 +578,12 @@ function Dashboard() {
     return { ...scenario, generation: override.generation, storage: override.storage };
   }, [scenario, data]);
 
-  const { result, isPending } = useWorkerSimulation(data, resolvedScenario);
+  const { result, isPending: simPending } = useWorkerSimulation(data, resolvedScenario);
+  const chartPending = useChartPending();
+  // Indicator bleibt aktiv solange entweder die Simulation rechnet ODER der
+  // Chart-Worker noch nicht den letzten Frame committed hat. So sieht der
+  // User den Spinner bis das Bild tatsächlich da ist, nicht nur bis die Zahlen.
+  const isPending = simPending || chartPending;
   useEffect(() => {
     if (!result || chartResult === result) return;
     if (!chartResult) {
@@ -488,11 +602,8 @@ function Dashboard() {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [deferredChartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildMixChartOption(sliced, mixVisibility, chartMode) : undefined, [sliced, mixVisibility, chartMode]);
-  const storageOption = useMemo<echarts.EChartsOption | undefined>(() => sliced.length ? buildStorageChartOption(sliced) : undefined, [sliced]);
-
-  useChart('mix-chart', mixOption);
-  useChart('storage-chart', storageOption);
+  useMixChart('mix-chart', sliced, mixVisibility, chartMode);
+  useStorageChart('storage-chart', sliced);
 
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
@@ -631,7 +742,13 @@ function Dashboard() {
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
             <div className="relative min-h-0 flex-1 rounded-lg bg-white">
-              <div id="mix-chart" className="h-full w-full"/>
+              <div
+                id="mix-chart"
+                className={cx(
+                  'h-full w-full transition-opacity duration-150',
+                  isPending ? 'opacity-40' : 'opacity-100',
+                )}
+              />
               <div
                 aria-hidden={!isPending}
                 className={cx(
@@ -640,6 +757,17 @@ function Dashboard() {
                 )}
               >
                 <div className="h-full w-1/3 animate-[indeterminate_1.1s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-zinc-950 to-transparent"/>
+              </div>
+              <div
+                aria-hidden={!isPending}
+                className={cx(
+                  'pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-150',
+                  isPending ? 'opacity-100' : 'opacity-0',
+                )}
+              >
+                <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white shadow-sm">
+                  Aktualisiere …
+                </div>
               </div>
             </div>
             <MixLegend

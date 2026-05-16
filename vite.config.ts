@@ -52,6 +52,10 @@ export default defineConfig({
   define: {
     __BUILD_COMMIT__: JSON.stringify(commitHash),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    // ECharts referenziert `global` (Node-CommonJS-Konvention). Im Browser-Main
+    // ist es shim'd, im Worker-Kontext aber nicht — daher explizit auf
+    // globalThis mappen, damit chart-worker.ts beim init nicht crashed.
+    global: 'globalThis',
   },
   plugins: [react(), tailwindcss(), topLevelData()],
   server: { port: 5177 },

@@ -153,34 +153,55 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   const coordinate = mode === 'sunburst'
     ? { polar: { center: ['50%', '52%'], radius: ['6%', '96%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
     : { grid: { left: 44, right: 20, top: 10, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GW') };
+  // Rich-Text-Styles für den Tooltip — renderMode 'richText' funktioniert auch
+  // im OffscreenCanvas-Worker, weil ECharts den Tooltip direkt auf das Canvas
+  // zeichnet statt einen DOM-Knoten zu mounten.
+  const rich: Record<string, { color?: string; fontWeight?: 'bold' }> = {
+    bold: { fontWeight: 'bold' },
+    muted: { color: '#71717a' },
+    import: { color: '#dc2626' },
+    shedding: { color: '#b91c1c' },
+    storage: { color: '#0d9488' },
+    batt: { color: '#14b8a6' },
+    psp: { color: '#0284c7' },
+    h2c: { color: '#06b6d4' },
+    exp: { color: '#94a3b8' },
+    residual: { color: '#64748b' },
+    load: { color: '#111827' },
+  };
+  for (const group of MIX_GROUPS) {
+    rich[`g_${group.id}`] = { color: group.color };
+    for (const leaf of group.leaves) rich[`l_${leaf.key}`] = { color: leaf.color };
+  }
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: {
       trigger: 'axis',
+      renderMode: 'richText',
       backgroundColor: 'rgba(255,255,255,.96)',
       borderColor: '#e5e7eb',
-      textStyle: { color: '#111827' },
+      textStyle: { color: '#111827', rich } as { color: string; rich: typeof rich },
       formatter: (raw: unknown) => {
         const params = Array.isArray(raw) ? raw as Array<{ dataIndex: number }> : [];
         const index = params[0]?.dataIndex ?? 0;
         const hour = chartHours[index];
         if (!hour) return '';
-        const lines = [`<b>${shortDateLabel(hour)}</b>`];
+        const lines = [`{bold|${shortDateLabel(hour)}}`];
         for (const group of MIX_GROUPS) {
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
           const total = active.reduce((sum, leaf) => sum + valueOf(hour, leaf.key), 0);
-          const detail = active.map(leaf => `<span style="color:${leaf.color}">●</span> ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
-          lines.push(`<span style="color:${group.color}">●</span> ${group.label}: <b>${fmt.format(total)} GW</b><br/><span style="opacity:.75">${detail}</span>`);
+          const detail = active.map(leaf => `{l_${leaf.key}|●} ${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
+          lines.push(`{g_${group.id}|●} ${group.label}: {bold|${fmt.format(total)} GW}\n{muted|${detail}}`);
         }
-        if (visibility.storageDischargeGW && hour.storageDischargeGW > 0) lines.push(`<span style="color:#0d9488">●</span> Speicher: <b>${fmt.format(hour.storageDischargeGW)} GW</b><br/><span style="opacity:.75"><span style="color:#14b8a6">●</span> Batterie ${fmt.format(hour.batterieDischargeGW)} · <span style="color:#0284c7">●</span> PSP ${fmt.format(hour.pumpspeicherDischargeGW)} · <span style="color:#06b6d4">●</span> H₂ ${fmt.format(hour.h2DischargeGW)}</span>`);
-        if (visibility.importGW) lines.push(`<span style="color:#dc2626">●</span> Import: <b>${fmt.format(hour.importGW)} GW</b>`);
-        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(`<span style="color:#b91c1c">▨</span> Fehlend: <b>${fmt.format(hour.loadSheddingGW)} GW</b>`);
-        if (hour.exportGW > 0) lines.push(`<span style="color:#94a3b8">●</span> Export: <b>${fmt.format(hour.exportGW)} GW</b>`);
-        if (hour.dataBoundaryResidualGW !== 0) lines.push(`<span style="color:#64748b">●</span> Abgrenzungsrest: <b>${fmt.format(hour.dataBoundaryResidualGW)} GW</b>`);
-        if (visibility.loadGW) lines.push(`<span style="color:#111827">●</span> Last: <b>${fmt.format(hour.loadGW)} GW</b>`);
-        return lines.join('<br/>');
+        if (visibility.storageDischargeGW && hour.storageDischargeGW > 0) lines.push(`{storage|●} Speicher: {bold|${fmt.format(hour.storageDischargeGW)} GW}\n{muted|{batt|●} Batterie ${fmt.format(hour.batterieDischargeGW)} · {psp|●} PSP ${fmt.format(hour.pumpspeicherDischargeGW)} · {h2c|●} H₂ ${fmt.format(hour.h2DischargeGW)}}`);
+        if (visibility.importGW) lines.push(`{import|●} Import: {bold|${fmt.format(hour.importGW)} GW}`);
+        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(`{shedding|▨} Fehlend: {bold|${fmt.format(hour.loadSheddingGW)} GW}`);
+        if (hour.exportGW > 0) lines.push(`{exp|●} Export: {bold|${fmt.format(hour.exportGW)} GW}`);
+        if (hour.dataBoundaryResidualGW !== 0) lines.push(`{residual|●} Abgrenzungsrest: {bold|${fmt.format(hour.dataBoundaryResidualGW)} GW}`);
+        if (visibility.loadGW) lines.push(`{load|●} Last: {bold|${fmt.format(hour.loadGW)} GW}`);
+        return lines.join('\n');
       },
     },
     legend: { show: false },
@@ -200,19 +221,12 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         stack: 'supply',
         showSymbol: false,
         smooth: false,
-        areaStyle: { color: '#b91c1c', opacity: 0.65 },
-        lineStyle: { color: '#7f1d1d', width: 1 },
-        itemStyle: {
-          color: '#b91c1c',
-          decal: {
-            symbol: 'rect',
-            symbolSize: 0.7,
-            dashArrayX: [4, 0],
-            dashArrayY: [3, 3],
-            rotation: -Math.PI / 4,
-            color: 'rgba(255,255,255,0.45)',
-          },
-        } as never,
+        // Solid statt Decal-Hatched: ECharts-Decal crasht im OffscreenCanvas-
+        // Worker (kein DOM für die inner Pattern-Canvas-Factory). Sattes Rot
+        // mit hoher Opazität bleibt visuell klar als "Fehlend" lesbar.
+        areaStyle: { color: '#b91c1c', opacity: 0.85 },
+        lineStyle: { color: '#7f1d1d', width: 1.2 },
+        itemStyle: { color: '#b91c1c' },
         data: chartHours.map((h) => h.loadSheddingGW),
       }] : []),
       ...(visibility.loadGW ? [{
@@ -242,7 +256,7 @@ export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
   return {
     backgroundColor: 'transparent',
     animation: false,
-    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
+    tooltip: { trigger: 'axis', renderMode: 'richText', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
     grid: { left: 46, right: 20, top: 18, bottom: 48 },
     xAxis: xAxis(hours, chartHours),
     yAxis: yAxis('GWh'),
