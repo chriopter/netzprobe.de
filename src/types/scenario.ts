@@ -24,14 +24,6 @@ export type Scenario = {
     'e100-stahl-target-mio-ton': number;
     'e100-chemie': boolean;
     'e100-chemie-target-twh': number;
-    /**
-     * H2-Importmenge in TWh H2 (LHV) pro Jahr. Wird auf die aktivierten H2-
-     * konsumierenden Sektoren (Stahl/Chemie/Schiff/Flug) verteilt und reduziert
-     * dort jeweils den Elektrolyse-Strombedarf proportional zum H2-Anteil
-     * dieses Sektors. 0 = kein Import, alle H2-Mengen werden inland aus
-     * Elektrolyse-Strom erzeugt (Modell-Defaults).
-     */
-    'h2-import-twh': number;
   };
   supplyPreset: 'custom' | 'historical-2025' | 'historical-2017' | '100ee-noimport' | '50ee-50import' | '2025-skaliert';
   loadYear: 2025 | 2017;
@@ -44,9 +36,6 @@ export type Scenario = {
     laufwasserInstalledGW: number;
     gasInstalledGW: number;
     kohleInstalledGW: number;
-    importMaxGW: number;
-    exportMaxGW: number;
-    importEmissionGperKWh: number;
     /**
      * Multiplier auf die einspeisefaktoren-2025-Werte, um modernere Anlagen-
      * Flotten als die aktuelle DE-2025-Realflotte zu modellieren. Defaults =
@@ -68,5 +57,20 @@ export type Scenario = {
     h2ChargePowerGW: number;
     h2DischargePowerGW: number;
     h2EnergyGWh: number;
+  };
+  /**
+   * Außenhandel-Import: Strom in GW (stündlich-konstante Obergrenze) plus
+   * H2-Import in TWh/Jahr (LHV). Letzterer reduziert den inländischen Strom-
+   * bedarf der H2-konsumierenden Sektoren (Stahl/Chemie/Schiff/Flug) nach
+   * Wirkungsgrad-Priorität (Flug→Schiff→Chemie→Stahl), nicht als zusätzlicher
+   * Stromfluss. Import-Emissionsfaktor liegt im aussenhandel/strom-handel-Paket.
+   */
+  import: {
+    stromGW: number;
+    stromEmissionGperKWh: number;
+    h2TWh: number;
+  };
+  export: {
+    stromGW: number;
   };
 };

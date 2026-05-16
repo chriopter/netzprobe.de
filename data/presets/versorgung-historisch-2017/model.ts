@@ -1,10 +1,12 @@
-import type { ErzeugungsPool, ModelFactorHour, SpeicherPool } from '../../../src/types/data';
+import type { ErzeugungsPool, ModelFactorHour, SpeicherPool, AussenhandelPool } from '../../../src/types/data';
 import type { Scenario } from '../../../src/types/scenario';
 
 export type FactorHour = Pick<ModelFactorHour, 'solarIrradiance' | 'wind100m'>;
 export type SupplyOverride = {
   generation: Scenario['generation'];
   storage: Scenario['storage'];
+  import: Scenario['import'];
+  export: Scenario['export'];
 };
 
 // Historischer Pass-Through 2017: das Kernmodell switcht die stündlichen Beobachtungs-Daten
@@ -19,8 +21,9 @@ const INSTALLED_2017 = {
 export function compute(
   _demandTWh: number,
   _factors: FactorHour[],
-  erz: ErzeugungsPool,
+  _erz: ErzeugungsPool,
   _speicher: SpeicherPool,
+  aussenhandel: AussenhandelPool,
 ): SupplyOverride {
   return {
     generation: {
@@ -32,12 +35,6 @@ export function compute(
       laufwasserInstalledGW: INSTALLED_2017.laufwasser,
       gasInstalledGW: INSTALLED_2017.gas,
       kohleInstalledGW: INSTALLED_2017.kohle,
-      importMaxGW: 14,
-      exportMaxGW: 30,
-      importEmissionGperKWh: erz.import.emissionGperKWh,
-      // CF-Multipliers: 1.0 = heutige Flottenrealität, Offshore-Default 1.8
-      // korrigiert den gemittelten einspeisefaktoren-2025-windFactor auf reale
-      // Offshore-VLH (siehe data/kern/model.ts:96-113).
       pvCapacityFactorMultiplier: 1.0,
       windOnCapacityFactorMultiplier: 1.0,
       windOffCapacityFactorMultiplier: 1.8,
@@ -50,6 +47,14 @@ export function compute(
       h2ChargePowerGW: 0,
       h2DischargePowerGW: 0,
       h2EnergyGWh: 0,
+    },
+    import: {
+      stromGW: 14,
+      stromEmissionGperKWh: aussenhandel.strom.import.emissionGperKWh,
+      h2TWh: 0,
+    },
+    export: {
+      stromGW: 30,
     },
   };
 }

@@ -1,6 +1,6 @@
 {
   "id": "pumpspeicher",
-  "domain": "erzeugung",
+  "domain": "speicher",
   "kind": "scenario",
   "title": "Pumpspeicher",
   "file": "speicher/pumpspeicher/data.json",

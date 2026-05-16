@@ -1,6 +1,6 @@
 {
   "id": "versorgung-100ee-noimport",
-  "domain": "erzeugung",
+  "domain": "presets",
   "kind": "composition",
   "title": "Versorgung: 100% EE ohne Import",
   "scripts": [

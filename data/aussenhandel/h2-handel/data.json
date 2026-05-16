@@ -1,0 +1,11 @@
+{
+  "id": "h2-handel",
+  "name": "H2-Außenhandel",
+  "import": {
+    "default2025TWh": 0,
+    "defaultTWh": 0,
+    "minTWh": 0,
+    "maxTWh": 600,
+    "stepTWh": 10
+  }
+}

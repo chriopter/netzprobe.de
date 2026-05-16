@@ -3,8 +3,10 @@ import { runSimulation, type SimulationContext } from '../simulation/engine';
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
-  ErzeugungsPool, SpeicherPool,
-  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  ErzeugungsPool, SpeicherPool, AussenhandelPool,
+  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
+  AussenhandelStromData, AussenhandelH2Data,
+  ErzeugungsModellDispatchOrder,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   HourlyInput,
 } from '../types/data';
@@ -18,10 +20,12 @@ import erzBiomasseJson from '../../data/erzeugung/biomasse/data.json';
 import erzLaufwasserJson from '../../data/erzeugung/laufwasser/data.json';
 import erzGasJson from '../../data/erzeugung/gas/data.json';
 import erzKohleJson from '../../data/erzeugung/kohle/data.json';
-import erzHandelJson from '../../data/erzeugung/handel/data.json';
+import aussenhandelStromJson from '../../data/aussenhandel/strom-handel/data.json';
+import aussenhandelH2Json from '../../data/aussenhandel/h2-handel/data.json';
 import speicherBatterieJson from '../../data/speicher/batterie/data.json';
 import speicherPumpspeicherJson from '../../data/speicher/pumpspeicher/data.json';
 import speicherH2Json from '../../data/speicher/h2/data.json';
+import kernConfig from '../../data/kern/data.json';
 
 const flatMul = Array.from({ length: 24 }, () => 1);
 
@@ -41,9 +45,7 @@ const erzeugungsModell: ErzeugungsPool = {
     gas: stripId(erzGasJson as ErzPackageDispatchable),
     kohle: stripId(erzKohleJson as ErzPackageDispatchable),
   },
-  import: (erzHandelJson as ErzHandelData).import,
-  export: (erzHandelJson as ErzHandelData).export,
-  dispatchOrder: (erzHandelJson as ErzHandelData).dispatchOrder,
+  dispatchOrder: (kernConfig as { dispatchOrder: ErzeugungsModellDispatchOrder }).dispatchOrder,
 } as ErzeugungsPool;
 
 const speicherModell: SpeicherPool = {
@@ -53,6 +55,13 @@ const speicherModell: SpeicherPool = {
     h2: stripId(speicherH2Json as SpeicherH2Data),
   },
 } as SpeicherPool;
+const aussenhandelModell: AussenhandelPool = {
+  strom: {
+    import: (aussenhandelStromJson as AussenhandelStromData).import,
+    export: (aussenhandelStromJson as AussenhandelStromData).export,
+  },
+  h2: { import: (aussenhandelH2Json as AussenhandelH2Data).import },
+};
 
 const noopDemand: E100PkwData = { id: 'e100-pkw', title: 'X', source: 'Test', sourceUrls: [], referenceYear: 2023, referenceMillionKm: 0, alreadyElectricMillionKm: 0, defaultTargetMillionKm: 0, maxTargetMillionKm: 0, stepMillionKm: 1, kwhPer100Km: 20, distribution: 'hourly-profile', hourlyProfile: { source: 'T', multipliers: flatMul }, note: 'T', summary: 'T' };
 const noopHeiz: E100HeizData = { id: 'e100-heiz', title: 'X', source: 'T', sourceUrls: [], referenceYear: 2023, referenceHeatDemandTWh: 0, alreadyElectricHeatTWh: 0, defaultTargetHeatTWh: 0, maxTargetHeatTWh: 0, stepHeatTWh: 1, seasonalCop: 3.3, distribution: 'heating-degree-days', degreeDayProfile: { year: 2025, heatingLimitC: 15, indoorReferenceC: 20, monthlyMeanTemperatureC: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], days: [] }, hourlyProfile: { source: 'T', multipliers: flatMul }, note: 'T', summary: 'T' };
@@ -70,6 +79,7 @@ const ctx: SimulationContext = {
   'e100-schiff': noopSchiff, 'e100-flug': noopFlug, 'e100-ghd': noopGhd,
   'e100-industrie-waerme': noopIndW, 'e100-stahl': noopStahl, 'e100-chemie': noopChemie,
   'erzeugungs-modell': erzeugungsModell, 'speicher-modell': speicherModell,
+  'aussenhandel-modell': aussenhandelModell,
 };
 
 const baseScenario: Scenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };
@@ -236,8 +246,8 @@ describe('storage edge cases', () => {
         pvInstalledGW: 0, windOnInstalledGW: 0, windOffInstalledGW: 5,
         kernkraftInstalledGW: 0, biomasseInstalledGW: 0, laufwasserInstalledGW: 0,
         gasInstalledGW: 0, kohleInstalledGW: 0,
-        importMaxGW: 0,
       },
+      import: { ...baseScenario.import, stromGW: 0 },
       storage: { ...baseScenario.storage,
         batteriePowerGW: 0, batterieEnergyGWh: 0,
         pumpspeicherPowerGW: 0, pumpspeicherEnergyGWh: 0,

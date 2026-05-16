@@ -1,6 +1,6 @@
 {
   "id": "versorgung-50ee-50import",
-  "domain": "erzeugung",
+  "domain": "presets",
   "kind": "composition",
   "title": "Versorgung: 50% EE + 50% H₂-Import",
   "scripts": [
@@ -32,9 +32,9 @@
   ],
   "method": [
     "Ruft compute() aus versorgung-100ee-noimport mit demandTWh/2.",
-    "Setzt importMaxGW = erz.import.maxGW (200 GW).",
-    "Setzt importEmissionGperKWh = 100 g/kWh (grüner H₂-Mittelwert).",
-    "exportMaxGW bleibt Default.",
+    "Setzt import.stromGW = aussenhandel.strom.import.maxGW (200 GW).",
+    "Setzt import.stromEmissionGperKWh = 100 g/kWh (grüner H₂-Mittelwert).",
+    "export.stromGW bleibt Default.",
     "Datei: data/presets/versorgung-50ee-50import/model.ts."
   ],
   "fields": [

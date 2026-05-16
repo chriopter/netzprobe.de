@@ -6,8 +6,10 @@ import { runSimulation, type SimulationContext, type SimulationResult } from '..
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
-  ErzeugungsPool, SpeicherPool,
-  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  ErzeugungsPool, SpeicherPool, AussenhandelPool,
+  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
+  AussenhandelStromData, AussenhandelH2Data,
+  ErzeugungsModellDispatchOrder,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   GenerationHour, HourlyInput, LoadHour, ModelFactorHour, SplitDataFile,
 } from '../types/data';
@@ -42,7 +44,9 @@ const erzBiomasse = readJson<ErzPackageBaseload>('erzeugung/biomasse');
 const erzLaufwasser = readJson<ErzPackageBaseload>('erzeugung/laufwasser');
 const erzGas = readJson<ErzPackageDispatchable>('erzeugung/gas');
 const erzKohle = readJson<ErzPackageDispatchable>('erzeugung/kohle');
-const erzHandel = readJson<ErzHandelData>('erzeugung/handel');
+const aussenhandelStrom = readJson<AussenhandelStromData>('aussenhandel/strom-handel');
+const aussenhandelH2 = readJson<AussenhandelH2Data>('aussenhandel/h2-handel');
+const kernConfig = readJson<{ dispatchOrder: ErzeugungsModellDispatchOrder }>('kern');
 const speicherBatterie = readJson<SpeicherBatterieData>('speicher/batterie');
 const speicherPumpspeicher = readJson<SpeicherPumpspeicherData>('speicher/pumpspeicher');
 const speicherH2 = readJson<SpeicherH2Data>('speicher/h2');
@@ -58,9 +62,7 @@ const erzeugungsModell: ErzeugungsPool = {
     kernkraft: stripId(erzKernkraft), biomasse: stripId(erzBiomasse), laufwasser: stripId(erzLaufwasser),
     gas: stripId(erzGas), kohle: stripId(erzKohle),
   },
-  import: erzHandel.import,
-  export: erzHandel.export,
-  dispatchOrder: erzHandel.dispatchOrder,
+  dispatchOrder: kernConfig.dispatchOrder,
 } as ErzeugungsPool;
 const speicherModell: SpeicherPool = {
   storages: {
@@ -69,6 +71,10 @@ const speicherModell: SpeicherPool = {
     h2: stripId(speicherH2),
   },
 } as SpeicherPool;
+const aussenhandelModell: AussenhandelPool = {
+  strom: { import: aussenhandelStrom.import, export: aussenhandelStrom.export },
+  h2: { import: aussenhandelH2.import },
+};
 
 const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   timeZone: 'Europe/Berlin',
@@ -107,6 +113,7 @@ const context: SimulationContext = {
   'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
   'e100-industrie-waerme': e100IndustrieWaerme, 'e100-stahl': e100Stahl, 'e100-chemie': e100Chemie,
   'erzeugungs-modell': erzeugungsModell, 'speicher-modell': speicherModell,
+  'aussenhandel-modell': aussenhandelModell,
 };
 
 const baseline: Scenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };
@@ -119,6 +126,9 @@ function withStorage(s: Scenario, o: Partial<Scenario['storage']>): Scenario {
 }
 function withDemand(s: Scenario, o: Partial<Scenario['demand']>): Scenario {
   return { ...s, demand: { ...s.demand, ...o } };
+}
+function withImport(s: Scenario, o: Partial<Scenario['import']>): Scenario {
+  return { ...s, import: { ...s.import, ...o } };
 }
 
 // 10 diverse Szenarien als deterministische Regression-Fixture. Werte werden
@@ -169,10 +179,10 @@ const SCENARIOS: Array<{ name: string; build: () => Scenario }> = [
     'e100-pkw': true, 'e100-heiz': true, 'e100-lkw': true, 'e100-bahn': true, 'e100-schiff': true,
     'e100-flug': true, 'e100-ghd': true, 'e100-industrie-waerme': true, 'e100-stahl': true, 'e100-chemie': true,
   }) },
-  { name: '04-100ee-no-import-style', build: () => withStorage(withGeneration(baseline, {
+  { name: '04-100ee-no-import-style', build: () => withImport(withStorage(withGeneration(baseline, {
     pvInstalledGW: 300, windOnInstalledGW: 250, windOffInstalledGW: 80,
-    gasInstalledGW: 0, kohleInstalledGW: 0, importMaxGW: 0,
-  }), { batteriePowerGW: 100, batterieEnergyGWh: 300, h2ChargePowerGW: 50, h2DischargePowerGW: 50, h2EnergyGWh: 50000 }) },
+    gasInstalledGW: 0, kohleInstalledGW: 0,
+  }), { batteriePowerGW: 100, batterieEnergyGWh: 300, h2ChargePowerGW: 50, h2DischargePowerGW: 50, h2EnergyGWh: 50000 }), { stromGW: 0 }) },
   { name: '05-windon-dominant-with-battery', build: () => withStorage(withGeneration(baseline, {
     pvInstalledGW: 0, windOnInstalledGW: 200, windOffInstalledGW: 0, kohleInstalledGW: 0, gasInstalledGW: 0,
   }), { batteriePowerGW: 50, batterieEnergyGWh: 250 }) },
@@ -187,11 +197,10 @@ const SCENARIOS: Array<{ name: string; build: () => Scenario }> = [
   { name: '10-industrie-heavy', build: () => withDemand(withGeneration(baseline, {
     pvInstalledGW: 200, windOnInstalledGW: 150, windOffInstalledGW: 50,
   }), { 'e100-industrie-waerme': true, 'e100-stahl': true, 'e100-chemie': true }) },
-  { name: '11-h2-import-saves-strom', build: () => withDemand(baseline, {
+  { name: '11-h2-import-saves-strom', build: () => withImport(withDemand(baseline, {
     'e100-pkw': true, 'e100-heiz': true, 'e100-lkw': true,
     'e100-stahl': true, 'e100-chemie': true, 'e100-schiff': true, 'e100-flug': true,
-    'h2-import-twh': 200,
-  }) },
+  }), { h2TWh: 200 }) },
 ];
 
 describe('simulation regression (10 diverse scenarios)', () => {

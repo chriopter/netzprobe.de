@@ -15,20 +15,42 @@ Referenz: heutige 2025-Konfiguration, keine Elektrifizierung, keine Speicher-Erw
   "loadYear": 2025,
   "demand": {
     "last-2025": true,
-    "e100-pkw": false, "e100-heiz": false, "e100-lkw": false, "e100-bahn": false,
-    "e100-schiff": false, "e100-flug": false, "e100-ghd": false,
-    "e100-industrie-waerme": false, "e100-stahl": false, "e100-chemie": false
+    "e100-pkw": false,
+    "e100-heiz": false,
+    "e100-lkw": false,
+    "e100-bahn": false,
+    "e100-schiff": false,
+    "e100-flug": false,
+    "e100-ghd": false,
+    "e100-industrie-waerme": false,
+    "e100-stahl": false,
+    "e100-chemie": false
   },
   "generation": {
-    "pvInstalledGW": 102.5, "windOnInstalledGW": 62.8, "windOffInstalledGW": 9.4,
-    "kernkraftInstalledGW": 0, "biomasseInstalledGW": 4.8, "laufwasserInstalledGW": 4.8,
-    "gasInstalledGW": 30, "kohleInstalledGW": 18,
-    "importMaxGW": 13, "exportMaxGW": 25, "importEmissionGperKWh": 300
+    "pvInstalledGW": 102.5,
+    "windOnInstalledGW": 62.8,
+    "windOffInstalledGW": 9.4,
+    "kernkraftInstalledGW": 0,
+    "biomasseInstalledGW": 4.8,
+    "laufwasserInstalledGW": 4.8,
+    "gasInstalledGW": 30,
+    "kohleInstalledGW": 18
   },
   "storage": {
-    "batteriePowerGW": 10, "batterieEnergyGWh": 25,
-    "pumpspeicherPowerGW": 9.4, "pumpspeicherEnergyGWh": 45,
-    "h2ChargePowerGW": 0.1, "h2DischargePowerGW": 0, "h2EnergyGWh": 0.1
+    "batteriePowerGW": 10,
+    "batterieEnergyGWh": 25,
+    "pumpspeicherPowerGW": 9.4,
+    "pumpspeicherEnergyGWh": 45,
+    "h2ChargePowerGW": 0.1,
+    "h2DischargePowerGW": 0,
+    "h2EnergyGWh": 0.1
+  },
+  "import": {
+    "stromGW": 13,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 25
   }
 }
 ```

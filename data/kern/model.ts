@@ -312,9 +312,9 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
     'e100-chemie': input['e100-chemie'],
   };
 
-  const importLimitGW = scenario.generation.importMaxGW;
-  const exportLimitGW = scenario.generation.exportMaxGW;
-  const importEmissionGperKWh = scenario.generation.importEmissionGperKWh;
+  const importLimitGW = scenario.import.stromGW;
+  const exportLimitGW = scenario.export.stromGW;
+  const importEmissionGperKWh = scenario.import.stromEmissionGperKWh;
   const emPv = (erz.sources.pv as ErzeugungsModellVariableReSource).emissionGperKWh;
   const emWindOn = (erz.sources.windOn as ErzeugungsModellVariableReSource).emissionGperKWh;
   const emWindOff = (erz.sources.windOff as ErzeugungsModellVariableReSource).emissionGperKWh;

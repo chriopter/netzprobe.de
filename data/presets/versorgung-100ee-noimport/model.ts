@@ -1,10 +1,12 @@
-import type { ErzeugungsPool, ModelFactorHour, SpeicherPool } from '../../../src/types/data';
+import type { ErzeugungsPool, ModelFactorHour, SpeicherPool, AussenhandelPool } from '../../../src/types/data';
 import type { Scenario } from '../../../src/types/scenario';
 
 export type FactorHour = Pick<ModelFactorHour, 'solarIrradiance' | 'wind100m'>;
 export type SupplyOverride = {
   generation: Scenario['generation'];
   storage: Scenario['storage'];
+  import: Scenario['import'];
+  export: Scenario['export'];
 };
 
 const EE_PV_SHARE = 0.30;
@@ -43,6 +45,7 @@ export function compute(
   factors: FactorHour[],
   erz: ErzeugungsPool,
   speicher: SpeicherPool,
+  aussenhandel: AussenhandelPool,
 ): SupplyOverride {
   const yieldPV = Math.max(annualYieldTWhPerGW(factors, 'solarIrradiance'), 0.1);
   const yieldWind = Math.max(annualYieldTWhPerGW(factors, 'wind100m'), 0.1);
@@ -66,12 +69,6 @@ export function compute(
       laufwasserInstalledGW: erz.sources.laufwasser.defaultInstalledGW,
       gasInstalledGW: 0,
       kohleInstalledGW: 0,
-      importMaxGW: 0,
-      exportMaxGW: erz.export.defaultMaxGW,
-      importEmissionGperKWh: erz.import.emissionGperKWh,
-      // CF-Multipliers: 1.0 = heutige Flottenrealität, Offshore-Default 1.8
-      // korrigiert den gemittelten einspeisefaktoren-2025-windFactor auf reale
-      // Offshore-VLH (siehe data/kern/model.ts:96-113).
       pvCapacityFactorMultiplier: 1.0,
       windOnCapacityFactorMultiplier: 1.0,
       windOffCapacityFactorMultiplier: 1.8,
@@ -84,6 +81,14 @@ export function compute(
       h2ChargePowerGW: snap(demandTWh * EE_H2_CHARGE_PER_TWH, speicher.storages.h2.minChargePowerGW, speicher.storages.h2.maxChargePowerGW, speicher.storages.h2.stepChargePowerGW),
       h2DischargePowerGW: snap(demandTWh * EE_H2_DISCHARGE_PER_TWH, speicher.storages.h2.minDischargePowerGW, speicher.storages.h2.maxDischargePowerGW, speicher.storages.h2.stepDischargePowerGW),
       h2EnergyGWh: snap(demandTWh * EE_H2_ENERGY_FRACTION_OF_DEMAND * 1000, speicher.storages.h2.minEnergyGWh, speicher.storages.h2.maxEnergyGWh, speicher.storages.h2.stepEnergyGWh),
+    },
+    import: {
+      stromGW: 0,
+      stromEmissionGperKWh: aussenhandel.strom.import.emissionGperKWh,
+      h2TWh: 0,
+    },
+    export: {
+      stromGW: aussenhandel.strom.export.defaultMaxGW,
     },
   };
 }

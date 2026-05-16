@@ -34,10 +34,7 @@ EE-Strom ist verfügbar wenn Wind weht — Speicher fast Null. Erwartung: viel C
     "biomasseInstalledGW": 4.8,
     "laufwasserInstalledGW": 4.8,
     "gasInstalledGW": 0,
-    "kohleInstalledGW": 0,
-    "importMaxGW": 13,
-    "exportMaxGW": 25,
-    "importEmissionGperKWh": 300
+    "kohleInstalledGW": 0
   },
   "storage": {
     "batteriePowerGW": 10,
@@ -47,6 +44,13 @@ EE-Strom ist verfügbar wenn Wind weht — Speicher fast Null. Erwartung: viel C
     "h2ChargePowerGW": 0,
     "h2DischargePowerGW": 0,
     "h2EnergyGWh": 0
+  },
+  "import": {
+    "stromGW": 13,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 25
   }
 }
 ```

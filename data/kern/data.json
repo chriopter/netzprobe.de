@@ -3,12 +3,17 @@
   "title": "Kernmodell",
   "source": "Eigene stündliche Bilanzrechnung im Browser, Dispatch-Reihenfolge nach MTGermany energy-simulation-de.",
   "modelPath": "data/kern/model.ts",
+  "dispatchOrder": {
+    "curtailmentPriority": ["windOff", "windOn", "pv", "kernkraft"],
+    "rampUpPriority": ["gas", "kohle"],
+    "rampUpRatio": { "gas": 2, "kohle": 1 }
+  },
   "timeStep": "1 Stunde",
   "inputs": [
     "Demand: last-2025 plus aktive e100-Sektoren (demandGW aus src/simulation/demand.ts).",
     "Erzeugung: erz-* Bausteine (erz-pv, erz-windon, erz-windoff, erz-kernkraft, erz-biomasse, erz-laufwasser, erz-gas, erz-kohle) skalieren installedGW × einspeisefaktoren-2025[t]; Baseload und Dispatchable per Mode-Tag.",
     "Speicher: speicher-* Bausteine (speicher-batterie, speicher-pumpspeicher, speicher-h2) mit dispatchPriority-Reihenfolge, Roundtrip-Eta beim Laden.",
-    "Handel: importMaxGW / exportMaxGW aus Scenario; Import-Emissionsfaktor aus erz-handel."
+    "Außenhandel: import.stromGW / export.stromGW aus Scenario, Import-Emissionsfaktor aus scenario.import.stromEmissionGperKWh; H2-Import als scenario.import.h2TWh reduziert Demand der H2-Sektoren."
   ],
   "outputs": [
     "Pro Stunde: Erzeugung je Quelle (dispatched + curtailed), Speicher Charge/Discharge/SoC je Technologie, Import, Export, Lastabwurf, Bilanzrest, CO₂ (t/h).",

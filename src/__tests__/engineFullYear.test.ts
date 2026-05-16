@@ -6,8 +6,10 @@ import { runSimulation, type SimulationContext } from '../simulation/engine';
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
-  ErzeugungsPool, SpeicherPool,
-  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  ErzeugungsPool, SpeicherPool, AussenhandelPool,
+  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
+  AussenhandelStromData, AussenhandelH2Data,
+  ErzeugungsModellDispatchOrder,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   GenerationHour, HourlyInput, LoadHour, ModelFactorHour, SplitDataFile,
 } from '../types/data';
@@ -42,7 +44,9 @@ const erzBiomasse = readJson<ErzPackageBaseload>('erzeugung/biomasse');
 const erzLaufwasser = readJson<ErzPackageBaseload>('erzeugung/laufwasser');
 const erzGas = readJson<ErzPackageDispatchable>('erzeugung/gas');
 const erzKohle = readJson<ErzPackageDispatchable>('erzeugung/kohle');
-const erzHandel = readJson<ErzHandelData>('erzeugung/handel');
+const aussenhandelStrom = readJson<AussenhandelStromData>('aussenhandel/strom-handel');
+const aussenhandelH2 = readJson<AussenhandelH2Data>('aussenhandel/h2-handel');
+const kernConfig = readJson<{ dispatchOrder: ErzeugungsModellDispatchOrder }>('kern');
 const speicherBatterie = readJson<SpeicherBatterieData>('speicher/batterie');
 const speicherPumpspeicher = readJson<SpeicherPumpspeicherData>('speicher/pumpspeicher');
 const speicherH2 = readJson<SpeicherH2Data>('speicher/h2');
@@ -58,9 +62,7 @@ const erzeugungsModell: ErzeugungsPool = {
     kernkraft: stripId(erzKernkraft), biomasse: stripId(erzBiomasse), laufwasser: stripId(erzLaufwasser),
     gas: stripId(erzGas), kohle: stripId(erzKohle),
   },
-  import: erzHandel.import,
-  export: erzHandel.export,
-  dispatchOrder: erzHandel.dispatchOrder,
+  dispatchOrder: kernConfig.dispatchOrder,
 } as ErzeugungsPool;
 const speicherModell: SpeicherPool = {
   storages: {
@@ -69,6 +71,10 @@ const speicherModell: SpeicherPool = {
     h2: stripId(speicherH2),
   },
 } as SpeicherPool;
+const aussenhandelModell: AussenhandelPool = {
+  strom: { import: aussenhandelStrom.import, export: aussenhandelStrom.export },
+  h2: { import: aussenhandelH2.import },
+};
 
 const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   timeZone: 'Europe/Berlin',
@@ -107,6 +113,7 @@ const context: SimulationContext = {
   'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
   'e100-industrie-waerme': e100IndustrieWaerme, 'e100-stahl': e100Stahl, 'e100-chemie': e100Chemie,
   'erzeugungs-modell': erzeugungsModell, 'speicher-modell': speicherModell,
+  'aussenhandel-modell': aussenhandelModell,
 };
 
 const baseline: Scenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };

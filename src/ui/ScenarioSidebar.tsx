@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Activity,
+  ArrowRightLeft,
   BatteryCharging,
   BookOpen,
   CalendarDays,
@@ -16,7 +17,6 @@ import {
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
-import { ChangelogModal } from './ChangelogModal';
 
 // Lucide hat aus Markenrechtsgründen kein GitHub-Logo — eigenes inline-SVG.
 function GithubMark({ className }: { className?: string }) {
@@ -54,6 +54,7 @@ type ScenarioSidebarProps = {
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
   actionBar?: ReactNode;
+  onOpenChangelog: () => void;
   onCollapsedChange: (collapsed: boolean) => void;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
@@ -82,9 +83,10 @@ type ScenarioSidebarProps = {
   onE100StahlTargetChange: (mioTon: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (twh: number) => void;
-  onH2ImportTWhChange: (twh: number) => void;
   onGenerationChange: (field: keyof Scenario['generation'], value: number) => void;
   onStorageChange: (field: keyof Scenario['storage'], value: number) => void;
+  onImportChange: (field: keyof Scenario['import'], value: number) => void;
+  onExportChange: (field: keyof Scenario['export'], value: number) => void;
   supplyPreset: Scenario['supplyPreset'];
   onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
 };
@@ -104,6 +106,7 @@ export function ScenarioSidebar({
   openSectors,
   expandedRow,
   actionBar = null,
+  onOpenChangelog,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -132,13 +135,13 @@ export function ScenarioSidebar({
   onE100StahlTargetChange,
   onE100ChemieChange,
   onE100ChemieTargetChange,
-  onH2ImportTWhChange,
   onGenerationChange,
   onStorageChange,
+  onImportChange,
+  onExportChange,
   supplyPreset,
   onSupplyPresetChange,
 }: ScenarioSidebarProps) {
-  const [changelogOpen, setChangelogOpen] = useState(false);
   useEffect(() => {
     if (collapsed || typeof window === 'undefined') return;
     const mql = window.matchMedia('(max-width: 1023px)');
@@ -195,7 +198,7 @@ export function ScenarioSidebar({
             </a>
             <button
               type="button"
-              onClick={() => setChangelogOpen(true)}
+              onClick={onOpenChangelog}
               className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
             >
               <History className="h-3 w-3"/>
@@ -213,8 +216,6 @@ export function ScenarioSidebar({
           </div>
         </div>
       </div>
-      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)}/>
-
       <div className="grid gap-3">
         {actionBar}
 
@@ -256,7 +257,6 @@ export function ScenarioSidebar({
           onE100StahlTargetChange={onE100StahlTargetChange}
           onE100ChemieChange={onE100ChemieChange}
           onE100ChemieTargetChange={onE100ChemieTargetChange}
-          onH2ImportTWhChange={onH2ImportTWhChange}
           openSectors={openSectors}
           expandedRow={expandedRow}
           onOpenSectorsChange={onOpenSectorsChange}
@@ -270,6 +270,13 @@ export function ScenarioSidebar({
           onSupplyPresetChange={onSupplyPresetChange}
           onGenerationChange={onGenerationChange}
           onStorageChange={onStorageChange}
+        />
+
+        <AussenhandelSection
+          data={data}
+          scenario={scenario}
+          onImportChange={onImportChange}
+          onExportChange={onExportChange}
         />
 
         <ReadonlyCard
@@ -297,7 +304,7 @@ type GenerationFieldSpec = {
 };
 
 type GenerationGroup = {
-  id: 'erneuerbar' | 'kernkraft' | 'konventionell' | 'handel';
+  id: 'erneuerbar' | 'kernkraft' | 'konventionell';
   title: string;
   fields: GenerationFieldSpec[];
   summary: (scenario: Scenario) => string;
@@ -319,10 +326,45 @@ function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] 
       { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW },
       { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW },
     ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
-    { id: 'handel', title: 'Handel', fields: [
-      { key: 'importMaxGW', label: 'Import-Limit', unit: 'GW', min: erz.import.minGW, max: erz.import.maxGW, step: erz.import.stepGW, baseline: erz.import.default2025GW },
-      { key: 'exportMaxGW', label: 'Export-Limit', unit: 'GW', min: erz.export.minGW, max: erz.export.maxGW, step: erz.export.stepGW, baseline: erz.export.default2025GW },
-    ], summary: (s) => `${fmt0.format(s.generation.importMaxGW)} / ${fmt0.format(s.generation.exportMaxGW)} GW` },
+  ];
+}
+
+type ImportFieldKey = keyof Scenario['import'];
+type ExportFieldKey = keyof Scenario['export'];
+
+type AussenhandelGroup = {
+  id: 'aussenhandel-strom' | 'aussenhandel-h2';
+  title: string;
+  docId: string;
+  summary: (scenario: Scenario) => string;
+  importFields: Array<{ key: ImportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number }>;
+  exportFields: Array<{ key: ExportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number }>;
+};
+
+function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGroup[] {
+  return [
+    {
+      id: 'aussenhandel-strom',
+      title: 'Strom · Import & Export',
+      docId: datasetIds.aussenhandelStrom,
+      summary: (s) => `${fmt0.format(s.import.stromGW)} / ${fmt0.format(s.export.stromGW)} GW`,
+      importFields: [
+        { key: 'stromGW', label: 'Import-Cap', unit: 'GW', min: ah.strom.import.minGW, max: ah.strom.import.maxGW, step: ah.strom.import.stepGW, baseline: ah.strom.import.defaultMaxGW },
+      ],
+      exportFields: [
+        { key: 'stromGW', label: 'Export-Cap', unit: 'GW', min: ah.strom.export.minGW, max: ah.strom.export.maxGW, step: ah.strom.export.stepGW, baseline: ah.strom.export.defaultMaxGW },
+      ],
+    },
+    {
+      id: 'aussenhandel-h2',
+      title: 'H₂ · Import',
+      docId: datasetIds.aussenhandelH2,
+      summary: (s) => `${fmt0.format(s.import.h2TWh)} TWh/a`,
+      importFields: [
+        { key: 'h2TWh', label: 'H₂-Import', unit: 'TWh/a', min: ah.h2.import.minTWh, max: ah.h2.import.maxTWh, step: ah.h2.import.stepTWh, baseline: ah.h2.import.defaultTWh },
+      ],
+      exportFields: [],
+    },
   ];
 }
 
@@ -430,7 +472,64 @@ function ErzeugungSection({
   </SidebarCard>;
 }
 
-type SupplyGroupId = 'erneuerbar' | 'kernkraft' | 'konventionell' | 'handel' | 'batterie' | 'pumpspeicher' | 'h2';
+function AussenhandelSection({
+  data,
+  scenario,
+  onImportChange,
+  onExportChange,
+}: {
+  data: DataSet | null;
+  scenario: Scenario;
+  onImportChange: (field: ImportFieldKey, value: number) => void;
+  onExportChange: (field: ExportFieldKey, value: number) => void;
+}) {
+  if (!data) return null;
+  const groups = aussenhandelGroups(data['aussenhandel-modell']);
+  const [open, setOpen] = useState<Record<string, boolean>>({
+    'aussenhandel-strom': true,
+    'aussenhandel-h2': false,
+  });
+  const toggle = (id: string) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
+
+  return <SidebarCard title="Außenhandel" icon={<ArrowRightLeft className="h-4 w-4"/>} docId={datasetIds.aussenhandelStrom}>
+    <div className="grid gap-1.5">
+      {groups.map(group => <GroupAccordion
+        key={group.id}
+        title={group.title}
+        summary={group.summary(scenario)}
+        icon={<ArrowRightLeft className="h-3.5 w-3.5"/>}
+        open={open[group.id] ?? false}
+        onToggle={() => toggle(group.id)}
+        docId={group.docId}
+      >
+        {group.importFields.map(field => <CapacitySliderRow
+          key={`imp-${field.key}`}
+          label={field.label}
+          unit={field.unit}
+          value={scenario.import[field.key]}
+          min={field.min}
+          max={field.max}
+          step={field.step}
+          baseline={field.baseline}
+          onValue={value => onImportChange(field.key, value)}
+        />)}
+        {group.exportFields.map(field => <CapacitySliderRow
+          key={`exp-${field.key}`}
+          label={field.label}
+          unit={field.unit}
+          value={scenario.export[field.key]}
+          min={field.min}
+          max={field.max}
+          step={field.step}
+          baseline={field.baseline}
+          onValue={value => onExportChange(field.key, value)}
+        />)}
+      </GroupAccordion>)}
+    </div>
+  </SidebarCard>;
+}
+
+type SupplyGroupId = 'erneuerbar' | 'kernkraft' | 'konventionell' | 'batterie' | 'pumpspeicher' | 'h2';
 
 function SupplyGroupAccordions({
   data,
@@ -444,7 +543,7 @@ function SupplyGroupAccordions({
   onStorageChange: (field: StorageFieldKey, value: number) => void;
 }) {
   const [open, setOpen] = useState<Record<SupplyGroupId, boolean>>({
-    erneuerbar: true, kernkraft: false, konventionell: false, handel: false,
+    erneuerbar: true, kernkraft: false, konventionell: false,
     batterie: false, pumpspeicher: false, h2: false,
   });
   const toggle = (id: SupplyGroupId) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -549,6 +648,7 @@ function GroupAccordion({
   onToggle,
   checked,
   onChecked,
+  docId,
   children,
 }: {
   title: string;
@@ -558,6 +658,7 @@ function GroupAccordion({
   onToggle: () => void;
   checked?: boolean;
   onChecked?: (checked: boolean) => void;
+  docId?: string;
   children: ReactNode;
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
@@ -578,13 +679,16 @@ function GroupAccordion({
         aria-label={`${title} aktivieren`}
       />}
       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-600">{icon}</span>
-      <button
-        type="button"
-        className="text-left text-sm font-semibold text-zinc-950"
-        aria-expanded={open}
-        aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
-        onClick={onToggle}
-      >{title}</button>
+      <div className="flex min-w-0 items-center gap-1">
+        <button
+          type="button"
+          className="text-left text-sm font-semibold text-zinc-950"
+          aria-expanded={open}
+          aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
+          onClick={onToggle}
+        >{title}</button>
+        {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
+      </div>
       <button
         type="button"
         className="whitespace-nowrap text-right text-xs font-medium tabular-nums text-zinc-500"
@@ -730,7 +834,6 @@ type LoadConfigurationProps = {
   onE100StahlTargetChange: (n: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (n: number) => void;
-  onH2ImportTWhChange: (twh: number) => void;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
@@ -993,10 +1096,6 @@ function LoadConfiguration(props: LoadConfigurationProps) {
                 </div>
               </AccordionSection>}
 
-              {data && <H2ImportRow
-                value={scenario.demand['h2-import-twh']}
-                onValue={props.onH2ImportTWhChange}
-              />}
             </div>
           </div>
         </section>
@@ -1250,55 +1349,6 @@ type SectorRowProps = {
   onValue: (value: number) => void;
   onToggleExpand: () => void;
 };
-
-function H2ImportRow({ value, onValue }: { value: number; onValue: (v: number) => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const min = 0;
-  const max = 500;
-  const step = 5;
-  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
-  const Chevron = expanded ? ChevronUp : ChevronDown;
-  return <div className={cx('group transition', expanded ? 'bg-zinc-50/80' : 'bg-white hover:bg-zinc-50/60')}>
-    <div className="grid grid-cols-[18px_minmax(0,1fr)_64px_16px] items-center gap-1.5 px-2 py-2.5">
-      <span aria-hidden className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-700">H₂</span>
-      <button
-        type="button"
-        className="text-left text-xs font-medium leading-4 text-zinc-950"
-        aria-expanded={expanded}
-        onClick={() => setExpanded(e => !e)}
-        title="H₂-Importmenge in TWh H₂/Jahr. Wird priority-basiert auf Sektoren mit niedrigstem η verteilt (Flug→Schiff→Chemie→Stahl) und reduziert deren Elektrolyse-Strom-Aufwand."
-      >H₂-Import</button>
-      <span className={cx('whitespace-nowrap text-right text-xs tabular-nums', value > 0 ? 'font-semibold text-zinc-950' : 'text-zinc-400')}>{value} TWh</span>
-      <Chevron aria-hidden="true" className="h-3.5 w-3.5 text-zinc-400"/>
-    </div>
-    {expanded && <div className="grid gap-1.5 px-2 pb-3 pl-7">
-      <input
-        aria-label="H2-Import"
-        className="w-full"
-        style={{ ['--range-pct' as string]: `${pct}%` }}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={event => onValue(Number(event.target.value))}
-      />
-      <div className="flex items-baseline gap-1 text-[10px] leading-4 text-zinc-500">
-        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title="H₂-Import in TWh H₂/Jahr"/>
-        <span>TWh H₂/a</span>
-      </div>
-      <p className="text-[10px] leading-4 text-zinc-500">
-        Importierter H₂ ersetzt heimischen Elektrolyse-Strom. Allokation priorisiert
-        Sektoren mit niedrigem System-η: Flug (PtL η=0.38) → Schiff (e-MeOH 0.50) →
-        Chemie (NH₃/MeOH 0.55) → Stahl-DRI (0.62). System-Wirkungsgrade nach
-        DEA Technology Catalogue 2024, Fraunhofer ISE PtX-Atlas, Agora H2-Hochlauf.
-        Importrate-Annahmen: BMWK H₂-Importstrategie 2024 sieht 50-70 % bis 2030,
-        Ariadne/Agora 60-250 TWh in 2045-Szenarien.
-        Überschüssiger Import (über den max-Bedarf hinaus) wird nicht weiter angerechnet.
-      </p>
-    </div>}
-  </div>;
-}
 
 function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;

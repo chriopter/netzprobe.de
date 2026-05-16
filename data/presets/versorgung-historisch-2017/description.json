@@ -1,6 +1,6 @@
 {
   "id": "versorgung-historisch-2017",
-  "domain": "erzeugung",
+  "domain": "presets",
   "kind": "composition",
   "title": "Historisch 2017",
   "scripts": [

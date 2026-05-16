@@ -1,6 +1,6 @@
 {
   "id": "versorgung-2025-skaliert",
-  "domain": "erzeugung",
+  "domain": "presets",
   "kind": "composition",
   "title": "Versorgung: 2025 hochskaliert",
   "scripts": [

@@ -1,6 +1,6 @@
 {
   "id": "versorgung-historisch-2025",
-  "domain": "erzeugung",
+  "domain": "presets",
   "kind": "composition",
   "title": "Versorgung: Historisch 2025",
   "scripts": [

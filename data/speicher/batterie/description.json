@@ -1,6 +1,6 @@
 {
   "id": "batterie",
-  "domain": "erzeugung",
+  "domain": "speicher",
   "kind": "scenario",
   "title": "Batterie",
   "file": "speicher/batterie/data.json",

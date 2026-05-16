@@ -15,12 +15,20 @@ Extrem-Szenario: 200 GW Batterieleistung, 1 TWh Energie. Übersteigt heutige Kap
   "loadYear": 2025,
   "demand": {
     "last-2025": true,
-    "e100-pkw": true, "e100-pkw-million-km": 472200,
-    "e100-heiz": true, "e100-heiz-target-heat-twh": 530,
-    "e100-lkw": true, "e100-lkw-target-bn-km": 117,
-    "e100-bahn": false, "e100-schiff": false, "e100-flug": false,
-    "e100-ghd": true, "e100-ghd-target-heat-twh": 163,
-    "e100-industrie-waerme": false, "e100-stahl": false, "e100-chemie": false
+    "e100-pkw": true,
+    "e100-pkw-million-km": 472200,
+    "e100-heiz": true,
+    "e100-heiz-target-heat-twh": 530,
+    "e100-lkw": true,
+    "e100-lkw-target-bn-km": 117,
+    "e100-bahn": false,
+    "e100-schiff": false,
+    "e100-flug": false,
+    "e100-ghd": true,
+    "e100-ghd-target-heat-twh": 163,
+    "e100-industrie-waerme": false,
+    "e100-stahl": false,
+    "e100-chemie": false
   },
   "generation": {
     "pvInstalledGW": 350,
@@ -30,10 +38,7 @@ Extrem-Szenario: 200 GW Batterieleistung, 1 TWh Energie. Übersteigt heutige Kap
     "biomasseInstalledGW": 8,
     "laufwasserInstalledGW": 4.8,
     "gasInstalledGW": 10,
-    "kohleInstalledGW": 0,
-    "importMaxGW": 13,
-    "exportMaxGW": 25,
-    "importEmissionGperKWh": 300
+    "kohleInstalledGW": 0
   },
   "storage": {
     "batteriePowerGW": 200,
@@ -43,6 +48,13 @@ Extrem-Szenario: 200 GW Batterieleistung, 1 TWh Energie. Übersteigt heutige Kap
     "h2ChargePowerGW": 0,
     "h2DischargePowerGW": 0,
     "h2EnergyGWh": 0
+  },
+  "import": {
+    "stromGW": 13,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 25
   }
 }
 ```

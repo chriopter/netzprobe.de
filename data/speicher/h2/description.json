@@ -1,6 +1,6 @@
 {
   "id": "h2",
-  "domain": "erzeugung",
+  "domain": "speicher",
   "kind": "scenario",
   "title": "Wasserstoff",
   "file": "speicher/h2/data.json",

@@ -7,7 +7,8 @@ import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
 import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
 import erzGas from '../../data/erzeugung/gas/data.json';
 import erzKohle from '../../data/erzeugung/kohle/data.json';
-import erzHandel from '../../data/erzeugung/handel/data.json';
+import aussenhandelStrom from '../../data/aussenhandel/strom-handel/data.json';
+import aussenhandelH2 from '../../data/aussenhandel/h2-handel/data.json';
 import speicherBatterie from '../../data/speicher/batterie/data.json';
 import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
 import speicherH2 from '../../data/speicher/h2/data.json';
@@ -30,7 +31,6 @@ export const defaultScenario: Scenario = {
     'e100-industrie-waerme': false, 'e100-industrie-waerme-target-heat-twh': 220,
     'e100-stahl': false, 'e100-stahl-target-mio-ton': 28,
     'e100-chemie': false, 'e100-chemie-target-twh': 685,
-    'h2-import-twh': 0,
   },
   generation: {
     pvInstalledGW: erzPv.defaultInstalledGW,
@@ -41,9 +41,6 @@ export const defaultScenario: Scenario = {
     laufwasserInstalledGW: erzLaufwasser.defaultInstalledGW,
     gasInstalledGW: erzGas.defaultInstalledGW,
     kohleInstalledGW: erzKohle.defaultInstalledGW,
-    importMaxGW: erzHandel.import.defaultMaxGW,
-    exportMaxGW: erzHandel.export.defaultMaxGW,
-    importEmissionGperKWh: erzHandel.import.emissionGperKWh,
     // Capacity-Factor-Multipliers — Default 1.0 für PV und Wind onshore
     // (heutige Flottenwerte aus einspeisefaktoren-2025). Offshore-Default 1.8
     // kompensiert dass der einspeisefaktoren-2025-windFactor aus gemittelten
@@ -63,12 +60,22 @@ export const defaultScenario: Scenario = {
     h2DischargePowerGW: speicherH2.defaultDischargePowerGW,
     h2EnergyGWh: speicherH2.defaultEnergyGWh,
   },
+  import: {
+    stromGW: aussenhandelStrom.import.defaultMaxGW,
+    stromEmissionGperKWh: aussenhandelStrom.import.emissionGperKWh,
+    h2TWh: aussenhandelH2.import.defaultTWh,
+  } as Scenario['import'],
+  export: {
+    stromGW: aussenhandelStrom.export.defaultMaxGW,
+  },
 };
 
 export function normalizeScenario(scenario: Scenario): Scenario {
   const demand = (scenario.demand ?? {}) as Partial<Scenario['demand']>;
   const generation = (scenario.generation ?? {}) as Partial<Scenario['generation']>;
   const storage = (scenario.storage ?? {}) as Partial<Scenario['storage']>;
+  const imp = (scenario.import ?? {}) as Partial<Scenario['import']>;
+  const exp = (scenario.export ?? {}) as Partial<Scenario['export']>;
   const validPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '50ee-50import', '2025-skaliert'];
   // Migration: alte 'manual' Werte werden zu 'custom'.
   const rawPreset = (scenario.supplyPreset as string) === 'manual' ? 'custom' : scenario.supplyPreset;
@@ -102,7 +109,6 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       'e100-stahl-target-mio-ton': demand['e100-stahl-target-mio-ton'] ?? 28,
       'e100-chemie': demand['e100-chemie'] ?? false,
       'e100-chemie-target-twh': demand['e100-chemie-target-twh'] ?? 685,
-      'h2-import-twh': demand['h2-import-twh'] ?? 0,
     },
     generation: {
       pvInstalledGW: generation.pvInstalledGW ?? defaultScenario.generation.pvInstalledGW,
@@ -113,9 +119,6 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       laufwasserInstalledGW: generation.laufwasserInstalledGW ?? defaultScenario.generation.laufwasserInstalledGW,
       gasInstalledGW: generation.gasInstalledGW ?? defaultScenario.generation.gasInstalledGW,
       kohleInstalledGW: generation.kohleInstalledGW ?? defaultScenario.generation.kohleInstalledGW,
-      importMaxGW: generation.importMaxGW ?? defaultScenario.generation.importMaxGW,
-      exportMaxGW: generation.exportMaxGW ?? defaultScenario.generation.exportMaxGW,
-      importEmissionGperKWh: generation.importEmissionGperKWh ?? defaultScenario.generation.importEmissionGperKWh,
       pvCapacityFactorMultiplier: generation.pvCapacityFactorMultiplier ?? defaultScenario.generation.pvCapacityFactorMultiplier,
       windOnCapacityFactorMultiplier: generation.windOnCapacityFactorMultiplier ?? defaultScenario.generation.windOnCapacityFactorMultiplier,
       windOffCapacityFactorMultiplier: generation.windOffCapacityFactorMultiplier ?? defaultScenario.generation.windOffCapacityFactorMultiplier,
@@ -128,6 +131,14 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       h2ChargePowerGW: storage.h2ChargePowerGW ?? defaultScenario.storage.h2ChargePowerGW,
       h2DischargePowerGW: storage.h2DischargePowerGW ?? defaultScenario.storage.h2DischargePowerGW,
       h2EnergyGWh: storage.h2EnergyGWh ?? defaultScenario.storage.h2EnergyGWh,
+    },
+    import: {
+      stromGW: imp.stromGW ?? defaultScenario.import.stromGW,
+      stromEmissionGperKWh: imp.stromEmissionGperKWh ?? defaultScenario.import.stromEmissionGperKWh,
+      h2TWh: imp.h2TWh ?? defaultScenario.import.h2TWh,
+    },
+    export: {
+      stromGW: exp.stromGW ?? defaultScenario.export.stromGW,
     },
   };
 }

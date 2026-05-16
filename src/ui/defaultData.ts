@@ -1,12 +1,15 @@
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
-  ErzeugungsPool, SpeicherPool,
-  ErzPackageSource, ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe, ErzHandelData,
+  ErzeugungsPool, SpeicherPool, AussenhandelPool,
+  ErzPackageSource, ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
+  AussenhandelStromData, AussenhandelH2Data,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
+  ErzeugungsModellDispatchOrder,
   DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile,
 } from '../types/data';
 import { dataManifestUrl, dataPackageIds, dataPackageUrl, registerDataPackagePath } from './dataPackages';
+import kernModelConfig from '../../data/kern/data.json';
 
 type ManifestEntryRaw = { id: string; path?: string; description: string };
 
@@ -43,7 +46,8 @@ export async function loadDefaultData(): Promise<DataSet> {
   const [
     loadData, e100Pkw, e100Heiz, e100Lkw, e100Bahn, e100Schiff, e100Flug,
     e100Ghd, e100IndustrieWaerme, e100Stahl, e100Chemie, generationData, factorData,
-    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle, erzHandel,
+    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle,
+    aussenhandelStrom, aussenhandelH2,
     speicherBatterie, speicherPumpspeicher, speicherH2,
     load2017Data, generation2017Data,
   ] = await Promise.all([
@@ -68,7 +72,8 @@ export async function loadDefaultData(): Promise<DataSet> {
     loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzLaufwasser, 'data.json')),
     loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzGas, 'data.json')),
     loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzKohle, 'data.json')),
-    loadJson<ErzHandelData>(dataPackageUrl(dataPackageIds.erzHandel, 'data.json')),
+    loadJson<AussenhandelStromData>(dataPackageUrl(dataPackageIds.aussenhandelStrom, 'data.json')),
+    loadJson<AussenhandelH2Data>(dataPackageUrl(dataPackageIds.aussenhandelH2, 'data.json')),
     loadJson<SpeicherBatterieData>(dataPackageUrl(dataPackageIds.speicherBatterie, 'data.json')),
     loadJson<SpeicherPumpspeicherData>(dataPackageUrl(dataPackageIds.speicherPumpspeicher, 'data.json')),
     loadJson<SpeicherH2Data>(dataPackageUrl(dataPackageIds.speicherH2, 'data.json')),
@@ -77,9 +82,10 @@ export async function loadDefaultData(): Promise<DataSet> {
   ]);
 
   const erzeugungsModell = aggregateErzeugungsPool(
-    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle, erzHandel,
+    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle,
   );
   const speicherModell = aggregateSpeicherPool(speicherBatterie, speicherPumpspeicher, speicherH2);
+  const aussenhandelModell = aggregateAussenhandelPool(aussenhandelStrom, aussenhandelH2);
 
   const generationByTime = new Map(generationData.hours.map((hour) => [hour.time, hour]));
   const factorsByTime = new Map(factorData.hours.map((hour) => [hour.time, hour]));
@@ -142,6 +148,7 @@ export async function loadDefaultData(): Promise<DataSet> {
     'e100-chemie': e100Chemie,
     'erzeugungs-modell': erzeugungsModell,
     'speicher-modell': speicherModell,
+    'aussenhandel-modell': aussenhandelModell,
     loadSumTWh: loadData.sumTWh,
     generationSumTWh: generationData.sumTWh,
     importSumTWh: generationData.sumImportTWh,
@@ -163,10 +170,8 @@ export function aggregateErzeugungsPool(
   laufwasser: ErzPackageBaseload,
   gas: ErzPackageDispatchable,
   kohle: ErzPackageDispatchable,
-  handel: ErzHandelData,
 ): ErzeugungsPool {
   const toSource = (pkg: ErzPackageSource) => {
-    // Strip id from individual package shape - Pool sources use the legacy shape without id
     const { id: _id, ...rest } = pkg as ErzPackageSource & { id?: string };
     return rest as unknown as ErzPackageSource;
   };
@@ -181,10 +186,18 @@ export function aggregateErzeugungsPool(
       gas: toSource(gas),
       kohle: toSource(kohle),
     },
-    import: handel.import,
-    export: handel.export,
-    dispatchOrder: handel.dispatchOrder,
+    dispatchOrder: (kernModelConfig as { dispatchOrder: ErzeugungsModellDispatchOrder }).dispatchOrder,
   } as ErzeugungsPool;
+}
+
+export function aggregateAussenhandelPool(
+  strom: AussenhandelStromData,
+  h2: AussenhandelH2Data,
+): AussenhandelPool {
+  return {
+    strom: { import: strom.import, export: strom.export },
+    h2: { import: { defaultTWh: h2.import.defaultTWh, minTWh: h2.import.minTWh, maxTWh: h2.import.maxTWh, stepTWh: h2.import.stepTWh } },
+  };
 }
 
 export function aggregateSpeicherPool(

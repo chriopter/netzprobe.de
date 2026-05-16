@@ -329,14 +329,46 @@ export type ErzeugungsModellDispatchOrder = {
   rampUpRatio: Partial<Record<ErzeugungsModellSourceId, number>>;
 };
 
-// Aggregierter Pool aus den einzelnen erz-* Bausteinen.
-// Strukturidentisch wie früher ErzeugungsModellData.sources/.import/.export/.dispatchOrder,
-// damit das Kernmodell unverändert weiterläuft.
+// Aggregierter Pool aus den einzelnen Erzeugung-Bausteinen.
+// Import/Export wandern in AussenhandelPool, dispatchOrder lebt in der
+// Engine (data/kern/data.json).
 export type ErzeugungsPool = {
   sources: Record<ErzeugungsModellSourceId, ErzeugungsModellSource>;
+  dispatchOrder: ErzeugungsModellDispatchOrder;
+};
+
+export type AussenhandelStromData = {
+  id: 'strom-handel';
+  name: string;
   import: ErzeugungsModellImport;
   export: ErzeugungsModellExport;
-  dispatchOrder: ErzeugungsModellDispatchOrder;
+};
+
+export type AussenhandelH2Data = {
+  id: 'h2-handel';
+  name: string;
+  import: {
+    default2025TWh: number;
+    defaultTWh: number;
+    minTWh: number;
+    maxTWh: number;
+    stepTWh: number;
+  };
+};
+
+export type AussenhandelPool = {
+  strom: {
+    import: ErzeugungsModellImport;
+    export: ErzeugungsModellExport;
+  };
+  h2: {
+    import: {
+      defaultTWh: number;
+      minTWh: number;
+      maxTWh: number;
+      stepTWh: number;
+    };
+  };
 };
 
 // Generischer Typ für ein einzelnes erz-* Paket. Discriminated Union über `mode`.
@@ -383,13 +415,6 @@ export type ErzPackageDispatchable = {
 
 export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPackageDispatchable;
 
-export type ErzHandelData = {
-  id: 'handel';
-  name: string;
-  import: ErzeugungsModellImport;
-  export: ErzeugungsModellExport;
-  dispatchOrder: ErzeugungsModellDispatchOrder;
-};
 
 export type SpeicherModellStorageId = 'batterie' | 'pumpspeicher' | 'h2';
 
@@ -480,6 +505,7 @@ export type DataSet = {
   'e100-chemie': E100ChemieData;
   'erzeugungs-modell': ErzeugungsPool;
   'speicher-modell': SpeicherPool;
+  'aussenhandel-modell': AussenhandelPool;
   loadSumTWh?: number;
   generationSumTWh?: number;
   importSumTWh?: number;

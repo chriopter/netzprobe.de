@@ -1,4 +1,4 @@
-import type { ErzeugungsPool, ModelFactorHour, SpeicherPool } from '../types/data';
+import type { ErzeugungsPool, ModelFactorHour, SpeicherPool, AussenhandelPool } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { compute as computeHistorisch2025 } from '../../data/presets/versorgung-historisch-2025/model';
 import { compute as computeHistorisch2017 } from '../../data/presets/versorgung-historisch-2017/model';
@@ -52,6 +52,8 @@ export const supplyPresetWikiIds = supplyPillWikiIds;
 export type SupplyOverride = {
   generation: Scenario['generation'];
   storage: Scenario['storage'];
+  import: Scenario['import'];
+  export: Scenario['export'];
 };
 
 type FactorHour = Pick<ModelFactorHour, 'solarIrradiance' | 'wind100m'>;
@@ -62,12 +64,12 @@ export function applySupplyPreset(
   factors: FactorHour[],
   erz: ErzeugungsPool,
   speicher: SpeicherPool,
+  aussenhandel: AussenhandelPool,
 ): SupplyOverride {
-  if (presetId === 'historical-2025') return computeHistorisch2025(demandTWh, factors, erz, speicher);
-  if (presetId === 'historical-2017') return computeHistorisch2017(demandTWh, factors, erz, speicher);
-  if (presetId === '100ee-noimport') return compute100Ee(demandTWh, factors, erz, speicher);
-  if (presetId === '50ee-50import') return compute50Ee(demandTWh, factors, erz, speicher);
-  if (presetId === '2025-skaliert') return compute2025Skaliert(demandTWh, factors, erz, speicher);
-  // unreachable
-  return computeHistorisch2025(demandTWh, factors, erz, speicher);
+  if (presetId === 'historical-2025') return computeHistorisch2025(demandTWh, factors, erz, speicher, aussenhandel);
+  if (presetId === 'historical-2017') return computeHistorisch2017(demandTWh, factors, erz, speicher, aussenhandel);
+  if (presetId === '100ee-noimport') return compute100Ee(demandTWh, factors, erz, speicher, aussenhandel);
+  if (presetId === '50ee-50import') return compute50Ee(demandTWh, factors, erz, speicher, aussenhandel);
+  if (presetId === '2025-skaliert') return compute2025Skaliert(demandTWh, factors, erz, speicher, aussenhandel);
+  return computeHistorisch2025(demandTWh, factors, erz, speicher, aussenhandel);
 }

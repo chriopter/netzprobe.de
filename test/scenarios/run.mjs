@@ -63,7 +63,9 @@ const erzBiomasse = readJson('erzeugung/biomasse');
 const erzLaufwasser = readJson('erzeugung/laufwasser');
 const erzGas = readJson('erzeugung/gas');
 const erzKohle = readJson('erzeugung/kohle');
-const erzHandel = readJson('erzeugung/handel');
+const aussenhandelStrom = readJson('aussenhandel/strom-handel');
+const aussenhandelH2 = readJson('aussenhandel/h2-handel');
+const kernConfig = JSON.parse(readFileSync(join(rootDir, 'data', 'kern', 'data.json'), 'utf8'));
 const speicherBatterie = readJson('speicher/batterie');
 const speicherPumpspeicher = readJson('speicher/pumpspeicher');
 const speicherH2 = readJson('speicher/h2');
@@ -76,7 +78,7 @@ const erzeugungsModell = {
     kernkraft: stripId(erzKernkraft), biomasse: stripId(erzBiomasse), laufwasser: stripId(erzLaufwasser),
     gas: stripId(erzGas), kohle: stripId(erzKohle),
   },
-  import: erzHandel.import, export: erzHandel.export, dispatchOrder: erzHandel.dispatchOrder,
+  dispatchOrder: kernConfig.dispatchOrder,
 };
 const speicherModell = {
   storages: {
@@ -84,6 +86,10 @@ const speicherModell = {
     pumpspeicher: stripId(speicherPumpspeicher),
     h2: stripId(speicherH2),
   },
+};
+const aussenhandelModell = {
+  strom: { import: aussenhandelStrom.import, export: aussenhandelStrom.export },
+  h2: { import: aussenhandelH2.import },
 };
 
 const berlinFmt = new Intl.DateTimeFormat('de-DE', {
@@ -116,6 +122,7 @@ const context = {
   'e100-schiff': e100Schiff, 'e100-flug': e100Flug, 'e100-ghd': e100Ghd,
   'e100-industrie-waerme': e100IndustrieWaerme, 'e100-stahl': e100Stahl, 'e100-chemie': e100Chemie,
   'erzeugungs-modell': erzeugungsModell, 'speicher-modell': speicherModell,
+  'aussenhandel-modell': aussenhandelModell,
 };
 
 const baselineScenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };

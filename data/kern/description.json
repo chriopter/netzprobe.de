@@ -23,11 +23,11 @@
     },
     {
       "label": "Dispatch bei Überschuss",
-      "value": "Speicher laden (Reihenfolge per dispatchPriority) → Export bis exportMaxGW → Curtailment in Reihenfolge curtailmentPriority → Fallback: Min-Last fossil reduzieren."
+      "value": "Speicher laden (Reihenfolge per dispatchPriority) → Export bis export.stromGW-Cap → Curtailment in Reihenfolge curtailmentPriority → Fallback: Min-Last fossil reduzieren."
     },
     {
       "label": "Dispatch bei Unterdeckung",
-      "value": "Speicher entladen → Import bis importMaxGW → Gas/Kohle hochfahren im rampUpRatio → Lastabwurf."
+      "value": "Speicher entladen → Import bis import.stromGW-Cap → Gas/Kohle hochfahren im rampUpRatio → Lastabwurf."
     }
   ],
   "method": [

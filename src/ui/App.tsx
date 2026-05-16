@@ -8,6 +8,7 @@ import type { SimulationResult, SimHour } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
+import { ChangelogModal } from './ChangelogModal';
 import { applyManifestPaths, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
@@ -15,7 +16,7 @@ import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type Sideb
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { applySupplyPreset } from './supplyPresets';
 import { demandGW } from '../simulation/demand';
-import { aggregateErzeugungsPool, aggregateSpeicherPool } from './defaultData';
+import { aggregateErzeugungsPool, aggregateSpeicherPool, aggregateAussenhandelPool } from './defaultData';
 import erzPv from '../../data/erzeugung/pv/data.json';
 import erzWindOn from '../../data/erzeugung/windon/data.json';
 import erzWindOff from '../../data/erzeugung/windoff/data.json';
@@ -24,13 +25,15 @@ import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
 import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
 import erzGas from '../../data/erzeugung/gas/data.json';
 import erzKohle from '../../data/erzeugung/kohle/data.json';
-import erzHandel from '../../data/erzeugung/handel/data.json';
+import aussenhandelStromData from '../../data/aussenhandel/strom-handel/data.json';
+import aussenhandelH2Data from '../../data/aussenhandel/h2-handel/data.json';
 import speicherBatterie from '../../data/speicher/batterie/data.json';
 import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
 import speicherH2 from '../../data/speicher/h2/data.json';
 import type {
   ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
-  ErzHandelData, SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
+  AussenhandelStromData, AussenhandelH2Data,
+  SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
 } from '../types/data';
 import { cx, muted, shell, sidebarOffsetClass } from './ui';
 
@@ -43,12 +46,15 @@ const erzeugungsModell = aggregateErzeugungsPool(
   erzLaufwasser as ErzPackageBaseload,
   erzGas as ErzPackageDispatchable,
   erzKohle as ErzPackageDispatchable,
-  erzHandel as ErzHandelData,
 );
 const speicherModell = aggregateSpeicherPool(
   speicherBatterie as SpeicherBatterieData,
   speicherPumpspeicher as SpeicherPumpspeicherData,
   speicherH2 as SpeicherH2Data,
+);
+const aussenhandelModell = aggregateAussenhandelPool(
+  aussenhandelStromData as AussenhandelStromData,
+  aussenhandelH2Data as AussenhandelH2Data,
 );
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
@@ -90,8 +96,6 @@ const scenarioGenerationParams: Array<[string, keyof Scenario['generation']]> = 
   ['hydroGW', 'laufwasserInstalledGW'],
   ['gasGW', 'gasInstalledGW'],
   ['kohleGW', 'kohleInstalledGW'],
-  ['impGW', 'importMaxGW'],
-  ['expGW', 'exportMaxGW'],
 ];
 
 const scenarioStorageParams: Array<[string, keyof Scenario['storage']]> = [
@@ -102,6 +106,16 @@ const scenarioStorageParams: Array<[string, keyof Scenario['storage']]> = [
   ['h2cP', 'h2ChargePowerGW'],
   ['h2dP', 'h2DischargePowerGW'],
   ['h2E', 'h2EnergyGWh'],
+];
+
+const scenarioImportParams: Array<[string, keyof Scenario['import']]> = [
+  ['impGW', 'stromGW'],
+  ['impEmis', 'stromEmissionGperKWh'],
+  ['h2ImpTWh', 'h2TWh'],
+];
+
+const scenarioExportParams: Array<[string, keyof Scenario['export']]> = [
+  ['expGW', 'stromGW'],
 ];
 
 function queryParams() {
@@ -201,6 +215,20 @@ function scenarioFromQueryParams(): Scenario {
     const value = Number(raw);
     if (Number.isFinite(value)) storage[key] = value;
   }
+  const imp = scenario.import as Record<string, number>;
+  for (const [param, key] of scenarioImportParams) {
+    const raw = params.get(param);
+    if (raw === null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) imp[key] = value;
+  }
+  const exp = scenario.export as Record<string, number>;
+  for (const [param, key] of scenarioExportParams) {
+    const raw = params.get(param);
+    if (raw === null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) exp[key] = value;
+  }
   return scenario;
 }
 
@@ -230,6 +258,14 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
   for (const [param, key] of scenarioStorageParams) {
     if (scenario.storage[key] === scenarioBase.storage[key]) url.searchParams.delete(param);
     else url.searchParams.set(param, String(scenario.storage[key]));
+  }
+  for (const [param, key] of scenarioImportParams) {
+    if (scenario.import[key] === scenarioBase.import[key]) url.searchParams.delete(param);
+    else url.searchParams.set(param, String(scenario.import[key]));
+  }
+  for (const [param, key] of scenarioExportParams) {
+    if (scenario.export[key] === scenarioBase.export[key]) url.searchParams.delete(param);
+    else url.searchParams.set(param, String(scenario.export[key]));
   }
 }
 
@@ -483,7 +519,9 @@ function urlView() {
     const params = url.searchParams;
     const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
     const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
-    return { view: path === 'wiki' || path.startsWith('wiki/') ? 'daten' : params.get('view'), path: params.get('path') };
+    if (path === 'changelog' || path === 'changelog/') return { view: 'changelog' as const, path: null };
+    if (path === 'wiki' || path.startsWith('wiki/')) return { view: 'daten' as const, path: null };
+    return { view: params.get('view'), path: params.get('path') };
   } catch {
     return { view: null, path: null };
   }
@@ -493,7 +531,7 @@ export function App() {
   const [route] = useState(urlView);
   if (route.view === 'datei' && route.path) return <DataFileViewer path={route.path}/>;
   if (route.view === 'daten') return <DataHandbookRoute/>;
-  return <Dashboard/>;
+  return <Dashboard initialChangelogOpen={route.view === 'changelog'}/>;
 }
 
 function DataHandbookRoute() {
@@ -501,7 +539,7 @@ function DataHandbookRoute() {
   return <DataHandbook docs={datasetDocs}/>;
 }
 
-function Dashboard() {
+function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: boolean }) {
   const [data, setData] = useState<DataSet | null>(null);
   const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
@@ -514,6 +552,19 @@ function Dashboard() {
   const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const [changelogOpen, setChangelogOpenState] = useState(initialChangelogOpen);
+
+  const setChangelogOpen = (next: boolean) => {
+    setChangelogOpenState(next);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
+    const target = next ? `${basePath}changelog` : basePath.replace(/\/$/, '') || '/';
+    if (url.pathname !== target) {
+      url.pathname = target;
+      window.history.replaceState(null, '', url);
+    }
+  };
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
@@ -574,8 +625,14 @@ function Dashboard() {
       'e100-chemie': data['e100-chemie'],
     };
     const annualDemandTWh = data.hours.reduce((sum, row) => sum + demandGW(row, scenario, demandContext), 0) / 1000;
-    const override = applySupplyPreset(scenario.supplyPreset, annualDemandTWh, data.hours, erzeugungsModell, speicherModell);
-    return { ...scenario, generation: override.generation, storage: override.storage };
+    const override = applySupplyPreset(scenario.supplyPreset, annualDemandTWh, data.hours, erzeugungsModell, speicherModell, aussenhandelModell);
+    return {
+      ...scenario,
+      generation: override.generation,
+      storage: override.storage,
+      import: override.import,
+      export: override.export,
+    };
   }, [scenario, data]);
 
   const { result, isPending: simPending } = useWorkerSimulation(data, resolvedScenario);
@@ -786,6 +843,7 @@ function Dashboard() {
       <ScenarioSidebar
         data={data}
         scenario={resolvedScenario}
+        onOpenChangelog={() => setChangelogOpen(true)}
         supplyPreset={scenario.supplyPreset}
         onSupplyPresetChange={(p) => setScenario(prev => {
           if (p === 'custom') return { ...prev, supplyPreset: 'custom', generation: resolvedScenario.generation, storage: resolvedScenario.storage };
@@ -832,22 +890,42 @@ function Dashboard() {
         onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
         onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
-        onH2ImportTWhChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'h2-import-twh': v } }))}
         onGenerationChange={(field, v) => setScenario(prev => ({
           ...prev,
           supplyPreset: 'custom',
           generation: { ...resolvedScenario.generation, [field]: v },
           storage: resolvedScenario.storage,
+          import: resolvedScenario.import,
+          export: resolvedScenario.export,
         }))}
         onStorageChange={(field, v) => setScenario(prev => ({
           ...prev,
           supplyPreset: 'custom',
           generation: resolvedScenario.generation,
           storage: { ...resolvedScenario.storage, [field]: v },
+          import: resolvedScenario.import,
+          export: resolvedScenario.export,
+        }))}
+        onImportChange={(field, v) => setScenario(prev => ({
+          ...prev,
+          supplyPreset: 'custom',
+          generation: resolvedScenario.generation,
+          storage: resolvedScenario.storage,
+          import: { ...resolvedScenario.import, [field]: v },
+          export: resolvedScenario.export,
+        }))}
+        onExportChange={(field, v) => setScenario(prev => ({
+          ...prev,
+          supplyPreset: 'custom',
+          generation: resolvedScenario.generation,
+          storage: resolvedScenario.storage,
+          import: resolvedScenario.import,
+          export: { ...resolvedScenario.export, [field]: v },
         }))}
       />
 
     </div>
+    <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)}/>
   </main>;
 }
 

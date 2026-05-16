@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
@@ -9,6 +10,9 @@ const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=da
 const domainLabels: Record<string, string> = {
   last: 'Last',
   erzeugung: 'Erzeugung',
+  speicher: 'Speicher',
+  aussenhandel: 'Außenhandel',
+  presets: 'Presets',
   modell: 'Modell',
 };
 const kindLabels: Record<DatasetDoc['kind'], string> = {
@@ -42,6 +46,9 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
   const sections = [
     ['last', 'Last'],
     ['erzeugung', 'Erzeugung'],
+    ['speicher', 'Speicher'],
+    ['aussenhandel', 'Außenhandel'],
+    ['presets', 'Presets'],
     ['modell', 'Modell'],
   ] as const;
 
@@ -90,11 +97,18 @@ function DataHandbookNav({
   grouped: Record<string, DatasetDoc[]>;
   selectedId: string | null;
 }) {
+  const selectedDomain = selectedId
+    ? Object.entries(grouped).find(([, docs]) => docs.some(d => d.id === selectedId))?.[0]
+    : null;
   return <nav aria-label="Datensätze">
-    <div className="grid gap-5">
-      <TreeSection title="Home">
-        <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
-      </TreeSection>
+    <div className="grid gap-2">
+      <a
+        href={dataWikiHomeUrl()}
+        className={cx(
+          'block rounded-md px-2 py-1.5 text-sm leading-5 transition',
+          !selectedId ? 'bg-zinc-100 font-medium text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
+        )}
+      >Überblick</a>
       {sections.map(([domain, label]) => {
         const inDomain = grouped[domain];
         if (!inDomain?.length) return null;
@@ -102,7 +116,7 @@ function DataHandbookNav({
         const presets = inDomain.filter(doc => doc.kind === 'composition');
         const models = inDomain.filter(doc => doc.kind === 'model');
         const showGroups = (presets.length > 0 || models.length > 0) && bausteine.length > 0;
-        return <TreeSection key={domain} title={label}>
+        return <CollapsibleSection key={domain} title={label} defaultOpen={selectedDomain === domain}>
           {!!bausteine.length && <>
             {showGroups && <TreeSubheader>Bausteine</TreeSubheader>}
             <div className={showGroups ? 'ml-2 grid gap-1 border-l border-zinc-100 pl-2' : 'grid gap-1'}>
@@ -121,7 +135,7 @@ function DataHandbookNav({
               {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
             </div>
           </>}
-        </TreeSection>;
+        </CollapsibleSection>;
       })}
     </div>
   </nav>;
@@ -234,12 +248,22 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
   </div>;
 }
 
-function TreeSection({ title, children }: { title: string; children: ReactNode }) {
+function CollapsibleSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  const Chevron = open ? ChevronDown : ChevronRight;
   return <section className="min-w-0">
-    <h2 className="mb-2 text-[11px] font-semibold uppercase text-zinc-400">{title}</h2>
-    <div className="grid min-w-0 gap-1">
+    <button
+      type="button"
+      onClick={() => setOpen(o => !o)}
+      aria-expanded={open}
+      className="group flex w-full items-center gap-1.5 rounded-md px-1.5 py-1.5 text-left text-base font-semibold leading-5 text-zinc-900 transition hover:bg-zinc-50"
+    >
+      <Chevron className="h-4 w-4 shrink-0 text-zinc-400 transition group-hover:text-zinc-700" aria-hidden/>
+      <span className="truncate">{title}</span>
+    </button>
+    {open && <div className="mt-1 grid min-w-0 gap-1 pl-5">
       {children}
-    </div>
+    </div>}
   </section>;
 }
 

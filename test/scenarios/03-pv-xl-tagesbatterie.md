@@ -15,9 +15,16 @@ Solar-dominiertes System mit großer Batterie für Tag-Nacht-Verschiebung. Klass
   "loadYear": 2025,
   "demand": {
     "last-2025": true,
-    "e100-pkw": false, "e100-heiz": false, "e100-lkw": false, "e100-bahn": false,
-    "e100-schiff": false, "e100-flug": false, "e100-ghd": false,
-    "e100-industrie-waerme": false, "e100-stahl": false, "e100-chemie": false
+    "e100-pkw": false,
+    "e100-heiz": false,
+    "e100-lkw": false,
+    "e100-bahn": false,
+    "e100-schiff": false,
+    "e100-flug": false,
+    "e100-ghd": false,
+    "e100-industrie-waerme": false,
+    "e100-stahl": false,
+    "e100-chemie": false
   },
   "generation": {
     "pvInstalledGW": 400,
@@ -27,10 +34,7 @@ Solar-dominiertes System mit großer Batterie für Tag-Nacht-Verschiebung. Klass
     "biomasseInstalledGW": 4.8,
     "laufwasserInstalledGW": 4.8,
     "gasInstalledGW": 0,
-    "kohleInstalledGW": 0,
-    "importMaxGW": 13,
-    "exportMaxGW": 25,
-    "importEmissionGperKWh": 300
+    "kohleInstalledGW": 0
   },
   "storage": {
     "batteriePowerGW": 100,
@@ -40,6 +44,13 @@ Solar-dominiertes System mit großer Batterie für Tag-Nacht-Verschiebung. Klass
     "h2ChargePowerGW": 0,
     "h2DischargePowerGW": 0,
     "h2EnergyGWh": 0
+  },
+  "import": {
+    "stromGW": 13,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 25
   }
 }
 ```

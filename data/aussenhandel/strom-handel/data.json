@@ -1,6 +1,6 @@
 {
-  "id": "handel",
-  "name": "Stromhandel",
+  "id": "strom-handel",
+  "name": "Strom-Außenhandel",
   "import": {
     "default2025GW": 13,
     "defaultMaxGW": 13,
@@ -15,10 +15,5 @@
     "minGW": 0,
     "maxGW": 200,
     "stepGW": 5
-  },
-  "dispatchOrder": {
-    "curtailmentPriority": ["windOff", "windOn", "pv", "kernkraft"],
-    "rampUpPriority": ["gas", "kohle"],
-    "rampUpRatio": { "gas": 2, "kohle": 1 }
   }
 }

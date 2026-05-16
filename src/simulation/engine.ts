@@ -1,7 +1,7 @@
 import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
-  ErzeugungsPool, SpeicherPool,
+  ErzeugungsPool, SpeicherPool, AussenhandelPool,
   HourlyInput,
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
@@ -31,6 +31,7 @@ export type SimulationContext = {
   'e100-chemie': E100ChemieData;
   'erzeugungs-modell': ErzeugungsPool;
   'speicher-modell': SpeicherPool;
+  'aussenhandel-modell': AussenhandelPool;
 };
 
 export function runSimulation(input: HourlyInput[], scenario: Scenario, context: SimulationContext): SimulationResult {

@@ -15,12 +15,20 @@ Hypothetisches Szenario mit PSP an der oberen Slider-Grenze (15 GW / 100 GWh). R
   "loadYear": 2025,
   "demand": {
     "last-2025": true,
-    "e100-pkw": true, "e100-pkw-million-km": 472200,
-    "e100-heiz": true, "e100-heiz-target-heat-twh": 530,
-    "e100-lkw": true, "e100-lkw-target-bn-km": 117,
-    "e100-bahn": false, "e100-schiff": false, "e100-flug": false,
-    "e100-ghd": true, "e100-ghd-target-heat-twh": 163,
-    "e100-industrie-waerme": false, "e100-stahl": false, "e100-chemie": false
+    "e100-pkw": true,
+    "e100-pkw-million-km": 472200,
+    "e100-heiz": true,
+    "e100-heiz-target-heat-twh": 530,
+    "e100-lkw": true,
+    "e100-lkw-target-bn-km": 117,
+    "e100-bahn": false,
+    "e100-schiff": false,
+    "e100-flug": false,
+    "e100-ghd": true,
+    "e100-ghd-target-heat-twh": 163,
+    "e100-industrie-waerme": false,
+    "e100-stahl": false,
+    "e100-chemie": false
   },
   "generation": {
     "pvInstalledGW": 250,
@@ -30,10 +38,7 @@ Hypothetisches Szenario mit PSP an der oberen Slider-Grenze (15 GW / 100 GWh). R
     "biomasseInstalledGW": 8,
     "laufwasserInstalledGW": 4.8,
     "gasInstalledGW": 20,
-    "kohleInstalledGW": 0,
-    "importMaxGW": 20,
-    "exportMaxGW": 30,
-    "importEmissionGperKWh": 300
+    "kohleInstalledGW": 0
   },
   "storage": {
     "batteriePowerGW": 30,
@@ -43,6 +48,13 @@ Hypothetisches Szenario mit PSP an der oberen Slider-Grenze (15 GW / 100 GWh). R
     "h2ChargePowerGW": 20,
     "h2DischargePowerGW": 10,
     "h2EnergyGWh": 20000
+  },
+  "import": {
+    "stromGW": 20,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 30
   }
 }
 ```

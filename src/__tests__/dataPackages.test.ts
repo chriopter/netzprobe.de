@@ -34,7 +34,7 @@ describe('data package manifest', () => {
       const doc = readDoc(entry);
       expect(doc.id, entry.description).toBe(entry.id);
       expect('code' in doc, entry.description).toBe(false);
-      expect(doc.domain, entry.description).toMatch(/^(last|erzeugung|modell)$/);
+      expect(doc.domain, entry.description).toMatch(/^(last|erzeugung|speicher|aussenhandel|presets|modell)$/);
       expect(validKinds.has(doc.kind), entry.description).toBe(true);
     }
   });

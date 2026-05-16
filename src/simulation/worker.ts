@@ -27,6 +27,7 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
       'e100-chemie': message['e100-chemie'],
       'erzeugungs-modell': message['erzeugungs-modell'],
       'speicher-modell': message['speicher-modell'],
+      'aussenhandel-modell': message['aussenhandel-modell'],
     };
     return;
   }

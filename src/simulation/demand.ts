@@ -51,7 +51,7 @@ function sectorH2StromTWh(scenario: Scenario, context: DemandScenarioContext): S
 }
 
 function h2ImportReductionGW(scenario: Scenario, context: DemandScenarioContext): number {
-  const importTWh = scenario.demand['h2-import-twh'] ?? 0;
+  const importTWh = scenario.import.h2TWh ?? 0;
   if (importTWh <= 0) return 0;
   const sectorStrom = sectorH2StromTWh(scenario, context);
   const totalStromTWh = sectorStrom.stahl + sectorStrom.chemie + sectorStrom.schiff + sectorStrom.flug;

@@ -15,17 +15,26 @@ Annäherung an das BMWK-Langfristszenario T45-Strom 2045: 400 GW PV, 160 GW Wind
   "loadYear": 2025,
   "demand": {
     "last-2025": true,
-    "e100-pkw": true, "e100-pkw-million-km": 472200,
-    "e100-heiz": true, "e100-heiz-target-heat-twh": 530,
-    "e100-lkw": true, "e100-lkw-target-bn-km": 117,
-    "e100-bahn": true, "e100-bahn-target-twh": 10,
-    "e100-schiff": true, "e100-schiff-target-twh": 80,
-    "e100-flug": true, "e100-flug-target-twh": 300,
-    "e100-ghd": true, "e100-ghd-target-heat-twh": 163,
-    "e100-industrie-waerme": true, "e100-industrie-waerme-target-heat-twh": 220,
-    "e100-stahl": true, "e100-stahl-target-mio-ton": 28,
-    "e100-chemie": true, "e100-chemie-target-twh": 440,
-    "h2-import-twh": 150
+    "e100-pkw": true,
+    "e100-pkw-million-km": 472200,
+    "e100-heiz": true,
+    "e100-heiz-target-heat-twh": 530,
+    "e100-lkw": true,
+    "e100-lkw-target-bn-km": 117,
+    "e100-bahn": true,
+    "e100-bahn-target-twh": 10,
+    "e100-schiff": true,
+    "e100-schiff-target-twh": 80,
+    "e100-flug": true,
+    "e100-flug-target-twh": 300,
+    "e100-ghd": true,
+    "e100-ghd-target-heat-twh": 163,
+    "e100-industrie-waerme": true,
+    "e100-industrie-waerme-target-heat-twh": 220,
+    "e100-stahl": true,
+    "e100-stahl-target-mio-ton": 28,
+    "e100-chemie": true,
+    "e100-chemie-target-twh": 440
   },
   "generation": {
     "pvInstalledGW": 400,
@@ -35,10 +44,7 @@ Annäherung an das BMWK-Langfristszenario T45-Strom 2045: 400 GW PV, 160 GW Wind
     "biomasseInstalledGW": 8,
     "laufwasserInstalledGW": 4.8,
     "gasInstalledGW": 30,
-    "kohleInstalledGW": 0,
-    "importMaxGW": 30,
-    "exportMaxGW": 30,
-    "importEmissionGperKWh": 300
+    "kohleInstalledGW": 0
   },
   "storage": {
     "batteriePowerGW": 80,
@@ -48,6 +54,14 @@ Annäherung an das BMWK-Langfristszenario T45-Strom 2045: 400 GW PV, 160 GW Wind
     "h2ChargePowerGW": 80,
     "h2DischargePowerGW": 40,
     "h2EnergyGWh": 80000
+  },
+  "import": {
+    "h2TWh": 150,
+    "stromGW": 30,
+    "stromEmissionGperKWh": 300
+  },
+  "export": {
+    "stromGW": 30
   }
 }
 ```
