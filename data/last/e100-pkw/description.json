@@ -22,8 +22,8 @@
   "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
   "description": [
     "**Bezugsjahr 2023:** private Pkw fahren rund `472.200 Mio. km`. Davon sind etwa `20.000 Mio. km` bereits elektrisch gefahren und damit schon in der historischen Stromlast enthalten; dieser Sockel ist das Slider-Minimum.",
-    "Für zusätzliche elektrische Kilometer setzt das Modell `20 kWh/100 km` Strom ab Netz an, inklusive AC-Ladeverlusten. Der Wert liegt im Flottenmittel-Korridor (`18–22 kWh/100 km`); Einzelmodelle streuen segment- und wetterabhängig zwischen `14` und `28 kWh/100 km`. Eine vollständige Elektrifizierung der 2023er privaten Pkw-Fahrleistung ergibt so rund `90 TWh/a` Zusatzlast — sie ersetzt etwa das Dreifache an fossiler Kraftstoff-Endenergie, weil der Antriebsstrang-Wirkungsgrad vom Verbrenner (`~25 %`) zum BEV (`75–85 %`) um Faktor 3 steigt.",
-    "Die Stundenlast folgt nicht dem Zeitpunkt der Fahrt, sondern dem Laden. Das hinterlegte **24-h-Heimladeprofil** bildet ungesteuertes Laden mit Abendpeak `17–21 Uhr` und Nachttal `4–6 Uhr` ab; Smart Charging, öffentliches Laden und saisonal höherer Winterverbrauch bleiben außen vor."
+    "**Verbrauch:** das Modell setzt `20 kWh/100 km` Strom ab Netz an, inklusive AC-Ladeverlusten. Der Wert liegt im Flottenmittel-Korridor (`18–22 kWh/100 km`); Einzelmodelle streuen segment- und wetterabhängig zwischen `14` und `28 kWh/100 km`. Eine vollständige Elektrifizierung der 2023er privaten Pkw-Fahrleistung ergibt so rund `90 TWh/a` Zusatzlast — sie ersetzt etwa das Dreifache an fossiler Kraftstoff-Endenergie, weil der **Antriebsstrang-Wirkungsgrad** vom Verbrenner (`~25 %`) zum BEV (`75–85 %`) um Faktor 3 steigt.",
+    "**Lastform:** die Stundenlast folgt nicht dem Zeitpunkt der Fahrt, sondern dem Laden. Das hinterlegte 24-h-Heimladeprofil bildet ungesteuertes Laden mit Abendpeak `17–21 Uhr` und Nachttal `4–6 Uhr` ab; Smart Charging, öffentliches Laden und saisonal höherer Winterverbrauch bleiben außen vor."
   ],
   "overview": [
     {
