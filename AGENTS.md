@@ -10,14 +10,16 @@
 
 ## Datenpakete entwickeln
 
-Datenpakete teilen sich in zwei Klassen:
+Datenpakete leben unter `data/<domäne>/<paket>/`. Domänen:
 
-- **Bausteine** (`kind: dataset` oder `kind: scenario`) — atomare Einheiten mit Parametern oder Beobachtungen. Direkt unter `data/<id>/`.
-- **Presets** (`kind: composition`) — vorkonfigurierte Kombinationen von Bausteinen. Unter `data/preset/<id>/`. Im Wiki mit gelbem „Preset"-Tag hervorgehoben.
+- `data/erzeugung/` — Erzeuger (PV, Wind, Kohle, Gas, …) plus historische Beobachtungen und Einspeisefaktoren.
+- `data/last/` — Sektor-Elektrifizierung (`e100-*`) plus historische Last.
+- `data/speicher/` — Batterie, Pumpspeicher, H2.
+- `data/presets/` — Kompositionen (`kind: composition`). Im Wiki mit gelbem „Preset"-Tag hervorgehoben.
+- `data/kern/` — Dispatch-Engine (`kind: model`).
 
-Engine-Code (`kind: model`) lebt in `data/kernmodell/`.
+Bausteine (`kind: dataset` oder `kind: scenario`) sind atomare Einheiten mit Parametern oder Beobachtungen.
 
-Jeder fachliche Daten-, Szenario- oder Modellbaustein lebt als Paket unter `data/<paket>/`.
 Jedes Paket hat immer:
 
 1. `description.json` — Wiki-Eintrag (siehe Stil unten), mit `id`, `domain` und `kind`.
@@ -29,12 +31,12 @@ Optional:
 4. `generate.mjs` — Generator, wenn Werte berechnet werden. Skript schreibt nach stdout oder direkt nach `data.json`; Regeneration klar in `description.json` beschreiben.
 
 Außerdem nötig:
-- Eintrag in `data/manifest.json` in der Reihenfolge, in der die App es zeigen soll. Jeder Eintrag hat `id`, `path` (Verzeichnis relativ zu `data/`) und `description` (Pfad zur Beschreibung).
-- Slug eindeutig; Top-Level-Pakete liegen flach in `data/<id>/`, Kompositions-/Preset-Pakete in `data/preset/<id>/` (z. B. `data/preset/e100/`, `data/preset/versorgung-100ee-noimport/`). Der Pfad wird im Manifest aufgelöst, die ID bleibt URL-stabil.
-- Paketordner-Basename, Manifest-`id`, `description.json.id` und der `model.ts`-Pfad in `scripts` (relativ zum `data/`-Root) müssen 1:1 denselben Paketnamen verwenden, z. B. `data/e100-pkw/`, `"id": "e100-pkw"`, `"scripts": ["e100-pkw/model.ts"]`.
-- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt der Paketordner-Basename sein.
-- App-Code referenziert Paket-IDs über `src/dataPackages.ts`; Scenario-State, Worker-Nachrichten und Core-Kontext verwenden die Paket-ID als Key, keine historischen Feature-Aliasse.
-- Loader-Anpassung in `src/loaders/defaultData.ts` und Typen in `src/types/data.ts`.
+- Eintrag in `data/manifest.json` mit `id`, `path` (Verzeichnis relativ zu `data/`, z. B. `erzeugung/pv` oder `last/e100-pkw`) und `description` (Pfad zur Beschreibung). Die Reihenfolge bestimmt die Wiki-Anzeige.
+- Slug eindeutig; der Pfad enthält die Domäne, die ID ist domänen-frei, wenn das Paket innerhalb seiner Domäne eindeutig ist (z. B. ID `pv`, Pfad `erzeugung/pv`). Wo IDs sonst kollidieren würden (`last-2025` vs. `erzeugung-2025`), bleibt der Domänen-Präfix in der ID.
+- `description.json.id` muss exakt der Manifest-`id` entsprechen; der `model.ts`-Eintrag in `scripts` muss mit `path/` beginnen, also z. B. `"scripts": ["erzeugung/pv/model.ts"]`.
+- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt die Manifest-`id` sein.
+- App-Code referenziert Paket-IDs über `src/ui/dataPackages.ts`; Scenario-State, Worker-Nachrichten und Core-Kontext verwenden die Paket-ID als Key, keine historischen Feature-Aliasse.
+- Loader-Anpassung in `src/ui/defaultData.ts` und Typen in `src/types/data.ts`.
 - Test-Fixture in `src/__tests__/engine.test.ts` mit minimalem Plausibilitäts-Check.
 
 ## Szenarien prüfen
@@ -49,8 +51,8 @@ Vor dem Mergen jedes neuen oder geänderten Szenarios:
 ## Wiki-Stil
 
 Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbilder:
-- Reine Daten ohne Slider: `data/last-2025/description.json` — kein `overview`, kein `sections`.
-- Szenarien mit Slider und Formel: `data/e100-pkw/description.json` und `data/e100-heiz/description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
+- Reine Daten ohne Slider: `data/last/2025/description.json` — kein `overview`, kein `sections`.
+- Szenarien mit Slider und Formel: `data/last/e100-pkw/description.json` und `data/last/e100-heiz/description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
 
 Regeln:
 
