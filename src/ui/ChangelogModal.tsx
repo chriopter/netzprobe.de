@@ -103,9 +103,11 @@ function renderInline(text: string): ReactNode[] {
 }
 
 function Bullets({ nodes, level = 0 }: { nodes: BulletNode[]; level?: number }) {
+  // Bindestrich als echtes Textzeichen statt CSS-Marker, damit beim Kopieren
+  // jede Zeile mit "- " in der Zwischenablage landet (markdown-tauglich).
   return <ul className={cx('grid gap-1.5', level === 0 ? 'mt-2' : 'mt-1.5')}>
-    {nodes.map((node, i) => <li key={i} className="flex gap-2 text-sm leading-6 text-zinc-700">
-      <span className="mt-[0.45rem] inline-block h-1 w-1 shrink-0 rounded-full bg-zinc-400" aria-hidden/>
+    {nodes.map((node, i) => <li key={i} className="flex gap-1.5 text-sm leading-6 text-zinc-700">
+      <span className="shrink-0 text-zinc-400" aria-hidden>{'- '}</span>
       <div className="min-w-0 flex-1">
         <span>{renderInline(node.text)}</span>
         {node.children.length > 0 && <Bullets nodes={node.children} level={level + 1}/>}

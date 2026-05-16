@@ -92,10 +92,11 @@ Mechanik:
 
 Stil:
 
-- Kompakt aber informativ: ein Satz pro Bullet, Substantiv + Verb, kein Marketing.
-- User-Perspektive: „Neuer Schieberegler für H2-Import", nicht „Refactor scenario presets".
-- Interne Refactors, Build-Hygiene, Tests weglassen — außer sie sind für Nutzer merklich (z. B. Performance).
-- Bei vielen Änderungen thematisch gruppieren (z. B. „Daten", „UI", „Simulation") statt chronologisch.
+- Knackig: max. 5 Bullets pro Tagesblock, je ~10–15 Wörter — ungefähr eine Zeile.
+- Substantiv-zentriert, kein Marketing, keine Quellen-Klammern; konkrete Begriffe (Sektor-Namen, Wirkungsgrade) sind erlaubt und gewollt.
+- User-Perspektive: „H2-Import als eigener Slider", nicht „Refactor scenario presets".
+- Verwandte Änderungen mit Semikolon in einem Bullet bündeln (z. B. „e100-lkw um Transit/Kabotage und Nutzlast-Uplift erweitert; e100-heiz-JAZ-Spanne dokumentiert.").
+- Interne Refactors, Build-Hygiene, Tests, UI-Cosmetics weglassen — nur was Nutzer sehen oder im Ergebnis spüren.
 
 ## Dokumentation
 
