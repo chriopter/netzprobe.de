@@ -141,10 +141,10 @@ export function ChangelogModal({ open, onClose }: { open: boolean; onClose: () =
     onClick={onClose}
   >
     <div
-      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white"
       onClick={e => e.stopPropagation()}
     >
-      <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-6 py-4">
+      <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-200 bg-zinc-50/60 px-6 py-4">
         <div className="min-w-0">
           <h2 id="changelog-title" className="text-lg font-semibold text-zinc-950">Änderungsverlauf</h2>
           <p className="mt-0.5 text-xs text-zinc-500">

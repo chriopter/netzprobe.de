@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import {
   Activity,
   ArrowRightLeft,
@@ -27,7 +27,7 @@ function GithubMark({ className }: { className?: string }) {
 import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataCatalog';
 import { fmt0, twh, twh0 } from './format';
-import { cx, sidebarWidthClass } from './ui';
+import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
 import { additionalTWh as e100PkwAdditionalTWh } from '../../data/last/e100-pkw/model';
 import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh } from '../../data/last/e100-heiz/model';
 import { additionalTWh as e100LkwAdditionalTWh } from '../../data/last/e100-lkw/model';
@@ -61,6 +61,7 @@ type ScenarioSidebarProps = {
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
+  onRange: (start: string, end: string) => void;
   onHistoricalLoadChange: (checked: boolean) => void;
   onLoadYearChange: (year: 2025 | 2017) => void;
   onE100PkwChange: (checked: boolean) => void;
@@ -113,6 +114,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   onPreset,
   onStart,
   onEnd,
+  onRange,
   onHistoricalLoadChange,
   onLoadYearChange,
   onE100PkwChange,
@@ -169,12 +171,12 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
     aria-modal="true"
     aria-label="Szenario-Sidebar"
     className={cx(
-      'fixed inset-0 z-50 w-screen max-w-none overflow-hidden bg-zinc-50 lg:inset-auto lg:bottom-3 lg:left-3 lg:top-3 lg:z-20 lg:bg-transparent',
+      'fixed inset-0 z-50 w-screen max-w-none overflow-hidden bg-white lg:bottom-0 lg:left-0 lg:top-0 lg:z-20 lg:bg-transparent',
       sidebarWidthClass,
     )}
   >
-    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden border-zinc-200/80 bg-zinc-50 p-3 shadow-[0_18px_45px_rgba(24,24,27,.06)] [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] lg:rounded-xl lg:border lg:bg-zinc-50/80">
-      <section className="sticky top-0 z-30 mb-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-2.5 shadow-[0_10px_26px_rgba(24,24,27,.04)]">
+    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] lg:border-r lg:border-zinc-200">
+      <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <button
@@ -182,7 +184,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
               aria-label="Sidebar einklappen"
               aria-expanded={true}
               title="Sidebar einklappen"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+              className={cx(iconButton, 'shrink-0')}
               onClick={() => onCollapsedChange(true)}
             >
               <Menu className="h-4 w-4" aria-hidden="true"/>
@@ -221,11 +223,11 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
             </a>
           </div>
         </div>
-        <div className="mt-2.5 border-t border-zinc-200/70 pt-2.5">
+        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px]">
           {actionBar}
         </div>
       </section>
-      <div className="grid gap-3">
+      <div className={cx('grid gap-6 py-5', sidebarInset)}>
 
         <PeriodControl
           preset={periodPreset}
@@ -237,6 +239,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
+          onRange={onRange}
         />
 
         <LoadConfiguration
@@ -287,13 +290,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           onExportChange={onExportChange}
         />
 
-        <ReadonlyCard
-          title="Modell"
-          icon={<SlidersHorizontal className="h-4 w-4"/>}
-          label="Kernmodell"
-          meta="Stündlicher Dispatch von Last, Erzeugung, Speicher und Handel"
-          docId={datasetIds.coreModel}
-        />
+        <ModelSection/>
       </div>
     </div>
   </aside>;
@@ -407,26 +404,74 @@ function storageGroups(sp: DataSet['speicher-modell']): StorageGroup[] {
 function PresetPillRow<TId extends string>({
   presets, activeId, onSelect,
 }: {
-  presets: ReadonlyArray<{ id: TId; label: string; description?: string }>;
+  presets: ReadonlyArray<PresetOption<TId>>;
   activeId: TId | null;
   onSelect: (id: TId) => void;
 }) {
-  return <div className="flex flex-wrap gap-1.5">
-    {presets.map(p => <button
-      key={p.id}
-      type="button"
-      title={p.description}
-      onClick={() => onSelect(p.id)}
-      className={cx(
-        'rounded-full px-3 py-1 text-xs font-medium transition',
-        p.id === activeId ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
-      )}
-    >{p.label}</button>)}
-  </div>;
+  return <>
+    {presets.map(p => <span key={p.id} className="group relative inline-flex items-center">
+      <button
+        type="button"
+        title={p.description}
+        onClick={() => onSelect(p.id)}
+        className={cx(
+          'rounded-full px-3 py-1 text-xs font-medium transition',
+          p.id === activeId ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
+        )}
+      >{p.label}</button>
+      {p.docId && <span className="absolute -right-4 top-1/2 -translate-y-1/2"><InfoLink id={p.docId} label={`${p.label} im Wiki öffnen`}/></span>}
+    </span>)}
+  </>;
 }
 
-function PillCategory({ children }: { children: ReactNode }) {
-  return <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">{children}</div>;
+type PresetOption<TId extends string> = { id: TId; label: string; description?: string; docId?: string };
+type PresetOptionGroup<TId extends string> = { title: string; presets: ReadonlyArray<PresetOption<TId>> };
+
+function PresetDropdownPill<TId extends string>({
+  label, presets = [], groups, activeId, active, docId, onSelect,
+}: {
+  label: string;
+  presets?: ReadonlyArray<PresetOption<TId>>;
+  groups?: ReadonlyArray<PresetOptionGroup<TId>>;
+  activeId: TId | null;
+  active?: boolean;
+  docId?: string;
+  onSelect: (id: TId) => void;
+}) {
+  const optionGroups = groups ?? [{ title: '', presets }];
+  const allPresets = optionGroups.flatMap(group => group.presets);
+  const activeState = active ?? allPresets.some(p => p.id === activeId);
+  return <span className="group relative inline-flex items-center">
+    <details className="relative inline-block">
+      <summary className={cx(
+        'flex h-[26px] w-fit cursor-pointer list-none items-center rounded-full border px-3 text-xs font-medium transition marker:hidden [&::-webkit-details-marker]:hidden',
+        activeState ? 'border-zinc-950 bg-zinc-950 text-white' : 'border-transparent bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
+      )}>
+        <span>{label}</span>
+        <ChevronDown className="ml-1 h-3 w-3" aria-hidden="true"/>
+      </summary>
+      <div className="absolute left-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg">
+        {optionGroups.map(group => <div key={group.title || 'options'}>
+          {group.title && <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400 first:pt-0.5">{group.title}</div>}
+          {group.presets.map(p => <div key={p.id} className={cx('rounded-md', p.id === activeId && 'bg-zinc-50')}>
+            <button
+              type="button"
+              title={p.description}
+              className={cx(
+                'w-full min-w-0 rounded-md px-2 py-1.5 text-left text-xs font-medium transition',
+                p.id === activeId ? 'text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
+              )}
+              onClick={event => {
+                onSelect(p.id);
+                event.currentTarget.closest('details')?.removeAttribute('open');
+              }}
+            >{p.label}</button>
+          </div>)}
+        </div>)}
+      </div>
+    </details>
+    {docId && <span className="absolute -right-4 top-1/2 -translate-y-1/2"><InfoLink id={docId} label={`${label} im Wiki öffnen`}/></span>}
+  </span>;
 }
 
 function ErzeugungSection({
@@ -450,26 +495,40 @@ function ErzeugungSection({
     id,
     label: supplyPillLabels[id],
     description: supplyPillDescriptions[id],
+    docId: supplyPillWikiIds[id],
   }));
   const activeId: SupplyPillId = supplyPreset;
   const activeWikiId = supplyPillWikiIds[activeId];
-  const fixIds = new Set(['historical-2025', 'historical-2017', 'custom']);
-  const fixPills = pillPresets.filter(p => fixIds.has(p.id));
-  const lastfolgendPills = pillPresets.filter(p => !fixIds.has(p.id));
+  const visibleSupplyPillIds = new Set<SupplyPillId>(['historical-2025', '100ee-noimport', 'custom']);
+  const visibleSupplyPills = pillPresets.filter(p => visibleSupplyPillIds.has(p.id));
+  const supplyDropdownGroups: ReadonlyArray<PresetOptionGroup<SupplyPillId>> = [
+    { title: 'Fix', presets: pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'historical-2017' || p.id === 'custom') },
+    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '50ee-50import' || p.id === '2025-skaliert') },
+  ];
 
-  return <SidebarCard title="Erzeugung" icon={<Zap className="h-4 w-4"/>} docId={activeWikiId}>
-    <div className="grid gap-2">
-      <div>
-        <PillCategory>Fix · Werte bleiben wie eingestellt</PillCategory>
-        <PresetPillRow presets={fixPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
-      </div>
-      <div>
-        <PillCategory>Lastfolgend · Werte passen sich der Last an</PillCategory>
-        <PresetPillRow presets={lastfolgendPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
-      </div>
+  const generationTotalGW = scenario.generation.pvInstalledGW
+    + scenario.generation.windOnInstalledGW
+    + scenario.generation.windOffInstalledGW
+    + scenario.generation.biomasseInstalledGW
+    + scenario.generation.laufwasserInstalledGW
+    + scenario.generation.kernkraftInstalledGW
+    + scenario.generation.gasInstalledGW
+    + scenario.generation.kohleInstalledGW;
+  return <SidebarCard
+    title="Erzeugung"
+    icon={<Zap className="h-4 w-4"/>}
+    docId={activeWikiId}
+    badge={supplyPillLabels[activeId]}
+    meta={`${fmt0.format(generationTotalGW)} GW`}
+    collapsible
+    defaultOpen
+  >
+    <div className="flex flex-wrap gap-1.5">
+      <PresetPillRow presets={visibleSupplyPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
+      <PresetDropdownPill label="Mehr" groups={supplyDropdownGroups} activeId={activeId} active={!visibleSupplyPillIds.has(activeId)} onSelect={onSupplyPresetChange}/>
     </div>
 
-    <div className="mt-3 grid gap-2">
+    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3">
       <SupplyGroupAccordions
         data={data}
         scenario={scenario}
@@ -498,8 +557,41 @@ function AussenhandelSection({
     'aussenhandel-h2': false,
   });
   const toggle = (id: string) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const [saved, setSaved] = useState<Partial<Record<AussenhandelGroup['id'], { import: Partial<Record<ImportFieldKey, number>>; export: Partial<Record<ExportFieldKey, number>> }>>>({});
+  const isEnabled = (group: AussenhandelGroup) => group.importFields.some(field => scenario.import[field.key] > 0)
+    || group.exportFields.some(field => scenario.export[field.key] > 0);
+  const setEnabled = (group: AussenhandelGroup, checked: boolean) => {
+    if (checked) {
+      const snapshot = saved[group.id];
+      for (const field of group.importFields) {
+        const fallback = field.baseline && field.baseline > field.min ? field.baseline : field.max;
+        onImportChange(field.key, snapshot?.import[field.key] ?? fallback);
+      }
+      for (const field of group.exportFields) {
+        const fallback = field.baseline && field.baseline > field.min ? field.baseline : field.max;
+        onExportChange(field.key, snapshot?.export[field.key] ?? fallback);
+      }
+    } else {
+      const snapshot: { import: Partial<Record<ImportFieldKey, number>>; export: Partial<Record<ExportFieldKey, number>> } = { import: {}, export: {} };
+      for (const field of group.importFields) {
+        snapshot.import[field.key] = scenario.import[field.key];
+        onImportChange(field.key, 0);
+      }
+      for (const field of group.exportFields) {
+        snapshot.export[field.key] = scenario.export[field.key];
+        onExportChange(field.key, 0);
+      }
+      setSaved(prev => ({ ...prev, [group.id]: snapshot }));
+    }
+  };
 
-  return <SidebarCard title="Außenhandel" icon={<ArrowRightLeft className="h-4 w-4"/>} docId={datasetIds.aussenhandelStrom}>
+  return <SidebarCard
+    title="Außenhandel"
+    icon={<ArrowRightLeft className="h-4 w-4"/>}
+    docId={datasetIds.aussenhandelStrom}
+    meta={`${fmt0.format(scenario.import.stromGW)}/${fmt0.format(scenario.export.stromGW)} GW · ${fmt0.format(scenario.import.h2TWh)} TWh H₂`}
+    collapsible
+  >
     <div className="grid gap-1.5">
       {groups.map(group => <GroupAccordion
         key={group.id}
@@ -509,6 +601,8 @@ function AussenhandelSection({
         open={open[group.id] ?? false}
         onToggle={() => toggle(group.id)}
         docId={group.docId}
+        checked={isEnabled(group)}
+        onChecked={checked => setEnabled(group, checked)}
       >
         {group.importFields.map(field => <CapacitySliderRow
           key={`imp-${field.key}`}
@@ -672,40 +766,41 @@ function GroupAccordion({
   const Chevron = open ? ChevronUp : ChevronDown;
   const hasCheckbox = onChecked !== undefined;
   return <section className={cx(
-    'overflow-hidden rounded-lg border bg-white transition',
-    open ? 'border-zinc-300' : 'border-zinc-200/80 hover:border-zinc-300',
+    'overflow-hidden rounded-md transition',
+    open ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
   )}>
-    <div className={cx(
-      'grid w-full items-center gap-1.5 px-2.5 py-2',
+    <div
+      className={cx(
+      'grid w-full cursor-pointer items-center gap-1.5 px-2.5 py-2',
       hasCheckbox ? 'grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px]' : 'grid-cols-[24px_minmax(72px,1fr)_auto_16px]',
-    )}>
+      )}
+      onClick={onToggle}
+    >
       {hasCheckbox && <input
         className="h-4 w-4 accent-zinc-950"
         type="checkbox"
         checked={!!checked}
+        onClick={event => event.stopPropagation()}
         onChange={event => onChecked!(event.target.checked)}
         aria-label={`${title} aktivieren`}
       />}
-      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-600">{icon}</span>
+      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}>{icon}</span>
       <div className="flex min-w-0 items-center gap-1">
         <button
           type="button"
           className="text-left text-sm font-semibold text-zinc-950"
           aria-expanded={open}
           aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
-          onClick={onToggle}
         >{title}</button>
         {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
       </div>
       <button
         type="button"
         className="whitespace-nowrap text-right text-xs font-medium tabular-nums text-zinc-500"
-        onClick={onToggle}
       >{summary}</button>
       <button
         type="button"
         aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
-        onClick={onToggle}
       >
         <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
       </button>
@@ -792,7 +887,7 @@ function EditableNumber({ value, min, max, step, onChange, title }: {
     return <input
       ref={inputRef}
       type="number"
-      className="w-16 rounded border border-zinc-300 bg-white px-1 text-right tabular-nums focus:border-zinc-500 focus:outline-none"
+      className="w-16 rounded border border-zinc-300 bg-white px-1 text-right tabular-nums focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
       value={draft}
       min={min}
       max={max}
@@ -944,169 +1039,174 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   // Pill state: nur-2025/nur-2017 (alle e100-* off, last-2025 on, je nach loadYear), e100 (alle e100-* on, last-2025 on, loadYear=2025), oder custom.
   const allE100Off = !electrificationSelected;
   const allE100On = sectorFlags.every(key => scenario.demand[key]);
-  type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100';
-  const loadPillId: LoadPillId | null = scenario.demand['last-2025'] && allE100Off && is2017
+  type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
+  const loadPillId: LoadPillId = scenario.demand['last-2025'] && allE100Off && is2017
     ? 'nur-2017'
     : scenario.demand['last-2025'] && allE100Off && !is2017
       ? 'nur-2025'
       : scenario.demand['last-2025'] && allE100On && !is2017
         ? 'e100'
-        : null;
+        : 'custom';
   const loadPills: ReadonlyArray<{ id: LoadPillId; label: string; description: string }> = [
-    { id: 'nur-2025', label: 'Nur 2025', description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
-    { id: 'nur-2017', label: 'Nur 2017', description: 'Historische Last 2017 (~507 TWh); unabhängig von Erzeugungspreset' },
-    { id: 'e100', label: 'Vollelektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },
+    { id: 'nur-2025', label: '2025', description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
+    { id: 'e100', label: '100% Elektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },
+    { id: 'custom', label: 'Manuell', description: 'Lastbausteine frei konfiguriert' },
+  ];
+  const loadDropdownPills: ReadonlyArray<PresetOption<LoadPillId>> = [
+    { id: 'nur-2017', label: '2017', description: 'Historische Last 2017 (~507 TWh); unabhängig von Erzeugungspreset', docId: datasetIds.loadHistorical2017 },
   ];
   const selectLoadPill = (id: LoadPillId) => {
     if (id === 'nur-2025') selectHistorical();
     else if (id === 'nur-2017') selectHistorical2017();
-    else selectElectrification();
+    else if (id === 'e100') selectElectrification();
   };
+  const loadPillLabel = loadPills.find(pill => pill.id === loadPillId)?.label
+    ?? loadDropdownPills.find(pill => pill.id === loadPillId)?.label
+    ?? 'Manuell';
 
-  return <SidebarCard title="Last" icon={<Activity className="h-4 w-4"/>} docId={datasetIds.loadHistorical2025}>
-      <PresetPillRow presets={loadPills} activeId={loadPillId} onSelect={selectLoadPill}/>
+  return <SidebarCard
+    title="Last"
+    icon={<Activity className="h-4 w-4"/>}
+    docId={datasetIds.loadHistorical2025}
+    badge={loadPillLabel}
+    meta={data ? `${fmt0.format(electrificationTotal)}/${fmt0.format(electrificationPotentialTotal)} TWh` : undefined}
+    collapsible
+    defaultOpen
+  >
+      <div className="flex flex-wrap gap-1.5">
+        <PresetPillRow presets={loadPills} activeId={loadPillId} onSelect={selectLoadPill}/>
+        <PresetDropdownPill label="Mehr" presets={loadDropdownPills} activeId={loadPillId} active={loadPillId === 'nur-2017'} docId={datasetIds.loadHistorical2017} onSelect={selectLoadPill}/>
+      </div>
 
-      <div className="mt-1 grid gap-2">
-        <section className="overflow-hidden rounded-lg bg-zinc-50/60">
-          <div className="border-zinc-100 bg-zinc-50/35 py-2 pl-3 pr-1.5">
-            <div className="grid gap-2 border-l border-zinc-300/80 pl-2.5">
-              <BasisSubSection
-                checked={scenario.demand['last-2025']}
-                meta={data?.loadSumTWh ? `Basis · ${twh0(data.loadSumTWh)}` : 'Basislast'}
-                docId={datasetIds.loadHistorical2025}
-                onChange={onHistoricalLoadChange}
-              />
-              <div className="flex items-center gap-1.5 px-1 pt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-                Elektrifizierungsbausteine
-                <InfoLink id={datasetIds.fullElectrification} label="100 % Elektrifizierung im Wiki öffnen"/>
-                {data && <span className="ml-auto text-[11px] tabular-nums text-zinc-500 normal-case tracking-normal">{twh0(electrificationTotal)} / {twh0(electrificationPotentialTotal)}</span>}
-              </div>
-
-              {data && <AccordionSection
-                title="Verkehr"
-                value={twh0(transportTotal)}
-                icon={<Car className="h-4 w-4"/>}
-                checked={transportEnabled}
-                docId={datasetIds.e100Pkw}
-                open={openSectors.verkehr}
-                onChecked={setTransport}
-                onToggle={() => toggleSector('verkehr')}
-              >
-                <div className="divide-y divide-zinc-100">
-                  <E100PkwControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-pkw'}
-                    onChecked={props.onE100PkwChange}
-                    onMillionKm={props.onE100PkwMillionKmChange}
-                    onToggleExpand={() => toggleRow('e100-pkw')}
-                  />
-                  <E100LkwControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-lkw'}
-                    onChecked={props.onE100LkwChange}
-                    onValue={props.onE100LkwTargetChange}
-                    onToggleExpand={() => toggleRow('e100-lkw')}
-                  />
-                  <E100BahnControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-bahn'}
-                    onChecked={props.onE100BahnChange}
-                    onValue={props.onE100BahnTargetChange}
-                    onToggleExpand={() => toggleRow('e100-bahn')}
-                  />
-                  <E100SchiffControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-schiff'}
-                    onChecked={props.onE100SchiffChange}
-                    onValue={props.onE100SchiffTargetChange}
-                    onToggleExpand={() => toggleRow('e100-schiff')}
-                  />
-                  <E100FlugControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-flug'}
-                    onChecked={props.onE100FlugChange}
-                    onValue={props.onE100FlugTargetChange}
-                    onToggleExpand={() => toggleRow('e100-flug')}
-                  />
-                </div>
-              </AccordionSection>}
-
-              {data && <AccordionSection
-                title="Wärme"
-                value={twh0(heatTotal)}
-                icon={<Flame className="h-4 w-4"/>}
-                checked={heatEnabled}
-                docId={datasetIds.e100Heiz}
-                open={openSectors.waerme}
-                onChecked={setHeat}
-                onToggle={() => toggleSector('waerme')}
-              >
-                <div className="divide-y divide-zinc-100">
-                  <E100HeizControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-heiz'}
-                    onChecked={props.onE100HeizChange}
-                    onTargetHeat={props.onE100HeizTargetHeatTWhChange}
-                    onToggleExpand={() => toggleRow('e100-heiz')}
-                  />
-                  <E100GhdControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-ghd'}
-                    onChecked={props.onE100GhdChange}
-                    onValue={props.onE100GhdTargetChange}
-                    onToggleExpand={() => toggleRow('e100-ghd')}
-                  />
-                </div>
-              </AccordionSection>}
-
-              {data && <AccordionSection
-                title="Industrie"
-                value={twh0(industryTotal)}
-                icon={<Factory className="h-4 w-4"/>}
-                checked={industryEnabled}
-                docId={datasetIds.e100IndustrieWaerme}
-                open={openSectors.industrie}
-                onChecked={setIndustry}
-                onToggle={() => toggleSector('industrie')}
-              >
-                <div className="divide-y divide-zinc-100">
-                  <E100IndustrieWaermeControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-industrie-waerme'}
-                    onChecked={props.onE100IndustrieWaermeChange}
-                    onValue={props.onE100IndustrieWaermeTargetChange}
-                    onToggleExpand={() => toggleRow('e100-industrie-waerme')}
-                  />
-                  <E100StahlControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-stahl'}
-                    onChecked={props.onE100StahlChange}
-                    onValue={props.onE100StahlTargetChange}
-                    onToggleExpand={() => toggleRow('e100-stahl')}
-                  />
-                  <E100ChemieControl
-                    data={data}
-                    scenario={scenario}
-                    expanded={expandedRow === 'e100-chemie'}
-                    onChecked={props.onE100ChemieChange}
-                    onValue={props.onE100ChemieTargetChange}
-                    onToggleExpand={() => toggleRow('e100-chemie')}
-                  />
-                </div>
-              </AccordionSection>}
-
-            </div>
+      <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3">
+        <BasisSubSection
+          checked={scenario.demand['last-2025']}
+          meta={data?.loadSumTWh ? twh0(data.loadSumTWh) : 'Basislast'}
+          docId={datasetIds.loadHistorical2025}
+          onChange={onHistoricalLoadChange}
+        />
+        {data && <AccordionSection
+          title="Verkehr"
+          value={twh0(transportTotal)}
+          icon={<Car className="h-4 w-4"/>}
+          checked={transportEnabled}
+          docId={datasetIds.e100Pkw}
+          open={openSectors.verkehr}
+          onChecked={setTransport}
+          onToggle={() => toggleSector('verkehr')}
+        >
+          <div className="divide-y divide-zinc-100">
+            <E100PkwControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-pkw'}
+              onChecked={props.onE100PkwChange}
+              onMillionKm={props.onE100PkwMillionKmChange}
+              onToggleExpand={() => toggleRow('e100-pkw')}
+            />
+            <E100LkwControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-lkw'}
+              onChecked={props.onE100LkwChange}
+              onValue={props.onE100LkwTargetChange}
+              onToggleExpand={() => toggleRow('e100-lkw')}
+            />
+            <E100BahnControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-bahn'}
+              onChecked={props.onE100BahnChange}
+              onValue={props.onE100BahnTargetChange}
+              onToggleExpand={() => toggleRow('e100-bahn')}
+            />
+            <E100SchiffControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-schiff'}
+              onChecked={props.onE100SchiffChange}
+              onValue={props.onE100SchiffTargetChange}
+              onToggleExpand={() => toggleRow('e100-schiff')}
+            />
+            <E100FlugControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-flug'}
+              onChecked={props.onE100FlugChange}
+              onValue={props.onE100FlugTargetChange}
+              onToggleExpand={() => toggleRow('e100-flug')}
+            />
           </div>
-        </section>
+        </AccordionSection>}
+
+        {data && <AccordionSection
+          title="Wärme"
+          value={twh0(heatTotal)}
+          icon={<Flame className="h-4 w-4"/>}
+          checked={heatEnabled}
+          docId={datasetIds.e100Heiz}
+          open={openSectors.waerme}
+          onChecked={setHeat}
+          onToggle={() => toggleSector('waerme')}
+        >
+          <div className="divide-y divide-zinc-100">
+            <E100HeizControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-heiz'}
+              onChecked={props.onE100HeizChange}
+              onTargetHeat={props.onE100HeizTargetHeatTWhChange}
+              onToggleExpand={() => toggleRow('e100-heiz')}
+            />
+            <E100GhdControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-ghd'}
+              onChecked={props.onE100GhdChange}
+              onValue={props.onE100GhdTargetChange}
+              onToggleExpand={() => toggleRow('e100-ghd')}
+            />
+          </div>
+        </AccordionSection>}
+
+        {data && <AccordionSection
+          title="Industrie"
+          value={twh0(industryTotal)}
+          icon={<Factory className="h-4 w-4"/>}
+          checked={industryEnabled}
+          docId={datasetIds.e100IndustrieWaerme}
+          open={openSectors.industrie}
+          onChecked={setIndustry}
+          onToggle={() => toggleSector('industrie')}
+        >
+          <div className="divide-y divide-zinc-100">
+            <E100IndustrieWaermeControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-industrie-waerme'}
+              onChecked={props.onE100IndustrieWaermeChange}
+              onValue={props.onE100IndustrieWaermeTargetChange}
+              onToggleExpand={() => toggleRow('e100-industrie-waerme')}
+            />
+            <E100StahlControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-stahl'}
+              onChecked={props.onE100StahlChange}
+              onValue={props.onE100StahlTargetChange}
+              onToggleExpand={() => toggleRow('e100-stahl')}
+            />
+            <E100ChemieControl
+              data={data}
+              scenario={scenario}
+              expanded={expandedRow === 'e100-chemie'}
+              onChecked={props.onE100ChemieChange}
+              onValue={props.onE100ChemieTargetChange}
+              onToggleExpand={() => toggleRow('e100-chemie')}
+            />
+          </div>
+        </AccordionSection>}
+
       </div>
     </SidebarCard>;
 }
@@ -1121,6 +1221,7 @@ function PeriodControl({
   onPreset,
   onStart,
   onEnd,
+  onRange,
 }: {
   preset: PeriodPreset;
   start: string;
@@ -1131,32 +1232,89 @@ function PeriodControl({
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
+  onRange: (start: string, end: string) => void;
 }) {
   const yearMin = `${loadYear}-01-01`;
   const yearMax = `${loadYear}-12-31`;
-  return <SidebarCard title="Zeitraum" icon={<CalendarDays className="h-4 w-4"/>}>
-    <select
-      className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400"
-      value={preset}
-      onChange={event => onPreset(event.target.value as PeriodPreset)}
-    >
-      <option value="21d">21 Tage</option>
-      <option value="90d">90 Tage</option>
-      <option value="year">Jahr</option>
-      <option value="custom">Benutzerdefiniert</option>
-    </select>
-    <span className="text-xs text-zinc-500">{formatDate(start)} bis {formatDate(end)}</span>
-    {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
-      <input aria-label="Startdatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
-      <input aria-label="Enddatum" className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-950 outline-none transition hover:border-zinc-300 focus:border-zinc-400" type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
-    </div>}
+  const [open, setOpen] = useState(false);
+  const selectedMonthId = preset === 'custom' ? monthIdFromRange(customStart, customEnd, loadYear) : null;
+  const activePeriodPillId = selectedMonthId ? null : preset;
+  const activePeriodLabel = selectedMonthId
+    ? periodMonthPills.find(month => month.id === selectedMonthId)?.label ?? 'Mehr'
+    : periodPills.find(pill => pill.id === preset)?.label ?? 'Manuell';
+  const selectMonth = (monthId: PeriodMonthId) => {
+    const range = monthRange(loadYear, monthId);
+    onRange(range.start, range.end);
+  };
+  const periodMeta = preset === 'year' ? String(loadYear) : `${formatDate(start)} bis ${formatDate(end)}`;
+  return <SidebarCard title="Zeitraum" icon={<CalendarDays className="h-4 w-4"/>} badge={activePeriodLabel} meta={periodMeta} collapsible>
+      <div className="grid gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          <PresetPillRow
+            presets={periodPills}
+            activeId={activePeriodPillId}
+            onSelect={onPreset}
+          />
+          <PresetDropdownPill label="Mehr" presets={periodMonthPills} activeId={selectedMonthId} onSelect={selectMonth}/>
+        </div>
+      </div>
+      {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
+        <input aria-label="Startdatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
+        <input aria-label="Enddatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
+      </div>}
   </SidebarCard>;
 }
 
-function ReadonlyCard({ title, icon, label, meta, docId, children }: { title: string; icon: ReactNode; label: string; meta: string; docId: string; children?: ReactNode }) {
-  return <SidebarCard title={title} icon={icon} docId={docId}>
-    <ReadonlyItem label={label} meta={meta} docId={docId}/>
-    {children}
+const periodPills: ReadonlyArray<{ id: PeriodPreset; label: string; description: string }> = [
+  { id: 'year', label: 'Jahr', description: 'Ganzes Datenjahr' },
+  { id: '21d', label: '21T', description: 'Letzte 21 Tage des Datenjahres' },
+  { id: '90d', label: '90T', description: 'Letzte 90 Tage des Datenjahres' },
+  { id: 'custom', label: 'Manuell', description: 'Start und Ende direkt wählen' },
+];
+
+type PeriodMonthId = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10' | '11' | '12';
+
+const periodMonthPills: ReadonlyArray<PresetOption<PeriodMonthId>> = [
+  { id: '01', label: 'Januar', description: '01.01. bis 31.01.' },
+  { id: '02', label: 'Februar', description: '01.02. bis 28.02.' },
+  { id: '03', label: 'März', description: '01.03. bis 31.03.' },
+  { id: '04', label: 'April', description: '01.04. bis 30.04.' },
+  { id: '05', label: 'Mai', description: '01.05. bis 31.05.' },
+  { id: '06', label: 'Juni', description: '01.06. bis 30.06.' },
+  { id: '07', label: 'Juli', description: '01.07. bis 31.07.' },
+  { id: '08', label: 'August', description: '01.08. bis 31.08.' },
+  { id: '09', label: 'September', description: '01.09. bis 30.09.' },
+  { id: '10', label: 'Oktober', description: '01.10. bis 31.10.' },
+  { id: '11', label: 'November', description: '01.11. bis 30.11.' },
+  { id: '12', label: 'Dezember', description: '01.12. bis 31.12.' },
+];
+
+const monthDays: Record<PeriodMonthId, number> = {
+  '01': 31, '02': 28, '03': 31, '04': 30, '05': 31, '06': 30,
+  '07': 31, '08': 31, '09': 30, '10': 31, '11': 30, '12': 31,
+};
+
+function monthRange(year: 2025 | 2017, monthId: PeriodMonthId) {
+  return {
+    start: `${year}-${monthId}-01`,
+    end: `${year}-${monthId}-${String(monthDays[monthId]).padStart(2, '0')}`,
+  };
+}
+
+function monthIdFromRange(start: string, end: string, year: 2025 | 2017): PeriodMonthId | null {
+  return periodMonthPills.find(month => {
+    const range = monthRange(year, month.id);
+    return range.start === start && range.end === end;
+  })?.id ?? null;
+}
+
+function ModelSection() {
+  return <SidebarCard title="Modell" icon={<SlidersHorizontal className="h-4 w-4"/>} docId={datasetIds.coreModel} meta="Kernmodell" collapsible>
+      <ReadonlyItem
+        label="Kernmodell"
+        meta="Stündlicher Dispatch von Last, Erzeugung, Speicher und Handel"
+        docId={datasetIds.coreModel}
+      />
   </SidebarCard>;
 }
 
@@ -1175,24 +1333,50 @@ function ReadonlyItem({ label, meta, docId }: { label: string; meta: string; doc
   </div>;
 }
 
-function SidebarCard({ title, icon, docId, children }: { title: string; icon: ReactNode; docId?: string; children: ReactNode }) {
-  return <section className="rounded-xl border border-zinc-200/80 bg-white p-4 shadow-[0_10px_26px_rgba(24,24,27,.04)]">
-    <SectionHeader title={title} icon={icon} docId={docId}/>
-    <div className="mt-3 grid gap-2.5">{children}</div>
+function SidebarCard({ title, icon, docId, badge, meta, collapsible = false, defaultOpen = false, children }: { title: string; icon: ReactNode; docId?: string; badge?: string; meta?: string; collapsible?: boolean; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(collapsible ? defaultOpen : true);
+  const toggle = () => setOpen(value => !value);
+  const onHeaderKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggle();
+  };
+  return <section className="rounded-lg border border-zinc-200 bg-white p-3 last:mb-0">
+    {collapsible
+      ? <div
+          role="button"
+          tabIndex={0}
+          className="group flex w-full cursor-pointer items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10"
+          aria-expanded={open}
+          onClick={toggle}
+          onKeyDown={onHeaderKeyDown}
+        >
+          <span className={cx(iconTile, 'h-7 w-7')}>{icon}</span>
+          <h2 className="text-[15px] font-bold text-zinc-950">{title}</h2>
+          {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
+          {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700">{badge}</span>}
+          {meta && <span className={cx('shrink-0 text-xs tabular-nums text-zinc-500', !badge && 'ml-auto')}>{meta}</span>}
+          <ChevronDown aria-hidden="true" className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform', open && 'rotate-180')}/>
+        </div>
+      : <SectionHeader title={title} icon={icon} docId={docId} badge={badge} meta={meta}/>
+    }
+    {open && <div className="mt-3 grid gap-2.5">{children}</div>}
   </section>;
 }
 
-function SectionHeader({ title, icon, docId }: { title: string; icon: ReactNode; docId?: string }) {
+function SectionHeader({ title, icon, docId, badge, meta }: { title: string; icon: ReactNode; docId?: string; badge?: string; meta?: string }) {
   return <div className="group flex items-center gap-2">
-    <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">{icon}</span>
-    <h2 className="text-sm font-semibold text-zinc-950">{title}</h2>
+    <span className={cx(iconTile, 'h-7 w-7')}>{icon}</span>
+    <h2 className="text-[15px] font-bold text-zinc-950">{title}</h2>
     {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
+    {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700">{badge}</span>}
+    {meta && <span className={cx('shrink-0 text-xs tabular-nums text-zinc-500', !badge && 'ml-auto')}>{meta}</span>}
   </div>;
 }
 
 function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean; meta: string; docId: string; onChange: (checked: boolean) => void }) {
-  return <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-    <label className="group grid cursor-pointer grid-cols-[18px_28px_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2.5">
+  return <section className="overflow-hidden rounded-md border border-zinc-200/70 bg-zinc-50/70 transition hover:bg-zinc-100/70">
+    <label className="group grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5">
       <input
         className="h-4 w-4 accent-zinc-950"
         type="checkbox"
@@ -1200,14 +1384,13 @@ function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean;
         onChange={event => onChange(event.target.checked)}
         aria-label="Basis aktivieren"
       />
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-50 text-zinc-600"><Database className="h-4 w-4"/></span>
-      <span className="grid min-w-0 gap-0.5">
-        <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-zinc-950">
-          <span className="truncate">Basis</span>
-          <InfoLink id={docId} label="Basis im Wiki öffnen"/>
-        </span>
-        <span className="truncate text-xs font-normal text-zinc-500">{meta}</span>
+      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}><Database className="h-4 w-4"/></span>
+      <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-zinc-950">
+        <span className={cx('truncate', checked ? 'text-zinc-950' : 'text-zinc-500')}>Basis</span>
+        <InfoLink id={docId} label="Basis im Wiki öffnen"/>
       </span>
+      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950' : 'text-zinc-400')}>{meta}</span>
+      <span aria-hidden="true" className="h-4 w-4"/>
     </label>
   </section>;
 }
@@ -1235,42 +1418,45 @@ function AccordionSection({
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
   return <section className={cx(
-    'overflow-hidden rounded-lg border bg-white transition',
-    open ? 'border-zinc-300' : 'border-zinc-200/80 hover:border-zinc-300',
+    'overflow-hidden rounded-md transition',
+    open ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
   )}>
-    <div className="grid grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5">
+    <div className="grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5" onClick={onToggle}>
       <input
         className="h-4 w-4 accent-zinc-950"
         type="checkbox"
         checked={checked}
+        onClick={event => event.stopPropagation()}
         onChange={event => onChecked(event.target.checked)}
         aria-label={`${title} aktivieren`}
       />
-      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-600">{icon}</span>
+      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}>{icon}</span>
       <button
         type="button"
         className="group flex min-w-0 items-center gap-1 text-left"
         aria-expanded={open}
         aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
-        onClick={onToggle}
       >
-        <span className="text-sm font-semibold text-zinc-950">{title}</span>
+        <span className={cx('text-sm font-semibold', checked ? 'text-zinc-950' : 'text-zinc-500')}>{title}</span>
         <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>
       </button>
-      <span className="whitespace-nowrap text-right text-sm font-semibold tabular-nums text-zinc-950">{value}</span>
+      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950' : 'text-zinc-400')}>{value}</span>
       <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
     </div>
     {open && <div className="border-t border-zinc-100 px-2 py-1">{children}</div>}
   </section>;
 }
 
-function InfoLink({ id, label }: { id: string; label: string }) {
+function InfoLink({ id, label, alwaysVisible = false }: { id: string; label: string; alwaysVisible?: boolean }) {
   return <a
     href={dataWikiUrl(id)}
     target="_blank"
     rel="noreferrer"
     aria-label={label}
-    className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-zinc-400 opacity-0 transition hover:bg-zinc-100 hover:text-zinc-950 group-hover:opacity-100 focus:opacity-100"
+    className={cx(
+      'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-950 focus:opacity-100',
+      alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+    )}
     onClick={event => event.stopPropagation()}
   >
     <Info className="h-3 w-3"/>
@@ -1280,7 +1466,7 @@ function InfoLink({ id, label }: { id: string; label: string }) {
 function ScenarioRadioItem({ name, label, meta, checked, onSelect }: { name: string; label: string; meta: string; checked: boolean; onSelect: () => void }) {
   return <label className={cx(
     'flex cursor-pointer items-start gap-3 rounded-lg px-2.5 py-2 transition',
-    checked ? 'bg-zinc-50' : 'hover:bg-zinc-50/80',
+    checked ? rowActive : rowHover,
   )}>
     <input
       className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-950"
@@ -1361,12 +1547,16 @@ type SectorRowProps = {
 function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
   const Chevron = expanded ? ChevronUp : ChevronDown;
-  return <div className={cx('group transition', expanded && enabled ? 'bg-zinc-50/80' : 'bg-white hover:bg-zinc-50/60')}>
-    <div className="grid grid-cols-[18px_minmax(0,1fr)_64px_16px] items-center gap-1.5 px-2 py-2.5">
+  return <div className={cx(
+    'group transition',
+    expanded && enabled ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
+  )}>
+    <div className={cx('grid grid-cols-[18px_minmax(0,1fr)_64px_16px] items-center gap-1.5 px-2 py-2.5', enabled && 'cursor-pointer')} onClick={() => { if (enabled) onToggleExpand(); }}>
       <input
         className="h-4 w-4 accent-zinc-950"
         type="checkbox"
         checked={enabled}
+        onClick={event => event.stopPropagation()}
         onChange={event => onChecked(event.target.checked)}
         aria-label={`${label} aktivieren`}
       />
@@ -1376,7 +1566,6 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
         aria-expanded={expanded && enabled}
         aria-label={expanded && enabled ? `${label} einklappen` : `${label} ausklappen`}
         disabled={!enabled}
-        onClick={onToggleExpand}
       >
         <span className="min-w-0 truncate">{label}</span>
         <InfoLink id={docId} label={`${label} im Wiki öffnen`}/>

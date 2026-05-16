@@ -35,6 +35,11 @@ function topLevelData(): Plugin {
           return;
         }
         const extension = extname(filePath);
+        if (rawUrl.includes('?raw-text')) {
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(readFileSync(filePath));
+          return;
+        }
         if (extension === '.ts' || extension === '.tsx') return next();
         if (rawUrl.includes('?')) return next();
         res.setHeader('Content-Type', extension === '.json' ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8');

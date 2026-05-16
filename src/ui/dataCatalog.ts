@@ -10,7 +10,7 @@ export type DatasetDoc = {
   id: string;
   parentId?: string;
   domain: string;
-  kind: 'dataset' | 'scenario' | 'composition' | 'model';
+  kind: 'dataset' | 'scenario' | 'composition' | 'model' | 'template';
   title: string;
   file?: string;
   scripts?: string[];
@@ -20,7 +20,7 @@ export type DatasetDoc = {
   resolution: string;
   unit: string;
   short: string;
-  description: string;
+  description: string | string[];
   overview?: Array<{ label: string; value: string }>;
   method?: string[];
   sections?: Array<{ title: string; items: string[] }>;
@@ -31,6 +31,9 @@ export type DatasetDoc = {
 export const datasetIds = dataPackageIds;
 
 export const manifestUrl = dataManifestUrl;
+export const templateDescriptionPaths = [
+  'templates/scenario-description.template.json',
+] as const;
 export const dataWikiHomeUrl = () => `${import.meta.env.BASE_URL}wiki/`;
 export const dataWikiUrl = (id: string) => `${import.meta.env.BASE_URL}wiki/${encodeURIComponent(id)}`;
 

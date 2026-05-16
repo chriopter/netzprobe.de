@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
-import { Camera, Link, Menu, RotateCcw, SquareDashed } from 'lucide-react';
+import { Camera, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -14,7 +14,7 @@ import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type 
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbook } from './DataHandbook';
 import { ChangelogModal } from './ChangelogModal';
-import { applyManifestPaths, manifestUrl, type DatasetDoc, type ManifestEntry } from './dataCatalog';
+import { applyManifestPaths, manifestUrl, templateDescriptionPaths, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
@@ -40,7 +40,7 @@ import type {
   AussenhandelStromData, AussenhandelH2Data,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
 } from '../types/data';
-import { cx, muted, shell, sidebarOffsetClass } from './ui';
+import { cx, iconButton, muted, panelHeader, shell, sidebarOffsetClass } from './ui';
 
 const erzeugungsModell = aggregateErzeugungsPool(
   erzPv as ErzPackageVariableRe,
@@ -354,14 +354,20 @@ function periodDates(preset: PeriodPreset, start: string, end: string, year: 202
   return { start, end: end < start ? start : end };
 }
 
-function useWorkerSimulation(data: DataSet | null, scenario: Scenario): { result: SimulationResult | null; isPending: boolean } {
+function useWorkerSimulation(
+  data: DataSet | null,
+  scenario: Scenario,
+  { live, interactionActive, runToken }: { live: boolean; interactionActive: boolean; runToken: number },
+): { result: SimulationResult | null; isPending: boolean; isStale: boolean } {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [inFlight, setInFlight] = useState(false);
+  const [stale, setStale] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
   const hasDataRef = useRef(false);
   const hasFiredFirstRef = useRef(false);
+  const lastRunTokenRef = useRef(runToken);
 
   useEffect(() => {
     const worker = new Worker(new URL('../simulation/worker.ts', import.meta.url), { type: 'module' });
@@ -369,6 +375,7 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario): { result
     worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
       if (event.data.requestId !== requestRef.current) return;
       setInFlight(false);
+      setStale(false);
       // Setze das Result als non-urgent State-Update: React darf Slider-Events
       // dazwischen ranlassen, der Chart kommt nach. Macht den Slider responsiv
       // auch wenn die Reconciliation 50-100ms braucht.
@@ -417,8 +424,8 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario): { result
   useEffect(() => {
     const worker = workerRef.current;
     if (!worker || !hasDataRef.current) return;
-    setInFlight(true);
     const fire = () => {
+      setInFlight(true);
       const requestId = ++requestRef.current;
       worker.postMessage({ type: 'run', requestId, scenario });
     };
@@ -429,11 +436,19 @@ function useWorkerSimulation(data: DataSet | null, scenario: Scenario): { result
       fire();
       return;
     }
-    const timer = window.setTimeout(fire, 150);
+    setStale(true);
+    const manualRun = runToken !== lastRunTokenRef.current;
+    if (manualRun) {
+      lastRunTokenRef.current = runToken;
+      fire();
+      return;
+    }
+    if (!live || interactionActive) return;
+    const timer = window.setTimeout(fire, 300);
     return () => window.clearTimeout(timer);
-  }, [data, scenario]);
+  }, [data, scenario, live, interactionActive, runToken]);
 
-  return { result, isPending: inFlight || isTransitioning };
+  return { result, isPending: inFlight || isTransitioning, isStale: stale };
 }
 
 function useDatasetDocs() {
@@ -442,7 +457,10 @@ function useDatasetDocs() {
     loadJson<ManifestEntry[]>(manifestUrl)
       .then(entries => {
         applyManifestPaths(entries);
-        return Promise.all(entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description))));
+        return Promise.all([
+          ...entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description))),
+          ...templateDescriptionPaths.map(path => loadJson<DatasetDoc>(dataFileUrl(path))),
+        ]);
       })
       .then(setDocs)
       .catch(console.error);
@@ -490,6 +508,9 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
   const [changelogOpen, setChangelogOpenState] = useState(initialChangelogOpen);
+  const [liveSimulation, setLiveSimulation] = useState(true);
+  const [manualRunToken, setManualRunToken] = useState(0);
+  const [sliderActive, setSliderActive] = useState(false);
 
   const setChangelogOpen = (next: boolean) => {
     setChangelogOpenState(next);
@@ -505,6 +526,24 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
 
   useEffect(() => {
     loadDefaultData().then(setData).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target instanceof HTMLInputElement && event.target.type === 'range') setSliderActive(true);
+    };
+    const stopSliderInteraction = () => setSliderActive(false);
+    window.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('pointerup', stopSliderInteraction, true);
+    window.addEventListener('pointercancel', stopSliderInteraction, true);
+    window.addEventListener('keyup', stopSliderInteraction, true);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('pointerup', stopSliderInteraction, true);
+      window.removeEventListener('pointercancel', stopSliderInteraction, true);
+      window.removeEventListener('keyup', stopSliderInteraction, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -572,7 +611,11 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
     };
   }, [scenario, data]);
 
-  const { result, isPending: simPending } = useWorkerSimulation(data, resolvedScenario);
+  const { result, isPending: simPending, isStale: simStale } = useWorkerSimulation(data, resolvedScenario, {
+    live: liveSimulation,
+    interactionActive: sliderActive,
+    runToken: manualRunToken,
+  });
   useEffect(() => {
     if (!result || chartResult === result) return;
     if (!chartResult) {
@@ -600,6 +643,7 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   // Chart-Debounce läuft oder ECharts den letzten Frame noch nicht fertig
   // gerendert hat ('finished'-Event).
   const debouncing = !!result && chartResult !== result;
+  const isOutdated = simStale || debouncing;
   const isPending = simPending || debouncing || mixPending || storagePending;
 
   const setQuickStart = (date: string) => {
@@ -610,6 +654,11 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   const setQuickEnd = (date: string) => {
     setPeriodPreset('custom');
     setCustomEnd(date < customStart ? customStart : date);
+  };
+  const setQuickRange = (start: string, end: string) => {
+    setPeriodPreset('custom');
+    setCustomStart(start);
+    setCustomEnd(end < start ? start : end);
   };
 
   const openSidebar = () => setSidebarCollapsed(false);
@@ -700,6 +749,16 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
     }
     window.setTimeout(() => setActionStatus(null), 1600);
   };
+  const toggleLiveSimulation = () => {
+    setLiveSimulation(value => {
+      const next = !value;
+      if (next) setManualRunToken(token => token + 1);
+      setActionStatus(next ? 'Live-Berechnung an' : 'Live-Berechnung pausiert');
+      window.setTimeout(() => setActionStatus(null), 1600);
+      return next;
+    });
+  };
+  const runSimulationNow = () => setManualRunToken(token => token + 1);
 
   return <main className={shell}>
     <div className={cx(
@@ -707,12 +766,12 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
       sidebarCollapsed ? '' : sidebarOffsetClass,
     )}>
       <section className="flex min-w-0 flex-col gap-3">
-        {!result ? <div className="relative grid min-h-[calc(100vh-1.5rem)] place-items-center rounded-xl border border-zinc-200/80 bg-white text-zinc-500 shadow-[0_18px_45px_rgba(24,24,27,.06)]">
+        {!result ? <div className="relative grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-500">
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col p-3">
-            <div className="mb-2.5 grid shrink-0 gap-2 border-b border-zinc-100 pb-2.5 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
+          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
+            <div className="grid shrink-0 gap-2 border-b border-zinc-200/70 px-3 py-3 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
               <div className="flex min-w-0 items-start gap-2">
                 {sidebarCollapsed && <SidebarOpenButton onClick={openSidebar}/>}
                 <div className="min-w-0">
@@ -738,22 +797,31 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div className="relative min-h-0 flex-1 rounded-lg bg-white">
+            <div className="relative min-h-0 flex-1 bg-white">
               <div
                 id="mix-chart"
                 className={cx(
                   'h-full w-full transition-opacity duration-150',
-                  isPending ? 'opacity-40' : 'opacity-100',
+                  isPending || isOutdated ? 'opacity-40' : 'opacity-100',
                 )}
               />
               <div
                 aria-hidden={!isPending}
                 className={cx(
-                  'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden rounded-t-lg bg-zinc-100/60 transition-opacity duration-150',
+                  'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150',
                   isPending ? 'opacity-100' : 'opacity-0',
                 )}
               >
                 <div className="h-full w-1/3 animate-[indeterminate_1.1s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-zinc-950 to-transparent"/>
+              </div>
+              <div
+                aria-hidden={!isOutdated || isPending}
+                className={cx(
+                  'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150',
+                  isOutdated && !isPending ? 'opacity-100' : 'opacity-0',
+                )}
+              >
+                <div className="h-full w-full bg-zinc-950/30"/>
               </div>
               <div
                 aria-hidden={!isPending}
@@ -762,9 +830,29 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
                   isPending ? 'opacity-100' : 'opacity-0',
                 )}
               >
-                <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white shadow-sm">
+                <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white">
                   Aktualisiere …
                 </div>
+              </div>
+              <div
+                aria-hidden={!isOutdated || isPending}
+                className={cx(
+                  'absolute inset-0 flex items-center justify-center transition-opacity duration-150',
+                  isOutdated && !isPending ? 'opacity-100' : 'pointer-events-none opacity-0',
+                  liveSimulation && 'pointer-events-none',
+                )}
+              >
+                {liveSimulation
+                  ? <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white">
+                      {sliderActive ? 'Eingabe läuft …' : 'Warte auf Berechnung …'}
+                    </div>
+                  : <button
+                      type="button"
+                      className="rounded-full bg-zinc-950/90 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/25"
+                      onClick={runSimulationNow}
+                    >
+                      Berechnen
+                    </button>}
               </div>
             </div>
             <MixLegend
@@ -773,8 +861,8 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
             />
           </ChartPanel>
 
-          <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂" className="p-4">
-            <div id="storage-chart" className="h-[240px] w-full"/>
+          <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
+            <div id="storage-chart" className="h-[240px] w-full px-3 py-3"/>
           </ChartPanel>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
@@ -801,6 +889,8 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
           onReset={resetConfiguration}
           onCopyUrl={copyShareUrl}
           onScreenshot={copyChartScreenshot}
+          live={liveSimulation}
+          onToggleLive={toggleLiveSimulation}
         />}
         onCollapsedChange={setSidebarCollapsed}
         onOpenSectorsChange={setOpenSectors}
@@ -808,6 +898,7 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}
+        onRange={setQuickRange}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
         onLoadYearChange={(year) => setScenario(prev => ({ ...prev, loadYear: year }))}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
@@ -886,24 +977,27 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   </main>;
 }
 
-function HeaderActions({ status, onReset, onCopyUrl, onScreenshot }: { status: string | null; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void }) {
-  return <div className="flex w-full min-w-0 flex-col items-start gap-1">
+function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void; onToggleLive: () => void }) {
+  return <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
     <div className="flex w-full justify-between">
+      <IconAction label={live ? 'Live-Berechnung pausieren' : 'Live-Berechnung aktivieren'} onClick={onToggleLive} tone={live ? 'default' : 'danger'}>
+        {live ? <Pause className="h-4 w-4"/> : <Play className="h-4 w-4"/>}
+      </IconAction>
+      <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>
       <IconAction label="Reset" onClick={onReset}><RotateCcw className="h-4 w-4"/></IconAction>
       <IconAction label="Link" onClick={onCopyUrl}><Link className="h-4 w-4"/></IconAction>
-      <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>
-      <IconAction label="Platzhalter" onClick={() => {}}><SquareDashed className="h-4 w-4"/></IconAction>
     </div>
-    {status && <div className="truncate rounded-md bg-zinc-900/90 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">{status}</div>}
+    {!live && <div className="truncate rounded-md bg-red-600 px-2 py-0.5 text-[11px] font-medium text-white">Live-Berechnung pausiert</div>}
+    {status && live && <div className="truncate rounded-md bg-zinc-900/90 px-2 py-0.5 text-[11px] font-medium text-white">{status}</div>}
   </div>;
 }
 
-function IconAction({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function IconAction({ label, onClick, tone = 'default', children }: { label: string; onClick: () => void; tone?: 'default' | 'danger'; children: ReactNode }) {
   return <button
     type="button"
     aria-label={label}
     title={label}
-    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+    className={cx(iconButton, 'h-[27px] w-[27px]', tone === 'danger' && 'bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 focus-visible:ring-red-700/25')}
     onClick={onClick}
   >
     {children}
@@ -916,7 +1010,7 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
     aria-label="Sidebar öffnen"
     aria-expanded={false}
     title="Sidebar öffnen"
-    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
     onClick={onClick}
   >
     <Menu className="h-4 w-4" aria-hidden="true"/>
@@ -925,20 +1019,20 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
 
 function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
   const modes: Array<[ChartMode, string]> = [['sunburst', 'Polar'], ['linie', 'Linie']];
-  return <div className="inline-flex shrink-0 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-xs shadow-sm" aria-label="Diagrammform wählen">
+  return <div className="inline-flex shrink-0 rounded-md border border-zinc-200 bg-zinc-50 p-0.5 text-xs" aria-label="Diagrammform wählen">
     {modes.map(([value, label]) => <button
       key={value}
       type="button"
       aria-pressed={mode === value}
-      className={cx('rounded-md px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white shadow-sm' : 'text-zinc-500 hover:bg-white hover:text-zinc-950')}
+      className={cx('rounded-[5px] px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-950')}
       onClick={() => onChange(value)}
     >{label}</button>)}
   </div>;
 }
 
 function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
-  return <section className={cx('min-w-0 overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-[0_18px_45px_rgba(24,24,27,.06)]', className)}>
-    {title && <div className="mb-3 flex items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+  return <section className={cx('min-w-0 overflow-hidden bg-white', className)}>
+    {title && <div className={cx(panelHeader, 'flex items-center justify-between gap-3 px-3 py-3')}>
       <h2 className="text-base font-semibold text-zinc-950">{title}</h2>
       {meta && <span className={cx(muted, 'text-xs sm:text-sm')}>{meta}</span>}
     </div>}
@@ -948,7 +1042,7 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="mt-2.5 grid gap-1.5 border-t border-zinc-100 pt-2.5 text-xs">
+  return <div className="grid gap-1.5 border-t border-zinc-200 bg-zinc-50/40 px-3 py-2.5 text-xs">
     <div className="flex flex-wrap gap-1.5">
       {EXTRA_LEAVES.map(item => {
         const active = visibility[item.key];
@@ -958,7 +1052,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
           aria-pressed={active}
           className={cx(
             'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-            active ? 'border-zinc-200 bg-white text-zinc-800 shadow-sm' : 'border-transparent bg-transparent text-zinc-400',
+            active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
           )}
           onClick={() => onToggleLeaf(item.key, !active)}
         >
@@ -976,7 +1070,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
         aria-pressed={active}
         className={cx(
           'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-          active ? 'border-zinc-200 bg-white text-zinc-800 shadow-sm' : 'border-transparent bg-transparent text-zinc-400',
+          active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
         )}
         onClick={() => onToggleLeaf(leaf.key, !active)}
       >
@@ -993,7 +1087,7 @@ function InlineKpi({ label, value, tone }: { label: string; value: string; tone?
   const isAlarm = tone === 'kritisch';
   const containerClass = isAlarm
     ? 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-red-300 px-2.5 py-1.5 leading-tight'
-    : 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200/80 bg-zinc-50/70 px-2.5 py-1.5 leading-tight';
+    : 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 leading-tight';
   const alarmStyle = isAlarm
     ? { backgroundImage: 'repeating-linear-gradient(45deg, rgba(220,38,38,0.10) 0 6px, rgba(220,38,38,0.20) 6px 12px)' }
     : undefined;

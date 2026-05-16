@@ -3,7 +3,7 @@ import type { DatasetDoc, ManifestEntry } from '../ui/dataCatalog';
 
 const files = import.meta.glob('../../data/**/*', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
 const manifest = JSON.parse(files['../../data/manifest.json']) as ManifestEntry[];
-const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model']);
+const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model', 'template']);
 const jsonFiles = Object.entries(files)
   .filter(([path]) => path.match(/^\.\.\/\.\.\/data\/.*\.json$/) && !path.endsWith('manifest.json'))
   .map(([path, raw]) => [path, JSON.parse(raw)] as const);

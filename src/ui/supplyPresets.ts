@@ -18,9 +18,9 @@ export const supplyPillIds: SupplyPillId[] = [
 ];
 
 export const supplyPillLabels: Record<SupplyPillId, string> = {
-  'historical-2025': 'Historisch 2025',
-  'historical-2017': 'Historisch 2017',
-  '100ee-noimport': '100% EE ohne Import',
+  'historical-2025': '2025',
+  'historical-2017': '2017',
+  '100ee-noimport': '100% EE',
   '50ee-50import': '50% EE + 50% H₂-Import',
   '2025-skaliert': '2025 hochskaliert',
   'custom': 'Manuell',
