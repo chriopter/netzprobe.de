@@ -2,7 +2,7 @@
   "id": "last-2017",
   "domain": "last",
   "kind": "dataset",
-  "title": "Historisch 2017",
+  "title": "2017",
   "file": "last/2017/data.json",
   "scripts": [
     "last/2017/model.ts"

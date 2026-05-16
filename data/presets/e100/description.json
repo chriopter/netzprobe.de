@@ -2,7 +2,7 @@
   "id": "e100",
   "domain": "presets",
   "kind": "composition",
-  "title": "100% Elektrifizierung",
+  "title": "E100",
   "scripts": [
     "presets/e100/model.ts"
   ],
@@ -10,7 +10,7 @@
   "period": "2026",
   "resolution": "stündlich",
   "unit": "TWh Strom",
-  "short": "Vollelektrifizierung aller Sektoren ohne Degrowth: Verkehr, Wärme und Industrie elektrisch oder über e-Fuels.",
+  "short": "E100: Verkehr, Wärme und Industrie elektrisch oder über e-Fuels.",
   "description": "Alternativ-Szenario zu reiner historischer Last: Pkw, Lkw und Bus, Bahn, Schifffahrt, Luftverkehr, Raumwärme und Warmwasser in Haushalten und GHD, industrielle Prozesswärme, Stahl und Chemie werden vollständig auf Strom oder strombasierte Brennstoffe umgestellt. Die historische Last 2025 bleibt als Basis bestehen, jeder Sektor wird additiv aufgesetzt. Alle Teilszenarien lassen sich einzeln über die Sidebar-Slider justieren.",
   "overview": [
     {
