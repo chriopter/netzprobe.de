@@ -181,39 +181,36 @@ export function ScenarioSidebar({
         >
           <PanelLeftClose className="h-4 w-4" aria-hidden="true"/>
         </button>
-        <div className="flex min-w-0 flex-1 items-baseline gap-5">
-          <div className="group/title relative min-w-0">
-            <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">netzprobe.de</h1>
-            <span className="pointer-events-none absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded-md bg-zinc-950 px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/title:opacity-100">
-              {__BUILD_COMMIT__} · {new Date(__BUILD_TIME__).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
-            </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">netzprobe.de</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <a
+              href="https://github.com/chriopter/netzprobe"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+            >
+              <GithubMark className="h-3 w-3"/>
+              Repo
+            </a>
+            <button
+              type="button"
+              onClick={() => setChangelogOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+            >
+              <History className="h-3 w-3"/>
+              Changelog
+            </button>
+            <a
+              href={dataWikiHomeUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+            >
+              <BookOpen className="h-3 w-3"/>
+              Wiki
+            </a>
           </div>
-          <a
-            href="https://github.com/chriopter/netzprobe"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
-          >
-            <GithubMark className="h-3 w-3"/>
-            Repo
-          </a>
-          <a
-            href={dataWikiHomeUrl()}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
-          >
-            <BookOpen className="h-3 w-3"/>
-            Wiki
-          </a>
-          <button
-            type="button"
-            onClick={() => setChangelogOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
-          >
-            <History className="h-3 w-3"/>
-            Changelog
-          </button>
         </div>
       </div>
       <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)}/>

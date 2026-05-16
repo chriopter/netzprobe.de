@@ -142,13 +142,26 @@ export function ChangelogModal({ open, onClose }: { open: boolean; onClose: () =
       className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
       onClick={e => e.stopPropagation()}
     >
-      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-100 px-6 py-4">
-        <h2 id="changelog-title" className="text-lg font-semibold text-zinc-950">Änderungsverlauf</h2>
+      <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-6 py-4">
+        <div className="min-w-0">
+          <h2 id="changelog-title" className="text-lg font-semibold text-zinc-950">Änderungsverlauf</h2>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            Build{' '}
+            <a
+              href="https://github.com/chriopter/netzprobe/commits/main/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-zinc-700 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 hover:decoration-zinc-700"
+            >{__BUILD_COMMIT__}</a>
+            {' · '}
+            {new Date(__BUILD_TIME__).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
         <button
           type="button"
           aria-label="Schließen"
           onClick={onClose}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950"
         >
           <X className="h-4 w-4" aria-hidden/>
         </button>
@@ -161,7 +174,7 @@ export function ChangelogModal({ open, onClose }: { open: boolean; onClose: () =
           if (block.type === 'ul') {
             return <Bullets key={i} nodes={block.items}/>;
           }
-          return <p key={i} className="mt-2 text-sm leading-6 text-zinc-600">{renderInline(block.text)}</p>;
+          return null;
         })}
       </div>
     </div>

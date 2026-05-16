@@ -6,7 +6,6 @@ import { DisclaimerFooter } from './DisclaimerFooter';
 import { cx } from './ui';
 
 const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=datei&path=${encodeURIComponent(path)}`;
-const commitsUrl = 'https://github.com/chriopter/netzprobe/commits/main/';
 const domainLabels: Record<string, string> = {
   last: 'Last',
   erzeugung: 'Erzeugung',
@@ -95,7 +94,6 @@ function DataHandbookNav({
     <div className="grid gap-5">
       <TreeSection title="Home">
         <TreeNode href={dataWikiHomeUrl()} label="Überblick" selected={!selectedId}/>
-        <TreeNode href={commitsUrl} label="Changelog" selected={false} external/>
       </TreeSection>
       {sections.map(([domain, label]) => {
         const inDomain = grouped[domain];
@@ -245,11 +243,9 @@ function TreeSection({ title, children }: { title: string; children: ReactNode }
   </section>;
 }
 
-function TreeNode({ href, label, selected, bullet = false, external = false, tag }: { href: string; label: string; selected: boolean; bullet?: boolean; external?: boolean; tag?: ReactNode }) {
+function TreeNode({ href, label, selected, bullet = false, tag }: { href: string; label: string; selected: boolean; bullet?: boolean; tag?: ReactNode }) {
   return <a
     href={href}
-    target={external ? '_blank' : undefined}
-    rel={external ? 'noreferrer' : undefined}
     className={cx(
       'block min-w-0 rounded-md px-2 py-1.5 text-sm leading-5 transition',
       selected ? 'bg-zinc-100 font-medium text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
