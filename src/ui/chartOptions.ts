@@ -41,9 +41,9 @@ export const DEFAULT_MIX_VISIBILITY: MixVisibility = {
   ...Object.fromEntries(EXTRA_LEAVES.map(leaf => [leaf.key, true])),
 } as MixVisibility;
 
-const shortDateLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit' });
+const shortDateLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit', timeZone: 'Europe/Berlin' });
 const dayLabels = (hours: SimHour[]) => hours.map(shortDateLabel);
-const dateKey = (hour: SimHour) => hour.time.slice(0, 10);
+const dateKey = (hour: SimHour) => new Date(hour.time).toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' });
 const dateParts = (date: string) => ({ month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) });
 
 const averageBucket = (bucket: SimHour[], numericKeys: (keyof SimHour)[]): SimHour => {
