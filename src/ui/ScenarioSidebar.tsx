@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Activity,
   BatteryCharging,
@@ -615,9 +615,10 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onVal
   return <div className="grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-xs font-medium text-zinc-950">{label}</span>
-      <span className="whitespace-nowrap text-xs tabular-nums text-zinc-500">
-        {value.toLocaleString('de-DE')} {unit}
-        {multiplier && <span className="ml-1.5 text-zinc-400">({multiplier})</span>}
+      <span className="flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500">
+        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
+        <span>{unit}</span>
+        {multiplier && <span className="ml-1 text-zinc-400">({multiplier})</span>}
       </span>
     </div>
     <input
@@ -632,6 +633,63 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onVal
       onChange={event => onValue(Number(event.target.value))}
     />
   </div>;
+}
+
+function EditableNumber({ value, min, max, step, onChange, title }: {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (n: number) => void;
+  title?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  const commit = () => {
+    const parsed = Number(draft.replace(',', '.'));
+    if (Number.isFinite(parsed)) {
+      const clamped = Math.max(min, Math.min(max, parsed));
+      const snapped = step > 0 ? Math.round((clamped - min) / step) * step + min : clamped;
+      onChange(snapped);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return <input
+      ref={inputRef}
+      type="number"
+      className="w-16 rounded border border-zinc-300 bg-white px-1 text-right tabular-nums focus:border-zinc-500 focus:outline-none"
+      value={draft}
+      min={min}
+      max={max}
+      step={step}
+      onChange={e => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={e => {
+        if (e.key === 'Enter') commit();
+        else if (e.key === 'Escape') setEditing(false);
+      }}
+    />;
+  }
+
+  return <button
+    type="button"
+    title={title ?? 'Klicken zum Bearbeiten'}
+    className="cursor-text rounded-sm px-0.5 tabular-nums hover:bg-zinc-100 hover:text-zinc-950"
+    onClick={() => { setDraft(String(value)); setEditing(true); }}
+  >
+    {value.toLocaleString('de-DE')}
+  </button>;
 }
 
 type LoadConfigurationProps = {
@@ -1124,6 +1182,7 @@ function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onTo
     max={model.maxTargetMillionKm}
     step={model.stepMillionKm}
     valueLabel="Pkw-km"
+    valueUnit="Mio. km"
     electricTWh={e100PkwAdditionalTWh(millionKm, model)}
     detail={`${millionKm.toLocaleString('de-DE')} Mio. km · ${formatPercent(millionKm / model.referenceMillionKm * 100)} · ${model.summary}`}
     docId={datasetIds.e100Pkw}
@@ -1145,6 +1204,7 @@ function E100HeizControl({ data, scenario, expanded, onChecked, onTargetHeat, on
     max={model.maxTargetHeatTWh}
     step={model.stepHeatTWh}
     valueLabel="Raumwärme"
+    valueUnit="TWh Wärme"
     electricTWh={e100HeizAdditionalElectricityTWh(heatTWh, model)}
     detail={`${heatTWh.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(heatTWh / model.referenceHeatDemandTWh * 100)} · ${model.summary}`}
     docId={datasetIds.e100Heiz}
@@ -1163,6 +1223,7 @@ type SectorRowProps = {
   max: number;
   step: number;
   valueLabel: string;
+  valueUnit?: string;
   electricTWh: number;
   detail: string;
   docId: string;
@@ -1172,7 +1233,7 @@ type SectorRowProps = {
   onToggleExpand: () => void;
 };
 
-function SectorRow({ label, enabled, value, min, max, step, valueLabel, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
+function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
   const Chevron = expanded ? ChevronUp : ChevronDown;
   return <div className={cx('group transition', expanded && enabled ? 'bg-zinc-50/80' : 'bg-white hover:bg-zinc-50/60')}>
@@ -1210,6 +1271,10 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, electric
         value={value}
         onChange={event => onValue(Number(event.target.value))}
       />
+      {valueUnit && <div className="flex items-baseline gap-1 text-[10px] leading-4 text-zinc-500">
+        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title={`${valueLabel}: direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${valueUnit})`}/>
+        <span>{valueUnit}</span>
+      </div>}
       <p className="text-[10px] leading-4 text-zinc-500">{detail}</p>
     </div>}
   </div>;
@@ -1228,6 +1293,7 @@ function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggle
     max={model.maxTargetBnKm}
     step={model.stepBnKm}
     valueLabel="Fahrleistung"
+    valueUnit="Mrd. km"
     electricTWh={e100LkwAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} Mrd. km · ${formatPercent(target / model.referenceBnKm * 100)} · ${model.summary}`}
     docId={datasetIds.e100Lkw}
@@ -1249,6 +1315,7 @@ function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggl
     max={model.maxTargetTWh}
     step={model.stepTWh}
     valueLabel="Zusatz-Bahnstrom"
+    valueUnit="TWh"
     electricTWh={e100BahnAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh · historische 11 TWh · ${model.summary}`}
     docId={datasetIds.e100Bahn}
@@ -1270,6 +1337,7 @@ function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onTog
     max={model.maxTargetTWh}
     step={model.stepTWh}
     valueLabel="Ziel-Strom"
+    valueUnit="TWh"
     electricTWh={e100SchiffAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh · Binnen + Hochsee · ${model.summary}`}
     docId={datasetIds.e100Schiff}
@@ -1291,6 +1359,7 @@ function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggl
     max={model.maxTargetTWh}
     step={model.stepTWh}
     valueLabel="PtL-Strom"
+    valueUnit="TWh"
     electricTWh={e100FlugAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh · e-Kerosin · ${model.summary}`}
     docId={datasetIds.e100Flug}
@@ -1312,6 +1381,7 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
     max={model.maxTargetHeatTWh}
     step={model.stepHeatTWh}
     valueLabel="GHD-Wärme"
+    valueUnit="TWh Wärme"
     electricTWh={e100GhdAdditionalElectricityTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)} · ${model.summary}`}
     docId={datasetIds.e100Ghd}
@@ -1333,6 +1403,7 @@ function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onVal
     max={model.maxTargetHeatTWh}
     step={model.stepHeatTWh}
     valueLabel="Prozesswärme"
+    valueUnit="TWh Wärme"
     electricTWh={e100IndustrieAdditionalElectricityTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh Wärme · ohne Stahl/Chemie · ${model.summary}`}
     docId={datasetIds.e100IndustrieWaerme}
@@ -1354,6 +1425,7 @@ function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onTogg
     max={model.maxTargetMioTon}
     step={model.stepMioTon}
     valueLabel="Primärstahl"
+    valueUnit="Mio. t"
     electricTWh={e100StahlAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} Mio. t · ${formatPercent(target / model.primarySteelMioTon * 100)} · ${model.summary}`}
     docId={datasetIds.e100Stahl}
@@ -1375,6 +1447,7 @@ function E100ChemieControl({ data, scenario, expanded, onChecked, onValue, onTog
     max={model.maxTargetTotalTWh}
     step={model.stepTWh}
     valueLabel="Zielstrom"
+    valueUnit="TWh"
     electricTWh={e100ChemieAdditionalTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh Gesamt · Status quo 55 TWh · ${model.summary}`}
     docId={datasetIds.e100Chemie}
