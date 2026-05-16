@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
-import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
+import { Camera, Link, Menu, RotateCcw, SquareDashed } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -64,13 +64,13 @@ const aussenhandelModell = aggregateAussenhandelPool(
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
 
-const defaultExpandedRow: SidebarExpandedRow = 'e100-pkw';
+const defaultExpandedRow: SidebarExpandedRow = null;
 const defaultCustomStart = '2025-01-01';
 const defaultCustomEnd = '2025-12-31';
 const defaultChartMode: ChartMode = 'sunburst';
 const defaultPeriodPreset: PeriodPreset = 'year';
-const defaultOpenSections = 'verkehr';
-const defaultOpenSectors: SidebarOpenSectors = { verkehr: true, waerme: false, industrie: false };
+const defaultOpenSections = '';
+const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false };
 const listSeparator = '.';
 const scenarioBase = normalizeScenario(defaultScenario);
 const electrificationFlags: Array<keyof Scenario['demand']> = [
@@ -154,7 +154,7 @@ function sidebarCollapsedFromUrl() {
 }
 
 function openSectorsFromUrl(): SidebarOpenSectors {
-  const values = new Set(splitUrlList(queryParams().get('sections') ?? 'verkehr'));
+  const values = new Set(splitUrlList(queryParams().get('sections') ?? defaultOpenSections));
   return {
     verkehr: values.has('verkehr'),
     waerme: values.has('waerme'),
@@ -887,13 +887,14 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
 }
 
 function HeaderActions({ status, onReset, onCopyUrl, onScreenshot }: { status: string | null; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void }) {
-  return <div className="rounded-xl border border-zinc-200/80 bg-white p-2 shadow-[0_10px_26px_rgba(24,24,27,.04)]">
-    <div className="grid grid-cols-3 gap-1.5">
-      <IconAction label="Zurücksetzen" onClick={onReset}><RotateCcw className="h-3.5 w-3.5"/></IconAction>
-      <IconAction label="Link kopieren" onClick={onCopyUrl}><Link className="h-3.5 w-3.5"/></IconAction>
-      <IconAction label="Plot kopieren" onClick={onScreenshot}><Camera className="h-3.5 w-3.5"/></IconAction>
+  return <div className="flex w-full min-w-0 flex-col items-start gap-1">
+    <div className="flex w-full justify-between">
+      <IconAction label="Reset" onClick={onReset}><RotateCcw className="h-4 w-4"/></IconAction>
+      <IconAction label="Link" onClick={onCopyUrl}><Link className="h-4 w-4"/></IconAction>
+      <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>
+      <IconAction label="Platzhalter" onClick={() => {}}><SquareDashed className="h-4 w-4"/></IconAction>
     </div>
-    {status && <div className="mt-1.5 truncate rounded-md bg-zinc-100 px-2 py-1 text-center text-[11px] font-medium text-zinc-600">{status}</div>}
+    {status && <div className="truncate rounded-md bg-zinc-900/90 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">{status}</div>}
   </div>;
 }
 
@@ -902,11 +903,10 @@ function IconAction({ label, onClick, children }: { label: string; onClick: () =
     type="button"
     aria-label={label}
     title={label}
-    className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-xs font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
+    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
     onClick={onClick}
   >
     {children}
-    <span className="truncate">{label}</span>
   </button>;
 }
 
@@ -915,11 +915,11 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
     type="button"
     aria-label="Sidebar öffnen"
     aria-expanded={false}
-    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
+    title="Sidebar öffnen"
+    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
     onClick={onClick}
   >
-    <Menu className="h-4 w-4 lg:hidden" aria-hidden="true"/>
-    <PanelLeftOpen className="hidden h-4 w-4 lg:block" aria-hidden="true"/>
+    <Menu className="h-4 w-4" aria-hidden="true"/>
   </button>;
 }
 

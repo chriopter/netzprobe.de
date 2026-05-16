@@ -13,7 +13,7 @@ import {
   Flame,
   History,
   Info,
-  PanelLeftClose,
+  Menu,
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
@@ -174,50 +174,58 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
     )}
   >
     <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden border-zinc-200/80 bg-zinc-50 p-3 shadow-[0_18px_45px_rgba(24,24,27,.06)] [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] lg:rounded-xl lg:border lg:bg-zinc-50/80">
-      <div className="mb-3 flex items-start gap-2 pl-3 pr-1 pt-3 sm:pl-4 lg:pl-3 lg:pt-0">
-        <button
-          type="button"
-          aria-label="Sidebar einklappen"
-          aria-expanded={true}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
-          onClick={() => onCollapsedChange(true)}
-        >
-          <PanelLeftClose className="h-4 w-4" aria-hidden="true"/>
-        </button>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="min-w-0 text-2xl font-semibold leading-8 text-zinc-950">netzprobe.de</h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <section className="sticky top-0 z-30 mb-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-2.5 shadow-[0_10px_26px_rgba(24,24,27,.04)]">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              aria-label="Sidebar einklappen"
+              aria-expanded={true}
+              title="Sidebar einklappen"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+              onClick={() => onCollapsedChange(true)}
+            >
+              <Menu className="h-4 w-4" aria-hidden="true"/>
+            </button>
+            <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950">netzprobe.de</h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-2.5">
             <a
               href="https://github.com/chriopter/netzprobe"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+              aria-label="Repository öffnen"
+              title="Repository öffnen"
+              className="inline-flex items-center text-zinc-500 transition hover:text-zinc-950"
             >
               <GithubMark className="h-3 w-3"/>
-              Repo
             </a>
             <button
               type="button"
               onClick={onOpenChangelog}
-              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+              aria-label="Changelog öffnen"
+              title="Changelog öffnen"
+              className="inline-flex items-center text-zinc-500 transition hover:text-zinc-950"
             >
               <History className="h-3 w-3"/>
-              Changelog
             </button>
             <a
               href={dataWikiHomeUrl()}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-950 hover:decoration-zinc-950"
+              title="Wiki öffnen"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 transition hover:text-zinc-950"
             >
               <BookOpen className="h-3 w-3"/>
               Wiki
             </a>
           </div>
         </div>
-      </div>
+        <div className="mt-2.5 border-t border-zinc-200/70 pt-2.5">
+          {actionBar}
+        </div>
+      </section>
       <div className="grid gap-3">
-        {actionBar}
 
         <PeriodControl
           preset={periodPreset}
@@ -486,7 +494,7 @@ function AussenhandelSection({
   if (!data) return null;
   const groups = aussenhandelGroups(data['aussenhandel-modell']);
   const [open, setOpen] = useState<Record<string, boolean>>({
-    'aussenhandel-strom': true,
+    'aussenhandel-strom': false,
     'aussenhandel-h2': false,
   });
   const toggle = (id: string) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -543,7 +551,7 @@ function SupplyGroupAccordions({
   onStorageChange: (field: StorageFieldKey, value: number) => void;
 }) {
   const [open, setOpen] = useState<Record<SupplyGroupId, boolean>>({
-    erneuerbar: true, kernkraft: false, konventionell: false,
+    erneuerbar: false, kernkraft: false, konventionell: false,
     batterie: false, pumpspeicher: false, h2: false,
   });
   const toggle = (id: SupplyGroupId) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -928,8 +936,8 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const selectElectrification = () => {
     onHistoricalLoadChange(true);
     setAllSectors(true);
-    onOpenSectorsChange({ verkehr: true, waerme: false, industrie: false });
-    onExpandedRowChange('e100-pkw');
+    onOpenSectorsChange({ verkehr: false, waerme: false, industrie: false });
+    onExpandedRowChange(null);
     onLoadYearChange(2025);
   };
 
