@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Activity,
   ArrowRightLeft,
@@ -95,7 +95,7 @@ export type SidebarSectorId = 'verkehr' | 'waerme' | 'industrie';
 export type SidebarOpenSectors = Record<SidebarSectorId, boolean>;
 export type SidebarExpandedRow = string | null;
 
-export function ScenarioSidebar({
+export const ScenarioSidebar = memo(function ScenarioSidebar({
   data,
   scenario,
   selectedPeriod,
@@ -289,7 +289,7 @@ export function ScenarioSidebar({
       </div>
     </div>
   </aside>;
-}
+});
 
 type GenerationFieldKey = keyof Scenario['generation'];
 

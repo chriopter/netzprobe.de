@@ -1,5 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import { Camera, Link, Menu, PanelLeftOpen, RotateCcw } from 'lucide-react';
+import * as echarts from 'echarts/core';
+import { LineChart } from 'echarts/charts';
+import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { dataFileUrl } from './dataPackages';
 import { loadDefaultData, loadJson } from './defaultData';
 import type { DataSet } from '../types/data';
@@ -269,140 +274,72 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
   }
 }
 
-// Shared chart-worker für Mix- und Storage-Chart. OffscreenCanvas-basiert:
-// Canvas-Element wird per transferControlToOffscreen() an den Worker übergeben,
-// dort läuft die ECharts-Render-Pipeline. Hält den Main-Thread frei für React +
-// Slider-Events.
-let chartWorkerInstance: Worker | null = null;
-// Set der Chart-IDs, deren letzte Daten-Sendung noch nicht im Canvas
-// committed ist. Wird beim postMessage('mix-data'/'storage-data') ergänzt
-// und vom 'rendered'-Reply des Workers wieder entfernt. UI-Loading-Indicator
-// bleibt sichtbar, solange Einträge drin sind.
-const pendingRenders = new Set<'mix' | 'storage'>();
-const pendingListeners = new Set<() => void>();
-function notifyPending() { for (const l of pendingListeners) l(); }
+// ECharts-Module einmalig registrieren. Charts laufen im Main-Thread; DOM-
+// Events (Hover, Klick, Resize) sind nativ verkabelt, Tooltip rendert auf das
+// Canvas. Slider-Drag wird über useDeferredValue + 80ms-Throttle (siehe
+// chartResult-Effect) coalesced, sodass schneller Drag den Re-Render nicht
+// auf den kritischen Pfad zwingt.
+echarts.use([LineChart, GridComponent, LegendComponent, PolarComponent, TooltipComponent, CanvasRenderer]);
 
-function getChartWorker(): Worker {
-  if (!chartWorkerInstance) {
-    chartWorkerInstance = new Worker(new URL('./chart-worker.ts', import.meta.url), { type: 'module' });
-    chartWorkerInstance.addEventListener('message', (event: MessageEvent<{ type: 'rendered'; id: 'mix' | 'storage' }>) => {
-      if (event.data?.type === 'rendered') {
-        pendingRenders.delete(event.data.id);
-        notifyPending();
-      }
-    });
-  }
-  return chartWorkerInstance;
-}
-
-function useChartPending(): boolean {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const l = () => setTick((t) => t + 1);
-    pendingListeners.add(l);
-    return () => { pendingListeners.delete(l); };
-  }, []);
-  // tick wird genutzt um Re-Renders zu triggern; der eigentliche Zustand kommt aus pendingRenders
-  void tick;
-  return pendingRenders.size > 0;
-}
-
-// HMR-Cleanup: bei Hot-Reload den alten Worker terminieren, sonst akkumulieren
-// sich Worker-Instanzen während der Entwicklung.
-if (typeof import.meta !== 'undefined' && (import.meta as { hot?: { dispose: (cb: () => void) => void } }).hot) {
-  (import.meta as unknown as { hot: { dispose: (cb: () => void) => void } }).hot.dispose(() => {
-    chartWorkerInstance?.terminate();
-    chartWorkerInstance = null;
-    pendingRenders.clear();
-  });
-}
-
-function useOffscreenChart(
+function useMainThreadChart<TData>(
   containerId: string,
-  chartId: 'mix' | 'storage',
-  sendData: (() => void) | null,
-  dataDeps: ReadonlyArray<unknown>,
-) {
-  const initedRef = useRef(false);
+  data: TData | null,
+  buildOption: (data: TData) => echarts.EChartsCoreOption,
+): boolean {
+  const chartRef = useRef<echarts.ECharts | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [pending, setPending] = useState(false);
+
+  // Lazy-Init beim ersten Render mit Daten. Pending-Flag wird per double-RAF
+  // wieder freigegeben (statt ECharts' 'finished'-Event, das mit
+  // animation:false unzuverlässig feuert).
+  useEffect(() => {
+    if (!data) return;
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!chartRef.current) {
+      const chart = echarts.init(el);
+      chartRef.current = chart;
+      const ro = new ResizeObserver(() => chart.resize());
+      ro.observe(el);
+      resizeObserverRef.current = ro;
+    }
+    setPending(true);
+    // notMerge: alte Option komplett verwerfen statt mergen. Sonst überleben
+    // Polar-Achsen/Series-Coords den Wechsel auf Linien-Modus und der Chart
+    // sieht unverändert aus.
+    chartRef.current.setOption(buildOption(data), { notMerge: true });
+    // Zwei RAFs: erste fired wenn Browser layoutet, zweite wenn der Frame
+    // wirklich gemalt ist. Danach kann der Spinner aus.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setPending(false));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerId, data]);
 
   useEffect(() => () => {
     resizeObserverRef.current?.disconnect();
     resizeObserverRef.current = null;
-    if (initedRef.current) {
-      getChartWorker().postMessage({ type: 'dispose', id: chartId });
-      initedRef.current = false;
-    }
-  }, [chartId]);
+    chartRef.current?.dispose();
+    chartRef.current = null;
+  }, []);
 
-  useEffect(() => {
-    if (!sendData) return;
-    const worker = getChartWorker();
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    if (!initedRef.current) {
-      // Frisches Canvas-Element ins Container-Div einsetzen und an Worker
-      // übergeben. transferControlToOffscreen() kann pro Canvas nur einmal
-      // aufgerufen werden — daher die initedRef-Schranke.
-      while (el.firstChild) el.removeChild(el.firstChild);
-      const canvas = document.createElement('canvas');
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.display = 'block';
-      el.appendChild(canvas);
-      const rect = el.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      const initW = Math.max(1, rect.width);
-      const initH = Math.max(1, rect.height);
-      // Canvas-interne Auflösung VOR transferControlToOffscreen setzen — die
-      // OffscreenCanvas erbt die Dimensionen vom Source-Canvas, und ECharts
-      // ändert sie nach init nicht mehr eigenständig. Ohne diesen Schritt
-      // bleibt das Canvas bei den 300×150-Defaults und der Chart wird nicht
-      // korrekt aufgespannt.
-      canvas.width = Math.round(initW * dpr);
-      canvas.height = Math.round(initH * dpr);
-      const offscreen = canvas.transferControlToOffscreen();
-      worker.postMessage({
-        type: 'init',
-        id: chartId,
-        canvas: offscreen,
-        width: initW,
-        height: initH,
-        dpr,
-      }, [offscreen]);
-      initedRef.current = true;
-
-      // TODO: DPR-Wechsel beim Monitor-Wechsel wird nicht getrackt. ECharts hat
-      // keine API um DPR ohne Re-Init zu ändern, und transferControlToOffscreen
-      // ist Einmal-Operation. Fix wäre komplettes Re-Mount via Key-Change.
-      const ro = new ResizeObserver(() => {
-        const r = el.getBoundingClientRect();
-        const w = Math.max(1, r.width);
-        const h = Math.max(1, r.height);
-        worker.postMessage({ type: 'resize', id: chartId, width: w, height: h });
-      });
-      ro.observe(el);
-      resizeObserverRef.current = ro;
-    }
-    sendData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containerId, chartId, ...dataDeps]);
+  return pending;
 }
 
-function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode) {
-  useOffscreenChart(containerId, 'mix', hours && hours.length ? () => {
-    pendingRenders.add('mix');
-    notifyPending();
-    getChartWorker().postMessage({ type: 'mix-data', hours, visibility, mode });
-  } : null, [hours, visibility, mode]);
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode } : null, [hours, visibility, mode]);
+  return useMainThreadChart(containerId, data, d => buildMixChartOption(d.hours, d.visibility, d.mode));
 }
 
-function useStorageChart(containerId: string, hours: SimHour[] | undefined) {
-  useOffscreenChart(containerId, 'storage', hours && hours.length ? () => {
-    pendingRenders.add('storage');
-    notifyPending();
-    getChartWorker().postMessage({ type: 'storage-data', hours });
-  } : null, [hours]);
+function useStorageChart(containerId: string, hours: SimHour[] | undefined): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours } : null, [hours]);
+  return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours));
 }
 
 function localDate(iso: string) {
@@ -636,18 +573,16 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   }, [scenario, data]);
 
   const { result, isPending: simPending } = useWorkerSimulation(data, resolvedScenario);
-  const chartPending = useChartPending();
-  // Indicator bleibt aktiv solange entweder die Simulation rechnet ODER der
-  // Chart-Worker noch nicht den letzten Frame committed hat. So sieht der
-  // User den Spinner bis das Bild tatsächlich da ist, nicht nur bis die Zahlen.
-  const isPending = simPending || chartPending;
   useEffect(() => {
     if (!result || chartResult === result) return;
     if (!chartResult) {
       setChartResult(result);
       return;
     }
-    const timer = window.setTimeout(() => setChartResult(result), 80);
+    // 180ms-Debounce: bei schnellem Slider-Drag werden Zwischenergebnisse
+    // verworfen, der Chart-Render läuft erst nachdem der Slider stillsteht.
+    // KPIs (oben) bleiben am ungedebouncten `result` und reagieren sofort.
+    const timer = window.setTimeout(() => setChartResult(result), 180);
     return () => window.clearTimeout(timer);
   }, [result, chartResult]);
 
@@ -659,8 +594,13 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [deferredChartSource, selectedPeriod.start, selectedPeriod.end]);
-  useMixChart('mix-chart', sliced, mixVisibility, chartMode);
-  useStorageChart('storage-chart', sliced);
+  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode);
+  const storagePending = useStorageChart('storage-chart', sliced);
+  // Indikator bleibt sichtbar, solange die Simulation rechnet, der 180ms-
+  // Chart-Debounce läuft oder ECharts den letzten Frame noch nicht fertig
+  // gerendert hat ('finished'-Event).
+  const debouncing = !!result && chartResult !== result;
+  const isPending = simPending || debouncing || mixPending || storagePending;
 
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
@@ -890,38 +830,55 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
         onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
         onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
-        onGenerationChange={(field, v) => setScenario(prev => ({
-          ...prev,
-          supplyPreset: 'custom',
-          generation: { ...resolvedScenario.generation, [field]: v },
-          storage: resolvedScenario.storage,
-          import: resolvedScenario.import,
-          export: resolvedScenario.export,
-        }))}
-        onStorageChange={(field, v) => setScenario(prev => ({
-          ...prev,
-          supplyPreset: 'custom',
-          generation: resolvedScenario.generation,
-          storage: { ...resolvedScenario.storage, [field]: v },
-          import: resolvedScenario.import,
-          export: resolvedScenario.export,
-        }))}
-        onImportChange={(field, v) => setScenario(prev => ({
-          ...prev,
-          supplyPreset: 'custom',
-          generation: resolvedScenario.generation,
-          storage: resolvedScenario.storage,
-          import: { ...resolvedScenario.import, [field]: v },
-          export: resolvedScenario.export,
-        }))}
-        onExportChange={(field, v) => setScenario(prev => ({
-          ...prev,
-          supplyPreset: 'custom',
-          generation: resolvedScenario.generation,
-          storage: resolvedScenario.storage,
-          import: resolvedScenario.import,
-          export: { ...resolvedScenario.export, [field]: v },
-        }))}
+        onGenerationChange={(field, v) => setScenario(prev => {
+          // Beim ersten Wechsel weg vom Preset: resolvedScenario-Werte als
+          // Basis (sonst würde prev.generation veraltete Preset-Loader-Werte
+          // enthalten). Danach (custom-Mode) immer prev nehmen, damit
+          // mehrere Calls im selben Event sich akkumulieren statt sich zu
+          // überschreiben.
+          const base = prev.supplyPreset === 'custom' ? prev : resolvedScenario;
+          return {
+            ...prev,
+            supplyPreset: 'custom',
+            generation: { ...base.generation, [field]: v },
+            storage: base.storage,
+            import: base.import,
+            export: base.export,
+          };
+        })}
+        onStorageChange={(field, v) => setScenario(prev => {
+          const base = prev.supplyPreset === 'custom' ? prev : resolvedScenario;
+          return {
+            ...prev,
+            supplyPreset: 'custom',
+            generation: base.generation,
+            storage: { ...base.storage, [field]: v },
+            import: base.import,
+            export: base.export,
+          };
+        })}
+        onImportChange={(field, v) => setScenario(prev => {
+          const base = prev.supplyPreset === 'custom' ? prev : resolvedScenario;
+          return {
+            ...prev,
+            supplyPreset: 'custom',
+            generation: base.generation,
+            storage: base.storage,
+            import: { ...base.import, [field]: v },
+            export: base.export,
+          };
+        })}
+        onExportChange={(field, v) => setScenario(prev => {
+          const base = prev.supplyPreset === 'custom' ? prev : resolvedScenario;
+          return {
+            ...prev,
+            supplyPreset: 'custom',
+            generation: base.generation,
+            storage: base.storage,
+            import: base.import,
+            export: { ...base.export, [field]: v },
+          };
+        })}
       />
 
     </div>
