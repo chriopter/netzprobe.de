@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, SlidersHorizontal, Zap } from 'lucide-react';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
@@ -14,6 +14,24 @@ const domainLabels: Record<string, string> = {
   aussenhandel: 'Außenhandel',
   presets: 'Presets',
   modell: 'Modell',
+};
+
+const domainIcons: Record<string, typeof Zap> = {
+  last: Activity,
+  erzeugung: Zap,
+  speicher: BatteryCharging,
+  aussenhandel: ArrowRightLeft,
+  presets: Bookmark,
+  modell: SlidersHorizontal,
+};
+
+const domainBlurbs: Record<string, string> = {
+  last: 'Stromnachfrage: historische Last 2025/2017 und Sektor-Elektrifizierung (e100-*).',
+  erzeugung: 'Erzeuger-Bausteine, historische Erzeugungs-Reihen und Einspeisefaktoren.',
+  speicher: 'Batterie, Pumpspeicher und H₂-Saison-Speicher mit Roundtrip-Daten.',
+  aussenhandel: 'Strom- und H₂-Import/-Export, Emissionsfaktoren, Bounds für Slider.',
+  presets: 'Vorkonfigurierte Kombinationen für Last und Versorgung.',
+  modell: 'Dispatch-Engine: stündliche Bilanz, Speicherlogik, CO₂.',
 };
 const kindLabels: Record<DatasetDoc['kind'], string> = {
   dataset: 'Datensatz',
@@ -58,7 +76,7 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
         <div className="flex items-start justify-between gap-4 lg:block">
           <div className="min-w-0">
             <a href={import.meta.env.BASE_URL} className="text-sm font-medium text-zinc-500 hover:text-zinc-950">Netzprobe</a>
-            <h1 className="mt-3 text-2xl font-semibold leading-tight lg:mt-4">Datenhandbuch</h1>
+            <h1 className="mt-3 text-2xl font-semibold leading-tight lg:mt-4">Wiki</h1>
           </div>
           <button
             type="button"
@@ -81,7 +99,7 @@ export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
         </div>
       </aside>
       <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:max-w-[860px] lg:px-10 lg:py-8">
-        {!docs.length ? <p className="p-5 text-zinc-500">Lade Datenhandbuch …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
+        {!docs.length ? <p className="p-5 text-zinc-500">Lade Wiki …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
         <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
       </article>
     </div>
@@ -98,14 +116,23 @@ function DataHandbookNav({
   selectedId: string | null;
 }) {
   const selectedDomain = selectedId
-    ? Object.entries(grouped).find(([, docs]) => docs.some(d => d.id === selectedId))?.[0]
+    ? Object.entries(grouped).find(([, docs]) => docs.some(d => d.id === selectedId))?.[0] ?? null
     : null;
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(selectedDomain ? [selectedDomain] : []));
+  useEffect(() => {
+    if (selectedDomain) setExpanded(prev => prev.has(selectedDomain) ? prev : new Set(prev).add(selectedDomain));
+  }, [selectedDomain]);
+  const toggle = (domain: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(domain)) next.delete(domain); else next.add(domain);
+    return next;
+  });
   return <nav aria-label="Datensätze">
-    <div className="grid gap-2">
+    <div className="grid gap-1">
       <a
         href={dataWikiHomeUrl()}
         className={cx(
-          'block rounded-md px-2 py-1.5 text-sm leading-5 transition',
+          'mb-2 block rounded-md px-2 py-1.5 text-sm leading-5 transition',
           !selectedId ? 'bg-zinc-100 font-medium text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
         )}
       >Überblick</a>
@@ -116,23 +143,32 @@ function DataHandbookNav({
         const presets = inDomain.filter(doc => doc.kind === 'composition');
         const models = inDomain.filter(doc => doc.kind === 'model');
         const showGroups = (presets.length > 0 || models.length > 0) && bausteine.length > 0;
-        return <CollapsibleSection key={domain} title={label} defaultOpen={selectedDomain === domain}>
+        const Icon = domainIcons[domain] ?? Zap;
+        return <CollapsibleSection
+          key={domain}
+          title={label}
+          icon={<Icon className="h-4 w-4"/>}
+          count={inDomain.length}
+          open={expanded.has(domain)}
+          active={selectedDomain === domain}
+          onToggle={() => toggle(domain)}
+        >
           {!!bausteine.length && <>
             {showGroups && <TreeSubheader>Bausteine</TreeSubheader>}
-            <div className={showGroups ? 'ml-2 grid gap-1 border-l border-zinc-100 pl-2' : 'grid gap-1'}>
-              {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
+              {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
           {!!presets.length && <>
             <TreeSubheader variant="preset">Presets</TreeSubheader>
-            <div className="ml-2 grid gap-1 border-l border-amber-200 pl-2">
-              {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+            <div className="ml-1.5 grid gap-0.5 border-l border-amber-300 pl-2">
+              {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
           {!!models.length && <>
             {showGroups && <TreeSubheader>Engine</TreeSubheader>}
-            <div className={showGroups ? 'ml-2 grid gap-1 border-l border-zinc-100 pl-2' : 'grid gap-1'}>
-              {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id} bullet/>)}
+            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
+              {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
         </CollapsibleSection>;
@@ -227,56 +263,111 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
 }
 
 function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
+  const grouped = docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
+    (acc[doc.domain] ??= []).push(doc);
+    return acc;
+  }, {});
+  const domains: ReadonlyArray<readonly [string, string]> = [
+    ['last', 'Last'],
+    ['erzeugung', 'Erzeugung'],
+    ['speicher', 'Speicher'],
+    ['aussenhandel', 'Außenhandel'],
+    ['presets', 'Presets'],
+    ['modell', 'Modell'],
+  ];
   return <div>
     <div>
       <p className="text-xs font-medium uppercase text-zinc-400">data/</p>
-      <h1 className="mt-2 text-4xl font-semibold leading-tight">Datenhandbuch</h1>
-      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">Dokumentation der Datensätze, die die Simulation direkt aus dem statischen <code>data/</code>-Ordner lädt.</p>
+      <h1 className="mt-2 text-4xl font-semibold leading-tight">Wiki</h1>
+      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">Dokumentation der Datensätze, die die Simulation direkt aus dem statischen <code>data/</code>-Ordner lädt. Sechs Domänen, eine Engine.</p>
     </div>
-    <section className="mt-9">
-      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Datensätze</h2>
-      <ul className="grid divide-y divide-zinc-100 border-b border-zinc-100 text-sm">
-        {docs.map(entry => <li key={entry.id} className="min-w-0 py-4">
-          <a href={dataWikiUrl(entry.id)} className="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{entry.title}</a>
-          <KindTag kind={entry.kind}/>
-          <code className="ml-2 break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">{entry.id}</code>
-          <div className="mt-1 text-xs text-zinc-400">{domainLabels[entry.domain] ?? entry.domain} · {kindLabels[entry.kind]}</div>
-          <p className="mt-1 leading-6 text-zinc-600">{entry.short}</p>
-        </li>)}
-      </ul>
+    <section className="mt-10">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {domains.map(([domain, label]) => {
+          const items = grouped[domain];
+          if (!items?.length) return null;
+          const Icon = domainIcons[domain] ?? Zap;
+          return <a
+            key={domain}
+            href={dataWikiUrl(items[0].id)}
+            className="group block rounded-xl border border-zinc-200 bg-white p-5 transition hover:border-zinc-400 hover:shadow-[0_4px_24px_rgba(24,24,27,.06)]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 transition group-hover:bg-zinc-900 group-hover:text-white">
+                <Icon className="h-5 w-5"/>
+              </span>
+              <h2 className="text-base font-semibold text-zinc-950">{label}</h2>
+              <span className="ml-auto text-xs tabular-nums text-zinc-400">{items.length} {items.length === 1 ? 'Eintrag' : 'Einträge'}</span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">{domainBlurbs[domain] ?? ''}</p>
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {items.slice(0, 6).map(item => <li key={item.id}>
+                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] leading-5 text-zinc-700">{item.title}</span>
+              </li>)}
+              {items.length > 6 && <li>
+                <span className="inline-block rounded-full px-2 py-0.5 text-[11px] leading-5 text-zinc-400">+{items.length - 6}</span>
+              </li>}
+            </ul>
+          </a>;
+        })}
+      </div>
     </section>
   </div>;
 }
 
-function CollapsibleSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
-  const [open, setOpen] = useState(!!defaultOpen);
-  const Chevron = open ? ChevronDown : ChevronRight;
+function CollapsibleSection({
+  title, icon, count, open, active, onToggle, children,
+}: {
+  title: string;
+  icon: ReactNode;
+  count: number;
+  open: boolean;
+  active: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
   return <section className="min-w-0">
     <button
       type="button"
-      onClick={() => setOpen(o => !o)}
+      onClick={onToggle}
       aria-expanded={open}
-      className="group flex w-full items-center gap-1.5 rounded-md px-1.5 py-1.5 text-left text-base font-semibold leading-5 text-zinc-900 transition hover:bg-zinc-50"
+      className={cx(
+        'group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[15px] font-semibold leading-5 transition',
+        active ? 'text-zinc-950 hover:bg-zinc-100' : 'text-zinc-800 hover:bg-zinc-50',
+      )}
     >
-      <Chevron className="h-4 w-4 shrink-0 text-zinc-400 transition group-hover:text-zinc-700" aria-hidden/>
-      <span className="truncate">{title}</span>
+      <ChevronRight
+        className={cx(
+          'h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:text-zinc-700',
+          open && 'rotate-90',
+        )}
+        aria-hidden
+      />
+      <span className={cx(
+        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition',
+        active ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200',
+      )}>{icon}</span>
+      <span className="flex-1 truncate">{title}</span>
+      <span className={cx(
+        'text-xs font-normal tabular-nums transition',
+        active ? 'text-zinc-700' : 'text-zinc-400',
+      )}>{count}</span>
     </button>
-    {open && <div className="mt-1 grid min-w-0 gap-1 pl-5">
+    {open && <div className="mt-0.5 mb-1 grid min-w-0 gap-0.5 pl-8">
       {children}
     </div>}
   </section>;
 }
 
-function TreeNode({ href, label, selected, bullet = false, tag }: { href: string; label: string; selected: boolean; bullet?: boolean; tag?: ReactNode }) {
+function TreeNode({ href, label, selected, tag }: { href: string; label: string; selected: boolean; tag?: ReactNode }) {
   return <a
     href={href}
     className={cx(
-      'block min-w-0 rounded-md px-2 py-1.5 text-sm leading-5 transition',
-      selected ? 'bg-zinc-100 font-medium text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
+      'block min-w-0 rounded-md px-2 py-1 text-[13px] leading-5 transition',
+      selected ? 'bg-zinc-950 font-medium text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950',
     )}
   >
     <span className="flex min-w-0 items-center gap-1">
-      {bullet && <span className="text-zinc-400">•</span>}
       <span className="truncate">{label}</span>
       {tag}
     </span>
@@ -285,8 +376,8 @@ function TreeNode({ href, label, selected, bullet = false, tag }: { href: string
 
 function TreeSubheader({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'preset' }) {
   return <div className={cx(
-    'px-2 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide',
-    variant === 'preset' ? 'text-amber-700' : 'text-zinc-500',
+    'px-2 pt-2 pb-0.5 text-[10px] font-medium uppercase tracking-wider',
+    variant === 'preset' ? 'text-amber-700' : 'text-zinc-400',
   )}>{children}</div>;
 }
 
