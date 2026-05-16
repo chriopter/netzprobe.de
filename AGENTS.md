@@ -18,6 +18,8 @@ Datenpakete leben unter `data/<domäne>/<paket>/`. Domänen:
 - `data/presets/` — Kompositionen (`kind: composition`). Im Wiki mit gelbem „Preset"-Tag hervorgehoben.
 - `data/kern/` — Dispatch-Engine (`kind: model`).
 
+Vorlagen unter `data/templates/` sind keine Datenpakete, stehen nicht im Manifest und werden nicht von Simulation/Loadern verwendet. Sie dürfen als `kind: template` im Wiki erscheinen.
+
 Bausteine (`kind: dataset` oder `kind: scenario`) sind atomare Einheiten mit Parametern oder Beobachtungen.
 
 Jedes Paket hat immer:
@@ -51,23 +53,27 @@ Vor dem Mergen jedes neuen oder geänderten Szenarios:
 ## Wiki-Stil
 
 Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbilder:
+- Arbeitsvorlage: `data/templates/scenario-description.template.json` — Struktur und Mindestniveau für neue Szenarien.
 - Reine Daten ohne Slider: `data/last/2025/description.json` — kein `overview`, kein `sections`.
-- Szenarien mit Slider und Formel: `data/last/e100-pkw/description.json` und `data/last/e100-heiz/description.json` — knappe Einleitung plus drei strukturierte Übersichtspunkte.
+- Szenarien mit Slider und Formel: `data/last/e100-pkw/description.json` — aktueller Qualitätsanker für fachbuchartigen Lesefluss.
 
 Regeln:
 
-- `description`: 2–3 Sätze, generisch, ohne konkrete Zahlen. Beschreibt _was_ das Szenario tut und _wie_ es prinzipiell gerechnet wird, nicht mit welchen Werten.
+- `description`: 2–3 Markdown-Absätze im Fachbuchstil. Konkrete Bezugswerte nennen, wenn sie zum Verständnis nötig sind: Bezugsjahr, Referenzmenge, historisch enthaltener Sockel, zentraler Umrechnungsfaktor, Ergebnisgrößenordnung und Profilmechanik. Wo das Szenario fossile Endenergie ersetzt, gehört auch der Substitutions- und Wirkungsgrad-Vergleich in den Lesefluss (z. B. Verbrenner `~25 %` vs. BEV `75–85 %`). Flottenmittel-Korridore von der breiteren Einzelmodell-Streuung sauber trennen.
+- Markdown sparsam nutzen: `**Begriffe**` für tragende Konzepte, `` `Werte/Einheiten/Formeln` `` für technische Größen, Links nur wenn sie den Lesefluss nicht stören.
 - `source`: ein Satz mit den wichtigsten Bezugswerten in Klammern (z. B. „UBA Raumwärme 2023 (445 TWh)"). URLs gehören in `sourceUrls`.
-- `overview`: nur für Szenarien mit Slider/Formel. Maximal drei Einträge in dieser Reihenfolge:
-  - **Verwendung**: konkrete Slider-Spanne, was Default bedeutet.
+- `overview`: nur für Szenarien mit Slider/Formel. Drei Einträge in dieser Reihenfolge, jeweils mit inline Markdown:
+  - **Verwendung**: konkrete Slider-Spanne, was Default und Minimum bedeuten; das Maximum braucht eine fachliche Rationale (Wachstum, nicht-modellierte Teilbereiche, Vergleichsbedarf), keine arbiträren Werte.
   - **Verteilung**: zeitliche Verteilung und Profil-Quelle.
   - **Formel**: Rechenvorschrift inklusive Default-Auswertung.
-  Kein zusätzlicher `Quelle`-Eintrag — die Quelle ist in `source` und der Wiki-Header rendert sie ohnehin separat.
+  Kein zusätzlicher `Quelle`-Eintrag — Quellen stehen in `source`/`sourceUrls` und werden als eigenes Wiki-Kapitel gerendert.
+- `method`: technische Herleitung mit Bezeichnern aus `data.json`/`model.ts`. Hier gehören Mengenrechnung, Faktorenkorridore und Profilnormierung hin.
+- `method`-Einträge mit Präfix `Datei:` werden nicht in der Herleitung gezeigt, sondern im `Files`-Tab als Reproduktionshinweis gerendert.
 - `fields`: eine knappe Zeile pro Top-Level-Feld. Verschachtelte Strukturen (`degreeDayProfile`, `hourlyProfile`) als ein einziger Eintrag mit Inhalt-Zusammenfassung, nicht jede Sub-Property einzeln.
-- `file`: auf `<paket>/data.json`, wenn vorhanden. `scripts`: mindestens `<paket>/model.ts`, plus `<paket>/generate.mjs` wenn vorhanden. Ordnername, `id` und Modellcode-Pfad müssen identisch sein.
-- `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen.
+- `file`: auf `<domain>/<paket>/data.json`, wenn vorhanden. `scripts`: mindestens `<domain>/<paket>/model.ts`, plus `<domain>/<paket>/generate.mjs` wenn vorhanden. Ordnername, `id` und Modellcode-Pfad müssen identisch sein.
+- `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen. Scope-Lücken (nicht-modellierte Teilbereiche) mit Mengenangabe explizit benennen; optimistische Annahmen am Rand der Realweltdaten als solche flaggen, idealerweise mit Quellenverweis.
 - `sections` vermeiden. „Erwägungsgründe" und pädagogische Bullet-Listen gehören weder ins Wiki noch in den Code.
-- Keine Wiederholung: Was schon in `title`, `short`, `source` oder `fields` steht, gehört nicht nochmal in `description` oder `overview`.
+- Keine tote Wiederholung: Zahlen dürfen in `description`, `overview` und `method` vorkommen, wenn sie dort unterschiedliche Aufgaben erfüllen (Lesefluss, Bedienung, Herleitung). Keine reinen Copy-Paste-Dubletten.
 - Keine Marketingsprache.
 
 ## Commits

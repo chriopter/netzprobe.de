@@ -1,0 +1,74 @@
+{
+  "id": "scenario-description-template",
+  "domain": "templates",
+  "kind": "template",
+  "title": "Szenario-Description Vorlage",
+  "file": "templates/scenario-description.template.json",
+  "source": "Arbeitsvorlage nach dem Qualitätsniveau von e100-pkw: konkrete Bezugswerte, knapper Fachbuch-Lesefluss, technische Herleitung im Modellansatz.",
+  "sourceUrls": [],
+  "period": "Vorlage",
+  "resolution": "Wiki-Eintrag",
+  "unit": "Description-JSON",
+  "short": "Arbeitsvorlage für neue Szenario-Wiki-Einträge mit Slider, Formel und Herleitung.",
+  "description": [
+    "**Zielniveau:** Ein Szenario erklärt zuerst fachlich, welche reale Größe elektrifiziert, skaliert oder ersetzt wird. Der Leser soll schon in der Übersicht konkrete Größenordnungen verstehen: Bezugsjahr, Referenzmenge, bereits historisch enthaltener Sockel, zentraler Faktor und Ergebnisordnung.",
+    "Der Lesetext bleibt knapp, aber nicht abstrakt. Werte wie `472.200 Mio. km`, `20 kWh/100 km` oder `90 TWh/a` gehören in die Übersicht, wenn sie den Mechanismus verständlich machen; die vollständige Mengenrechnung steht anschließend in der Herleitung. Wo fossile Endenergie ersetzt wird, gehört auch der Wirkungsgrad-Hebel in den Lesefluss (z. B. Verbrenner `~25 %` vs. BEV `75–85 %`); Flottenmittel sind sauber von der breiteren Einzelmodell-Streuung zu trennen.",
+    "Der Modellansatz trennt Bedienung, Profil und Formel. `Verwendung` beschreibt Slider und Default, `Verteilung` beschreibt die zeitliche Mechanik, `Formel` zeigt die Rechenvorschrift mit Default-Auswertung. Quellen stehen in einem eigenen Kapitel; Dateien, Felder und Code gehören in `Files`."
+  ],
+  "overview": [
+    {
+      "label": "Verwendung",
+      "value": "**Slider:** `<Minimum>` bis `<Maximum> <Einheit>`. Der Default `<Default>` steht für <fachliche Bedeutung>; das Minimum ist <historisch enthaltener Sockel>. Das Maximum lässt Kopfraum für <Wachstum oder nicht im Default enthaltene Teilbereiche> — keine arbiträren Werte."
+    },
+    {
+      "label": "Verteilung",
+      "value": "**Profil:** <Zeitprofil mit Quelle/Mechanik>. Hauptlast <Zeitfenster/Saison>, Tal <Zeitfenster/Saison>; <wichtige Vereinfachung>."
+    },
+    {
+      "label": "Formel",
+      "value": "**Rechnung:** `<Zielgröße> = max(0, Ziel − Mindestwert) × Faktor`. Default: `<eingesetzte Rechnung> = <Ergebnis>`."
+    }
+  ],
+  "method": [
+    "Datei: Vorlage unter data/templates/scenario-description.template.json. Neue Szenarien bekommen eigene Dateien unter data/<domain>/<scenario-id>/.",
+    "description: 2-3 Markdown-Absätze. Nenne konkrete Bezugswerte, aber vermeide vollständige Copy-Paste-Wiederholung aus overview und method.",
+    "overview.Verwendung: Slider-Spanne, Default-Bedeutung und Mindestwert in einem bedienbaren Satz; Maximum mit fachlicher Rationale begründen (Wachstum, nicht-modellierte Teilbereiche).",
+    "overview.Verteilung: Profilquelle, Peak/Tal oder saisonale Mechanik und zentrale Vereinfachung.",
+    "overview.Formel: Rechenvorschrift inklusive eingesetzter Default-Rechnung und Ergebnisgröße.",
+    "method-Datei-Konvention: Einträge mit Präfix `Datei:` wandern aus der Herleitung in den Files-Tab und erscheinen dort als Reproduktionshinweis.",
+    "method: technische Herleitung mit Bezeichnern aus data.json/model.ts, Mengenrechnung, Faktorenkorridor, Profilnormierung und Reproduktionshinweis.",
+    "caveats: 3–5 echte Modellgrenzen. Scope-Lücken (z. B. nur private statt aller Pkw) mit Mengenangabe nennen; optimistische Annahmen am Rand der Realweltdaten flaggen, idealerweise mit Quellenverweis (ICCT, UBA, KBA o. Ä.)."
+  ],
+  "fields": [
+    {
+      "name": "description",
+      "unit": "Markdown[]",
+      "description": "Fachbuchartiger Lesetext mit konkreten Bezugsmengen, Sockel, Faktor, Ergebnisordnung und Profilmechanik."
+    },
+    {
+      "name": "overview",
+      "unit": "Liste",
+      "description": "Drei Einträge: Verwendung, Verteilung, Formel; jeweils mit inline Markdown."
+    },
+    {
+      "name": "method",
+      "unit": "Liste",
+      "description": "Technische Herleitung mit data.json/model.ts-Bezeichnern, Quellenlogik und Normierung; `Datei:`-Einträge werden in Files gerendert."
+    },
+    {
+      "name": "fields",
+      "unit": "Liste",
+      "description": "Eine knappe Zeile pro Top-Level-Feld; verschachtelte Profile als ein Feld zusammenfassen."
+    },
+    {
+      "name": "caveats",
+      "unit": "Liste",
+      "description": "Drei bis fünf echte Modellgrenzen, jeweils ein Satz."
+    }
+  ],
+  "caveats": [
+    "Die Vorlage ersetzt keine Quellenprüfung; reale Benchmarks und URLs müssen pro Szenario neu belegt werden.",
+    "Platzhalter dürfen nicht im finalen Datenpaket bleiben; `id`, Pfade, Typen und Modellcode müssen paketgenau sein.",
+    "Zahlen dürfen mehrfach vorkommen, wenn sie unterschiedliche Aufgaben erfüllen: Lesefluss, Bedienung und Herleitung."
+  ]
+}
