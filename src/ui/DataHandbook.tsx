@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, SlidersHorizontal, Zap } from 'lucide-react';
+import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Menu, SlidersHorizontal, Zap } from 'lucide-react';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
 import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
-import { cx, iconTile, rowActive, rowHover, sectionBox } from './ui';
+import { MainTabs } from './MainTabs';
+import { cx, iconButton, iconTile, panelHeader, rowActive, rowHover, sectionBox, sidebarInset, sidebarWidthClass } from './ui';
 
 const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=datei&path=${encodeURIComponent(path)}`;
 const dataPlainTextUrl = (path: string) => `${dataFileUrl(path)}?raw-text`;
@@ -61,6 +62,16 @@ const tocAnchors = {
   files: 'files',
   homeDomains: 'wiki-domaenen',
 } as const;
+
+const wikiSections = [
+  ['last', 'Last'],
+  ['erzeugung', 'Erzeugung'],
+  ['speicher', 'Speicher'],
+  ['aussenhandel', 'Außenhandel'],
+  ['presets', 'Presets'],
+  ['modell', 'Modell'],
+  ['templates', 'Vorlagen'],
+] as const;
 
 function groupDocsForWiki(docs: DatasetDoc[]) {
   return docs.reduce<Record<string, DatasetDoc[]>>((acc, doc) => {
@@ -124,61 +135,81 @@ function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
   return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800">Preset</span>;
 }
 
-export function DataHandbook({ docs }: { docs: DatasetDoc[] }) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedChange }: { docs: DatasetDoc[]; collapsed: boolean; actionBar?: ReactNode; onCollapsedChange: (collapsed: boolean) => void }) {
+  const selectedId = selectedIdFromUrl();
+  const grouped = groupDocsForWiki(docs);
+  if (collapsed) return null;
+  return <aside
+    aria-label="Wiki-Navigation"
+    className={cx(
+      'min-w-0 overflow-hidden bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:border-r lg:border-zinc-200',
+      sidebarWidthClass,
+    )}
+  >
+    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin]">
+      <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            <button
+              type="button"
+              aria-label="Sidebar einklappen"
+              aria-expanded={true}
+              title="Sidebar einklappen"
+              className={cx(iconButton, 'shrink-0')}
+              onClick={() => onCollapsedChange(true)}
+            >
+              <Menu className="h-4 w-4" aria-hidden="true"/>
+            </button>
+            <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950">netzprobe.de</h1>
+            <MainTabs active="wiki"/>
+          </div>
+        </div>
+        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px]">
+          {actionBar}
+        </div>
+      </section>
+      <div className={cx('py-5', sidebarInset)}>
+        <DataHandbookNav sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
+        <div className="mt-4 border-t border-zinc-200 pt-3">
+          <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400">Über die App</p>
+          <a href={`${import.meta.env.BASE_URL}changelog`} className="block rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950">Changelog</a>
+          <a href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950">
+            GitHub
+            <ExternalLink className="h-3 w-3 text-zinc-400" aria-hidden="true"/>
+          </a>
+        </div>
+      </div>
+    </div>
+  </aside>;
+}
+
+export function DataHandbookContent({ docs, sidebarCollapsed, onOpenSidebar }: { docs: DatasetDoc[]; sidebarCollapsed?: boolean; onOpenSidebar?: () => void }) {
   const selectedId = selectedIdFromUrl();
   const selectedDataset = selectedId ? docs.find(doc => doc.id === selectedId) : undefined;
-  const grouped = groupDocsForWiki(docs);
   const tocItems = selectedDataset
     ? articleToc(selectedDataset)
     : !selectedId && docs.length
       ? [{ id: tocAnchors.homeDomains, label: 'Domänen' }]
       : [];
-  const sections = [
-    ['last', 'Last'],
-    ['erzeugung', 'Erzeugung'],
-    ['speicher', 'Speicher'],
-    ['aussenhandel', 'Außenhandel'],
-    ['presets', 'Presets'],
-    ['modell', 'Modell'],
-    ['templates', 'Vorlagen'],
-  ] as const;
-
-  return <main className="min-h-screen overflow-x-clip bg-white text-zinc-950">
-    <div className="flex w-full flex-col lg:flex-row lg:pl-[320px]">
-      <aside className="min-w-0 border-b border-zinc-200 bg-white px-4 py-4 sm:px-6 lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:h-screen lg:w-[320px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:px-8 lg:py-8">
-        <div className="flex items-start justify-between gap-4 lg:block">
-          <div className="min-w-0">
-            <a href={import.meta.env.BASE_URL} className="text-sm font-medium text-zinc-500 hover:text-zinc-950">netzprobe.de</a>
-            <h1 className="mt-3 text-2xl font-semibold leading-tight lg:mt-4">netzprobe.de Wiki</h1>
-          </div>
-          <button
-            type="button"
-            className="mt-0.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 lg:hidden"
-            aria-expanded={mobileNavOpen}
-            aria-controls="data-handbook-nav"
-            onClick={() => setMobileNavOpen(open => !open)}
-          >
-            {mobileNavOpen ? 'Schließen' : 'Menü'}
-          </button>
-        </div>
-        <div
-          id="data-handbook-nav"
-          className={cx(
-            'mt-5 max-h-[52vh] overflow-y-auto pr-1 lg:mt-8 lg:block lg:max-h-none lg:overflow-visible lg:pr-0',
-            mobileNavOpen ? 'block' : 'hidden',
-          )}
-        >
-          <DataHandbookNav sections={sections} grouped={grouped} selectedId={selectedId}/>
-        </div>
-      </aside>
-      <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:max-w-[900px] lg:px-10 lg:py-8">
+  return <section className="flex min-w-0 flex-col gap-3">
+    {sidebarCollapsed && onOpenSidebar && <div><button
+      type="button"
+      aria-label="Sidebar öffnen"
+      aria-expanded={false}
+      title="Sidebar öffnen"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+      onClick={onOpenSidebar}
+    >
+      <Menu className="h-4 w-4" aria-hidden="true"/>
+    </button></div>}
+    <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white">
+      <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
         {!docs.length ? <p className="p-5 text-zinc-500">Lade Wiki …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
         <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
       </article>
       <ArticleToc items={tocItems}/>
     </div>
-  </main>;
+  </section>;
 }
 
 function ArticleToc({ items }: { items: TocItem[] }) {
@@ -266,7 +297,7 @@ function DataHandbookNav({
           'mb-2 block rounded-md px-2 py-1.5 text-sm leading-5 transition',
           !selectedId ? rowActive + ' font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
         )}
-      >Überblick</a>
+      >Modelle & Daten</a>
       {sections.map(([domain, label]) => {
         const inDomain = grouped[domain];
         if (!inDomain?.length) return null;

@@ -12,7 +12,7 @@ import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
-import { DataHandbook } from './DataHandbook';
+import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
 import { ChangelogModal } from './ChangelogModal';
 import { applyManifestPaths, manifestUrl, templateDescriptionPaths, type DatasetDoc, type ManifestEntry } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
@@ -457,12 +457,17 @@ function useDatasetDocs() {
     loadJson<ManifestEntry[]>(manifestUrl)
       .then(entries => {
         applyManifestPaths(entries);
-        return Promise.all([
+        return Promise.allSettled([
           ...entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description))),
           ...templateDescriptionPaths.map(path => loadJson<DatasetDoc>(dataFileUrl(path))),
         ]);
       })
-      .then(setDocs)
+      .then(results => {
+        results.forEach(result => {
+          if (result.status === 'rejected') console.warn('Wiki-Eintrag konnte nicht geladen werden:', result.reason);
+        });
+        setDocs(results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []));
+      })
       .catch(console.error);
   }, []);
   return docs;
@@ -491,7 +496,46 @@ export function App() {
 
 function DataHandbookRoute() {
   const datasetDocs = useDatasetDocs();
-  return <DataHandbook docs={datasetDocs}/>;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const [wikiLive, setWikiLive] = useState(true);
+  const copyWikiUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setActionStatus('Link kopiert');
+    } catch {
+      setActionStatus('Kopieren nicht möglich');
+    }
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const showStaticStatus = () => {
+    setWikiLive(value => !value);
+    setActionStatus('Wiki-Ansicht statisch');
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const screenshotWiki = () => {
+    window.print();
+    setActionStatus('Druckdialog geöffnet');
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  return <main className={shell}>
+    <div className={cx('mx-auto w-full max-w-[1760px]', sidebarCollapsed ? '' : sidebarOffsetClass)}>
+      <DataHandbookSidebar
+        docs={datasetDocs}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+        actionBar={<HeaderToolBar
+          status={actionStatus}
+          live={wikiLive}
+          onToggleLive={showStaticStatus}
+          onScreenshot={screenshotWiki}
+          onRefresh={() => window.location.reload()}
+          onCopyUrl={copyWikiUrl}
+        />}
+      />
+      <DataHandbookContent docs={datasetDocs} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={() => setSidebarCollapsed(false)}/>
+    </div>
+  </main>;
 }
 
 function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: boolean }) {
@@ -871,7 +915,6 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
       <ScenarioSidebar
         data={data}
         scenario={resolvedScenario}
-        onOpenChangelog={() => setChangelogOpen(true)}
         supplyPreset={scenario.supplyPreset}
         onSupplyPresetChange={(p) => setScenario(prev => {
           if (p === 'custom') return { ...prev, supplyPreset: 'custom', generation: resolvedScenario.generation, storage: resolvedScenario.storage };
@@ -978,13 +1021,17 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
 }
 
 function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void; onToggleLive: () => void }) {
+  return <HeaderToolBar status={status} live={live} onToggleLive={onToggleLive} onScreenshot={onScreenshot} onRefresh={onReset} onCopyUrl={onCopyUrl}/>;
+}
+
+function HeaderToolBar({ status, live, onToggleLive, onScreenshot, onRefresh, onCopyUrl }: { status: string | null; live: boolean; onToggleLive: () => void; onScreenshot: () => void; onRefresh: () => void; onCopyUrl: () => void }) {
   return <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
     <div className="flex w-full justify-between">
       <IconAction label={live ? 'Live-Berechnung pausieren' : 'Live-Berechnung aktivieren'} onClick={onToggleLive} tone={live ? 'default' : 'danger'}>
         {live ? <Pause className="h-4 w-4"/> : <Play className="h-4 w-4"/>}
       </IconAction>
       <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>
-      <IconAction label="Reset" onClick={onReset}><RotateCcw className="h-4 w-4"/></IconAction>
+      <IconAction label="Aktualisieren" onClick={onRefresh}><RotateCcw className="h-4 w-4"/></IconAction>
       <IconAction label="Link" onClick={onCopyUrl}><Link className="h-4 w-4"/></IconAction>
     </div>
     {!live && <div className="truncate rounded-md bg-red-600 px-2 py-0.5 text-[11px] font-medium text-white">Live-Berechnung pausiert</div>}

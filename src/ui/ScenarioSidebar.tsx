@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowRightLeft,
   BatteryCharging,
-  BookOpen,
   CalendarDays,
   Car,
   ChevronDown,
@@ -11,22 +10,16 @@ import {
   Database,
   Factory,
   Flame,
-  History,
   Info,
   Menu,
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
 
-// Lucide hat aus Markenrechtsgründen kein GitHub-Logo — eigenes inline-SVG.
-function GithubMark({ className }: { className?: string }) {
-  return <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-1.94c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.27-5.24-5.66 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.9-.39.99 0 1.98.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.4-2.7 5.36-5.26 5.65.41.36.78 1.06.78 2.13v3.16c0 .31.21.66.79.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
-  </svg>;
-}
 import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
-import { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataCatalog';
+import { dataWikiUrl, datasetIds } from './dataCatalog';
 import { fmt0, twh, twh0 } from './format';
+import { MainTabs } from './MainTabs';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
 import { additionalTWh as e100PkwAdditionalTWh } from '../../data/last/e100-pkw/model';
 import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh } from '../../data/last/e100-heiz/model';
@@ -54,7 +47,6 @@ type ScenarioSidebarProps = {
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
   actionBar?: ReactNode;
-  onOpenChangelog: () => void;
   onCollapsedChange: (collapsed: boolean) => void;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
@@ -107,7 +99,6 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   openSectors,
   expandedRow,
   actionBar = null,
-  onOpenChangelog,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -178,7 +169,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
     <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] lg:border-r lg:border-zinc-200">
       <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
         <div className="flex min-w-0 items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
             <button
               type="button"
               aria-label="Sidebar einklappen"
@@ -190,37 +181,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
               <Menu className="h-4 w-4" aria-hidden="true"/>
             </button>
             <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950">netzprobe.de</h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-2.5">
-            <a
-              href="https://github.com/chriopter/netzprobe"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Repository öffnen"
-              title="Repository öffnen"
-              className="inline-flex items-center text-zinc-500 transition hover:text-zinc-950"
-            >
-              <GithubMark className="h-3 w-3"/>
-            </a>
-            <button
-              type="button"
-              onClick={onOpenChangelog}
-              aria-label="Changelog öffnen"
-              title="Changelog öffnen"
-              className="inline-flex items-center text-zinc-500 transition hover:text-zinc-950"
-            >
-              <History className="h-3 w-3"/>
-            </button>
-            <a
-              href={dataWikiHomeUrl()}
-              target="_blank"
-              rel="noreferrer"
-              title="Wiki öffnen"
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 transition hover:text-zinc-950"
-            >
-              <BookOpen className="h-3 w-3"/>
-              Wiki
-            </a>
+            <MainTabs active="simulation"/>
           </div>
         </div>
         <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px]">
