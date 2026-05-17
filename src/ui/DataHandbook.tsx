@@ -177,23 +177,25 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
       </section>
       <div className={cx('py-5', sidebarInset)}>
         <div className="mb-3 border-b border-zinc-200 pb-3">
-          <h2 className="mb-2 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950">Allgemein</h2>
-          <a
-            href={`${import.meta.env.BASE_URL}changelog`}
-            className={cx(
-              'block rounded-md px-2 py-1.5 text-sm leading-5 transition',
-              onChangelog ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
-            )}
-          >Changelog</a>
-          <a
-            href="https://github.com/chriopter/netzprobe"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950"
-          >
-            GitHub
-            <ExternalLink className="h-3 w-3 text-zinc-400" aria-hidden="true"/>
-          </a>
+          <h2 className="mb-0.5 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950">Allgemein</h2>
+          <div className="mb-1 grid min-w-0 gap-0.5 pl-8">
+            <a
+              href={`${import.meta.env.BASE_URL}changelog`}
+              className={cx(
+                'block min-w-0 rounded-md px-2 py-1.5 text-sm leading-5 transition',
+                onChangelog ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+              )}
+            >Changelog</a>
+            <a
+              href="https://github.com/chriopter/netzprobe"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950"
+            >
+              GitHub
+              <ExternalLink className="h-3 w-3 text-zinc-400" aria-hidden="true"/>
+            </a>
+          </div>
         </div>
         <DataHandbookNav sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
       </div>

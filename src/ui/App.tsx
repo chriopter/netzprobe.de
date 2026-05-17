@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import { Camera, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -11,9 +11,10 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
-import { DataFileViewer } from './DataFileViewer';
-import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
-import { ChangelogPage } from './ChangelogPage';
+const DataFileViewer = lazy(() => import('./DataFileViewer').then(m => ({ default: m.DataFileViewer })));
+const DataHandbookContent = lazy(() => import('./DataHandbook').then(m => ({ default: m.DataHandbookContent })));
+const DataHandbookSidebar = lazy(() => import('./DataHandbook').then(m => ({ default: m.DataHandbookSidebar })));
+const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })));
 import { datasetDocs, templateDescriptionPaths, type DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
@@ -488,11 +489,13 @@ function urlView() {
   }
 }
 
+const RouteFallback = () => <div className="flex h-screen items-center justify-center text-sm text-zinc-400">Lade …</div>;
+
 export function App() {
   const [route] = useState(urlView);
-  if (route.view === 'datei' && route.path) return <DataFileViewer path={route.path}/>;
-  if (route.view === 'daten') return <DataHandbookRoute/>;
-  if (route.view === 'changelog') return <ChangelogRoute/>;
+  if (route.view === 'datei' && route.path) return <Suspense fallback={<RouteFallback/>}><DataFileViewer path={route.path}/></Suspense>;
+  if (route.view === 'daten') return <Suspense fallback={<RouteFallback/>}><DataHandbookRoute/></Suspense>;
+  if (route.view === 'changelog') return <Suspense fallback={<RouteFallback/>}><ChangelogRoute/></Suspense>;
   return <Dashboard/>;
 }
 
@@ -593,6 +596,7 @@ function ChangelogRoute() {
         <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white">
           <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
             <ChangelogPage/>
+            <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
           </article>
         </div>
       </section>
@@ -608,6 +612,9 @@ function Dashboard() {
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
   const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
+  // Build-Time pre-computed default als sofortiger Erst-Render. Wird beim ersten
+  // Worker-Ergebnis (Slider-Drag) durch live-Rechnung ersetzt.
+  const hasLiveResultRef = useRef(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(mixVisibilityFromUrl);
   const [chartMode, setChartMode] = useState<ChartMode>(chartModeFromUrl);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(sidebarCollapsedFromUrl);
@@ -620,6 +627,14 @@ function Dashboard() {
 
   useEffect(() => {
     loadDefaultData().then(setRawData).catch(console.error);
+    // Parallel: pre-computed Default-Result laden, damit der Chart sofort
+    // erscheint, ohne auf Worker-Boot + erste Engine-Berechnung zu warten.
+    fetch(`${import.meta.env.BASE_URL}default-result.json`)
+      .then(response => response.ok ? response.json() as Promise<SimulationResult> : null)
+      .then(result => {
+        if (result && !hasLiveResultRef.current) setChartResult(result);
+      })
+      .catch(() => { /* still falls back to live worker result */ });
   }, []);
 
   const needs2017 = scenario.loadYear === 2017 || scenario.supplyPreset === 'historical-2017';
@@ -729,7 +744,9 @@ function Dashboard() {
   });
   useEffect(() => {
     if (!result || chartResult === result) return;
-    if (!chartResult) {
+    if (!hasLiveResultRef.current) {
+      // Erstes Live-Result vom Worker: ersetzt den pre-computed Default sofort.
+      hasLiveResultRef.current = true;
       setChartResult(result);
       return;
     }
