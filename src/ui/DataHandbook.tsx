@@ -549,13 +549,13 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
 
 function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): FileContentTab[] {
   const tabs: FileContentTab[] = [];
+  if (selected.fields?.length || reproductionItems.length) {
+    tabs.push({ id: 'fields', label: 'Felder', kind: 'fields' });
+  }
   const modulePath = modulePathForId(selected.id);
   if (modulePath) {
     const filename = modulePath.split('/').pop() ?? modulePath;
     tabs.push({ id: `module-${modulePath}`, label: `Modul (${filename})`, kind: 'module', path: modulePath });
-  }
-  if (selected.fields?.length || reproductionItems.length) {
-    tabs.push({ id: 'fields', label: 'Felder', kind: 'fields' });
   }
   if (generatorPackageIds.has(selected.id)) {
     const generatorPath = generatorPathForId(selected.id);
