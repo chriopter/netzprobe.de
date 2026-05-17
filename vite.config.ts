@@ -1,5 +1,5 @@
 import { cpSync, existsSync, readFileSync, statSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
@@ -71,6 +71,22 @@ function topLevelData(): Plugin {
   };
 }
 
+function precomputeDefaultResult(): Plugin {
+  return {
+    name: 'precompute-default-result',
+    closeBundle() {
+      const outPath = resolve(rootDir, 'dist/default-result.json');
+      const result = spawnSync('npx', ['tsx', 'src/simulation/precomputeDefault.ts', outPath], {
+        stdio: 'inherit',
+        cwd: rootDir,
+      });
+      if (result.status !== 0) {
+        throw new Error('precompute-default-result: tsx-Run fehlgeschlagen');
+      }
+    },
+  };
+}
+
 export default defineConfig({
   base: process.env.GITHUB_PAGES === 'true' ? '/netzprobe/' : '/',
   define: {
@@ -82,7 +98,7 @@ export default defineConfig({
     // globalThis mappen, damit chart-worker.ts beim init nicht crashed.
     global: 'globalThis',
   },
-  plugins: [react(), tailwindcss(), topLevelData()],
+  plugins: [react(), tailwindcss(), topLevelData(), precomputeDefaultResult()],
   server: { port: 5177 },
   preview: { port: 4177 },
   build: { chunkSizeWarningLimit: 1500 },
