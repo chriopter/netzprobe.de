@@ -1,6 +1,6 @@
 # Netzprobe
 
-Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂ sehen.
+Kompakte Stromnetz-Simulation für Deutschland. Last und Erzeugung einstellen, Lastdeckung, Speicher, Abregelung und CO₂-Bilanz sehen.
 
 Vibecoded und schnell iteriert. Alle Eingangsgrößen sind dokumentierte Annahmen aus öffentlichen Quellen, keine belastbaren Werte — als Orientierung lesen, nicht als Prognose.
 
