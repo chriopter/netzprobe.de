@@ -70,9 +70,12 @@ export const data: ErzPackageBaseload = {
   installed2025GW: 0,
   defaultInstalledGW: 0,
   minInstalledGW: 0,
-  maxInstalledGW: 50,
+  maxInstalledGW: 500,
   stepGW: 0.5,
   mode: 'baseload',
   availability: 0.9,
   emissionGperKWh: 12,
+  // UI-Anker: 1,4 GW ≈ ein Block der Konvoi-Baureihe (Isar 2, Brokdorf, Emsland);
+  // wird im Sidebar-Slider als „≈ X × Isar 2" gerendert.
+  comparison: { divisor: 1.4, label: 'Isar 2' },
 };
