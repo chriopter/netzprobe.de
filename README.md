@@ -12,15 +12,16 @@ React, ECharts (OffscreenCanvas-Worker), Vite, TypeScript, Tailwind, Vitest. Sim
 
 ## Daten
 
-Pakete liegen unter `data/<domäne>/<id>/`:
+Pakete liegen unter `data/<domäne>/`:
 
-- `erzeugung/` — Erzeuger (`pv`, `windon`, `windoff`, `kernkraft`, `biomasse`, `laufwasser`, `gas`, `kohle`, `handel`) plus historische Referenzen.
+- `erzeugung/` — Erzeuger (`pv`, `windon`, `windoff`, `kernkraft`, `biomasse`, `laufwasser`, `gas`, `kohle`) plus historische Referenzen und Einspeisefaktoren.
 - `last/` — Sektor-Elektrifizierung (`e100-*`) plus historische Last.
 - `speicher/` — `batterie`, `pumpspeicher`, `h2`.
+- `aussenhandel/` — `strom-handel`, `h2-handel`.
 - `presets/` — Vorkonfigurierte Kombinationen.
-- `kern/` — Dispatch-Engine.
+- `kern.ts` — Dispatch-Engine.
 
-Jedes Paket hat `description.json` und `model.ts`, optional `data.json` und `generate.mjs`. `data/manifest.json` mappt IDs auf Pfade.
+Jedes Paket ist ein einziges TS-Modul (`data/<domain>/<id>.ts` flach, oder `data/<domain>/<id>/index.ts` falls ein Generator-Skript dazu gehört). Das Modul exportiert `description: DatasetDoc`, optional `data` und Modul-Funktionen. Großvolumige Zeitreihen (>500 Einträge) liegen als kolokiertes JSON daneben (`*.hours.json` oder `data.json`) und werden vom TS-Modul typisiert importiert. Der Loader liest alle Module via `import.meta.glob`; ein Manifest gibt es nicht mehr.
 
 ## Entwicklung
 

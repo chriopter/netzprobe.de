@@ -6,15 +6,15 @@ import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from
 import { CanvasRenderer } from 'echarts/renderers';
 import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
 import { dataFileUrl } from './dataPackages';
-import { loadDefaultData, loadJson } from './defaultData';
+import { loadDefaultData, loadHistorical2017, loadJson, type Historical2017Data } from './defaultData';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../simulation/engine';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
 import { DataFileViewer } from './DataFileViewer';
 import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
-import { ChangelogModal } from './ChangelogModal';
-import { applyManifestPaths, manifestUrl, templateDescriptionPaths, type DatasetDoc, type ManifestEntry } from './dataCatalog';
+import { ChangelogPage } from './ChangelogPage';
+import { datasetDocs, templateDescriptionPaths, type DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
@@ -22,19 +22,19 @@ import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { applySupplyPreset } from './supplyPresets';
 import { demandGW } from '../simulation/demand';
 import { aggregateErzeugungsPool, aggregateSpeicherPool, aggregateAussenhandelPool } from './defaultData';
-import erzPv from '../../data/erzeugung/pv/data.json';
-import erzWindOn from '../../data/erzeugung/windon/data.json';
-import erzWindOff from '../../data/erzeugung/windoff/data.json';
-import erzKernkraft from '../../data/erzeugung/kernkraft/data.json';
-import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
-import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
-import erzGas from '../../data/erzeugung/gas/data.json';
-import erzKohle from '../../data/erzeugung/kohle/data.json';
-import aussenhandelStromData from '../../data/aussenhandel/strom-handel/data.json';
-import aussenhandelH2Data from '../../data/aussenhandel/h2-handel/data.json';
-import speicherBatterie from '../../data/speicher/batterie/data.json';
-import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
-import speicherH2 from '../../data/speicher/h2/data.json';
+import { data as erzPv } from '../../data/erzeugung/pv';
+import { data as erzWindOn } from '../../data/erzeugung/windon';
+import { data as erzWindOff } from '../../data/erzeugung/windoff';
+import { data as erzKernkraft } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasse } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasser } from '../../data/erzeugung/laufwasser';
+import { data as erzGas } from '../../data/erzeugung/gas';
+import { data as erzKohle } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStromData } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2Data } from '../../data/aussenhandel/h2-handel';
+import { data as speicherBatterie } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicher } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2 } from '../../data/speicher/h2';
 import type {
   ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
   AussenhandelStromData, AussenhandelH2Data,
@@ -452,21 +452,22 @@ function useWorkerSimulation(
 }
 
 function useDatasetDocs() {
-  const [docs, setDocs] = useState<DatasetDoc[]>([]);
+  // Single-File-TS-Module werden von dataCatalog.ts via import.meta.glob
+  // synchron geladen und stehen ab dem ersten Render zur Verfügung. Nur die
+  // Template-Description liegt weiterhin als JSON unter data/templates/ —
+  // dafür bleibt der fetch-Pfad erhalten.
+  const [docs, setDocs] = useState<DatasetDoc[]>(() => datasetDocs);
   useEffect(() => {
-    loadJson<ManifestEntry[]>(manifestUrl)
-      .then(entries => {
-        applyManifestPaths(entries);
-        return Promise.allSettled([
-          ...entries.map(entry => loadJson<DatasetDoc>(dataFileUrl(entry.description))),
-          ...templateDescriptionPaths.map(path => loadJson<DatasetDoc>(dataFileUrl(path))),
-        ]);
-      })
+    Promise.allSettled(
+      templateDescriptionPaths.map(path => loadJson<DatasetDoc>(dataFileUrl(path))),
+    )
       .then(results => {
+        const templates: DatasetDoc[] = [];
         results.forEach(result => {
-          if (result.status === 'rejected') console.warn('Wiki-Eintrag konnte nicht geladen werden:', result.reason);
+          if (result.status === 'fulfilled') templates.push(result.value);
+          else console.warn('Wiki-Vorlage konnte nicht geladen werden:', result.reason);
         });
-        setDocs(results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []));
+        if (templates.length) setDocs([...datasetDocs, ...templates]);
       })
       .catch(console.error);
   }, []);
@@ -491,7 +492,8 @@ export function App() {
   const [route] = useState(urlView);
   if (route.view === 'datei' && route.path) return <DataFileViewer path={route.path}/>;
   if (route.view === 'daten') return <DataHandbookRoute/>;
-  return <Dashboard initialChangelogOpen={route.view === 'changelog'}/>;
+  if (route.view === 'changelog') return <ChangelogRoute/>;
+  return <Dashboard/>;
 }
 
 function DataHandbookRoute() {
@@ -538,8 +540,69 @@ function DataHandbookRoute() {
   </main>;
 }
 
-function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: boolean }) {
-  const [data, setData] = useState<DataSet | null>(null);
+function ChangelogRoute() {
+  const datasetDocs = useDatasetDocs();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const [wikiLive, setWikiLive] = useState(true);
+  const copyWikiUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setActionStatus('Link kopiert');
+    } catch {
+      setActionStatus('Kopieren nicht möglich');
+    }
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const showStaticStatus = () => {
+    setWikiLive(value => !value);
+    setActionStatus('Wiki-Ansicht statisch');
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  const screenshotWiki = () => {
+    window.print();
+    setActionStatus('Druckdialog geöffnet');
+    window.setTimeout(() => setActionStatus(null), 1600);
+  };
+  return <main className={shell}>
+    <div className={cx('mx-auto w-full max-w-[1760px]', sidebarCollapsed ? '' : sidebarOffsetClass)}>
+      <DataHandbookSidebar
+        docs={datasetDocs}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+        actionBar={<HeaderToolBar
+          status={actionStatus}
+          live={wikiLive}
+          onToggleLive={showStaticStatus}
+          onScreenshot={screenshotWiki}
+          onRefresh={() => window.location.reload()}
+          onCopyUrl={copyWikiUrl}
+        />}
+      />
+      <section className="flex min-w-0 flex-col gap-3">
+        {sidebarCollapsed && <div><button
+          type="button"
+          aria-label="Sidebar öffnen"
+          aria-expanded={false}
+          title="Sidebar öffnen"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+          onClick={() => setSidebarCollapsed(false)}
+        >
+          <Menu className="h-4 w-4" aria-hidden="true"/>
+        </button></div>}
+        <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white">
+          <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
+            <ChangelogPage/>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>;
+}
+
+function Dashboard() {
+  const [rawData, setRawData] = useState<DataSet | null>(null);
+  const [historical2017, setHistorical2017] = useState<Historical2017Data | null>(null);
   const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
@@ -551,26 +614,30 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
   const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
-  const [changelogOpen, setChangelogOpenState] = useState(initialChangelogOpen);
   const [liveSimulation, setLiveSimulation] = useState(true);
   const [manualRunToken, setManualRunToken] = useState(0);
   const [sliderActive, setSliderActive] = useState(false);
 
-  const setChangelogOpen = (next: boolean) => {
-    setChangelogOpenState(next);
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
-    const target = next ? `${basePath}changelog` : basePath.replace(/\/$/, '') || '/';
-    if (url.pathname !== target) {
-      url.pathname = target;
-      window.history.replaceState(null, '', url);
-    }
-  };
-
   useEffect(() => {
-    loadDefaultData().then(setData).catch(console.error);
+    loadDefaultData().then(setRawData).catch(console.error);
   }, []);
+
+  const needs2017 = scenario.loadYear === 2017 || scenario.supplyPreset === 'historical-2017';
+  useEffect(() => {
+    if (!needs2017 || historical2017) return;
+    loadHistorical2017().then(setHistorical2017).catch(console.error);
+  }, [needs2017, historical2017]);
+
+  const data = useMemo<DataSet | null>(() => {
+    if (!rawData) return null;
+    if (!historical2017) return rawData;
+    return {
+      ...rawData,
+      hours2017: historical2017.hours2017,
+      loadSum2017TWh: historical2017.loadSum2017TWh,
+      generationSum2017TWh: historical2017.generationSum2017TWh,
+    };
+  }, [rawData, historical2017]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1016,7 +1083,6 @@ function Dashboard({ initialChangelogOpen = false }: { initialChangelogOpen?: bo
       />
 
     </div>
-    <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)}/>
   </main>;
 }
 

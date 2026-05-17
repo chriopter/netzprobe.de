@@ -1,0 +1,189 @@
+import type { GenerationHour, SplitDataFile } from '../../src/types/data';
+import type { DatasetDoc } from '../../src/ui/dataCatalog';
+import hoursJson from './2025.hours.json';
+
+export const description: DatasetDoc = {
+  "id": "erzeugung-2025",
+  "domain": "erzeugung",
+  "kind": "dataset",
+  "title": "Historisch 2025",
+  "file": "erzeugung/2025/data.json",
+  "scripts": [
+    "erzeugung/2025/model.ts"
+  ],
+  "source": "Energy-Charts API; Fraunhofer ISE Jahresauswertung 2025.",
+  "sourceUrls": [
+    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+    "https://www.ise.fraunhofer.de/content/dam/ise/en/documents/press-releases/2026/0126_ISE_e_PR_Net%20electricity%20generation%202025.pdf"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "MW",
+  "short": "Beobachtete öffentliche Stromerzeugung Deutschland 2025, stündlich nach Energieträgern und Handelssaldo.",
+  "description": [
+    "**Datengrundlage:** stündliche öffentliche Nettostromerzeugung Deutschlands 2025 aus der Energy-Charts-API (Fraunhofer ISE), aus 15-Minuten-Werten zu Stundenmitteln aggregiert. Der Datensatz umfasst `8.760` Stunden und elf Erzeugungsarten in `MW` plus den Netto-Handelssaldo mit den Nachbarländern.",
+    "**Jahresgang:** die Gesamterzeugung summiert sich auf rund `424,6 TWh`, getragen von Wind Onshore (`105,1 TWh`), Kohle (`97,4 TWh`), **PV** (`70,1 TWh`), Gas (`49,5 TWh`), Biomasse (`36,1 TWh`), Wind Offshore (`26,1 TWh`) und Wasserkraft (`26,6 TWh`). Der Import-Saldo liegt bei `+34,1 TWh`, der Export bei `12,2 TWh`; netto wird Deutschland 2025 zum Stromimporteur. Erneuerbare decken zusammen rund `60 %` der inländischen Erzeugung.",
+    "**Modellgrenze:** abgebildet ist ausschließlich die öffentliche Stromerzeugung — industrielle Eigenversorgung und Kraftwerksblöcke der Chemie-, Stahl- und Papierbranche bleiben außen vor. Handelsströme erscheinen nur als stündlicher Netto-Saldo, nicht als Bruttoflüsse je Nachbarland; Pumpspeicher-Erzeugung und -Verbrauch laufen in separaten Reihen und sind hier nicht enthalten."
+  ],
+  "method": [
+    "Bezug aus Energy-Charts public_power API für Deutschland, 2025-01-01 bis 2026-01-01.",
+    "Stundenwerte je Energieträger werden direkt übernommen; Handelssaldo importExportMW positiv = Import, negativ = Export.",
+    "Jahressummen sumPartsTWh und sumSharesPct werden aus den Stundenwerten aggregiert; sumTWh ist Erzeugung ohne Handelssaldo, sumImportTWh und sumExportTWh sind die positiven beziehungsweise negativen Anteile."
+  ],
+  "fields": [
+    {
+      "name": "generatedAt",
+      "unit": "ISO-Zeit",
+      "description": "Zeitpunkt der lokalen Datendatei-Erzeugung."
+    },
+    {
+      "name": "year",
+      "unit": "Jahr",
+      "description": "Bezugsjahr."
+    },
+    {
+      "name": "source",
+      "unit": "Text",
+      "description": "Quellenkurzname."
+    },
+    {
+      "name": "sourceUrl",
+      "unit": "URL",
+      "description": "Energy-Charts-API-Abruf."
+    },
+    {
+      "name": "unit",
+      "unit": "Text",
+      "description": "Stundenwert-Einheit."
+    },
+    {
+      "name": "hours[].time",
+      "unit": "ISO-Zeit",
+      "description": "Stundenanfang."
+    },
+    {
+      "name": "hours[].pvMW",
+      "unit": "MW",
+      "description": "Photovoltaik-Einspeisung."
+    },
+    {
+      "name": "hours[].windOnMW",
+      "unit": "MW",
+      "description": "Wind Onshore."
+    },
+    {
+      "name": "hours[].windOffMW",
+      "unit": "MW",
+      "description": "Wind Offshore."
+    },
+    {
+      "name": "hours[].gasMW",
+      "unit": "MW",
+      "description": "Gaserzeugung."
+    },
+    {
+      "name": "hours[].coalMW",
+      "unit": "MW",
+      "description": "Kohleerzeugung."
+    },
+    {
+      "name": "hours[].hydroMW",
+      "unit": "MW",
+      "description": "Wasserkraft."
+    },
+    {
+      "name": "hours[].biomassMW",
+      "unit": "MW",
+      "description": "Biomasse."
+    },
+    {
+      "name": "hours[].wasteMW",
+      "unit": "MW",
+      "description": "Abfall."
+    },
+    {
+      "name": "hours[].oilMW",
+      "unit": "MW",
+      "description": "Öl."
+    },
+    {
+      "name": "hours[].geothermalMW",
+      "unit": "MW",
+      "description": "Geothermie."
+    },
+    {
+      "name": "hours[].otherMW",
+      "unit": "MW",
+      "description": "Sonstige Erzeugung."
+    },
+    {
+      "name": "hours[].importExportMW",
+      "unit": "MW",
+      "description": "Handelssaldo; positiv = Import, negativ = Export."
+    },
+    {
+      "name": "sumTWh",
+      "unit": "TWh",
+      "description": "Erzeugungssumme ohne Handelssaldo."
+    },
+    {
+      "name": "sumPartsTWh",
+      "unit": "Objekt",
+      "description": "Jahressummen je Energieträger."
+    },
+    {
+      "name": "sumImportTWh",
+      "unit": "TWh",
+      "description": "Summe positiver Handelssaldo-Werte."
+    },
+    {
+      "name": "sumExportTWh",
+      "unit": "TWh",
+      "description": "Summe negativer Handelssaldo-Werte als Exportbetrag."
+    },
+    {
+      "name": "sumSharesPct",
+      "unit": "%",
+      "description": "Anteile der Energieträger an der Erzeugungssumme."
+    },
+    {
+      "name": "sumNote",
+      "unit": "Text",
+      "description": "Rechenhinweis."
+    }
+  ],
+  "caveats": [
+    "Nur öffentliche Stromerzeugung; private und industrielle Eigenversorgung sind nicht vollständig enthalten.",
+    "Import und Export sind aus dem stündlichen Netto-Handelssaldo aggregiert, nicht als Bruttoflüsse je Nachbarland."
+  ]
+};
+
+export const data: SplitDataFile<GenerationHour> = {
+  generatedAt: "2026-05-12T13:43:25.436531Z",
+  year: 2025,
+  source: "Energy-Charts public_power API: hourly public generation and import/export for Germany, averaged from 15-minute values.",
+  sourceUrl: "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+  unit: "MW",
+  sumTWh: 424.6,
+  sumPartsTWh: {
+    pvTWh: 70.1,
+    windOnTWh: 105.1,
+    windOffTWh: 26.1,
+    gasTWh: 49.5,
+    coalTWh: 97.4,
+    hydroTWh: 26.6,
+    biomassTWh: 36.1,
+    wasteTWh: 8.9,
+    oilTWh: 2.8,
+    geothermalTWh: 0.2,
+    otherTWh: 1.8,
+  },
+  sumNote: "Erzeugung: alle Energy-Charts-Erzeugungsarten ohne Last, Residual Load, Anteil-Hilfsreihen, Handelsaldo und Pumpspeicherverbrauch. Import: positive importExportMW-Stunden. Export separat.",
+  sumImportTWh: 34.1,
+  sumExportTWh: 12.2,
+  sumSharesPct: {
+    generationPct: 92.6,
+    importPct: 7.4,
+  },
+  hours: hoursJson as GenerationHour[],
+};

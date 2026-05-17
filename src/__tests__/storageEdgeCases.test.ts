@@ -12,20 +12,20 @@ import type {
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { defaultScenario, normalizeScenario } from '../ui/scenarioPresets';
-import erzPvJson from '../../data/erzeugung/pv/data.json';
-import erzWindOnJson from '../../data/erzeugung/windon/data.json';
-import erzWindOffJson from '../../data/erzeugung/windoff/data.json';
-import erzKernkraftJson from '../../data/erzeugung/kernkraft/data.json';
-import erzBiomasseJson from '../../data/erzeugung/biomasse/data.json';
-import erzLaufwasserJson from '../../data/erzeugung/laufwasser/data.json';
-import erzGasJson from '../../data/erzeugung/gas/data.json';
-import erzKohleJson from '../../data/erzeugung/kohle/data.json';
-import aussenhandelStromJson from '../../data/aussenhandel/strom-handel/data.json';
-import aussenhandelH2Json from '../../data/aussenhandel/h2-handel/data.json';
-import speicherBatterieJson from '../../data/speicher/batterie/data.json';
-import speicherPumpspeicherJson from '../../data/speicher/pumpspeicher/data.json';
-import speicherH2Json from '../../data/speicher/h2/data.json';
-import kernConfig from '../../data/kern/data.json';
+import { data as erzPvJson } from '../../data/erzeugung/pv';
+import { data as erzWindOnJson } from '../../data/erzeugung/windon';
+import { data as erzWindOffJson } from '../../data/erzeugung/windoff';
+import { data as erzKernkraftJson } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasseJson } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasserJson } from '../../data/erzeugung/laufwasser';
+import { data as erzGasJson } from '../../data/erzeugung/gas';
+import { data as erzKohleJson } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStromJson } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2Json } from '../../data/aussenhandel/h2-handel';
+import { data as speicherBatterieJson } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicherJson } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2Json } from '../../data/speicher/h2';
+import { data as kernConfig } from '../../data/kern';
 
 const flatMul = Array.from({ length: 24 }, () => 1);
 

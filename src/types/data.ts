@@ -472,9 +472,11 @@ export type SpeicherH2Data = SpeicherModellAsymmetricStorage & { id: 'h2' };
 
 export type SplitDataFile<T> = {
   source: string;
+  year?: number;
   generatedAt?: string;
   sourceUrl?: string;
   sourceUrls?: string[];
+  notes?: string[];
   unit?: string;
   sumTWh?: number;
   sumImportTWh?: number;

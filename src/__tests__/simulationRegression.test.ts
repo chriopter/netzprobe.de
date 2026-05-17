@@ -1,55 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { runSimulation, type SimulationContext, type SimulationResult } from '../simulation/engine';
 import type {
-  E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
-  E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
   ErzeugungsPool, SpeicherPool, AussenhandelPool,
-  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
-  AussenhandelStromData, AussenhandelH2Data,
   ErzeugungsModellDispatchOrder,
-  SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
-  GenerationHour, HourlyInput, LoadHour, ModelFactorHour, SplitDataFile,
+  HourlyInput,
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { defaultScenario, normalizeScenario } from '../ui/scenarioPresets';
+import { data as loadData } from '../../data/last/2025';
+import { data as generationData } from '../../data/erzeugung/2025';
+import { data as factorData } from '../../data/erzeugung/einspeisefaktoren-2025';
+import { data as e100Pkw } from '../../data/last/e100-pkw';
+import { data as e100Heiz } from '../../data/last/e100-heiz';
+import { data as e100Lkw } from '../../data/last/e100-lkw';
+import { data as e100Bahn } from '../../data/last/e100-bahn';
+import { data as e100Schiff } from '../../data/last/e100-schiff';
+import { data as e100Flug } from '../../data/last/e100-flug';
+import { data as e100Ghd } from '../../data/last/e100-ghd';
+import { data as e100IndustrieWaerme } from '../../data/last/e100-industrie-waerme';
+import { data as e100Stahl } from '../../data/last/e100-stahl';
+import { data as e100Chemie } from '../../data/last/e100-chemie';
+import { data as erzPv } from '../../data/erzeugung/pv';
+import { data as erzWindOn } from '../../data/erzeugung/windon';
+import { data as erzWindOff } from '../../data/erzeugung/windoff';
+import { data as erzKernkraft } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasse } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasser } from '../../data/erzeugung/laufwasser';
+import { data as erzGas } from '../../data/erzeugung/gas';
+import { data as erzKohle } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStrom } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2 } from '../../data/aussenhandel/h2-handel';
+import { data as kernConfigData } from '../../data/kern';
+import { data as speicherBatterie } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicher } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2 } from '../../data/speicher/h2';
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const dataDir = resolve(rootDir, 'data');
-
-function readJson<T>(packageName: string): T {
-  return JSON.parse(readFileSync(resolve(dataDir, packageName, 'data.json'), 'utf8')) as T;
-}
-
-const loadData = readJson<SplitDataFile<LoadHour>>('last/2025');
-const generationData = readJson<SplitDataFile<GenerationHour>>('erzeugung/2025');
-const factorData = readJson<SplitDataFile<ModelFactorHour>>('erzeugung/einspeisefaktoren-2025');
-const e100Pkw = readJson<E100PkwData>('last/e100-pkw');
-const e100Heiz = readJson<E100HeizData>('last/e100-heiz');
-const e100Lkw = readJson<E100LkwData>('last/e100-lkw');
-const e100Bahn = readJson<E100BahnData>('last/e100-bahn');
-const e100Schiff = readJson<E100SchiffData>('last/e100-schiff');
-const e100Flug = readJson<E100FlugData>('last/e100-flug');
-const e100Ghd = readJson<E100GhdData>('last/e100-ghd');
-const e100IndustrieWaerme = readJson<E100IndustrieWaermeData>('last/e100-industrie-waerme');
-const e100Stahl = readJson<E100StahlData>('last/e100-stahl');
-const e100Chemie = readJson<E100ChemieData>('last/e100-chemie');
-const erzPv = readJson<ErzPackageVariableRe>('erzeugung/pv');
-const erzWindOn = readJson<ErzPackageVariableRe>('erzeugung/windon');
-const erzWindOff = readJson<ErzPackageVariableRe>('erzeugung/windoff');
-const erzKernkraft = readJson<ErzPackageBaseload>('erzeugung/kernkraft');
-const erzBiomasse = readJson<ErzPackageBaseload>('erzeugung/biomasse');
-const erzLaufwasser = readJson<ErzPackageBaseload>('erzeugung/laufwasser');
-const erzGas = readJson<ErzPackageDispatchable>('erzeugung/gas');
-const erzKohle = readJson<ErzPackageDispatchable>('erzeugung/kohle');
-const aussenhandelStrom = readJson<AussenhandelStromData>('aussenhandel/strom-handel');
-const aussenhandelH2 = readJson<AussenhandelH2Data>('aussenhandel/h2-handel');
-const kernConfig = readJson<{ dispatchOrder: ErzeugungsModellDispatchOrder }>('kern');
-const speicherBatterie = readJson<SpeicherBatterieData>('speicher/batterie');
-const speicherPumpspeicher = readJson<SpeicherPumpspeicherData>('speicher/pumpspeicher');
-const speicherH2 = readJson<SpeicherH2Data>('speicher/h2');
+const kernConfig = kernConfigData as { dispatchOrder: ErzeugungsModellDispatchOrder };
 
 function stripId<T extends { id?: string }>(obj: T): Omit<T, 'id'> {
   const { id: _id, ...rest } = obj;

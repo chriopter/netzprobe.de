@@ -1,5 +1,5 @@
 // Generator: holt 2017 Erzeugung + Last + Cross-Border aus Energy-Charts public_power API,
-// aggregiert 15-min auf 1h, schreibt data/erzeugung/2017/data.json und data/last/2017/data.json.
+// aggregiert 15-min auf 1h, schreibt data/erzeugung/2017/data.json und data/last/2017.hours.json.
 // Run: node data/erzeugung/2017/generate.mjs
 import { writeFileSync } from 'node:fs';
 
@@ -98,17 +98,6 @@ const erz = {
   hours,
 };
 
-const lst = {
-  generatedAt: new Date().toISOString(),
-  year: 2017,
-  source: 'Energy-Charts public_power API: hourly load for Germany 2017, averaged from 15-minute values.',
-  sourceUrl: url,
-  unit: 'MW',
-  sumTWh: twh(numericSum.load),
-  sumNote: 'Stündliche Last 2017 aus 15-min Werten gemittelt.',
-  hours: lastHours,
-};
-
 writeFileSync('data/erzeugung/2017/data.json', JSON.stringify(erz));
-writeFileSync('data/last/2017/data.json', JSON.stringify(lst));
+writeFileSync('data/last/2017.hours.json', JSON.stringify(lastHours));
 console.log(`wrote ${hours.length} hours. erzeugung sum=${supplyTotalTWh} TWh, last sum=${twh(numericSum.load)} TWh, import=${twh(numericSum.import)} TWh, export=${twh(numericSum.export)} TWh`);

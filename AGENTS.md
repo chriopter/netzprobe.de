@@ -10,36 +10,69 @@
 
 ## Datenpakete entwickeln
 
-Datenpakete leben unter `data/<domäne>/<paket>/`. Domänen:
+Datenpakete sind **Single-File-TS-Module** unter `data/<domäne>/`. Domänen:
 
 - `data/erzeugung/` — Erzeuger (PV, Wind, Kohle, Gas, …) plus historische Beobachtungen und Einspeisefaktoren.
 - `data/last/` — Sektor-Elektrifizierung (`e100-*`) plus historische Last.
 - `data/speicher/` — Batterie, Pumpspeicher, H2.
+- `data/aussenhandel/` — Strom- und H₂-Handel.
 - `data/presets/` — Kompositionen (`kind: composition`). Im Wiki mit gelbem „Preset"-Tag hervorgehoben.
-- `data/kern/` — Dispatch-Engine (`kind: model`).
+- `data/kern.ts` — Dispatch-Engine (`kind: model`).
 
-Vorlagen unter `data/templates/` sind keine Datenpakete, stehen nicht im Manifest und werden nicht von Simulation/Loadern verwendet. Sie dürfen als `kind: template` im Wiki erscheinen.
+Vorlagen unter `data/templates/` sind keine Datenpakete und werden nicht vom Loader verwendet. Sie dürfen als `kind: template` im Wiki erscheinen.
 
 Bausteine (`kind: dataset` oder `kind: scenario`) sind atomare Einheiten mit Parametern oder Beobachtungen.
 
-Jedes Paket hat immer:
+### Ablage
 
-1. `description.json` — Wiki-Eintrag (siehe Stil unten), mit `id`, `domain` und `kind`.
-2. `model.ts` — ausführbarer Paket-Adapter oder Modellcode. Auch reine Datenpakete exportieren hier typisiert ihre `data.json`.
+Pro Paket genau **eine** der zwei Formen:
 
-Optional:
+- **Flach** (Standard): `data/<domain>/<id>.ts` — das Modul enthält alles.
+- **Ordner-Form** (wenn ein Generator-Skript oder Roh-Daten dazu gehören): `data/<domain>/<id>/index.ts` plus ggf. `generate.mjs`, `data.json`, weitere kolokierte Assets.
 
-3. `data.json` — Modellparameter, Rohdaten und eingebettete Profile, wenn das Paket Datenwerte enthält.
-4. `generate.mjs` — Generator, wenn Werte berechnet werden. Skript schreibt nach stdout oder direkt nach `data.json`; Regeneration klar in `description.json` beschreiben.
+Das Modul exportiert mindestens:
 
-Außerdem nötig:
-- Eintrag in `data/manifest.json` mit `id`, `path` (Verzeichnis relativ zu `data/`, z. B. `erzeugung/pv` oder `last/e100-pkw`) und `description` (Pfad zur Beschreibung). Die Reihenfolge bestimmt die Wiki-Anzeige.
-- Slug eindeutig; der Pfad enthält die Domäne, die ID ist domänen-frei, wenn das Paket innerhalb seiner Domäne eindeutig ist (z. B. ID `pv`, Pfad `erzeugung/pv`). Wo IDs sonst kollidieren würden (`last-2025` vs. `erzeugung-2025`), bleibt der Domänen-Präfix in der ID.
-- `description.json.id` muss exakt der Manifest-`id` entsprechen; der `model.ts`-Eintrag in `scripts` muss mit `path/` beginnen, also z. B. `"scripts": ["erzeugung/pv/model.ts"]`.
-- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs wie `EF25`. Wenn eine Datei ein `id`-Feld hat, muss es exakt die Manifest-`id` sein.
-- App-Code referenziert Paket-IDs über `src/ui/dataPackages.ts`; Scenario-State, Worker-Nachrichten und Core-Kontext verwenden die Paket-ID als Key, keine historischen Feature-Aliasse.
-- Loader-Anpassung in `src/ui/defaultData.ts` und Typen in `src/types/data.ts`.
+- `description: DatasetDoc` — Wiki-Eintrag (siehe Wiki-Stil unten), mit `id`, `domain` und `kind`.
+- optional `data: <SpecificType>` — Modellparameter, Konstanten und kleine Profile. Bei Slider-Szenarien typed nach `src/types/data.ts`.
+- optional Modul-Funktionen — Rechen-/Dispatch-Logik, `compute(scenario)` für Presets, `additional…TWh()`/`hourlyLoadGW()` für e100-Module, etc.
+
+### Größen-Regel: Zeitreihen ab 500 Zeilen auslagern
+
+TypeScript-Module sollen lesbar bleiben. Wenn `data` ein Array mit mehr als ~500 Einträgen enthält (8.760-Stunden-Profile, 365-Tage-`degreeDayProfile`, Tausende von Kapazitätsfaktoren), wandert das Array in eine **kolokierte JSON-Datei** und wird typisiert importiert. Vorbilder:
+
+- `data/last/2025.ts` + `data/last/2025.hours.json` (8.760 Stunden ausgelagert).
+- `data/last/e100-heiz/index.ts` + `data/last/e100-heiz/data.json` (`degreeDayProfile.days` + restliches `data`-Objekt, vom Generator gepflegt).
+
+Pattern für Non-Generator-Pakete:
+
+```ts
+import hoursJson from './2025.hours.json';
+export const data: SplitDataFile<LoadHour> = {
+  source: 'Energy-Charts',
+  year: 2025,
+  // weitere kleine Felder inline …
+  hours: hoursJson as LoadHour[],
+};
+```
+
+Pattern für Generator-Pakete: der Generator schreibt `data.json`, das Modul importiert es typisiert:
+
+```ts
+import dataJson from './data.json';
+export const data = dataJson as E100HeizData;
+```
+
+Faustregel: TS-Datei **max. 500 Zeilen**; bei mehr lagere die größte Datenstruktur aus. Description, Slider-Bounds, Konstanten, Modul-Funktionen bleiben **immer** im TS — sie sind die menschen-lesbare Schicht.
+
+### Konsistenz-Anforderungen
+
+- `description.id` muss mit dem Datei-Stem oder Ordner-Name übereinstimmen (Flat: `data/last/e100-pkw.ts` → `id: 'e100-pkw'`; Ordner: `data/last/e100-heiz/index.ts` → `id: 'e100-heiz'`).
+- Slug eindeutig; der Pfad enthält die Domäne, die ID ist domänen-frei, wenn das Paket innerhalb seiner Domäne eindeutig ist (z. B. ID `pv`, Pfad `erzeugung/pv.ts`). Wo IDs kollidieren würden (`last-2025` vs. `erzeugung-2025`), bleibt der Domänen-Präfix in der ID.
+- Kein zweites technisches Kürzel: kein `code`-Feld, keine parallelen Kurz-IDs.
+- App-Code referenziert Paket-IDs als Key in Scenario-State, Worker-Nachrichten und `SimulationContext` — keine historischen Feature-Aliasse.
+- Loader-Anpassung in `src/ui/defaultData.ts` (Big-Datasets via dynamic import, Kleinpakete static), Typen in `src/types/data.ts`.
 - Test-Fixture in `src/__tests__/engine.test.ts` mit minimalem Plausibilitäts-Check.
+- Wenn das Modul groß ist (z. B. `last/2025.ts` mit 8.760 Stunden im JSON-Import): in `defaultData.ts` per `await import(…)` laden, damit Vite es in einen eigenen Chunk packt.
 
 ## Szenarien prüfen
 
@@ -85,24 +118,7 @@ Regeln:
 
 ## Changelog
 
-`CHANGELOG.md` listet user-sichtbare Änderungen, händisch gepflegt. Eintrag dann anlegen, wenn etwas „release-würdiges" fertig ist (neues Feature, sichtbare Verhaltensänderung, nutzerrelevanter Bugfix) — nicht pro Commit.
-
-Mechanik:
-
-1. Alten Marker am Dateiende lesen: `<!-- last: <sha> -->`.
-2. Seit dem Marker passierte Commits durchsehen: `git log <alter-sha>..HEAD --oneline`.
-3. Neuen Block **direkt unter** dem Einleitungs-Paragraphen einfügen, **über** allen bestehenden `##`-Blöcken:
-   - Überschrift `## YYYY-MM-DD` (heute, `date +%Y-%m-%d`).
-   - Bullet-Liste mit den Änderungen.
-4. Alten Marker entfernen, neuen ans Dateiende setzen: `<!-- last: $(git rev-parse --short HEAD) -->`.
-
-Stil:
-
-- Knackig: max. 5 Bullets pro Tagesblock, je ~10–15 Wörter — ungefähr eine Zeile.
-- Substantiv-zentriert, kein Marketing, keine Quellen-Klammern; konkrete Begriffe (Sektor-Namen, Wirkungsgrade) sind erlaubt und gewollt.
-- User-Perspektive: „H2-Import als eigener Slider", nicht „Refactor scenario presets".
-- Verwandte Änderungen mit Semikolon in einem Bullet bündeln (z. B. „e100-lkw um Transit/Kabotage und Nutzlast-Uplift erweitert; e100-heiz-JAZ-Spanne dokumentiert.").
-- Interne Refactors, Build-Hygiene, Tests, UI-Cosmetics weglassen — nur was Nutzer sehen oder im Ergebnis spüren.
+Der Änderungsverlauf wird zur Build-Zeit aus `git log` generiert (`vite.config.ts` → `__BUILD_COMMITS__`, letzte 50 Commits ohne Merges) und im `ChangelogModal` gerendert. Keine händische Pflege nötig — die Commit-Subjects sind das Changelog. Entsprechend sollten Subjects user-verständlich sein (siehe Commit-Stil oben).
 
 ## Dokumentation
 

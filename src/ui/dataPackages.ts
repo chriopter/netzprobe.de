@@ -37,22 +37,7 @@ export const dataPackageIds = {
 } as const;
 
 export type DataPackageId = typeof dataPackageIds[keyof typeof dataPackageIds];
-export type DataPackageFile = 'data.json' | 'description.json' | 'model.ts' | 'generate.mjs';
 
-// Runtime lookup map for id -> path, populated by the manifest loader. Until then,
-// fall back to id-as-path (which is identical for all top-level packages).
-const idToPath = new Map<string, string>();
-
-export function registerDataPackagePath(id: string, path: string): void {
-  idToPath.set(id, path);
-}
-
-export function dataPackageResolvedPath(id: string): string {
-  return idToPath.get(id) ?? id;
-}
-
+// URL-Helper für statische data/-Dateien (z. B. Template-JSONs oder die noch
+// vorhandenen Generator-Outputs data.json bei den 4 Generator-Paketen).
 export const dataFileUrl = (path: string) => `${import.meta.env.BASE_URL}data/${path}`;
-export const dataManifestUrl = dataFileUrl('manifest.json');
-export const dataPackagePath = (id: DataPackageId, file: DataPackageFile) =>
-  `${dataPackageResolvedPath(id)}/${file}`;
-export const dataPackageUrl = (id: DataPackageId, file: DataPackageFile) => dataFileUrl(dataPackagePath(id, file));

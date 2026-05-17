@@ -2,13 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Menu, SlidersHorizontal, Zap } from 'lucide-react';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
-import { dataWikiHomeUrl, dataWikiUrl } from './dataCatalog';
+import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { MainTabs } from './MainTabs';
 import { cx, iconButton, iconTile, panelHeader, rowActive, rowHover, sectionBox, sidebarInset, sidebarWidthClass } from './ui';
 
 const dataFileViewerUrl = (path: string) => `${import.meta.env.BASE_URL}?view=datei&path=${encodeURIComponent(path)}`;
-const dataPlainTextUrl = (path: string) => `${dataFileUrl(path)}?raw-text`;
 const domainLabels: Record<string, string> = {
   last: 'Last',
   erzeugung: 'Erzeugung',
@@ -46,12 +45,11 @@ const kindLabels: Record<DatasetDoc['kind'], string> = {
   template: 'Vorlage',
 };
 type TocItem = { id: string; label: string; level?: 1 | 2 };
-type FileContentTab = {
-  id: string;
-  label: string;
-  kind: 'dataset' | 'code' | 'script';
-  path?: string;
-};
+type FileContentTab =
+  | { id: string; label: string; kind: 'fields' }
+  | { id: string; label: string; kind: 'module'; path: string }
+  | { id: string; label: string; kind: 'generator'; path: string }
+  | { id: string; label: string; kind: 'data-json'; path: string };
 
 const tocAnchors = {
   overview: 'uebersicht',
@@ -93,7 +91,7 @@ function hasModelSection(selected: DatasetDoc) {
 }
 
 function hasFileRows(selected: DatasetDoc) {
-  return !!selected.file || !!selected.scripts?.length || !!selected.fields?.length || !!technicalMethodItems(selected).length;
+  return !!modulePathForId(selected.id) || !!selected.fields?.length || !!technicalMethodItems(selected).length || generatorPackageIds.has(selected.id);
 }
 
 function sectionAnchor(title: string) {
@@ -129,6 +127,14 @@ function selectedIdFromUrl() {
   return match ? decodeURIComponent(match[1]) : url.searchParams.get('id');
 }
 
+function isChangelogRoute() {
+  if (typeof window === 'undefined') return false;
+  const url = new URL(window.location.href);
+  const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
+  const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
+  return path === 'changelog' || path === 'changelog/';
+}
+
 function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
   if (kind === 'template') return <span className="ml-2 inline-flex items-center rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-800">Vorlage</span>;
   if (kind !== 'composition') return null;
@@ -137,6 +143,7 @@ function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
 
 export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedChange }: { docs: DatasetDoc[]; collapsed: boolean; actionBar?: ReactNode; onCollapsedChange: (collapsed: boolean) => void }) {
   const selectedId = selectedIdFromUrl();
+  const onChangelog = isChangelogRoute();
   const grouped = groupDocsForWiki(docs);
   if (collapsed) return null;
   return <aside
@@ -169,15 +176,26 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
         </div>
       </section>
       <div className={cx('py-5', sidebarInset)}>
-        <DataHandbookNav sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
-        <div className="mt-4 border-t border-zinc-200 pt-3">
-          <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400">Über die App</p>
-          <a href={`${import.meta.env.BASE_URL}changelog`} className="block rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950">Changelog</a>
-          <a href="https://github.com/chriopter/netzprobe" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950">
+        <div className="mb-3 border-b border-zinc-200 pb-3">
+          <h2 className="mb-2 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950">Allgemein</h2>
+          <a
+            href={`${import.meta.env.BASE_URL}changelog`}
+            className={cx(
+              'block rounded-md px-2 py-1.5 text-sm leading-5 transition',
+              onChangelog ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+            )}
+          >Changelog</a>
+          <a
+            href="https://github.com/chriopter/netzprobe"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950"
+          >
             GitHub
             <ExternalLink className="h-3 w-3 text-zinc-400" aria-hidden="true"/>
           </a>
         </div>
+        <DataHandbookNav sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
       </div>
     </div>
   </aside>;
@@ -295,7 +313,7 @@ function DataHandbookNav({
         href={dataWikiHomeUrl()}
         className={cx(
           'mb-2 block rounded-md px-2 py-1.5 text-sm leading-5 transition',
-          !selectedId ? rowActive + ' font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+          !selectedId ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
         )}
       >Modelle & Daten</a>
       {sections.map(([domain, label]) => {
@@ -518,33 +536,42 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
       aria-labelledby={`file-tab-${activeTab.id}`}
       className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4"
     >
-      {activeTab.kind === 'dataset'
-        ? <DatasetFilePanel selected={selected} reproductionItems={reproductionItems} path={activeTab.path}/>
-        : <ScriptFilePanel tab={activeTab}/>}
+      {activeTab.kind === 'fields'
+        ? <FieldsTabPanel selected={selected} reproductionItems={reproductionItems}/>
+        : activeTab.kind === 'data-json'
+          ? <DataJsonTabPanel path={activeTab.path}/>
+          : <SourceTabPanel path={activeTab.path} kind={activeTab.kind}/>}
     </div>
   </div>;
 }
 
 function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): FileContentTab[] {
   const tabs: FileContentTab[] = [];
-  if (selected.file || selected.fields?.length || reproductionItems.length) {
-    tabs.push({ id: selected.file ?? 'dataset', label: 'Datensatz', kind: 'dataset', path: selected.file });
+  const modulePath = modulePathForId(selected.id);
+  if (modulePath) {
+    const filename = modulePath.split('/').pop() ?? modulePath;
+    tabs.push({ id: `module-${modulePath}`, label: `Modul (${filename})`, kind: 'module', path: modulePath });
   }
-  selected.scripts?.forEach(script => {
-    tabs.push({
-      id: script,
-      label: script.split('/').pop() ?? script,
-      kind: script.endsWith('.ts') ? 'code' : 'script',
-      path: script,
-    });
-  });
+  if (selected.fields?.length || reproductionItems.length) {
+    tabs.push({ id: 'fields', label: 'Felder', kind: 'fields' });
+  }
+  if (generatorPackageIds.has(selected.id)) {
+    const generatorPath = generatorPathForId(selected.id);
+    if (generatorPath) {
+      const filename = generatorPath.split('/').pop() ?? generatorPath;
+      tabs.push({ id: `generator-${generatorPath}`, label: `Generator (${filename})`, kind: 'generator', path: generatorPath });
+    }
+    const dataJsonPath = generatorDataJsonPathForId(selected.id);
+    if (dataJsonPath) {
+      tabs.push({ id: `data-json-${dataJsonPath}`, label: 'data.json', kind: 'data-json', path: dataJsonPath });
+    }
+  }
   return tabs;
 }
 
-function DatasetFilePanel({ selected, reproductionItems, path }: { selected: DatasetDoc; reproductionItems: string[]; path?: string }) {
+function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
   return <div>
     <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      {path && <FilePathLine label="Datensatz" path={path} viewer/>}
       {selected.fields?.map(field => <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_70px_minmax(0,1fr)]">
         <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
         <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
@@ -559,39 +586,38 @@ function DatasetFilePanel({ selected, reproductionItems, path }: { selected: Dat
   </div>;
 }
 
-function ScriptFilePanel({ tab }: { tab: FileContentTab }) {
-  if (!tab.path) return null;
-  return <div>
-    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      <FilePathLine label={tab.kind === 'code' ? 'Code' : 'Skript'} path={tab.path}/>
-    </dl>
-    <CodeFileBox path={tab.path}/>
-  </div>;
-}
-
-function CodeFileBox({ path }: { path: string }) {
-  const [content, setContent] = useState<string | null>(null);
+function SourceTabPanel({ path, kind }: { path: string; kind: 'module' | 'generator' }) {
+  const label = kind === 'generator' ? 'Generator' : 'Modul';
+  const [source, setSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    setContent(null);
+    setSource(null);
     setError(null);
-    fetch(dataPlainTextUrl(path))
-      .then(response => response.ok ? response.text() : Promise.reject(new Error(`${response.status} ${response.statusText}`)))
-      .then(text => {
-        if (!cancelled) setContent(text);
-      })
-      .catch(err => {
-        if (!cancelled) setError(String(err));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [path]);
+    const loader = kind === 'generator' ? loadGeneratorSource(path) : loadModuleSource(path);
+    loader
+      .then(text => { if (!cancelled) setSource(text ?? ''); })
+      .catch(err => { if (!cancelled) setError(String(err)); });
+    return () => { cancelled = true; };
+  }, [path, kind]);
+  return <div>
+    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+      <FilePathLine label={label} path={path}/>
+    </dl>
+    {error
+      ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Konnte Datei nicht laden: {error}</p>
+      : source === null
+        ? <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500">Lade Datei …</p>
+        : <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{source}</code></pre>}
+  </div>;
+}
 
-  if (error) return <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Konnte Datei nicht laden: {error}</p>;
-  if (content === null) return <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500">Lade Datei …</p>;
-  return <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{content}</code></pre>;
+function DataJsonTabPanel({ path }: { path: string }) {
+  return <div>
+    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+      <FilePathLine label="Generator-Output" path={path} viewer/>
+    </dl>
+  </div>;
 }
 
 function FilePathLine({ label, path, viewer = false }: { label: string; path: string; viewer?: boolean }) {

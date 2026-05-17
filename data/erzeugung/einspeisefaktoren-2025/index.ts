@@ -1,0 +1,84 @@
+import type { ModelFactorHour, SplitDataFile } from '../../../src/types/data';
+import type { DatasetDoc } from '../../../src/ui/dataCatalog';
+import dataJson from './data.json';
+
+export const description: DatasetDoc = {
+  "id": "einspeisefaktoren-2025",
+  "domain": "erzeugung",
+  "kind": "dataset",
+  "title": "Einspeisefaktoren 2025",
+  "file": "erzeugung/einspeisefaktoren-2025/data.json",
+  "scripts": [
+    "erzeugung/einspeisefaktoren-2025/model.ts",
+    "erzeugung/einspeisefaktoren-2025/generate.mjs"
+  ],
+  "source": "Energy-Charts public_power und installed_power APIs.",
+  "sourceUrls": [
+    "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
+    "https://api.energy-charts.info/installed_power?country=de&time_step=monthly"
+  ],
+  "period": "2025",
+  "resolution": "stündlich",
+  "unit": "dimensionslos",
+  "short": "Stündliche PV- und Wind-Einspeisefaktoren 2025 aus beobachteter Einspeisung dividiert durch installierte Leistung.",
+  "description": [
+    "**Datengrundlage:** stündliche dimensionslose Einspeisefaktoren `0..1` für PV und Wind, abgeleitet aus der beobachteten Einspeisung 2025 (Energy-Charts `public_power`) dividiert durch die monatlich installierte Leistung (Energy-Charts `installed_power`, `time_step=monthly`). Wind Onshore und Offshore werden im Zähler addiert; im Nenner steht die installierte Gesamt-Windleistung. Das Skalarfeld liegt als 1-Element-Array vor, damit das Erzeugungsmodell die Faktoren mit einer skalierbaren `installedGW` multiplizieren kann.",
+    "**Faktoren:** der annualisierte Kapazitätsfaktor liegt bei `~8,0 %` für PV und `~19,9 %` für Wind (Onshore plus Offshore zusammen), in Übereinstimmung mit den langjährigen Mittelwerten (PV ~`10 %`, Wind onshore ~`22 %`). Stündliche Spitzen erreichen `~0,50` bei PV und `~0,67` bei Wind; die `clip(0, 1)`-Begrenzung verhindert Ausreißer durch verzögerte Bestandsaktualisierung.",
+    "**Tagesgang:** PV folgt strikt dem Sonnenstand mit Nullstunden über Nacht, breitem Mittagsplateau und ausgeprägter Saisonalität — Monatsmittel von `~1,8 %` im Dezember bis `~14,0 %` im Juni. Wind ist gegenläufig saisonal mit starken Wintermonaten (`Jan 28,3 %`, `Okt 29,1 %`) und schwachem Sommer (`Jul 13,3 %`, `Aug 13,2 %`); innerhalb des Tages weitgehend strukturlos. Wetterabregelung (Redispatch, Negativpreis-Stunden) ist nicht herausgerechnet, sodass die Faktoren das physikalische Potenzial leicht unterschätzen."
+  ],
+  "method": [
+    "Datei: erzeugt durch data/einspeisefaktoren-2025/generate.mjs. Skript ohne Argument lädt installed_power aus der Energy-Charts-API; optional kann eine lokale installed_power.json übergeben werden. Adapter in data/einspeisefaktoren-2025/model.ts.",
+    "PV-Faktor solarIrradiance: beobachtete pvMW je Stunde geteilt durch monatlich installierte PV-Leistung. Wert auf 0..1 begrenzt.",
+    "Wind-Faktor wind100m: (beobachtete windOnMW + windOffMW) je Stunde geteilt durch monatlich installierte Wind-Leistung. Wert auf 0..1 begrenzt.",
+    "Datenquellen: Energy-Charts public_power für Einspeisung und installed_power (time_step=monthly) für installierte Leistung."
+  ],
+  "fields": [
+    {
+      "name": "generatedAt",
+      "unit": "ISO-Zeit",
+      "description": "Zeitpunkt der lokalen Datendatei-Erzeugung."
+    },
+    {
+      "name": "year",
+      "unit": "Jahr",
+      "description": "Bezugsjahr."
+    },
+    {
+      "name": "source",
+      "unit": "Text",
+      "description": "Quellenkurzname."
+    },
+    {
+      "name": "sourceUrls",
+      "unit": "Liste",
+      "description": "API-Abrufe."
+    },
+    {
+      "name": "notes",
+      "unit": "Liste",
+      "description": "Hinweise zur Ableitung."
+    },
+    {
+      "name": "hours[].time",
+      "unit": "ISO-Zeit",
+      "description": "Stundenanfang."
+    },
+    {
+      "name": "hours[].solarIrradiance",
+      "unit": "Faktor",
+      "description": "PV-Einspeisefaktor (Array, aktuell 1 Element)."
+    },
+    {
+      "name": "hours[].wind100m",
+      "unit": "Faktor",
+      "description": "Wind-Einspeisefaktor (Array, aktuell 1 Element)."
+    }
+  ],
+  "caveats": [
+    "Keine Rohwetterdaten, sondern empirische Faktoren aus Einspeisung und Bestand.",
+    "Abregelung ist nicht herausgerechnet; die Faktoren können mögliche Erzeugung leicht unterschätzen.",
+    "Wind Offshore nutzt denselben Faktor wie Wind Onshore — ein separater Offshore-Faktor ist nicht hinterlegt."
+  ]
+};
+
+export const data = dataJson as SplitDataFile<ModelFactorHour>;

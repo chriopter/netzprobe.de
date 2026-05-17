@@ -1,11 +1,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const generationPath = 'data/erzeugung/2025/data.json';
+const generationHoursPath = 'data/erzeugung/2025.hours.json';
 const outputPath = 'data/erzeugung/einspeisefaktoren-2025/data.json';
 const installedPowerUrl = 'https://api.energy-charts.info/installed_power?country=de&time_step=monthly';
 const installedPowerPath = process.argv[2];
 
-const generation = JSON.parse(readFileSync(generationPath, 'utf8'));
+// erzeugung-2025 data.json was split: hours array lives in 2025.hours.json,
+// stamp/source URLs live inline in 2025.ts. Re-create the minimal slice we need.
+const generation = {
+  hours: JSON.parse(readFileSync(generationHoursPath, 'utf8')),
+  sourceUrl: 'https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01',
+};
 const installed = installedPowerPath
   ? JSON.parse(readFileSync(installedPowerPath, 'utf8'))
   : await fetch(installedPowerUrl).then((response) => {

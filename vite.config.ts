@@ -16,6 +16,25 @@ const commitHash = (() => {
   }
 })();
 
+const commits = (() => {
+  try {
+    const out = execSync(
+      'git log -50 --no-merges --pretty=format:%H%x1f%h%x1f%aI%x1f%s%x1e',
+      { cwd: rootDir, encoding: 'utf8' },
+    );
+    return out
+      .split('\x1e')
+      .map(record => record.replace(/^\n/, ''))
+      .filter(Boolean)
+      .map(record => {
+        const [sha, short, date, subject] = record.split('\x1f');
+        return { sha, short, date, subject };
+      });
+  } catch {
+    return [];
+  }
+})();
+
 function topLevelData(): Plugin {
   return {
     name: 'top-level-data',
@@ -56,6 +75,7 @@ export default defineConfig({
   base: process.env.GITHUB_PAGES === 'true' ? '/netzprobe/' : '/',
   define: {
     __BUILD_COMMIT__: JSON.stringify(commitHash),
+    __BUILD_COMMITS__: JSON.stringify(commits),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     // ECharts referenziert `global` (Node-CommonJS-Konvention). Im Browser-Main
     // ist es shim'd, im Worker-Kontext aber nicht — daher explizit auf

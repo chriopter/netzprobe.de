@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import e100PkwDataJson from '../../data/last/e100-pkw/data.json';
-import e100HeizDataJson from '../../data/last/e100-heiz/data.json';
-import { additionalTWh as e100PkwAdditionalTWh, hourlyLoadGW as e100PkwHourlyLoadGW } from '../../data/last/e100-pkw/model';
-import { additionalElectricityTWh as e100HeizAdditionalElectricityTWh, hourlyLoadGW as e100HeizHourlyLoadGW } from '../../data/last/e100-heiz/model';
-import type { E100HeizData, E100PkwData, HourlyInput } from '../types/data';
-
-const e100PkwData = e100PkwDataJson as E100PkwData;
-const e100HeizData = e100HeizDataJson as E100HeizData;
+import {
+  data as e100PkwData,
+  additionalTWh as e100PkwAdditionalTWh,
+  hourlyLoadGW as e100PkwHourlyLoadGW,
+} from '../../data/last/e100-pkw';
+import {
+  data as e100HeizData,
+  additionalElectricityTWh as e100HeizAdditionalElectricityTWh,
+  hourlyLoadGW as e100HeizHourlyLoadGW,
+} from '../../data/last/e100-heiz';
+import type { HourlyInput } from '../types/data';
 
 function emptyHour(hourOfDayBerlin: number, heatingDegreeDayWeight = 0, time = '2025-01-01T00:00:00Z'): HourlyInput {
   return {

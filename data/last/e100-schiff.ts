@@ -1,0 +1,132 @@
+import type { DatasetDoc } from '../../src/ui/dataCatalog';
+import type { E100SchiffData, HourlyInput } from '../../src/types/data';
+import type { DemandScenarioModule } from '../../src/simulation/demandContext';
+
+export const description: DatasetDoc = {
+  id: 'e100-schiff',
+  parentId: 'e100',
+  domain: 'last',
+  kind: 'scenario',
+  title: 'Schiff Elektrifizierung',
+  file: 'last/e100-schiff/data.json',
+  scripts: [
+    'last/e100-schiff/model.ts',
+  ],
+  source: 'AGEB Jahresbericht 2023 (Endenergieverbrauch Küsten- und Binnenschifffahrt ≈ 3 TWh thermisch); BAFA Mineralölinfo 12/2023 (Heizöl schwer Inland 0,55 Mio. t, Bunkerprodukte rückläufig); EnergyComment Hamburg 2025 (globaler Bunker 2023 = 233,1 Mio. t, DE-Häfen kleiner Anteil); IEA Renewables 2024 und Wind-to-Methanol-Studien (Power-to-Methanol Wirkungsgrad 50-62 % strom-zu-Fuel-LHV); DECHEMA H2-Kompass 2024 (e-Methanol/e-Ammoniak als Hochsee-Kraftstoffe); HPA Hamburg 2024 (Landstromziel 130-140 GWh bis 2030).',
+  sourceUrls: [
+    'https://ag-energiebilanzen.de/wp-content/uploads/2024/04/AGEB_Jahresbericht2023_20240403_dt.pdf',
+    'https://www.bafa.de/SharedDocs/Kurzmeldungen/DE/Energie/Mineraloel/2023_12_mineraloelinfo.html',
+    'https://www.energycomment.de/treibstoffe-im-globalen-seeverkehr-2025-verbrauch-steigt-dekarbonisierung-kommt-kaum-voran/',
+    'https://www.umweltbundesamt.de/themen/verkehr/emissionsstandards/binnenschiffe',
+    'https://www.iea.org/reports/renewables-2024/renewable-fuels',
+    'https://dechema.de/Forschung/Studien+und+Positionspapiere/2024+03+H2+Kompass/_/H2K_Internationale-Schifffahrt.pdf',
+    'https://www.hamburg.de/politik-und-verwaltung/behoerden/bwai/aktuelles/pressemeldungen/2023-12-22-bwi-landstrom-522944',
+    'https://www.now-gmbh.de/wp-content/uploads/2024/04/NOW_Abschlussbericht-Potenzialstudie-Betankungsstrukturen.pdf',
+    'https://www.sciencedirect.com/science/article/pii/S0306261920301847',
+  ],
+  period: '2023',
+  resolution: 'Jahr × Stunde',
+  unit: 'TWh thermisch, TWh Strom',
+  short: 'Zusatzlast aus elektrifizierter Binnenschifffahrt und PtL-Bunkerung für die Seeschifffahrt.',
+  description: [
+    '**Bezugsjahr 2023:** AGEB-Endenergie Küsten- und Binnenschifffahrt rund `3 TWh` thermisch; BAFA-Mineralölinfo weist `0,55 Mio. t` Heizöl schwer Inland aus, reale DE-Bunkermenge `1–3 Mio. t/a`. Global ist der Bunkerabsatz internationaler Seeschifffahrt mit `233,1 Mio. t` (`2023`) deutlich größer; deutsche Häfen tragen einen kleinen Anteil. Bereits elektrisch betrieben sind `0,3 TWh` (Landstrom Hamburg, Bremerhaven, Cuxhaven, Schiffsstrom) und Teil der historischen Last.',
+    '**Faktor:** zwei Hebel — direkte Batterie-Elektrifizierung für Binnenflotte, Hafenumschlag und Cold-Ironing nutzt den Wirkungsgradvorteil `~3` gegenüber Diesel (`~1,2 TWh` Strom für `~3 TWh` thermisch). Hochsee-Bunker wird über **e-Methanol/e-Ammoniak** ersetzt; System-η Strom → Fuel `0,50` (LHV; IEA Renewables 2024 / Wind-to-Methanol-Studien Bandbreite `50–62 %` je nach CO2-Quelle und Pfad). Mengenanker `39 TWh` thermisch ersetzbare Bunkermenge: rund `15–25 TWh` aus deutschen Hafen-Bunkern (BAFA/AGEB, Heizöl schwer Inland `0,55 Mio. t` plus Marinediesel) plus ein anteiliger Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht — denn deutsche Bunker werden weltweit verfahren, der Synthese-Strom muss nicht zwangsläufig in DE anfallen. `39 TWh ÷ 0,50 ≈ 78 TWh` PtL-Strom; Default-Zusatzlast: `~80 TWh/a`. `1 TWh` H2-Import ersetzt `2,0 TWh` inländischen Synthese-Strom.',
+    '**Lastform:** 24-h-Profil nahezu konstant mit leichter Mittagsdelle (`0,950` bis `1,050`, Summe `24`) — Elektrolyse-/PtL-Anlagen laufen kontinuierlich, leichte Tag-Nacht-Spreizung skizziert PV-Mitnahme im PPA-getriebenen Fahrplan. Drop-in-Kraftstoffe für lange Binnenstrecken (Rhein, Donau) sind nicht abgebildet, und der globale Bunkerabsatz von `233,1 Mio. t` (`2023`) zeigt das Größenverhältnis: der DE-Anteil ist klein, der Modellpfad zielt auf den anteiligen IMO-Beitrag.',
+  ],
+  overview: [
+    {
+      label: 'Verwendung',
+      value: '**Slider:** `0,3` bis `120 TWh` Strom in `1-TWh`-Schritten. Default `80 TWh` = `~1,2 TWh` direkte Elektrifizierung + `~78 TWh` PtL für Hochsee-Bunker. Maximum deckt höhere PtL-Beiträge zur internationalen IMO-Klimapflicht und konservativere Wirkungsgrade ab.',
+    },
+    {
+      label: 'Verteilung',
+      value: '**Profil:** glatter Kosinus um `1,0` mit Amplitude `0,05` (Nachtmaximum `1,05`, Mittagsminimum `0,95`); kein Saisongang.',
+    },
+    {
+      label: 'Formel',
+      value: '**Rechnung:** `Zusatzlast = max(0, Ziel − 0,3)`. Default: `1,2 + 39/0,50 ≈ 80 TWh/a`.',
+    },
+  ],
+  fields: [
+    { name: 'id', unit: 'Text', description: 'Technische Kennung.' },
+    { name: 'title', unit: 'Text', description: 'Anzeigename.' },
+    { name: 'source', unit: 'Text', description: 'Quellenkurzname.' },
+    { name: 'sourceUrls', unit: 'Liste', description: 'Belege.' },
+    { name: 'referenceYear', unit: 'Jahr', description: 'Bezugsjahr.' },
+    { name: 'directElectrificationTWh', unit: 'TWh', description: 'Strom für direkte Batterie-Elektrifizierung Binnenfracht, Hafenbetrieb, Küste.' },
+    { name: 'eFuelSynthesisTWh', unit: 'TWh', description: 'Strom für PtL-Synthese (e-Methanol/e-Ammoniak) der Hochseebunkerung.' },
+    { name: 'eFuelSystemEfficiency', unit: 'Anteil', description: 'System-η Strom → fertiger e-MeOH/e-Ammoniak-Schiffsfuel (LHV). Default 0,50 (Wind-to-Methanol-Studie 2020, IEA Renewables 2024). Wird genutzt um H2-Import in Strom-Einsparung umzurechnen: 1 TWh importierter H2 ersetzt (1/0,50)=2,0 TWh inländischen Synthese-Strom.' },
+    { name: 'alreadyElectricTWh', unit: 'TWh', description: 'Bereits elektrisch (Landstrom, Schiffsstrom); Slider-Minimum.' },
+    { name: 'defaultTargetTWh', unit: 'TWh', description: 'Slider-Default.' },
+    { name: 'maxTargetTWh', unit: 'TWh', description: 'Slider-Maximum.' },
+    { name: 'stepTWh', unit: 'TWh', description: 'Slider-Schrittweite.' },
+    { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
+    { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
+  ],
+  caveats: [
+    'PtL-Wirkungsgrad als Punktwert 50 % (strom-zu-Fuel-LHV); Literaturbandbreite 50-62 % je nach CO2-Quelle (DAC vs. Punktquelle) und Synthesepfad (Methanol vs. Ammoniak); IEA Renewables 2024 und Wind-to-Methanol-Studie 2020. Wert ist in `eFuelSystemEfficiency` festgehalten und wird vom kernmodell für die H2-Import-Substitutionslogik gelesen.',
+    'Standortabgrenzung unscharf: in deutschen Häfen gebunkerte Kraftstoffe werden weltweit verfahren, der Stromaufwand der Synthese muss nicht zwangsläufig in Deutschland anfallen. BAFA-Mineralölinfo 2023 zeigt rückläufige Bunkerprodukte (Heizöl schwer Inland 0,55 Mio. t); reale DE-Bunkermenge liegt bei 1-3 Mio. t/Jahr.',
+    'Tagesprofil ist generisch flach; reale Elektrolyse-Fahrweise hängt von Strompreis und PPA-Verträgen ab, kann saisonal stark schwanken.',
+    'Direktstrom-Anteil von rund 30 % der Inlandsschifffahrt ist obere Abschätzung; lange Binnenstrecken (Rhein, Donau) bleiben bei Drop-in-Kraftstoffen, Batteriegewicht/-volumen limitiert.',
+    'Bunker-Bezugsbasis ist eine Modellannahme von 39 TWh thermisch ersetzbarer Bunkermenge — sie kombiniert deutsche Hafen-Bunker (rund 15-25 TWh thermisch nach BAFA/AGEB) mit einem anteiligen Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht.',
+  ],
+};
+
+export const data: E100SchiffData = {
+  id: 'e100-schiff',
+  title: 'Schiff Elektrifizierung',
+  source: 'AGEB Auswertungstabellen Energiebilanz 2023 (Endenergieverbrauch Küsten- und Binnenschifffahrt rund 10-11 PJ ≈ 3 TWh thermisch); BAFA Mineralölinfo Dezember 2023 (Heizöl schwer / Bunkerprodukte DE 2023 stark rückläufig, 0,55 Mio. t HSFO + Marinediesel-Anteil); EnergyComment Hamburg 2025 (globaler Bunkerabsatz internationale Seeschifffahrt 2023 = 233,1 Mio. t, deutsche Häfen kleiner Anteil); IEA Renewables 2024 und Wind-to-Methanol-Studie (Power-to-Methanol Wirkungsgrad rund 50-62 % strom-zu-Fuel-LHV bei DAC-CO2); DECHEMA H2-Kompass 2024 (e-Methanol/e-Ammoniak als zentrale Hochsee-Kraftstoffe); HPA Hamburg Landstromausbau 2024 (rund 130-140 GWh Landstrombedarf bis 2030).',
+  sourceUrls: [
+    'https://ag-energiebilanzen.de/wp-content/uploads/2024/04/AGEB_Jahresbericht2023_20240403_dt.pdf',
+    'https://www.bafa.de/SharedDocs/Kurzmeldungen/DE/Energie/Mineraloel/2023_12_mineraloelinfo.html',
+    'https://www.energycomment.de/treibstoffe-im-globalen-seeverkehr-2025-verbrauch-steigt-dekarbonisierung-kommt-kaum-voran/',
+    'https://www.umweltbundesamt.de/themen/verkehr/emissionsstandards/binnenschiffe',
+    'https://www.iea.org/reports/renewables-2024/renewable-fuels',
+    'https://dechema.de/Forschung/Studien+und+Positionspapiere/2024+03+H2+Kompass/_/H2K_Internationale-Schifffahrt.pdf',
+    'https://www.hamburg.de/politik-und-verwaltung/behoerden/bwai/aktuelles/pressemeldungen/2023-12-22-bwi-landstrom-522944',
+    'https://www.now-gmbh.de/wp-content/uploads/2024/04/NOW_Abschlussbericht-Potenzialstudie-Betankungsstrukturen.pdf',
+    'https://www.sciencedirect.com/science/article/pii/S0306261920301847',
+  ],
+  referenceYear: 2023,
+  directElectrificationTWh: 1.2,
+  eFuelSynthesisTWh: 78,
+  eFuelSystemEfficiency: 0.50,
+  alreadyElectricTWh: 0.3,
+  defaultTargetTWh: 80,
+  maxTargetTWh: 120,
+  stepTWh: 1,
+  distribution: 'hourly-profile',
+  hourlyProfile: {
+    source: 'Generisches Industrieprofil für kontinuierliche PtL-/Elektrolyseanlagen und Hafenbetrieb. Glatter Kosinus-Verlauf um 1,0 mit Amplitude 0,05: Nachtmaximum 1,05 zur Mitternacht, Mittagsminimum 0,95 zur Mittagsstunde. Begründung: Elektrolyse- und Synthese-Anlagen laufen nahezu konstant (IEA Renewables 2024, Fraunhofer ISE), Hafenbetrieb ebenfalls 24/7; leichte Mittagsdelle bildet PV-Mitnahme im PPA-getriebenen Fahrplan ab. Stunde 0 = 00:00-01:00 Berlin-Zeit, Summe = 24.',
+    sourceUrls: [
+      'https://www.iea.org/reports/renewables-2024/renewable-fuels',
+      'https://www.ise.fraunhofer.de/en/business-areas/hydrogen-technologies/sustainable-synthesis-products.html',
+    ],
+    multipliers: [
+      1.050, 1.048, 1.043, 1.035, 1.025, 1.013, 1.000, 0.987,
+      0.975, 0.965, 0.957, 0.952, 0.950, 0.952, 0.957, 0.965,
+      0.975, 0.987, 1.000, 1.013, 1.025, 1.035, 1.043, 1.048,
+    ],
+  },
+  note: 'Zusatzlast = max(0, Ziel-TWh − bereits elektrisch betriebene TWh). Default 80 TWh setzt sich zusammen aus rund 1,2 TWh direkter Batterie-Elektrifizierung (Anker: AGEB Endenergie Küsten-/Binnenschifffahrt ≈ 3 TWh thermisch; rund 30 % batterietauglich × Dieselersatzfaktor ≈ 3 ergibt 0,3 TWh; Hafenumschlag/Cold-Ironing-Ausbau ≈ 0,9 TWh, kalibriert mit HPA-Zielwert 130-140 GWh allein in Hamburg bis 2030) plus rund 78 TWh PtL-Strom für e-Methanol/e-Ammoniak (39 TWh thermisch Bunker-Wechselmenge ÷ 0,50 mittlerer PtL-Wirkungsgrad nach IEA Renewables 2024 / Wind-to-Methanol-Studien 50-62 %, konservativer Mittelwert wegen DAC-CO2 und Ammoniak-Anteil; deutsche Bunker-Punktquelle anteilig statt globaler IMO-Pflichtmenge). Mindestwert 0,3 TWh = heute installierte Landstrom-/Schiffsstromkapazität (Hamburg, Bremerhaven, Cuxhaven). Stundenverteilung nahezu konstant: PtL-Anlagen und Hafenbetrieb laufen 24/7, leichte Mittagsdelle bildet PV-Affinität ab.',
+  summary: 'e-Methanol + Cold Ironing',
+};
+
+export function additionalTWh(targetTWh: number, model: E100SchiffData = data) {
+  return Math.max(0, targetTWh - model.alreadyElectricTWh);
+}
+
+export function hourlyLoadGW(row: HourlyInput, targetTWh: number, model: E100SchiffData = data) {
+  const annualTWh = additionalTWh(targetTWh, model);
+  const hourMultiplier = model.hourlyProfile.multipliers[row.hourOfDayBerlin];
+  return annualTWh * 1000 * hourMultiplier / 8760;
+}
+
+export const demandModule: DemandScenarioModule = {
+  id: 'e100-schiff',
+  loadGW(row, scenario, context) {
+    if (!scenario.demand['e100-schiff']) return 0;
+    return hourlyLoadGW(row, scenario.demand['e100-schiff-target-twh'], context['e100-schiff']);
+  },
+};

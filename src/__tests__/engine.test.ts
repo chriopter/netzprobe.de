@@ -4,28 +4,27 @@ import type {
   E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
   E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
   ErzeugungsPool, SpeicherPool, AussenhandelPool,
-  ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
-  AussenhandelStromData, AussenhandelH2Data,
-  SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   ErzeugungsModellDispatchOrder,
   HourlyInput,
 } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import { defaultScenario, normalizeScenario } from '../ui/scenarioPresets';
-import erzPvJson from '../../data/erzeugung/pv/data.json';
-import erzWindOnJson from '../../data/erzeugung/windon/data.json';
-import erzWindOffJson from '../../data/erzeugung/windoff/data.json';
-import erzKernkraftJson from '../../data/erzeugung/kernkraft/data.json';
-import erzBiomasseJson from '../../data/erzeugung/biomasse/data.json';
-import erzLaufwasserJson from '../../data/erzeugung/laufwasser/data.json';
-import erzGasJson from '../../data/erzeugung/gas/data.json';
-import erzKohleJson from '../../data/erzeugung/kohle/data.json';
-import aussenhandelStromJson from '../../data/aussenhandel/strom-handel/data.json';
-import aussenhandelH2Json from '../../data/aussenhandel/h2-handel/data.json';
-import speicherBatterieJson from '../../data/speicher/batterie/data.json';
-import speicherPumpspeicherJson from '../../data/speicher/pumpspeicher/data.json';
-import speicherH2Json from '../../data/speicher/h2/data.json';
-import kernConfig from '../../data/kern/data.json';
+import { data as erzPv } from '../../data/erzeugung/pv';
+import { data as erzWindOn } from '../../data/erzeugung/windon';
+import { data as erzWindOff } from '../../data/erzeugung/windoff';
+import { data as erzKernkraft } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasse } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasser } from '../../data/erzeugung/laufwasser';
+import { data as erzGas } from '../../data/erzeugung/gas';
+import { data as erzKohle } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStrom } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2 } from '../../data/aussenhandel/h2-handel';
+import { data as speicherBatterie } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicher } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2 } from '../../data/speicher/h2';
+import { data as kernConfigData } from '../../data/kern';
+
+const kernConfig = kernConfigData as { dispatchOrder: ErzeugungsModellDispatchOrder };
 
 const flatHourlyMultipliers = Array.from({ length: 24 }, () => 1);
 
@@ -42,30 +41,30 @@ function stripId<T extends { id?: string }>(obj: T): Omit<T, 'id'> {
 
 const erzeugungsModell: ErzeugungsPool = {
   sources: {
-    pv: stripId(erzPvJson as ErzPackageVariableRe),
-    windOn: stripId(erzWindOnJson as ErzPackageVariableRe),
-    windOff: stripId(erzWindOffJson as ErzPackageVariableRe),
-    kernkraft: stripId(erzKernkraftJson as ErzPackageBaseload),
-    biomasse: stripId(erzBiomasseJson as ErzPackageBaseload),
-    laufwasser: stripId(erzLaufwasserJson as ErzPackageBaseload),
-    gas: stripId(erzGasJson as ErzPackageDispatchable),
-    kohle: stripId(erzKohleJson as ErzPackageDispatchable),
+    pv: stripId(erzPv),
+    windOn: stripId(erzWindOn),
+    windOff: stripId(erzWindOff),
+    kernkraft: stripId(erzKernkraft),
+    biomasse: stripId(erzBiomasse),
+    laufwasser: stripId(erzLaufwasser),
+    gas: stripId(erzGas),
+    kohle: stripId(erzKohle),
   },
-  dispatchOrder: (kernConfig as { dispatchOrder: ErzeugungsModellDispatchOrder }).dispatchOrder,
+  dispatchOrder: kernConfig.dispatchOrder,
 } as ErzeugungsPool;
 const speicherModell: SpeicherPool = {
   storages: {
-    batterie: stripId(speicherBatterieJson as SpeicherBatterieData),
-    pumpspeicher: stripId(speicherPumpspeicherJson as SpeicherPumpspeicherData),
-    h2: stripId(speicherH2Json as SpeicherH2Data),
+    batterie: stripId(speicherBatterie),
+    pumpspeicher: stripId(speicherPumpspeicher),
+    h2: stripId(speicherH2),
   },
 } as SpeicherPool;
 const aussenhandelModell: AussenhandelPool = {
   strom: {
-    import: (aussenhandelStromJson as AussenhandelStromData).import,
-    export: (aussenhandelStromJson as AussenhandelStromData).export,
+    import: aussenhandelStrom.import,
+    export: aussenhandelStrom.export,
   },
-  h2: { import: (aussenhandelH2Json as AussenhandelH2Data).import },
+  h2: { import: aussenhandelH2.import },
 };
 
 const baselineScenario: Scenario = { ...normalizeScenario(defaultScenario), supplyPreset: 'custom' };

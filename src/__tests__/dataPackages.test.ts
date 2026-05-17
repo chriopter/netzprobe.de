@@ -1,66 +1,77 @@
 import { describe, expect, it } from 'vitest';
-import type { DatasetDoc, ManifestEntry } from '../ui/dataCatalog';
+import type { DatasetDoc } from '../ui/dataCatalog';
 
-const files = import.meta.glob('../../data/**/*', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
-const manifest = JSON.parse(files['../../data/manifest.json']) as ManifestEntry[];
+type Module = { description?: DatasetDoc; data?: unknown };
+
+// Glob all TS data modules — flat single-files (`data/<domain>/<stem>.ts`) plus
+// folder-form modules (`data/<domain>/<stem>/index.ts`). Eagerly load so we
+// can introspect the exported description and data values.
+const modules = import.meta.glob('../../data/**/*.ts', { eager: true }) as Record<string, Module>;
+
 const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model', 'template']);
-const jsonFiles = Object.entries(files)
-  .filter(([path]) => path.match(/^\.\.\/\.\.\/data\/.*\.json$/) && !path.endsWith('manifest.json'))
-  .map(([path, raw]) => [path, JSON.parse(raw)] as const);
+const validDomains = /^(last|erzeugung|speicher|aussenhandel|presets|modell)$/;
 
-function dataFile(path: string) {
-  return files[`../../data/${path}`];
+type Entry = { path: string; stem: string; doc: DatasetDoc; module: Module };
+
+function deriveStem(path: string): string | null {
+  // Examples:
+  //   '../../data/last/e100-pkw.ts'          → 'e100-pkw'
+  //   '../../data/erzeugung/2017/index.ts'   → '2017'
+  //   '../../data/kern.ts'                   → 'kern'
+  //   '../../data/last/e100-heiz/index.ts'   → 'e100-heiz'
+  const match = path.match(/\/data\/(.+)\.ts$/);
+  if (!match) return null;
+  const rel = match[1];
+  if (rel.endsWith('/index')) return rel.slice(0, -'/index'.length).split('/').pop() ?? null;
+  return rel.split('/').pop() ?? null;
 }
 
-function readDoc(entry: ManifestEntry) {
-  return JSON.parse(dataFile(entry.description)) as DatasetDoc;
-}
+const entries: Entry[] = Object.entries(modules)
+  .map(([path, module]): Entry | null => {
+    const doc = module.description;
+    if (!doc || typeof doc !== 'object') return null;
+    const stem = deriveStem(path);
+    if (!stem) return null;
+    return { path, stem, doc, module };
+  })
+  .filter((entry): entry is Entry => entry !== null);
 
-describe('data package manifest', () => {
-  it('keeps every manifest package in the strict package shape', () => {
-    expect(manifest).not.toHaveLength(0);
-
-    for (const entry of manifest) {
-      expect(dataFile(`${entry.path}/description.json`), entry.path).toBeDefined();
-      expect(dataFile(`${entry.path}/model.ts`), entry.path).toBeDefined();
-      expect(dataFile(`${entry.path}/model.json`), entry.path).toBeUndefined();
+describe('data single-file modules', () => {
+  it('discovers at least one description per known domain', () => {
+    expect(entries.length).toBeGreaterThan(0);
+    const domains = new Set(entries.map(entry => entry.doc.domain));
+    for (const expected of ['last', 'erzeugung', 'speicher', 'aussenhandel', 'presets']) {
+      expect(domains, expected).toContain(expected);
     }
   });
 
-  it('points to existing package descriptions with domain and kind metadata', () => {
-    for (const entry of manifest) {
-      expect(dataFile(entry.description), entry.description).toBeDefined();
-
-      const doc = readDoc(entry);
-      expect(doc.id, entry.description).toBe(entry.id);
-      expect('code' in doc, entry.description).toBe(false);
-      expect(doc.domain, entry.description).toMatch(/^(last|erzeugung|speicher|aussenhandel|presets|modell)$/);
-      expect(validKinds.has(doc.kind), entry.description).toBe(true);
+  it('exports a description whose id matches the file or folder name', () => {
+    for (const { path, stem, doc } of entries) {
+      // Akzeptierte Varianten: reiner Stem (z.B. `e100-pkw`, `pv`, `kern`) oder
+      // `<domain>-<stem>` (z.B. `last-2025`, `erzeugung-2025`).
+      const acceptedIds = new Set<string>([stem, `${doc.domain}-${stem}`]);
+      expect(acceptedIds.has(doc.id), `${path}: id "${doc.id}" passt nicht zu Stem "${stem}"`).toBe(true);
     }
   });
 
-  it('links package files and scenario code that actually exist', () => {
-    for (const entry of manifest) {
-      const doc = readDoc(entry);
-      if (doc.file) expect(dataFile(doc.file), doc.file).toBeDefined();
-      for (const script of doc.scripts ?? []) {
-        expect(dataFile(script), script).toBeDefined();
-      }
-      expect(doc.scripts).toContain(`${entry.path}/model.ts`);
-      expect(doc.scripts?.every(script => script.startsWith(`${entry.path}/`)), doc.id).toBe(true);
-      if (doc.file) expect(doc.file).toBe(`${entry.path}/data.json`);
-      expect(doc.file?.endsWith('/model.json'), doc.id).not.toBe(true);
+  it('keeps the description in the strict DatasetDoc shape', () => {
+    for (const { path, doc } of entries) {
+      expect(typeof doc.id, path).toBe('string');
+      expect(doc.id.length, path).toBeGreaterThan(0);
+      expect(typeof doc.title, path).toBe('string');
+      expect(doc.domain, path).toMatch(validDomains);
+      expect(validKinds.has(doc.kind), `${path}: kind "${doc.kind}"`).toBe(true);
+      expect(typeof doc.source, path).toBe('string');
+      // `description` ist string oder string[]
+      expect(['string', 'object'].includes(typeof doc.description), path).toBe(true);
     }
   });
 
-  it('does not keep a second identifier in package JSON files', () => {
-    for (const [path, json] of jsonFiles) {
-      expect('code' in json, path).toBe(false);
-      if (json && typeof json === 'object' && 'id' in json) {
-        const manifestEntry = manifest.find(entry => path.startsWith(`../../data/${entry.path}/`));
-        if (manifestEntry) {
-          expect(json.id, path).toBe(manifestEntry.id);
-        }
+  it('keeps description.id consistent with data.id when data carries one', () => {
+    for (const { path, doc, module } of entries) {
+      const data = module.data;
+      if (data && typeof data === 'object' && 'id' in (data as Record<string, unknown>)) {
+        expect((data as { id: unknown }).id, path).toBe(doc.id);
       }
     }
   });

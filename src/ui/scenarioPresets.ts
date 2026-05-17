@@ -1,17 +1,17 @@
 import type { Scenario } from '../types/scenario';
-import erzPv from '../../data/erzeugung/pv/data.json';
-import erzWindOn from '../../data/erzeugung/windon/data.json';
-import erzWindOff from '../../data/erzeugung/windoff/data.json';
-import erzKernkraft from '../../data/erzeugung/kernkraft/data.json';
-import erzBiomasse from '../../data/erzeugung/biomasse/data.json';
-import erzLaufwasser from '../../data/erzeugung/laufwasser/data.json';
-import erzGas from '../../data/erzeugung/gas/data.json';
-import erzKohle from '../../data/erzeugung/kohle/data.json';
-import aussenhandelStrom from '../../data/aussenhandel/strom-handel/data.json';
-import aussenhandelH2 from '../../data/aussenhandel/h2-handel/data.json';
-import speicherBatterie from '../../data/speicher/batterie/data.json';
-import speicherPumpspeicher from '../../data/speicher/pumpspeicher/data.json';
-import speicherH2 from '../../data/speicher/h2/data.json';
+import { data as erzPv } from '../../data/erzeugung/pv';
+import { data as erzWindOn } from '../../data/erzeugung/windon';
+import { data as erzWindOff } from '../../data/erzeugung/windoff';
+import { data as erzKernkraft } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasse } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasser } from '../../data/erzeugung/laufwasser';
+import { data as erzGas } from '../../data/erzeugung/gas';
+import { data as erzKohle } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStrom } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2 } from '../../data/aussenhandel/h2-handel';
+import { data as speicherBatterie } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicher } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2 } from '../../data/speicher/h2';
 
 export const defaultScenario: Scenario = {
   id: 'historical-2025',

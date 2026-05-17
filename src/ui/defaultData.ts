@@ -1,26 +1,36 @@
 import type {
-  E100PkwData, E100HeizData, E100LkwData, E100BahnData, E100SchiffData,
-  E100FlugData, E100GhdData, E100IndustrieWaermeData, E100StahlData, E100ChemieData,
   ErzeugungsPool, SpeicherPool, AussenhandelPool,
   ErzPackageSource, ErzPackageBaseload, ErzPackageDispatchable, ErzPackageVariableRe,
   AussenhandelStromData, AussenhandelH2Data,
   SpeicherBatterieData, SpeicherPumpspeicherData, SpeicherH2Data,
   ErzeugungsModellDispatchOrder,
-  DataSet, GenerationHour, LoadHour, ModelFactorHour, SplitDataFile,
+  DataSet, HourlyInput,
 } from '../types/data';
-import { dataManifestUrl, dataPackageIds, dataPackageUrl, registerDataPackagePath } from './dataPackages';
-import kernModelConfig from '../../data/kern/data.json';
+import { data as e100Pkw } from '../../data/last/e100-pkw';
+import { data as e100Heiz } from '../../data/last/e100-heiz';
+import { data as e100Lkw } from '../../data/last/e100-lkw';
+import { data as e100Bahn } from '../../data/last/e100-bahn';
+import { data as e100Schiff } from '../../data/last/e100-schiff';
+import { data as e100Flug } from '../../data/last/e100-flug';
+import { data as e100Ghd } from '../../data/last/e100-ghd';
+import { data as e100IndustrieWaerme } from '../../data/last/e100-industrie-waerme';
+import { data as e100Stahl } from '../../data/last/e100-stahl';
+import { data as e100Chemie } from '../../data/last/e100-chemie';
+import { data as erzPv } from '../../data/erzeugung/pv';
+import { data as erzWindOn } from '../../data/erzeugung/windon';
+import { data as erzWindOff } from '../../data/erzeugung/windoff';
+import { data as erzKernkraft } from '../../data/erzeugung/kernkraft';
+import { data as erzBiomasse } from '../../data/erzeugung/biomasse';
+import { data as erzLaufwasser } from '../../data/erzeugung/laufwasser';
+import { data as erzGas } from '../../data/erzeugung/gas';
+import { data as erzKohle } from '../../data/erzeugung/kohle';
+import { data as aussenhandelStrom } from '../../data/aussenhandel/strom-handel';
+import { data as aussenhandelH2 } from '../../data/aussenhandel/h2-handel';
+import { data as speicherBatterie } from '../../data/speicher/batterie';
+import { data as speicherPumpspeicher } from '../../data/speicher/pumpspeicher';
+import { data as speicherH2 } from '../../data/speicher/h2';
+import { data as kernModelConfig } from '../../data/kern';
 
-type ManifestEntryRaw = { id: string; path?: string; description: string };
-
-async function ensureManifestPaths(): Promise<void> {
-  const response = await fetch(dataManifestUrl);
-  if (!response.ok) return;
-  const entries = await response.json() as ManifestEntryRaw[];
-  for (const entry of entries) {
-    if (entry.path) registerDataPackagePath(entry.id, entry.path);
-  }
-}
 const berlinDateFormatter = new Intl.DateTimeFormat('de-DE', {
   timeZone: 'Europe/Berlin',
   year: 'numeric',
@@ -42,44 +52,16 @@ export async function loadJson<T>(url: string): Promise<T> {
 }
 
 export async function loadDefaultData(): Promise<DataSet> {
-  await ensureManifestPaths();
-  const [
-    loadData, e100Pkw, e100Heiz, e100Lkw, e100Bahn, e100Schiff, e100Flug,
-    e100Ghd, e100IndustrieWaerme, e100Stahl, e100Chemie, generationData, factorData,
-    erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle,
-    aussenhandelStrom, aussenhandelH2,
-    speicherBatterie, speicherPumpspeicher, speicherH2,
-    load2017Data, generation2017Data,
-  ] = await Promise.all([
-    loadJson<SplitDataFile<LoadHour>>(dataPackageUrl(dataPackageIds.loadHistorical2025, 'data.json')),
-    loadJson<E100PkwData>(dataPackageUrl(dataPackageIds.e100Pkw, 'data.json')),
-    loadJson<E100HeizData>(dataPackageUrl(dataPackageIds.e100Heiz, 'data.json')),
-    loadJson<E100LkwData>(dataPackageUrl(dataPackageIds.e100Lkw, 'data.json')),
-    loadJson<E100BahnData>(dataPackageUrl(dataPackageIds.e100Bahn, 'data.json')),
-    loadJson<E100SchiffData>(dataPackageUrl(dataPackageIds.e100Schiff, 'data.json')),
-    loadJson<E100FlugData>(dataPackageUrl(dataPackageIds.e100Flug, 'data.json')),
-    loadJson<E100GhdData>(dataPackageUrl(dataPackageIds.e100Ghd, 'data.json')),
-    loadJson<E100IndustrieWaermeData>(dataPackageUrl(dataPackageIds.e100IndustrieWaerme, 'data.json')),
-    loadJson<E100StahlData>(dataPackageUrl(dataPackageIds.e100Stahl, 'data.json')),
-    loadJson<E100ChemieData>(dataPackageUrl(dataPackageIds.e100Chemie, 'data.json')),
-    loadJson<SplitDataFile<GenerationHour>>(dataPackageUrl(dataPackageIds.generationHistorical2025, 'data.json')),
-    loadJson<SplitDataFile<ModelFactorHour>>(dataPackageUrl(dataPackageIds.feedInFactors2025, 'data.json')),
-    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzPv, 'data.json')),
-    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzWindOn, 'data.json')),
-    loadJson<ErzPackageVariableRe>(dataPackageUrl(dataPackageIds.erzWindOff, 'data.json')),
-    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzKernkraft, 'data.json')),
-    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzBiomasse, 'data.json')),
-    loadJson<ErzPackageBaseload>(dataPackageUrl(dataPackageIds.erzLaufwasser, 'data.json')),
-    loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzGas, 'data.json')),
-    loadJson<ErzPackageDispatchable>(dataPackageUrl(dataPackageIds.erzKohle, 'data.json')),
-    loadJson<AussenhandelStromData>(dataPackageUrl(dataPackageIds.aussenhandelStrom, 'data.json')),
-    loadJson<AussenhandelH2Data>(dataPackageUrl(dataPackageIds.aussenhandelH2, 'data.json')),
-    loadJson<SpeicherBatterieData>(dataPackageUrl(dataPackageIds.speicherBatterie, 'data.json')),
-    loadJson<SpeicherPumpspeicherData>(dataPackageUrl(dataPackageIds.speicherPumpspeicher, 'data.json')),
-    loadJson<SpeicherH2Data>(dataPackageUrl(dataPackageIds.speicherH2, 'data.json')),
-    loadJson<SplitDataFile<LoadHour>>(dataPackageUrl(dataPackageIds.loadHistorical2017, 'data.json')),
-    loadJson<SplitDataFile<GenerationHour>>(dataPackageUrl(dataPackageIds.generationHistorical2017, 'data.json')),
+  // Drei große 2025-Datasets werden parallel als eigener Chunk geladen.
+  // Vite splittet sie automatisch aus dem Initial-Bundle, weil sie dynamische Imports sind.
+  const [loadModule, generationModule, factorModule] = await Promise.all([
+    import('../../data/last/2025'),
+    import('../../data/erzeugung/2025'),
+    import('../../data/erzeugung/einspeisefaktoren-2025'),
   ]);
+  const loadData = loadModule.data;
+  const generationData = generationModule.data;
+  const factorData = factorModule.data;
 
   const erzeugungsModell = aggregateErzeugungsPool(
     erzPv, erzWindOn, erzWindOff, erzKernkraft, erzBiomasse, erzLaufwasser, erzGas, erzKohle,
@@ -116,26 +98,8 @@ export async function loadDefaultData(): Promise<DataSet> {
     };
   });
 
-  const generation2017ByTime = new Map(generation2017Data.hours.map((hour) => [hour.time, hour]));
-  const hours2017 = load2017Data.hours.map((loadHour) => {
-    const generation = generation2017ByTime.get(loadHour.time);
-    if (!generation) throw new Error(`Unvollständige Daten für ${loadHour.time}: erzeugung-2017`);
-    const { time: _generationTime, ...observed } = generation;
-    // 2017-Hours nutzen Pass-Through im Kernmodell — Faktor- und HDD-Felder werden nicht ausgewertet.
-    // Wir setzen Filler-Werte (0 Faktoren, weight 1/8760) damit die HourlyInput-Form passt.
-    return {
-      time: loadHour.time,
-      loadMW: loadHour.loadMW,
-      solarIrradiance: [0],
-      wind100m: [0],
-      heatingDegreeDayWeight: 1 / 8760,
-      hourOfDayBerlin: new Date(loadHour.time).getUTCHours(),
-      observed,
-    };
-  });
-
   return {
-    source: 'Energy-Charts 2025 + 2017: Last, Erzeugung und Einspeisefaktoren getrennt geladen.',
+    source: 'Energy-Charts 2025: Last, Erzeugung und Einspeisefaktoren. 2017-Daten werden bei Bedarf nachgeladen.',
     'e100-pkw': e100Pkw,
     'e100-heiz': e100Heiz,
     'e100-lkw': e100Lkw,
@@ -155,10 +119,49 @@ export async function loadDefaultData(): Promise<DataSet> {
     generationSharesPct: generationData.sumSharesPct,
     generationPartsTWh: generationData.sumPartsTWh,
     hours,
-    hours2017,
-    loadSum2017TWh: load2017Data.sumTWh,
-    generationSum2017TWh: generation2017Data.sumTWh,
   };
+}
+
+export type Historical2017Data = {
+  hours2017: HourlyInput[];
+  loadSum2017TWh?: number;
+  generationSum2017TWh?: number;
+};
+
+let historical2017Cache: Promise<Historical2017Data> | null = null;
+
+export function loadHistorical2017(): Promise<Historical2017Data> {
+  if (historical2017Cache) return historical2017Cache;
+  historical2017Cache = (async () => {
+    const [loadModule, generationModule] = await Promise.all([
+      import('../../data/last/2017'),
+      import('../../data/erzeugung/2017'),
+    ]);
+    const load2017Data = loadModule.data;
+    const generation2017Data = generationModule.data;
+    const generation2017ByTime = new Map(generation2017Data.hours.map((hour) => [hour.time, hour]));
+    const hours2017 = load2017Data.hours.map((loadHour) => {
+      const generation = generation2017ByTime.get(loadHour.time);
+      if (!generation) throw new Error(`Unvollständige Daten für ${loadHour.time}: erzeugung-2017`);
+      const { time: _generationTime, ...observed } = generation;
+      // 2017-Hours nutzen Pass-Through im Kernmodell — Faktor- und HDD-Felder werden nicht ausgewertet.
+      return {
+        time: loadHour.time,
+        loadMW: loadHour.loadMW,
+        solarIrradiance: [0],
+        wind100m: [0],
+        heatingDegreeDayWeight: 1 / 8760,
+        hourOfDayBerlin: new Date(loadHour.time).getUTCHours(),
+        observed,
+      };
+    });
+    return {
+      hours2017,
+      loadSum2017TWh: load2017Data.sumTWh,
+      generationSum2017TWh: generation2017Data.sumTWh,
+    };
+  })();
+  return historical2017Cache;
 }
 
 export function aggregateErzeugungsPool(
