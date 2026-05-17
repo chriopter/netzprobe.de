@@ -75,6 +75,7 @@ export const description: DatasetDoc = {
     { name: 'alreadyElectricTWh', unit: 'TWh', description: 'Heutiger Stromanteil = Slider-Minimum (kein Ausbau über Status quo).' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa BASF-Ludwigshafen-Stromverbrauch.' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -101,6 +102,9 @@ export const data: E100ChemieData = {
     'https://ag-energiebilanzen.de/daten-und-fakten/anwendungsbilanzen/',
     'https://www.vci.de/vci/downloads-vci/publikation/chiz-historisch/chemiewirtschaft-in-zahlen-2024.pdf',
   ],
+  referenceScales: {
+    activity: { value: 22, unit: 'TWh', label: 'BASF-Ludwigshafen-Stromverbrauch' },
+  },
   referenceYear: 2023,
   currentElectricityTWh: 55,
   processHeatSubstitutionTWh: 75,

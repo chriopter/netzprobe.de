@@ -54,7 +54,8 @@ export const description: DatasetDoc = {
     { name: 'stepGW', unit: 'GW', description: 'Slider-Schrittweite.' },
     { name: 'mode', unit: 'Enum', description: 'baseload.' },
     { name: 'availability', unit: 'Anteil', description: 'Jahresverfügbarkeit (0,86) — Wartungsfenster und Substrat-Limitierung inkludiert.' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa 5-MW-Biomasse-HKW.' },
   ],
   caveats: [
     'Biomasse-Emissionsfaktor 230 g/kWh ist Direkt-Emission; Lebenszyklus-Bilanz (Anbau, Transport, Landnutzung) deutlich höher.',
@@ -73,5 +74,6 @@ export const data: ErzPackageBaseload = {
   stepGW: 1,
   mode: 'baseload',
   availability: 0.86,
-  emissionGperKWh: 230,
+  emissions: { co2eGperKWh: 230 },
+  referenceScales: { power: { value: 0.005, unit: 'GW', label: '5-MW-Biomasse-HKW' } },
 };

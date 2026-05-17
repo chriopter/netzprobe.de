@@ -70,6 +70,7 @@ export const description: DatasetDoc = {
     { name: 'temperatureMix', unit: 'Objekt', description: 'Anteile NT/MT/HT und ihre Effizienzparameter (COP, Strom-pro-Wärme-Faktor, Wirkungsgrad).' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Schichtbetrieb-Mittelung.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa große Industriestandorte (10 TWh/a).' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -97,6 +98,9 @@ export const data: E100IndustrieWaermeData = {
     'https://www.bvglas.de/presse/presseinformation/news/glasindustrie-steigende-energiekosten-gefaehrden-energiewende/',
     'https://www.papierindustrie-transformation.de/transformation',
   ],
+  referenceScales: {
+    activity: { value: 10, unit: 'TWh', label: 'große Industriestandorte (10 TWh/a)' },
+  },
   referenceYear: 2023,
   referenceHeatTWh: 220,
   alreadyElectricHeatTWh: 25,

@@ -55,7 +55,8 @@ export const description: DatasetDoc = {
     { name: 'stepGW', unit: 'GW', description: 'Slider-Schrittweite.' },
     { name: 'mode', unit: 'Enum', description: 'baseload: konstante Leistung × Verfügbarkeit.' },
     { name: 'availability', unit: 'Anteil', description: 'Jahresverfügbarkeit (0,9).' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Isar-2-Blöcke.' },
   ],
   caveats: [
     'Default 0 GW reflektiert den Status Deutschland 2025 — Szenarien mit Kernkraft-Wiederinbetriebnahme sind hypothetisch.',
@@ -74,8 +75,8 @@ export const data: ErzPackageBaseload = {
   stepGW: 0.5,
   mode: 'baseload',
   availability: 0.9,
-  emissionGperKWh: 12,
-  // UI-Anker: 1,4 GW ≈ ein Block der Konvoi-Baureihe (Isar 2, Brokdorf, Emsland);
-  // wird im Sidebar-Slider als „≈ X × Isar 2" gerendert.
-  comparison: { divisor: 1.4, label: 'Isar 2' },
+  emissions: { co2eGperKWh: 12 },
+  referenceScales: {
+    power: { value: 1.4, unit: 'GW', label: 'Isar-2-Blöcke' },
+  },
 };

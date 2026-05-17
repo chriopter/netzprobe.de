@@ -57,7 +57,8 @@ export const description: DatasetDoc = {
     { name: 'mode', unit: 'Enum', description: 'dispatchable.' },
     { name: 'availability', unit: 'Anteil', description: 'Jahresverfügbarkeit (0,9).' },
     { name: 'minLoadFraction', unit: 'Anteil', description: 'Min-Last (0,2).' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen (Braunkohle-gewichtet).' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh (Braunkohle-gewichtet).' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Kohleblöcke (800 MW).' },
   ],
   caveats: [
     'Min-Last 20 % als Floor — keine Kaltstart-Restriktion modelliert; reale Anlagen brauchen 6-12 h Anfahrzeit.',
@@ -77,5 +78,6 @@ export const data: ErzPackageDispatchable = {
   mode: 'dispatchable',
   availability: 0.9,
   minLoadFraction: 0.2,
-  emissionGperKWh: 1170,
+  emissions: { co2eGperKWh: 1170 },
+  referenceScales: { power: { value: 0.8, unit: 'GW', label: 'Kohleblöcke (800 MW)' } },
 };

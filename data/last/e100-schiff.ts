@@ -62,6 +62,7 @@ export const description: DatasetDoc = {
     { name: 'stepTWh', unit: 'TWh', description: 'Slider-Schrittweite.' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa DE-Hafen-Bunkermenge 2023 (AGEB).' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -88,6 +89,9 @@ export const data: E100SchiffData = {
     'https://www.now-gmbh.de/wp-content/uploads/2024/04/NOW_Abschlussbericht-Potenzialstudie-Betankungsstrukturen.pdf',
     'https://www.sciencedirect.com/science/article/pii/S0306261920301847',
   ],
+  referenceScales: {
+    activity: { value: 3, unit: 'TWh', label: 'DE-Hafen-Bunkermenge 2023 (AGEB)' },
+  },
   referenceYear: 2023,
   directElectrificationTWh: 1.2,
   eFuelSynthesisTWh: 78,

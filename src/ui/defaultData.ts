@@ -198,8 +198,11 @@ export function aggregateAussenhandelPool(
   h2: AussenhandelH2Data,
 ): AussenhandelPool {
   return {
-    strom: { import: strom.import, export: strom.export },
-    h2: { import: { defaultTWh: h2.import.defaultTWh, minTWh: h2.import.minTWh, maxTWh: h2.import.maxTWh, stepTWh: h2.import.stepTWh } },
+    strom: { import: strom.import, export: strom.export, referenceScales: strom.referenceScales },
+    h2: {
+      import: { defaultTWh: h2.import.defaultTWh, minTWh: h2.import.minTWh, maxTWh: h2.import.maxTWh, stepTWh: h2.import.stepTWh },
+      referenceScales: h2.referenceScales,
+    },
   };
 }
 

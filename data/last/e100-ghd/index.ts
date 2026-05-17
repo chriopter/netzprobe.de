@@ -128,6 +128,11 @@ export const description: DatasetDoc = {
       description: "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24) nach BDEW SLP G0; Quellen und Quell-URLs.",
     },
     {
+      name: "referenceScales",
+      unit: "Objekt",
+      description: "Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa GHD-Wärme einer Großstadt (~1 Mio. Einw.).",
+    },
+    {
       name: "note",
       unit: "Text",
       description: "Rechenhinweis.",
@@ -145,7 +150,12 @@ export const description: DatasetDoc = {
   ],
 };
 
-export const data = dataJson as E100GhdData;
+export const data: E100GhdData = {
+  ...(dataJson as E100GhdData),
+  referenceScales: {
+    activity: { value: 10, unit: 'TWh', label: 'GHD-Wärme einer Großstadt (~1 Mio. Einw.)' },
+  },
+};
 
 export function additionalHeatTWh(targetHeatTWh: number, model: E100GhdData = data) {
   return Math.max(0, targetHeatTWh - model.alreadyElectricHeatTWh);

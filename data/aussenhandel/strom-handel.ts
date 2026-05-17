@@ -51,6 +51,7 @@ export const description: DatasetDoc = {
     { name: 'import.emissionGperKWh', unit: 'g/kWh', description: 'Import-Strom Emissionsfaktor (Nachbarland-Mittel).' },
     { name: 'export.defaultMaxGW', unit: 'GW', description: 'Default Export-Cap.' },
     { name: 'export.maxGW', unit: 'GW', description: 'Slider-Maximum Export.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa HGÜ-Trassen (2 GW).' },
   ],
   caveats: [
     'Import-Cap und Export-Cap sind statische Jahres-Caps; reale NTCs schwanken stundenweise.',
@@ -77,5 +78,8 @@ export const data: AussenhandelStromData = {
     minGW: 0,
     maxGW: 200,
     stepGW: 5,
+  },
+  referenceScales: {
+    power: { value: 2, unit: 'GW', label: 'HGÜ-Trassen (2 GW)' },
   },
 };

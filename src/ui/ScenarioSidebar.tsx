@@ -18,7 +18,7 @@ import {
 
 import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { dataWikiUrl, datasetIds } from './dataCatalog';
-import { fmt0, twh, twh0 } from './format';
+import { fmt, fmt0, twh, twh0 } from './format';
 import { MainTabs } from './MainTabs';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
 import { additionalTWh as e100PkwAdditionalTWh } from '../../data/last/e100-pkw';
@@ -31,7 +31,7 @@ import { additionalElectricityTWh as e100GhdAdditionalElectricityTWh } from '../
 import { additionalElectricityTWh as e100IndustrieAdditionalElectricityTWh } from '../../data/last/e100-industrie-waerme';
 import { additionalTWh as e100StahlAdditionalTWh } from '../../data/last/e100-stahl';
 import { additionalTWh as e100ChemieAdditionalTWh } from '../../data/last/e100-chemie';
-import type { DataSet } from '../types/data';
+import type { DataSet, ReferenceScale } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
@@ -267,6 +267,8 @@ type GenerationFieldSpec = {
   max: number;
   step: number;
   baseline?: number;
+  co2eGperKWh?: number;
+  referenceScale?: ReferenceScale;
 };
 
 type GenerationGroup = {
@@ -279,18 +281,18 @@ type GenerationGroup = {
 function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] {
   return [
     { id: 'erneuerbar', title: 'Erneuerbar', fields: [
-      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW },
-      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW },
-      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW },
-      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW },
-      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW },
+      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power },
+      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power },
+      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power },
+      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power },
+      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power },
     ], summary: (s) => `${fmt0.format(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW)} GW` },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
-      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW },
+      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power },
     ], summary: (s) => `${fmt0.format(s.generation.kernkraftInstalledGW)} GW` },
     { id: 'konventionell', title: 'Konventionell', fields: [
-      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW },
-      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW },
+      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power },
+      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power },
     ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
   ];
 }
@@ -303,8 +305,8 @@ type AussenhandelGroup = {
   title: string;
   docId: string;
   summary: (scenario: Scenario) => string;
-  importFields: Array<{ key: ImportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number }>;
-  exportFields: Array<{ key: ExportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number }>;
+  importFields: Array<{ key: ImportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number; referenceScale?: ReferenceScale }>;
+  exportFields: Array<{ key: ExportFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number; referenceScale?: ReferenceScale }>;
 };
 
 function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGroup[] {
@@ -315,10 +317,10 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
       docId: datasetIds.aussenhandelStrom,
       summary: (s) => `${fmt0.format(s.import.stromGW)} / ${fmt0.format(s.export.stromGW)} GW`,
       importFields: [
-        { key: 'stromGW', label: 'Import-Cap', unit: 'GW', min: ah.strom.import.minGW, max: ah.strom.import.maxGW, step: ah.strom.import.stepGW, baseline: ah.strom.import.defaultMaxGW },
+        { key: 'stromGW', label: 'Import-Cap', unit: 'GW', min: ah.strom.import.minGW, max: ah.strom.import.maxGW, step: ah.strom.import.stepGW, baseline: ah.strom.import.defaultMaxGW, referenceScale: ah.strom.referenceScales?.power },
       ],
       exportFields: [
-        { key: 'stromGW', label: 'Export-Cap', unit: 'GW', min: ah.strom.export.minGW, max: ah.strom.export.maxGW, step: ah.strom.export.stepGW, baseline: ah.strom.export.defaultMaxGW },
+        { key: 'stromGW', label: 'Export-Cap', unit: 'GW', min: ah.strom.export.minGW, max: ah.strom.export.maxGW, step: ah.strom.export.stepGW, baseline: ah.strom.export.defaultMaxGW, referenceScale: ah.strom.referenceScales?.power },
       ],
     },
     {
@@ -327,7 +329,7 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
       docId: datasetIds.aussenhandelH2,
       summary: (s) => `${fmt0.format(s.import.h2TWh)} TWh/a`,
       importFields: [
-        { key: 'h2TWh', label: 'H₂-Import', unit: 'TWh/a', min: ah.h2.import.minTWh, max: ah.h2.import.maxTWh, step: ah.h2.import.stepTWh, baseline: ah.h2.import.defaultTWh },
+        { key: 'h2TWh', label: 'H₂-Import', unit: 'TWh/a', min: ah.h2.import.minTWh, max: ah.h2.import.maxTWh, step: ah.h2.import.stepTWh, baseline: ah.h2.import.defaultTWh, referenceScale: ah.h2.referenceScales?.activity },
       ],
       exportFields: [],
     },
@@ -335,29 +337,30 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
 }
 
 type StorageFieldKey = keyof Scenario['storage'];
-type StorageFieldSpec = { key: StorageFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number };
+type StorageFieldSpec = { key: StorageFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number; referenceScale?: ReferenceScale };
 
 type StorageGroup = {
   id: 'batterie' | 'pumpspeicher' | 'h2';
   title: string;
+  subtitle: string;
   fields: StorageFieldSpec[];
   summary: (scenario: Scenario) => string;
 };
 
 function storageGroups(sp: DataSet['speicher-modell']): StorageGroup[] {
   return [
-    { id: 'batterie', title: 'Batterie · kurzfristig', fields: [
-      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.minPowerGW,   max: sp.storages.batterie.maxPowerGW,   step: sp.storages.batterie.stepPowerGW,   baseline: sp.storages.batterie.power2025GW },
-      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.minEnergyGWh, max: sp.storages.batterie.maxEnergyGWh, step: sp.storages.batterie.stepEnergyGWh, baseline: sp.storages.batterie.energy2025GWh },
+    { id: 'batterie', title: 'Batterie', subtitle: 'kurzfristig', fields: [
+      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.minPowerGW,   max: sp.storages.batterie.maxPowerGW,   step: sp.storages.batterie.stepPowerGW,   baseline: sp.storages.batterie.power2025GW,   referenceScale: sp.storages.batterie.referenceScales?.power },
+      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.minEnergyGWh, max: sp.storages.batterie.maxEnergyGWh, step: sp.storages.batterie.stepEnergyGWh, baseline: sp.storages.batterie.energy2025GWh, referenceScale: sp.storages.batterie.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.batteriePowerGW)} GW · ${fmt0.format(s.storage.batterieEnergyGWh)} GWh` },
-    { id: 'pumpspeicher', title: 'Pumpspeicher · mittelfristig', fields: [
-      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.minPowerGW,   max: sp.storages.pumpspeicher.maxPowerGW,   step: sp.storages.pumpspeicher.stepPowerGW,   baseline: sp.storages.pumpspeicher.power2025GW },
-      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.minEnergyGWh, max: sp.storages.pumpspeicher.maxEnergyGWh, step: sp.storages.pumpspeicher.stepEnergyGWh, baseline: sp.storages.pumpspeicher.energy2025GWh },
+    { id: 'pumpspeicher', title: 'Pumpspeicher', subtitle: 'mittelfristig', fields: [
+      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.minPowerGW,   max: sp.storages.pumpspeicher.maxPowerGW,   step: sp.storages.pumpspeicher.stepPowerGW,   baseline: sp.storages.pumpspeicher.power2025GW,   referenceScale: sp.storages.pumpspeicher.referenceScales?.power },
+      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.minEnergyGWh, max: sp.storages.pumpspeicher.maxEnergyGWh, step: sp.storages.pumpspeicher.stepEnergyGWh, baseline: sp.storages.pumpspeicher.energy2025GWh, referenceScale: sp.storages.pumpspeicher.referenceScales?.energy },
     ], summary: (s) => `${s.storage.pumpspeicherPowerGW.toLocaleString('de-DE')} GW · ${fmt0.format(s.storage.pumpspeicherEnergyGWh)} GWh` },
-    { id: 'h2', title: 'Wasserstoff · saisonal', fields: [
-      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.minChargePowerGW,    max: sp.storages.h2.maxChargePowerGW,    step: sp.storages.h2.stepChargePowerGW,    baseline: sp.storages.h2.chargePower2025GW },
-      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.minDischargePowerGW, max: sp.storages.h2.maxDischargePowerGW, step: sp.storages.h2.stepDischargePowerGW, baseline: sp.storages.h2.dischargePower2025GW },
-      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.minEnergyGWh,        max: sp.storages.h2.maxEnergyGWh,        step: sp.storages.h2.stepEnergyGWh,        baseline: sp.storages.h2.energy2025GWh },
+    { id: 'h2', title: 'Wasserstoff', subtitle: 'saisonal', fields: [
+      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.minChargePowerGW,    max: sp.storages.h2.maxChargePowerGW,    step: sp.storages.h2.stepChargePowerGW,    baseline: sp.storages.h2.chargePower2025GW,    referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.minDischargePowerGW, max: sp.storages.h2.maxDischargePowerGW, step: sp.storages.h2.stepDischargePowerGW, baseline: sp.storages.h2.dischargePower2025GW, referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.minEnergyGWh,        max: sp.storages.h2.maxEnergyGWh,        step: sp.storages.h2.stepEnergyGWh,        baseline: sp.storages.h2.energy2025GWh,        referenceScale: sp.storages.h2.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.h2ChargePowerGW)} / ${fmt0.format(s.storage.h2DischargePowerGW)} GW · ${fmt0.format(s.storage.h2EnergyGWh)} GWh` },
   ];
 }
@@ -574,6 +577,7 @@ function AussenhandelSection({
           max={field.max}
           step={field.step}
           baseline={field.baseline}
+          referenceScale={field.referenceScale}
           onValue={value => onImportChange(field.key, value)}
         />)}
         {group.exportFields.map(field => <CapacitySliderRow
@@ -585,6 +589,7 @@ function AussenhandelSection({
           max={field.max}
           step={field.step}
           baseline={field.baseline}
+          referenceScale={field.referenceScale}
           onValue={value => onExportChange(field.key, value)}
         />)}
       </GroupAccordion>)}
@@ -675,12 +680,15 @@ function SupplyGroupAccordions({
         max={field.max}
         step={field.step}
         baseline={field.baseline}
+        co2eGperKWh={field.co2eGperKWh}
+        referenceScale={field.referenceScale}
         onValue={value => onGenerationChange(field.key, value)}
       />)}
     </GroupAccordion>)}
     {stoGroups.map(group => <GroupAccordion
       key={group.id}
       title={group.title}
+      subtitle={group.subtitle}
       summary={group.summary(scenario)}
       icon={<BatteryCharging className="h-3.5 w-3.5"/>}
       open={open[group.id]}
@@ -697,6 +705,7 @@ function SupplyGroupAccordions({
         max={field.max}
         step={field.step}
         baseline={field.baseline}
+        referenceScale={field.referenceScale}
         onValue={value => onStorageChange(field.key, value)}
       />)}
     </GroupAccordion>)}
@@ -705,6 +714,7 @@ function SupplyGroupAccordions({
 
 function GroupAccordion({
   title,
+  subtitle,
   summary,
   icon,
   open,
@@ -715,6 +725,7 @@ function GroupAccordion({
   children,
 }: {
   title: string;
+  subtitle?: string;
   summary: string;
   icon: ReactNode;
   open: boolean;
@@ -766,7 +777,10 @@ function GroupAccordion({
         <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
       </button>
     </div>
-    {open && <div className="border-t border-zinc-100 px-2 py-1">{children}</div>}
+    {open && <div className="border-t border-zinc-100 px-2 py-1">
+      {subtitle && <div className="px-1 pb-1 pt-0.5 text-[11px] leading-4 text-zinc-400">{subtitle}</div>}
+      {children}
+    </div>}
   </section>;
 }
 
@@ -780,7 +794,17 @@ function formatMultiplier(value: number, baseline: number | undefined): string |
   return `${Math.round(ratio)}× 2025`;
 }
 
-function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onValue }: {
+function formatReferenceScale(value: number, referenceScale: ReferenceScale | undefined): string | null {
+  if (!referenceScale || value <= 0 || referenceScale.value <= 0) return null;
+  return `≈ ${fmt.format(value / referenceScale.value)} ${referenceScale.label}`;
+}
+
+function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {
+  if (co2eGperKWh === undefined) return null;
+  return `CO₂e: ${fmt0.format(co2eGperKWh)} g/kWh`;
+}
+
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, onValue }: {
   label: string;
   unit: string;
   value: number;
@@ -788,10 +812,15 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onVal
   max: number;
   step: number;
   baseline?: number;
+  co2eGperKWh?: number;
+  referenceScale?: ReferenceScale;
   onValue: (value: number) => void;
 }) {
   const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
   const multiplier = formatMultiplier(value, baseline);
+  const emissionText = formatEmissionFactor(co2eGperKWh);
+  const referenceText = formatReferenceScale(value, referenceScale);
+  const detailText = [emissionText, referenceText].filter(Boolean).join(' · ');
   return <div className="grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-xs font-medium text-zinc-950">{label}</span>
@@ -801,6 +830,7 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, onVal
         {multiplier && <span className="ml-1 text-zinc-400">({multiplier})</span>}
       </span>
     </div>
+    {detailText && <div className="px-0.5 text-xs leading-5 text-zinc-500">{detailText}</div>}
     <input
       aria-label={label}
       className="w-full"
@@ -1446,6 +1476,7 @@ function ScenarioRadioItem({ name, label, meta, checked, onSelect }: { name: str
 function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onToggleExpand }: { data: DataSet; scenario: Scenario; expanded: boolean; onChecked: (checked: boolean) => void; onMillionKm: (millionKm: number) => void; onToggleExpand: () => void }) {
   const model = data['e100-pkw'];
   const millionKm = scenario.demand['e100-pkw-million-km'];
+  const referenceText = formatReferenceScale(millionKm, model.referenceScales?.activity);
   return <SectorRow
     label="PKW Elektrifizierung"
     enabled={scenario.demand['e100-pkw']}
@@ -1456,7 +1487,7 @@ function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onTo
     valueLabel="Pkw-km"
     valueUnit="Mio. km"
     electricTWh={e100PkwAdditionalTWh(millionKm, model)}
-    detail={`${millionKm.toLocaleString('de-DE')} Mio. km · ${formatPercent(millionKm / model.referenceMillionKm * 100)} · ${model.summary}`}
+    detail={`${millionKm.toLocaleString('de-DE')} Mio. km · ${formatPercent(millionKm / model.referenceMillionKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Pkw}
     expanded={expanded}
     onChecked={onChecked}
@@ -1468,6 +1499,7 @@ function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onTo
 function E100HeizControl({ data, scenario, expanded, onChecked, onTargetHeat, onToggleExpand }: { data: DataSet; scenario: Scenario; expanded: boolean; onChecked: (checked: boolean) => void; onTargetHeat: (heatTWh: number) => void; onToggleExpand: () => void }) {
   const model = data['e100-heiz'];
   const heatTWh = scenario.demand['e100-heiz-target-heat-twh'];
+  const referenceText = formatReferenceScale(heatTWh, model.referenceScales?.activity);
   return <SectorRow
     label="Haushalte Elektrifizierung"
     enabled={scenario.demand['e100-heiz']}
@@ -1478,7 +1510,7 @@ function E100HeizControl({ data, scenario, expanded, onChecked, onTargetHeat, on
     valueLabel="Raumwärme"
     valueUnit="TWh Wärme"
     electricTWh={e100HeizAdditionalElectricityTWh(heatTWh, model)}
-    detail={`${heatTWh.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(heatTWh / model.referenceHeatDemandTWh * 100)} · ${model.summary}`}
+    detail={`${heatTWh.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(heatTWh / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Heiz}
     expanded={expanded}
     onChecked={onChecked}
@@ -1546,11 +1578,11 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
         value={value}
         onChange={event => onValue(Number(event.target.value))}
       />
-      {valueUnit && <div className="flex items-baseline gap-1 text-[10px] leading-4 text-zinc-500">
+      {valueUnit && <div className="flex items-baseline gap-1 text-xs leading-5 text-zinc-500">
         <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title={`${valueLabel}: direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${valueUnit})`}/>
         <span>{valueUnit}</span>
       </div>}
-      <p className="text-[10px] leading-4 text-zinc-500">{detail}</p>
+      <p className="text-xs leading-5 text-zinc-500">{detail}</p>
     </div>}
   </div>;
 }
@@ -1560,6 +1592,7 @@ type SectorWrapperProps = { data: DataSet; scenario: Scenario; expanded: boolean
 function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-lkw'];
   const target = scenario.demand['e100-lkw-target-bn-km'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Lkw + Bus Elektrifizierung"
     enabled={scenario.demand['e100-lkw']}
@@ -1570,7 +1603,7 @@ function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggle
     valueLabel="Fahrleistung"
     valueUnit="Mrd. km"
     electricTWh={e100LkwAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} Mrd. km · ${formatPercent(target / model.referenceBnKm * 100)} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} Mrd. km · ${formatPercent(target / model.referenceBnKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Lkw}
     expanded={expanded}
     onChecked={onChecked}
@@ -1582,6 +1615,7 @@ function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggle
 function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-bahn'];
   const target = scenario.demand['e100-bahn-target-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Bahn Elektrifizierung"
     enabled={scenario.demand['e100-bahn']}
@@ -1592,7 +1626,7 @@ function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggl
     valueLabel="Zusatz-Bahnstrom"
     valueUnit="TWh"
     electricTWh={e100BahnAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh · historische 11 TWh · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Bahn}
     expanded={expanded}
     onChecked={onChecked}
@@ -1604,6 +1638,7 @@ function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggl
 function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-schiff'];
   const target = scenario.demand['e100-schiff-target-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Schiff Elektrifizierung"
     enabled={scenario.demand['e100-schiff']}
@@ -1614,7 +1649,7 @@ function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onTog
     valueLabel="Ziel-Strom"
     valueUnit="TWh"
     electricTWh={e100SchiffAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh · Binnen + Hochsee · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Schiff}
     expanded={expanded}
     onChecked={onChecked}
@@ -1626,6 +1661,7 @@ function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onTog
 function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-flug'];
   const target = scenario.demand['e100-flug-target-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Flug Elektrifizierung"
     enabled={scenario.demand['e100-flug']}
@@ -1636,7 +1672,7 @@ function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggl
     valueLabel="PtL-Strom"
     valueUnit="TWh"
     electricTWh={e100FlugAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh · e-Kerosin · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Flug}
     expanded={expanded}
     onChecked={onChecked}
@@ -1648,6 +1684,7 @@ function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggl
 function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-ghd'];
   const target = scenario.demand['e100-ghd-target-heat-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="GHD Elektrifizierung"
     enabled={scenario.demand['e100-ghd']}
@@ -1658,7 +1695,7 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
     valueLabel="GHD-Wärme"
     valueUnit="TWh Wärme"
     electricTWh={e100GhdAdditionalElectricityTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Ghd}
     expanded={expanded}
     onChecked={onChecked}
@@ -1670,6 +1707,7 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
 function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-industrie-waerme'];
   const target = scenario.demand['e100-industrie-waerme-target-heat-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Prozesswärme Elektrifizierung"
     enabled={scenario.demand['e100-industrie-waerme']}
@@ -1680,7 +1718,7 @@ function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onVal
     valueLabel="Prozesswärme"
     valueUnit="TWh Wärme"
     electricTWh={e100IndustrieAdditionalElectricityTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Wärme · ohne Stahl/Chemie · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Wärme${referenceText ? ` · ${referenceText}` : ''} · ohne Stahl/Chemie · ${model.summary}`}
     docId={datasetIds.e100IndustrieWaerme}
     expanded={expanded}
     onChecked={onChecked}
@@ -1692,6 +1730,7 @@ function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onVal
 function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-stahl'];
   const target = scenario.demand['e100-stahl-target-mio-ton'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Stahl Elektrifizierung"
     enabled={scenario.demand['e100-stahl']}
@@ -1702,7 +1741,7 @@ function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onTogg
     valueLabel="Primärstahl"
     valueUnit="Mio. t"
     electricTWh={e100StahlAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} Mio. t · ${formatPercent(target / model.primarySteelMioTon * 100)} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} Mio. t · ${formatPercent(target / model.primarySteelMioTon * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Stahl}
     expanded={expanded}
     onChecked={onChecked}
@@ -1714,6 +1753,7 @@ function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onTogg
 function E100ChemieControl({ data, scenario, expanded, onChecked, onValue, onToggleExpand }: SectorWrapperProps) {
   const model = data['e100-chemie'];
   const target = scenario.demand['e100-chemie-target-twh'];
+  const referenceText = formatReferenceScale(target, model.referenceScales?.activity);
   return <SectorRow
     label="Chemie Elektrifizierung"
     enabled={scenario.demand['e100-chemie']}
@@ -1724,7 +1764,7 @@ function E100ChemieControl({ data, scenario, expanded, onChecked, onValue, onTog
     valueLabel="Zielstrom"
     valueUnit="TWh"
     electricTWh={e100ChemieAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Gesamt · Status quo 55 TWh · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Gesamt${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
     docId={datasetIds.e100Chemie}
     expanded={expanded}
     onChecked={onChecked}

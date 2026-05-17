@@ -73,6 +73,7 @@ export const description: DatasetDoc = {
     { name: 'stepTWh', unit: 'TWh', description: 'Slider-Schrittweite.' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (alle 1,0, Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa DE-Kerosin-Inlandsbedarf 2022.' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -101,6 +102,9 @@ export const data: E100FlugData = {
     'https://www.oeko.de/publikationen/p-details/rescue-langfristszenarien-fuer-eine-treibhausgasneutrale-energieversorgung',
     'https://transport.ec.europa.eu/transport-modes/air/environment/refueleu-aviation_en',
   ],
+  referenceScales: {
+    activity: { value: 114, unit: 'TWh', label: 'DE-Kerosin-Inlandsbedarf 2022' },
+  },
   referenceYear: 2023,
   kerosineDemandMioT: 9.47,
   kerosineEnergyTWh: 114,

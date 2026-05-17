@@ -73,6 +73,7 @@ export const description: DatasetDoc = {
     { name: 'stepMioTon', unit: 'Mio. t', description: 'Slider-Schrittweite.' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa Salzgitter-Stahlwerk Jahresoutput.' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -100,6 +101,9 @@ export const data: E100StahlData = {
     'https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2020/Dec/IRENA_Green_hydrogen_cost_2020.pdf',
     'https://doi.org/10.1016/j.jclepro.2018.08.279',
   ],
+  referenceScales: {
+    activity: { value: 5.7, unit: 'Mio. t', label: 'Salzgitter-Stahlwerk Jahresoutput' },
+  },
   referenceYear: 2023,
   primarySteelMioTon: 25.6,
   hydrogenKgPerTonSteel: 60,

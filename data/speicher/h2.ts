@@ -69,6 +69,7 @@ export const description: DatasetDoc = {
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,34).' },
     { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC (0,5).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (3).' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Salzkavernen-Speicher (200 GWh).' },
   ],
   caveats: [
     'Roundtrip-Wirkungsgrad 34 % gilt für Power-to-Power-Pfad; bei stofflicher Nutzung von H₂ (Stahl, Chemie) ist der Pfad-Wirkungsgrad höher.',
@@ -100,6 +101,9 @@ export const data: SpeicherH2Data = {
   roundtripEfficiency: 0.34,
   initialStateOfChargeFraction: 0.5,
   dispatchPriority: 3,
+  referenceScales: {
+    energy: { value: 200, unit: 'GWh', label: 'Salzkavernen-Speicher (200 GWh)' },
+  },
 };
 
 export const speicherH2Data = data;

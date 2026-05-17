@@ -64,6 +64,7 @@ export const description: DatasetDoc = {
     { name: 'stepTWh', unit: 'TWh', description: 'Slider-Schrittweite.' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa DB-Netz-Bahnstrom 2024.' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -87,6 +88,9 @@ export const data: E100BahnData = {
     'https://www.deutschlandtakt.de/',
     'https://www.bundesregierung.de/breg-de/themen/klimaschutz/klimaschutzprogramm-2030-1673502',
   ],
+  referenceScales: {
+    activity: { value: 11, unit: 'TWh', label: 'DB-Netz-Bahnstrom 2024' },
+  },
   referenceYear: 2023,
   dieselSubstitutionTWh: 2,
   modalShiftTWh: 8,

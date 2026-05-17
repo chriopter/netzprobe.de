@@ -72,6 +72,7 @@ export const description: DatasetDoc = {
     { name: 'kwhPerKm', unit: 'kWh/km', description: 'Gewichteter Flottenverbrauch ab Netz inklusive Ladeverluste.' },
     { name: 'distribution', unit: 'Text', description: 'Verteilungstyp.' },
     { name: 'hourlyProfile', unit: 'Objekt', description: '24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa Mio. Lkw (à 78.000 km/a, BAG 2022).' },
     { name: 'note', unit: 'Text', description: 'Rechenhinweis.' },
   ],
   caveats: [
@@ -100,6 +101,9 @@ export const data: E100LkwData = {
     'https://www.volvotrucks.de/de-de/news/press-releases/2022/jan/volvos-heavy-duty-electric-truck-is-put-to-the-test-excels-in-both-range-and-energy-efficiency.html',
     'https://www.bast.de/DE/Themen/Digitales/HF_1/Massnahmen/verkehrszaehlung/zaehl_node.html',
   ],
+  referenceScales: {
+    activity: { value: 33.3, unit: 'Mrd. km/a', label: 'Mio. Lkw (à 78.000 km/a, BAG 2022)' },
+  },
   referenceYear: 2023,
   referenceBnKm: 93,
   alreadyElectricBnKm: 1.5,

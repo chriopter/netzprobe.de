@@ -54,7 +54,8 @@ export const description: DatasetDoc = {
     { name: 'stepGW', unit: 'GW', description: 'Slider-Schrittweite.' },
     { name: 'mode', unit: 'Enum', description: 'baseload.' },
     { name: 'availability', unit: 'Anteil', description: 'Jahresverfügbarkeit (0,63) — Jahresmittel der Flussdurchflussmengen.' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Laufwasser-Kraftwerke (100 MW).' },
   ],
   caveats: [
     'Baseload-Annahme bildet keine Saisonalität ab — Frühjahrshochwasser und Sommertrockenheit gleichen sich nur im Jahresmittel aus.',
@@ -73,5 +74,6 @@ export const data: ErzPackageBaseload = {
   stepGW: 0.5,
   mode: 'baseload',
   availability: 0.63,
-  emissionGperKWh: 11,
+  emissions: { co2eGperKWh: 11 },
+  referenceScales: { power: { value: 0.1, unit: 'GW', label: 'Laufwasser-Kraftwerke (100 MW)' } },
 };

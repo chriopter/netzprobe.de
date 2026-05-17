@@ -56,7 +56,8 @@ export const description: DatasetDoc = {
     { name: 'mode', unit: 'Enum', description: 'variable-re.' },
     { name: 'factorPackage', unit: 'Text', description: 'einspeisefaktoren-2025.' },
     { name: 'factorField', unit: 'Text', description: 'wind100m.' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Offshore-Turbinen (14 MW).' },
   ],
   caveats: [
     'Wind Offshore nutzt denselben Einspeisefaktor wie Onshore; ein eigener Offshore-Faktor mit höherem Volllaststundenwert ist nicht hinterlegt.',
@@ -77,5 +78,6 @@ export const data: ErzPackageVariableRe = {
   mode: 'variable-re',
   factorPackage: 'einspeisefaktoren-2025',
   factorField: 'wind100m',
-  emissionGperKWh: 13,
+  emissions: { co2eGperKWh: 13 },
+  referenceScales: { power: { value: 0.014, unit: 'GW', label: 'Offshore-Turbinen (14 MW)' } },
 };

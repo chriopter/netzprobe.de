@@ -40,6 +40,13 @@ const descriptionModules = import.meta.glob<DatasetDoc | undefined>(
   { eager: true, import: 'description' },
 );
 
+// Lazy-Glob für die `data`-Exports: das Wiki lädt sie on-demand, wenn der
+// Felder-Tab geöffnet wird. Lazy weil (a) manche Module (Presets) keinen
+// `data`-Export haben — eager mit `import: 'data'` würde dort beim Build
+// crashen — und (b) die Daten-Module groß sein können (8 760 hours) und nicht
+// ins Initial-Bundle gehören.
+const dataLoaders = import.meta.glob<{ data?: unknown }>('../../data/**/*.ts');
+
 // Raw-Source jedes TS-Moduls — wird vom DataHandbook-Modul-Tab on-demand
 // nachgeladen, damit die großen Hour-Arrays nicht im Initial-Bundle landen.
 const moduleSources = import.meta.glob<string>(
@@ -60,9 +67,20 @@ function relPathFromGlobKey(key: string): string {
 }
 
 const docPathById = new Map<string, string>();
+const dataLoaderByDocId = new Map<string, () => Promise<{ data?: unknown }>>();
 for (const [key, doc] of Object.entries(descriptionModules)) {
   const id = doc?.id;
-  if (id) docPathById.set(id, relPathFromGlobKey(key));
+  if (!id) continue;
+  docPathById.set(id, relPathFromGlobKey(key));
+  const loader = dataLoaders[key];
+  if (loader) dataLoaderByDocId.set(id, loader);
+}
+
+export async function loadDataForDocId(id: string): Promise<Record<string, unknown> | null> {
+  const loader = dataLoaderByDocId.get(id);
+  if (!loader) return null;
+  const mod = await loader();
+  return (mod.data && typeof mod.data === 'object') ? mod.data as Record<string, unknown> : null;
 }
 
 // Pfad-Lookup für Source-Loader (lazy): glob-Key per Pfad-Stem.

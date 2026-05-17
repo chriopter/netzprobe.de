@@ -60,6 +60,7 @@ export const description: DatasetDoc = {
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,8).' },
     { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC am Jahresbeginn (0,5).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (1 = zuerst).' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Tesla Megapacks (4 MWh).' },
   ],
   caveats: [
     'Keine Selbstentladung modelliert.',
@@ -85,6 +86,9 @@ export const data: SpeicherBatterieData = {
   roundtripEfficiency: 0.8,
   initialStateOfChargeFraction: 0.5,
   dispatchPriority: 1,
+  referenceScales: {
+    energy: { value: 0.004, unit: 'GWh', label: 'Tesla Megapacks (4 MWh)' },
+  },
 };
 
 export const speicherBatterieData = data;

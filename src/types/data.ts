@@ -56,6 +56,42 @@ export type HourlyProfile = {
   multipliers: number[];
 };
 
+export type ReferenceScale = {
+  value: number;
+  unit: string;
+  label: string;
+};
+
+/** Size anchors per physical dimension: power in GW (capacity slider),
+ *  energy in GWh (storage), activity in TWh/a, Mio. km/a, Mio. t etc. */
+export type ReferenceScalesData = {
+  power?: ReferenceScale;
+  energy?: ReferenceScale;
+  activity?: ReferenceScale;
+};
+
+/** Mixin adding optional `referenceScales` to a module data type. */
+export type WithReferenceScales = {
+  referenceScales?: ReferenceScalesData;
+};
+
+export type CapacityBounds = {
+  installed2025GW: number;
+  defaultInstalledGW: number;
+  minInstalledGW: number;
+  maxInstalledGW: number;
+  stepGW: number;
+};
+
+export type EmissionsData = {
+  co2eGperKWh: number;
+};
+
+/** Mixin: every generator carries a mandatory `emissions` field. */
+export type WithEmissions = {
+  emissions: EmissionsData;
+};
+
 export type E100PkwData = {
   id: 'e100-pkw';
   title: string;
@@ -72,7 +108,7 @@ export type E100PkwData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100HeizData = {
   id: 'e100-heiz';
@@ -91,7 +127,7 @@ export type E100HeizData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100LkwData = {
   id: 'e100-lkw';
@@ -109,7 +145,7 @@ export type E100LkwData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100BahnData = {
   id: 'e100-bahn';
@@ -126,7 +162,7 @@ export type E100BahnData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100SchiffData = {
   id: 'e100-schiff';
@@ -146,7 +182,7 @@ export type E100SchiffData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100FlugData = {
   id: 'e100-flug';
@@ -166,7 +202,7 @@ export type E100FlugData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100GhdData = {
   id: 'e100-ghd';
@@ -185,7 +221,7 @@ export type E100GhdData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100IndustrieWaermeData = {
   id: 'e100-industrie-waerme';
@@ -211,7 +247,7 @@ export type E100IndustrieWaermeData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100StahlData = {
   id: 'e100-stahl';
@@ -232,7 +268,7 @@ export type E100StahlData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type E100ChemieData = {
   id: 'e100-chemie';
@@ -256,7 +292,7 @@ export type E100ChemieData = {
   hourlyProfile: HourlyProfile;
   note: string;
   summary: string;
-};
+} & WithReferenceScales;
 
 export type ErzeugungsModellSourceId =
   | 'pv' | 'windOn' | 'windOff' | 'kernkraft' | 'biomasse' | 'laufwasser' | 'gas' | 'kohle';
@@ -265,41 +301,23 @@ export type ErzeugungsModellSourceMode = 'variable-re' | 'baseload' | 'dispatcha
 
 export type ErzeugungsModellVariableReSource = {
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'variable-re';
   factorPackage: 'einspeisefaktoren-2025';
   factorField: 'solarIrradiance' | 'wind100m';
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzeugungsModellBaseloadSource = {
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'baseload';
   availability: number;
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzeugungsModellDispatchableSource = {
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'dispatchable';
   availability: number;
   minLoadFraction: number;
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzeugungsModellSource =
   | ErzeugungsModellVariableReSource
@@ -342,7 +360,7 @@ export type AussenhandelStromData = {
   name: string;
   import: ErzeugungsModellImport;
   export: ErzeugungsModellExport;
-};
+} & WithReferenceScales;
 
 export type AussenhandelH2Data = {
   id: 'h2-handel';
@@ -354,12 +372,13 @@ export type AussenhandelH2Data = {
     maxTWh: number;
     stepTWh: number;
   };
-};
+} & WithReferenceScales;
 
 export type AussenhandelPool = {
   strom: {
     import: ErzeugungsModellImport;
     export: ErzeugungsModellExport;
+    referenceScales?: ReferenceScalesData;
   };
   h2: {
     import: {
@@ -368,50 +387,32 @@ export type AussenhandelPool = {
       maxTWh: number;
       stepTWh: number;
     };
+    referenceScales?: ReferenceScalesData;
   };
 };
 
-// Generischer Typ für ein einzelnes erz-* Paket. Discriminated Union über `mode`.
 export type ErzPackageVariableRe = {
   id: string;
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'variable-re';
   factorPackage: 'einspeisefaktoren-2025';
   factorField: 'solarIrradiance' | 'wind100m';
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageBaseload = {
   id: string;
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'baseload';
   availability: number;
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageDispatchable = {
   id: string;
   name: string;
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
   mode: 'dispatchable';
   availability: number;
   minLoadFraction: number;
-  emissionGperKWh: number;
-};
+} & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPackageDispatchable;
 
@@ -433,7 +434,7 @@ export type SpeicherModellSymmetricStorage = {
   roundtripEfficiency: number;
   initialStateOfChargeFraction: number;
   dispatchPriority: number;
-};
+} & WithReferenceScales;
 
 export type SpeicherModellAsymmetricStorage = {
   name: string;
@@ -455,7 +456,7 @@ export type SpeicherModellAsymmetricStorage = {
   roundtripEfficiency: number;
   initialStateOfChargeFraction: number;
   dispatchPriority: number;
-};
+} & WithReferenceScales;
 
 // Aggregierter Pool aus den einzelnen speicher-* Bausteinen.
 export type SpeicherPool = {

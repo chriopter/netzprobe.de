@@ -62,6 +62,7 @@ export const description: DatasetDoc = {
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,8).' },
     { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC (0,5).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (2).' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Pumpspeicher Goldisthal (8,5 GWh).' },
   ],
   caveats: [
     'Maximum 15 GW / 100 GWh reflektiert DE-LU-Marktgebietsbestand (9,4 GW) plus aggressives Zubaupotenzial (+5-6 GW); weiterer Zubau topographisch und durch Naturschutz limitiert. Default 9,4 GW schließt Vianden Luxembourg ein (gehört bilanziell zum DE-LU-Marktgebiet); DE-only wären ~6,8 GW.',
@@ -86,6 +87,9 @@ export const data: SpeicherPumpspeicherData = {
   roundtripEfficiency: 0.8,
   initialStateOfChargeFraction: 0.5,
   dispatchPriority: 2,
+  referenceScales: {
+    energy: { value: 8.5, unit: 'GWh', label: 'Pumpspeicher Goldisthal (8,5 GWh)' },
+  },
 };
 
 export const speicherPumpspeicherData = data;

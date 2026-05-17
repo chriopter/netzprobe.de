@@ -56,7 +56,8 @@ export const description: DatasetDoc = {
     { name: 'mode', unit: 'Enum', description: 'variable-re: stündlich aus Einspeisefaktor berechnet.' },
     { name: 'factorPackage', unit: 'Text', description: 'Verweis auf das Paket mit Einspeisefaktoren.' },
     { name: 'factorField', unit: 'Text', description: 'Feld in den Einspeisefaktoren (solarIrradiance).' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen pro erzeugter kWh.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Solarpark Witznitz (500 MW).' },
   ],
   caveats: [
     'PV-Einspeisefaktor ist deutschlandweiter Durchschnitt; regionale Unterschiede (Süd-Nord) nicht abgebildet.',
@@ -76,5 +77,6 @@ export const data: ErzPackageVariableRe = {
   mode: 'variable-re',
   factorPackage: 'einspeisefaktoren-2025',
   factorField: 'solarIrradiance',
-  emissionGperKWh: 35,
+  emissions: { co2eGperKWh: 35 },
+  referenceScales: { power: { value: 0.5, unit: 'GW', label: 'Solarpark Witznitz (500 MW)' } },
 };

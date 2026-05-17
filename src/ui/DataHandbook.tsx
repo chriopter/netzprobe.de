@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Menu, SlidersHorizontal, Zap } from 'lucide-react';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
-import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
+import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, loadDataForDocId, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { MainTabs } from './MainTabs';
 import { cx, iconButton, iconTile, panelHeader, rowActive, rowHover, sectionBox, sidebarInset, sidebarWidthClass } from './ui';
@@ -571,16 +571,66 @@ function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): Fil
   return tabs;
 }
 
+function resolveFieldValue(data: Record<string, unknown> | null, path: string): unknown {
+  if (!data) return undefined;
+  return path.split('.').reduce<unknown>((current, segment) => {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object') return undefined;
+    return (current as Record<string, unknown>)[segment];
+  }, data);
+}
+
+function formatFieldValue(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'number') return value.toLocaleString('de-DE', { maximumFractionDigits: 4 });
+  if (typeof value === 'string') return value;
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    if (value.length <= 6 && value.every(item => typeof item === 'number' || typeof item === 'string')) {
+      return `[${value.map(item => typeof item === 'number' ? item.toLocaleString('de-DE', { maximumFractionDigits: 4 }) : String(item)).join(', ')}]`;
+    }
+    return `Array · ${value.length} Einträge`;
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value as Record<string, unknown>);
+    if (keys.length === 0) return '{}';
+    const preview = keys.slice(0, 4).join(', ');
+    const more = keys.length > 4 ? `, …` : '';
+    return `Objekt · { ${preview}${more} }`;
+  }
+  return String(value);
+}
+
 function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setData(null);
+    loadDataForDocId(selected.id)
+      .then(result => { if (!cancelled) setData(result); })
+      .catch(() => { if (!cancelled) setData(null); });
+    return () => { cancelled = true; };
+  }, [selected.id]);
   return <div>
     <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      {selected.fields?.map(field => <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_70px_minmax(0,1fr)]">
-        <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
-        <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
-        <dd className="min-w-0 leading-5 text-zinc-700">{field.description}</dd>
-      </div>)}
-      {reproductionItems.map(item => <div key={item} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_70px_minmax(0,1fr)]">
+      {selected.fields?.map(field => {
+        const rawValue = resolveFieldValue(data, field.name);
+        const formatted = rawValue === undefined ? null : formatFieldValue(rawValue);
+        return <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
+          <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
+          <dd className="min-w-0 leading-5 text-zinc-900">
+            {formatted !== null
+              ? <code className="break-words rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">{formatted}</code>
+              : <span className="text-zinc-400">–</span>}
+          </dd>
+          <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
+          <dd className="min-w-0 leading-5 text-zinc-700">{field.description}</dd>
+        </div>;
+      })}
+      {reproductionItems.map(item => <div key={item} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
         <dt className="min-w-0"><code className="break-words">Reproduktion</code></dt>
+        <dd className="min-w-0"><span className="text-zinc-400">–</span></dd>
         <dd className="min-w-0 text-zinc-500">Hinweis</dd>
         <dd className="min-w-0 leading-5 text-zinc-700">{item.replace(/^Datei:\s*/, '')}</dd>
       </div>)}

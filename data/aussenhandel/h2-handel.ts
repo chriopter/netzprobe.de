@@ -49,6 +49,7 @@ export const description: DatasetDoc = {
     { name: 'import.minTWh', unit: 'TWh/a', description: 'Slider-Minimum (0 = kein Import).' },
     { name: 'import.maxTWh', unit: 'TWh/a', description: 'Slider-Maximum (Stresstest-Obergrenze).' },
     { name: 'import.stepTWh', unit: 'TWh/a', description: 'Slider-Schrittweite.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa BMWK-H₂-Importziel 2030.' },
   ],
   caveats: [
     'Importierter H2 senkt nur den inländischen Strombedarf, kommt nicht als zusätzliche Energiequelle in die Bilanz.',
@@ -67,5 +68,8 @@ export const data: AussenhandelH2Data = {
     minTWh: 0,
     maxTWh: 600,
     stepTWh: 10,
+  },
+  referenceScales: {
+    activity: { value: 50, unit: 'TWh/a', label: 'BMWK-H₂-Importziel 2030' },
   },
 };

@@ -133,6 +133,11 @@ export const description: DatasetDoc = {
       description: "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs.",
     },
     {
+      name: "referenceScales",
+      unit: "Objekt",
+      description: "Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa Mio. Haushalte (à 12.500 kWh/a).",
+    },
+    {
       name: "note",
       unit: "Text",
       description: "Rechenhinweis.",
@@ -150,7 +155,12 @@ export const description: DatasetDoc = {
   ],
 };
 
-export const data = dataJson as E100HeizData;
+export const data: E100HeizData = {
+  ...(dataJson as E100HeizData),
+  referenceScales: {
+    activity: { value: 12.5, unit: 'TWh', label: 'Mio. Haushalte (à 12.500 kWh/a)' },
+  },
+};
 
 export function additionalHeatTWh(targetHeatTWh: number, model: E100HeizData = data) {
   return Math.max(0, targetHeatTWh - model.alreadyElectricHeatTWh);

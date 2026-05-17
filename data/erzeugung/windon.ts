@@ -56,7 +56,8 @@ export const description: DatasetDoc = {
     { name: 'mode', unit: 'Enum', description: 'variable-re: aus Einspeisefaktor berechnet.' },
     { name: 'factorPackage', unit: 'Text', description: 'Verweis auf einspeisefaktoren-2025.' },
     { name: 'factorField', unit: 'Text', description: 'wind100m.' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Onshore-Turbinen (4 MW).' },
   ],
   caveats: [
     'Einspeisefaktor wind100m ist deutschlandweiter Durchschnitt; regionale Unterschiede (Küste vs. Süd) nicht abgebildet.',
@@ -76,5 +77,6 @@ export const data: ErzPackageVariableRe = {
   mode: 'variable-re',
   factorPackage: 'einspeisefaktoren-2025',
   factorField: 'wind100m',
-  emissionGperKWh: 13,
+  emissions: { co2eGperKWh: 13 },
+  referenceScales: { power: { value: 0.004, unit: 'GW', label: 'Onshore-Turbinen (4 MW)' } },
 };

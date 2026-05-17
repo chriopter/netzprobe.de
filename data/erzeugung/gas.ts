@@ -57,7 +57,8 @@ export const description: DatasetDoc = {
     { name: 'mode', unit: 'Enum', description: 'dispatchable: Floor plus ramp-up.' },
     { name: 'availability', unit: 'Anteil', description: 'Jahresverfügbarkeit (0,9).' },
     { name: 'minLoadFraction', unit: 'Anteil', description: 'Min-Last als Anteil der verfügbaren Leistung (0,05).' },
-    { name: 'emissionGperKWh', unit: 'g/kWh', description: 'Spezifische CO₂-Emissionen.' },
+    { name: 'emissions', unit: 'Objekt', description: 'Spezifische CO₂e-Emissionen pro erzeugter kWh.' },
+    { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 GW entspricht etwa Gasturbinen-Blöcke (400 MW).' },
   ],
   caveats: [
     'Min-Last 5 % als Floor — keine Kaltstart-Restriktion oder Vorhaltezeit modelliert.',
@@ -77,5 +78,6 @@ export const data: ErzPackageDispatchable = {
   mode: 'dispatchable',
   availability: 0.9,
   minLoadFraction: 0.05,
-  emissionGperKWh: 494,
+  emissions: { co2eGperKWh: 494 },
+  referenceScales: { power: { value: 0.4, unit: 'GW', label: 'Gasturbinen-Blöcke (400 MW)' } },
 };

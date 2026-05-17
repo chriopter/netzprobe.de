@@ -31,7 +31,7 @@ export const description: DatasetDoc = {
   short: 'Stündlicher Dispatch aus Last, Erzeugung, Speicher und Außenhandel mit CO₂-Bilanz.',
   description: [
     '**Aufgabe:** das Kernmodell iteriert über `8.760` Stunden pro Jahr und schließt in jeder Stunde die Bilanz aus Last (aggregiert via `demand.ts` aus `last-2025` und aktiven `e100-*` Modulen), variabler RE-Erzeugung (PV/Wind mit `einspeisefaktoren-2025[t] × capacityFactorMultiplier`), Baseload (Kernkraft, Biomasse, Laufwasser × `availability`), Dispatchable-Floor (Gas/Kohle auf `minLoadFraction`) und Speicher-Slots. Ergebnis pro Stunde sind alle Quellenbeiträge, Curtailment, Speicher-SoC, Import/Export, Lastabwurf und CO₂ in `t/h`; auf Jahressumme aggregiert das Modell `Last`, `EE-Anteil`, `Import`, `Export`, `Curtailment`, `Lastabwurf`, `CO₂ Mt/a` und `g/kWh`, Peak-Last sowie Stundenkennzahlen.',
-    '**Dispatch-Logik:** in jeder Stunde wird `mismatch = baselineSupply − loadGW` berechnet. Bei **Überschuss** lädt die Engine zunächst die Speicher in der Reihenfolge ihrer `dispatchPriority` (Batterie vor Pumpspeicher vor H₂), exportiert dann bis zum `export.stromGW`-Cap und greift erst danach zum Curtailment der variablen RE nach `curtailmentPriority` (zuerst Wind offshore, dann onshore, PV, zuletzt Kernkraft); reicht das nicht, werden im Notfall Min-Last-Fossile sowie Biomasse und Laufwasser heruntergeregelt. Bei **Unterdeckung** läuft die Reihenfolge gespiegelt — Speicher entladen, Import bis zum `import.stromGW`-Cap, dann `Gas + Kohle` gemeinsam im `rampUpRatio` (Default `2:1`) bis `maxAvailable` hochfahren; der ungedeckte Rest fließt als `loadSheddingGW` in die Bilanz. CO₂ pro Stunde: `Σ supply_q × emissionGperKWh_q + import × stromEmissionGperKWh`.',
+    '**Dispatch-Logik:** in jeder Stunde wird `mismatch = baselineSupply − loadGW` berechnet. Bei **Überschuss** lädt die Engine zunächst die Speicher in der Reihenfolge ihrer `dispatchPriority` (Batterie vor Pumpspeicher vor H₂), exportiert dann bis zum `export.stromGW`-Cap und greift erst danach zum Curtailment der variablen RE nach `curtailmentPriority` (zuerst Wind offshore, dann onshore, PV, zuletzt Kernkraft); reicht das nicht, werden im Notfall Min-Last-Fossile sowie Biomasse und Laufwasser heruntergeregelt. Bei **Unterdeckung** läuft die Reihenfolge gespiegelt — Speicher entladen, Import bis zum `import.stromGW`-Cap, dann `Gas + Kohle` gemeinsam im `rampUpRatio` (Default `2:1`) bis `maxAvailable` hochfahren; der ungedeckte Rest fließt als `loadSheddingGW` in die Bilanz. CO₂ pro Stunde: `Σ supply_q × emissions.co2eGperKWh_q + import × stromEmissionGperKWh`.',
     '**Modellgrenze:** keine Marktlogik, kein preisgetriebener Handel, kein Redispatch, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen, kein Netzmodell mit regionalen Engpässen. Min-Last für Gas (`10 %`) und Kohle (`20 %`) wird auch bei viel RE als Floor erzwungen — dadurch laufen `~9 GW` fossil weiter und der Default-Export sinkt auf `~3 TWh/a` (real `~54 TWh/a`). Import/Export-Caps sind harte Grenzen ohne Preissignal; der `capacityFactorMultiplier` linearisiert Technologiefortschritt zwischen Bestand und Neubau ohne Anlagen-Mix-Verschiebung.',
   ],
   overview: [
@@ -54,7 +54,7 @@ export const description: DatasetDoc = {
     'Capacity-Factor-Multiplier (pvCapacityFactorMultiplier, windOnCapacityFactorMultiplier, windOffCapacityFactorMultiplier) skalieren den historischen einspeisefaktor-2025-Realwert auf eine fiktive Neubau-Flotte. Default 1.0 (heutige DE-Flotte: PV ~702 kWh/kWp, Wind gemischt ~1745 VLH). Empfohlen für 2045-Szenarien: PV 1.5 (bifazial+Tracker → ~1100 kWh/kWp), Wind onshore 1.4 (4-6 MW Klasse → ~2400 VLH), Wind offshore 1.8 (15 MW Nordsee → ~4000 VLH; korrigiert den gemittelten Faktor in einspeisefaktoren-2025 wo Offshore und Onshore zusammen gemessen werden). Pro Stunde wird auf Math.min(1, …) gecapt (kein Output über Nameplate).',
     'Mismatch = Sockel − Last. Bei Überschuss: Speicher laden → Export → Curtailment der RE in fester Reihenfolge → Notfall-Reduktion von Min-Last fossil → Biomasse/Laufwasser.',
     'Bei Unterdeckung: Speicher entladen → Import bis Cap → Gas + Kohle gemeinsam hochfahren im Verhältnis rampUpRatio (2:1 Default) bis maxAvailable → Rest als loadSheddingGW.',
-    'CO₂ je Stunde: Σ supply_q × emissionGperKWh_q + import × Nachbarmix. Jahreswert dividiert durch Strom-Nachfrage = g/kWh.',
+    'CO₂ je Stunde: Σ supply_q × emissions.co2eGperKWh_q + import × Nachbarmix. Jahreswert dividiert durch Strom-Nachfrage = g/kWh.',
     'Jahreskennzahlen: Last, Import, Export, Curtailment, Lastabwurf, Erneuerbarenanteil, CO₂ Mt/Jahr und g/kWh, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, Peak Load, monatliche Erzeugung.',
   ],
   fields: [
@@ -408,14 +408,14 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
   const importLimitGW = scenario.import.stromGW;
   const exportLimitGW = scenario.export.stromGW;
   const importEmissionGperKWh = scenario.import.stromEmissionGperKWh;
-  const emPv = (erz.sources.pv as ErzeugungsModellVariableReSource).emissionGperKWh;
-  const emWindOn = (erz.sources.windOn as ErzeugungsModellVariableReSource).emissionGperKWh;
-  const emWindOff = (erz.sources.windOff as ErzeugungsModellVariableReSource).emissionGperKWh;
-  const emKern = (erz.sources.kernkraft as ErzeugungsModellBaseloadSource).emissionGperKWh;
-  const emBiomasse = (erz.sources.biomasse as ErzeugungsModellBaseloadSource).emissionGperKWh;
-  const emLaufwasser = (erz.sources.laufwasser as ErzeugungsModellBaseloadSource).emissionGperKWh;
-  const emGas = (erz.sources.gas as ErzeugungsModellDispatchableSource).emissionGperKWh;
-  const emKohle = (erz.sources.kohle as ErzeugungsModellDispatchableSource).emissionGperKWh;
+  const emPv = (erz.sources.pv as ErzeugungsModellVariableReSource).emissions.co2eGperKWh;
+  const emWindOn = (erz.sources.windOn as ErzeugungsModellVariableReSource).emissions.co2eGperKWh;
+  const emWindOff = (erz.sources.windOff as ErzeugungsModellVariableReSource).emissions.co2eGperKWh;
+  const emKern = (erz.sources.kernkraft as ErzeugungsModellBaseloadSource).emissions.co2eGperKWh;
+  const emBiomasse = (erz.sources.biomasse as ErzeugungsModellBaseloadSource).emissions.co2eGperKWh;
+  const emLaufwasser = (erz.sources.laufwasser as ErzeugungsModellBaseloadSource).emissions.co2eGperKWh;
+  const emGas = (erz.sources.gas as ErzeugungsModellDispatchableSource).emissions.co2eGperKWh;
+  const emKohle = (erz.sources.kohle as ErzeugungsModellDispatchableSource).emissions.co2eGperKWh;
   const curtailOrder = erz.dispatchOrder.curtailmentPriority;
   const gasRatio = erz.dispatchOrder.rampUpRatio.gas ?? 1;
   const kohleRatio = erz.dispatchOrder.rampUpRatio.kohle ?? 1;

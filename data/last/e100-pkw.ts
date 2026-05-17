@@ -81,6 +81,9 @@ export const data: E100PkwData = {
     'https://www.bmwk.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.html',
     'https://www.umweltbundesamt.de/daten/umweltzustand-trends/verkehr/verkehrsinfrastruktur-fahrzeugbestand',
   ],
+  referenceScales: {
+    activity: { value: 11000, unit: 'Mio. km/a', label: 'Mio. Pkw' },
+  },
   referenceYear: 2023,
   referenceMillionKm: 472200,
   alreadyElectricMillionKm: 20000,
