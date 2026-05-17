@@ -22,14 +22,14 @@ export const description: DatasetDoc = {
   unit: 'GW, g/kWh',
   short: 'Hypothetische installierte Kernkraftleistung; Baseload mit Verfügbarkeit 0,9.',
   description: [
-    '**Anlagenpark:** Deutschland hat den letzten Reaktor (Isar 2, Emsland, Neckarwestheim 2) am `15.04.2023` vom Netz genommen — installierter Bestand 2025 ist `0 GW`, der **Default**. Der Slider erlaubt eine hypothetische Wiederinbetriebnahme bis `50 GW` (Schritt `0,5 GW`); das Maximum entspricht in etwa der historischen Spitzenkapazität Deutschlands (rund `21 GW`) zuzüglich Spielraum für Szenarien mit Neubauten oder europäischer Importperspektive.',
-    '**Einspeisecharakteristik:** das Modell bildet Kernkraft als **Baseload** ab — `supplyGW(t) = installedGW × 0,9` konstant über alle `8760 h/a`. Bei einer Verfügbarkeit von `0,9` ergibt das Volllaststunden von rund `7900 h/a` und beim Maximum `50 GW` einen Jahresertrag von etwa `395 TWh/a` — zum Vergleich: die deutsche Gesamt-Bruttostromerzeugung liegt bei rund `500 TWh/a`. Spezifische Emissionen sind mit `12 g/kWh` als **IPCC-AR6-Median** angesetzt (Spannweite `5–110 g/kWh`); enthalten sind Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau.',
+    '**Anlagenpark:** Deutschland hat den letzten Reaktor (Isar 2, Emsland, Neckarwestheim 2) am `15.04.2023` vom Netz genommen — installierter Bestand 2025 ist `0 GW`, der **Default**. Der Slider erlaubt eine hypothetische Wiederinbetriebnahme bis `500 GW` (Schritt `0,5 GW`); das Maximum geht weit über die historische Spitzenkapazität Deutschlands (rund `21 GW`) hinaus und bedient extrem hypothetische Vollkernkraft-Szenarien inklusive europäischer Importperspektive.',
+    '**Einspeisecharakteristik:** das Modell bildet Kernkraft als **Baseload** ab — `supplyGW(t) = installedGW × 0,9` konstant über alle `8760 h/a`. Bei einer Verfügbarkeit von `0,9` ergibt das Volllaststunden von rund `7900 h/a`; bereits `50 GW` reichen für einen Jahresertrag von etwa `395 TWh/a` — zum Vergleich: die deutsche Gesamt-Bruttostromerzeugung liegt bei rund `500 TWh/a`. Spezifische Emissionen sind mit `12 g/kWh` als **IPCC-AR6-Median** angesetzt (Spannweite `5–110 g/kWh`); enthalten sind Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau.',
     '**Modellgrenze:** die Verfügbarkeit ist konstant `0,9` als Jahresmittel — Revisionsfenster, planbare Stillstände und Lastfolgebetrieb (in DE historisch kaum, in FR üblich) sind nicht stundenscharf modelliert. Endlager-Kosten und Versicherungsrisiken bleiben außen vor. Im Curtailment-Stack des Kernmodells wird Kernkraft nach Wind und PV abgeregelt, läuft also bei Überschuss länger als die volatilen Erneuerbaren.',
   ],
   overview: [
     {
       label: 'Verwendung',
-      value: '**Slider:** `0` bis `50 GW`, Schritt `0,5 GW`. Default `0 GW` reflektiert den Status nach Abschaltung der letzten drei Reaktoren am `15.04.2023`; das Maximum liegt jenseits der historischen Spitzenkapazität (`~21 GW`) und bedient explizit hypothetische Neubau- oder SMR-Szenarien.',
+      value: '**Slider:** `0` bis `500 GW`, Schritt `0,5 GW`. Default `0 GW` reflektiert den Status nach Abschaltung der letzten drei Reaktoren am `15.04.2023`; das Maximum liegt weit jenseits der historischen Spitzenkapazität (`~21 GW`) und bedient explizit hypothetische Neubau-, SMR- oder Vollkernkraft-Szenarien.',
     },
     {
       label: 'Verteilung',
