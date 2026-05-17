@@ -35,24 +35,37 @@ function groupRecent(commits: Commit[]): RecentGroup[] {
 function CommitRow({ commit }: { commit: Commit }) {
   const [open, setOpen] = useState(false);
   const hasBody = commit.body.length > 0;
+  const toggle = () => setOpen(value => !value);
   return <li className="text-sm leading-6 text-zinc-700">
-    <div className="flex items-center gap-2">
+    <div
+      role={hasBody ? 'button' : undefined}
+      tabIndex={hasBody ? 0 : undefined}
+      aria-expanded={hasBody ? open : undefined}
+      aria-label={hasBody ? (open ? 'Details ausblenden' : 'Details anzeigen') : undefined}
+      onClick={hasBody ? toggle : undefined}
+      onKeyDown={hasBody ? (event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggle();
+        }
+      }) : undefined}
+      className={cx(
+        '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5 transition',
+        hasBody && 'cursor-pointer hover:bg-zinc-50',
+      )}
+    >
       <a
         href={`${REPO_URL}/commit/${commit.sha}`}
         target="_blank"
         rel="noreferrer"
+        onClick={event => event.stopPropagation()}
         className="shrink-0 font-mono text-xs text-zinc-400 underline decoration-transparent underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-300"
       >{commit.short}</a>
       <span className="min-w-0 flex-1">{commit.subject}</span>
-      {hasBody && <button
-        type="button"
-        aria-expanded={open}
-        aria-label={open ? 'Details ausblenden' : 'Details anzeigen'}
-        onClick={() => setOpen(value => !value)}
-        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-zinc-400 transition hover:text-zinc-700"
-      >
-        <ChevronRight className={cx('h-4 w-4 transition-transform duration-150', open && 'rotate-90')} aria-hidden/>
-      </button>}
+      {hasBody && <ChevronRight
+        aria-hidden
+        className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150', open && 'rotate-90')}
+      />}
     </div>
     {hasBody && open && <pre className="ml-[60px] mt-1.5 max-w-3xl whitespace-pre-wrap break-words rounded-md bg-zinc-50 px-3 py-2 text-[13px] leading-5 text-zinc-700 [font-family:inherit]">{commit.body}</pre>}
   </li>;
