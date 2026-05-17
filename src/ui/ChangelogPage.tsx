@@ -163,10 +163,10 @@ export function ChangelogPage() {
 
   return <div>
     <p className="text-xs font-medium uppercase text-zinc-400">Allgemein</p>
-    <h1 className="mt-2 text-4xl font-semibold leading-tight">Änderungsverlauf</h1>
-    <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">
-      Commit-Historie von <a href={`${REPO_URL}/commits/main/`} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">chriopter/netzprobe</a>. Die letzten Tage sind aufgeklappt; ältere Tage laden ihre Commits beim Aufklappen nach.
-    </p>
+    <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-4xl font-semibold leading-tight">
+      <span>Changelog</span>
+      <a href={`${REPO_URL}/commits/main/`} target="_blank" rel="noreferrer" className="text-sm font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 hover:decoration-zinc-700">chriopter/netzprobe</a>
+    </h1>
     {recentGroups.length === 0 && olderDays.length === 0 && <p className="mt-8 text-sm text-zinc-500">Keine Commit-Historie verfügbar.</p>}
     {recentGroups.map((group, index) => <RecentDayGroup key={group.key} group={group} defaultOpen={index < 2}/>)}
     {olderDays.map(meta => <OlderDaySection
