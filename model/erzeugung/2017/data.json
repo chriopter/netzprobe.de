@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-05-15T16:09:37.343Z",
+  "year": 2017,
+  "source": "Energy-Charts public_power API: hourly public generation, nuclear and import/export for Germany 2017, averaged from 15-minute values.",
+  "sourceUrl": "https://api.energy-charts.info/public_power?country=de&start=2017-01-01T00:00%2B01:00&end=2018-01-01T00:00%2B01:00",
+  "unit": "MW",
+  "sumTWh": 553.8,
+  "sumPartsTWh": {
+    "pvTWh": 35.4,
+    "windOnTWh": 86.3,
+    "windOffTWh": 17.4,
+    "nuclearTWh": 72.2,
+    "gasTWh": 45.3,
+    "coalTWh": 215.8,
+    "hydroTWh": 19.4,
+    "biomassTWh": 40.2,
+    "wasteTWh": 10.7,
+    "oilTWh": 1.8,
+    "geothermalTWh": 0.2,
+    "otherTWh": 9.2
+  },
+  "sumImportTWh": 0.4,
+  "sumExportTWh": 60.5,
+  "sumNote": "Erzeugung: alle Energy-Charts-Erzeugungsarten inkl. Kernkraft 2017 (vor Atomausstieg)."
+}

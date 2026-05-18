@@ -1,0 +1,119 @@
+{
+  "description": {
+    "id": "strom-handel",
+    "domain": "aussenhandel",
+    "kind": "scenario",
+    "title": "Strom-Außenhandel",
+    "source": "Energy-Charts cross_border_flows 2025 (Import/Export Deutschland); Electricity Maps DE-Imports 2024 (Emissionsfaktor Nachbarmix); ENTSO-E Transparency Platform.",
+    "sourceUrls": [
+      "https://api.energy-charts.info/cross_border_electricity?country=de",
+      "https://app.electricitymaps.com/zone/DE",
+      "https://transparency.entsoe.eu/"
+    ],
+    "period": "2025",
+    "resolution": "stündlich (Cap) / jährlich (Default)",
+    "unit": "GW, g/kWh",
+    "short": "Stundenscharfe Import-/Export-Caps und Emissionsfaktor für den grenzüberschreitenden Stromhandel.",
+    "description": [
+      "**Sektor:** grenzüberschreitender Stromhandel über die deutschen Kuppelstellen zu acht Nachbarländern (`FR`, `NL`, `AT`, `DK`, `CH`, `PL`, `CZ`, `BE`). Im Bezugsjahr 2025 lag der Brutto-Import bei rund `76 TWh`, der Brutto-Export bei rund `54 TWh`; physikalische Stundenflüsse erreichten Spitzen von `25–30 GW` je Richtung. Das Szenario bildet diesen Saldo nicht historisch ab, sondern stellt der Engine zwei harte Stunden-Caps für die Dispatch-Entscheidung bereit.",
+      "**Mechanik:** der Import-Slider läuft von `0` bis `200 GW` mit Default `13 GW`, der Export-Slider analog mit Default `25 GW` (Schrittweite `5 GW`); beide Defaults sind so gewählt, dass sie die 2025-Jahresbilanz reproduzieren. Importierter Strom wird pauschal mit `300 g CO₂/kWh` bilanziert — ein gewichteter **Nachbarmix** zwischen `~30 g/kWh` (CH-Wasser) und `~660 g/kWh` (PL-Kohle); Electricity Maps weist für DE-Imports 2024 etwa `250–280 g/kWh` aus, der Modellwert liegt wegen erwarteter PL/CZ-Lastflussanteile leicht darüber. Pro Stunde gilt `Importemissionen = importGW(t) × 300 g/kWh`; Exporte werden der eigenen Bilanz nicht zugerechnet.",
+      "**Dispatch-Einbindung:** in der Engine entscheidet die Stunden-Residuallast über die Aktivierung. Bei Überschuss greift die Kaskade Speicher → Export bis Cap → Curtailment, bei Unterdeckung Speicher → Import bis Cap → Gas/Kohle-Rampe (`2:1`) → Lastabwurf. Das **Cap** ist statisch über alle 8.760 Stunden; reale NTCs schwanken mit Last, Wartung und Wetter, und die Marginalquelle hinter einer Importstunde kann von schwedischer Wasserkraft bis polnischer Steinkohle reichen. Der Slider erlaubt bis `200 GW` für Stresstests jenseits jeder physisch verfügbaren Kuppelkapazität."
+    ],
+    "overview": [
+      {
+        "label": "Verwendung",
+        "value": "**Slider:** Import-Cap `0–200 GW` (Default `13 GW`), Export-Cap `0–200 GW` (Default `25 GW`), Schritt `5 GW`. Die Defaults reproduzieren den 2025-Saldo (`+76 TWh` Import, `−54 TWh` Export); das Maximum lässt Kopfraum für Stresstests deutlich oberhalb der real installierten Kuppelkapazität (`~25–30 GW`)."
+      },
+      {
+        "label": "Verteilung",
+        "value": "**Dispatch:** bei Überschuss Speicher → Export bis Cap → Curtailment; bei Unterdeckung Speicher → Import bis Cap → Gas/Kohle-Rampe (`2:1`) → Lastabwurf. Caps wirken in jeder Stunde, kein Saisonprofil."
+      },
+      {
+        "label": "Formel",
+        "value": "**Rechnung:** `Importemissionen(t) = importGW(t) × 300 g/kWh`. Exporte sind in der eigenen CO₂-Bilanz emissionsneutral."
+      }
+    ],
+    "method": [
+      "Datei: handgepflegt. Werte in model/aussenhandel/strom-handel/package.json, Adapter in model/aussenhandel/strom-handel/model.rs.",
+      "Scenario-Mapping: `data.import.{minGW, maxGW, stepGW, defaultMaxGW, emissionGperKWh}` ↦ `scenario.import.stromGW` (Slider) und `scenario.import.stromEmissionGperKWh`; `data.export.*` ↦ `scenario.export.stromGW`. Presets können Defaults überschreiben (z.B. `versorgung-50ee-50import` setzt Emission auf 100 g/kWh).",
+      "Import- und Export-Cap getrennt: Default Import 13 GW (reproduziert 2025 Brutto-Import 76 TWh), Export 25 GW (NTC, real 2025 Export 54 TWh).",
+      "Slider erlaubt bis 200 GW für Stresstests.",
+      "Emissionsfaktor Import 300 g/kWh als gewichteter Nachbarmix 2024 (FR ~55, NL ~270, AT ~120, DK ~140, CH ~30, PL ~660, CZ ~390, BE ~140 — Electricity Maps DE-Imports 2024 etwa 250-280, leicht höher angesetzt wegen PL/CZ-Lastfluss-Anteil).",
+      "Dispatch-Reihenfolge (curtailment + Ramp-Up Gas:Kohle = 2:1) liegt im Engine-Paket (model/kern/kern/package.json)."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung."
+      },
+      {
+        "name": "name",
+        "unit": "Text",
+        "description": "Anzeigename."
+      },
+      {
+        "name": "import.defaultMaxGW",
+        "unit": "GW",
+        "description": "Default Import-Cap."
+      },
+      {
+        "name": "import.maxGW",
+        "unit": "GW",
+        "description": "Slider-Maximum Import."
+      },
+      {
+        "name": "import.emissionGperKWh",
+        "unit": "g/kWh",
+        "description": "Import-Strom Emissionsfaktor (Nachbarland-Mittel)."
+      },
+      {
+        "name": "export.defaultMaxGW",
+        "unit": "GW",
+        "description": "Default Export-Cap."
+      },
+      {
+        "name": "export.maxGW",
+        "unit": "GW",
+        "description": "Slider-Maximum Export."
+      },
+      {
+        "name": "referenceScales",
+        "unit": "Objekt",
+        "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa HGÜ-Trassen (2 GW)."
+      }
+    ],
+    "caveats": [
+      "Import-Cap und Export-Cap sind statische Jahres-Caps; reale NTCs schwanken stundenweise.",
+      "Importemissionen sind ein Nachbarland-Mittelwert; die tatsächliche Marginalquelle (z.B. PL Kohle vs. NO Wasser) kann deutlich abweichen.",
+      "Default Import 13 GW reproduziert 2025-Bilanz; reale Stunden-Maximum lag bei 25-30 GW.",
+      "Export-Emissionen werden ausgeklammert — bei strenger Bilanzierung müssten sie der Quelle (DE-Mix) zugeordnet werden."
+    ]
+  },
+  "data": {
+    "id": "strom-handel",
+    "name": "Strom-Außenhandel",
+    "import": {
+      "default2025GW": 13,
+      "defaultMaxGW": 13,
+      "minGW": 0,
+      "maxGW": 200,
+      "stepGW": 5,
+      "emissionGperKWh": 300
+    },
+    "export": {
+      "default2025GW": 25,
+      "defaultMaxGW": 25,
+      "minGW": 0,
+      "maxGW": 200,
+      "stepGW": 5
+    },
+    "referenceScales": {
+      "power": {
+        "value": 2,
+        "unit": "GW",
+        "label": "HGÜ-Trassen (2 GW)"
+      }
+    }
+  }
+}

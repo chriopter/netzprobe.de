@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Abschluss-Gate fuer den Rust-/Model-Rewrite.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+echo "-> TypeScript/Vitest"
+npm test
+
+echo "-> Rust-Tests"
+cargo test --manifest-path server/Cargo.toml
+
+
+echo "-> Produktionsbuild"
+npm run build
+
+echo ""
+echo "✓ Rewrite-Gate gruen."

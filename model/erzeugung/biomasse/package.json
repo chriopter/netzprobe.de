@@ -1,0 +1,129 @@
+{
+  "description": {
+    "id": "biomasse",
+    "domain": "erzeugung",
+    "kind": "scenario",
+    "title": "Biomasse",
+    "file": "erzeugung/biomasse/data.json",
+    "scripts": [
+      "erzeugung/biomasse/model.rs"
+    ],
+    "source": "Energy-Charts installed_power 2025 (Biomasse Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Emissionsfaktor).",
+    "sourceUrls": [
+      "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+      "https://github.com/MTGermany/energy-simulation-de",
+      "https://app.electricitymaps.com/zone/DE"
+    ],
+    "period": "2025",
+    "resolution": "stündlich (Verfügbarkeitsmittel) / jährlich (installierte Leistung)",
+    "unit": "GW, g/kWh",
+    "short": "Installierte Biomasse-Kraftwerksleistung; Baseload mit Verfügbarkeit 0,86.",
+    "description": [
+      "**Anlagenpark:** rund `9.700` Biogasanlagen plus Holz-Heizkraftwerke und Bioabfall-Verstromer mit installierter Gesamtleistung `4,8 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Der Bestand stagniert seit Auslaufen der EEG-Förderbedingungen; das Slider-Maximum `50 GW` (Schritt `1 GW`) ist explizit nicht als Prognose, sondern als Vergleichshorizont gegen das nachhaltige Brennstoffpotenzial Deutschlands (Substrate, Reststoffe) gesetzt.",
+      "**Einspeisecharakteristik:** das Modell bildet Biomasse als **Baseload** ab — `supplyGW(t) = installedGW × 0,86` konstant. Bei einer Verfügbarkeit von `0,86` ergeben sich rund `7530 h/a` Volllaststunden und beim Default-Bestand etwa `36 TWh/a` Energieertrag (real `45–50 TWh/a` mit höherem Laufzeitanteil). Spezifische Emissionen sind mit `230 g/kWh` angesetzt (electricitymaps DE) — das ist die **direkte Stromsektor-Emission**, nicht die volle Lebenszyklus-Bilanz inklusive Anbau, Düngung, Transport und Landnutzungsänderung.",
+      "**Modellgrenze:** Biomasse läuft als Dauerlast — die in der Realität zunehmende **flexible Fahrweise** (Direktvermarktung, Spitzenlast-Erweiterungen) ist nicht modelliert. Die Lebenszyklus-Bewertung ist auf den Stromsektor-Faktor reduziert; vorgelagerte Kette und THG-Bilanz Boden bleiben außen vor. Substratverfügbarkeit (Mais-Konkurrenz, Reststoffaufkommen) limitiert den Slider rein numerisch nicht."
+    ],
+    "overview": [
+      {
+        "label": "Verwendung",
+        "value": "**Slider:** `0` bis `50 GW`, Schritt `1 GW`. Default `4,8 GW` ist der Energy-Charts-Bestand Ende 2025; das Maximum dient als technischer Vergleichshorizont und liegt deutlich über jedem realistisch nachhaltigen Brennstoffpotenzial Deutschlands."
+      },
+      {
+        "label": "Verteilung",
+        "value": "**Profil:** `supplyGW(t) = installedGW × 0,86` als konstanter Baseload. Keine Stunden- oder Saisonstruktur."
+      },
+      {
+        "label": "Formel",
+        "value": "**Rechnung:** `Emissionen(t) = supplyGW(t) × 230 g/kWh` (Direkt-Emission, ohne Vorkette und Landnutzung)."
+      }
+    ],
+    "method": [
+      "Datei: handgepflegt. Werte in model/erzeugung/biomasse/package.json, Adapter in model/erzeugung/biomasse/model.rs.",
+      "Verfügbarkeit availability 0,86 — Jahresmittel inklusive Wartungsfenster und Substrat-Limitierung; im Modell als Dauerlast supplyGW(t) = installedGW × 0,86 abgebildet.",
+      "Emissionsfaktor 230 g/kWh laut MTGermany (electricitymaps DE) — enthält keine Lebenszyklus-Korrektur."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung."
+      },
+      {
+        "name": "name",
+        "unit": "Text",
+        "description": "Anzeigename."
+      },
+      {
+        "name": "installed2025GW",
+        "unit": "GW",
+        "description": "Installierte Leistung Stand Ende 2025."
+      },
+      {
+        "name": "defaultInstalledGW",
+        "unit": "GW",
+        "description": "Slider-Default."
+      },
+      {
+        "name": "minInstalledGW",
+        "unit": "GW",
+        "description": "Slider-Minimum."
+      },
+      {
+        "name": "maxInstalledGW",
+        "unit": "GW",
+        "description": "Slider-Maximum."
+      },
+      {
+        "name": "stepGW",
+        "unit": "GW",
+        "description": "Slider-Schrittweite."
+      },
+      {
+        "name": "mode",
+        "unit": "Enum",
+        "description": "baseload."
+      },
+      {
+        "name": "availability",
+        "unit": "Anteil",
+        "description": "Jahresverfügbarkeit (0,86) — Wartungsfenster und Substrat-Limitierung inkludiert."
+      },
+      {
+        "name": "emissions",
+        "unit": "Objekt",
+        "description": "Spezifische CO₂e-Emissionen pro erzeugter kWh."
+      },
+      {
+        "name": "referenceScales",
+        "unit": "Objekt",
+        "description": "Größenanker zur Einordnung: 1 GW entspricht etwa 5-MW-Biomasse-HKW."
+      }
+    ],
+    "caveats": [
+      "Biomasse-Emissionsfaktor 230 g/kWh ist Direkt-Emission; Lebenszyklus-Bilanz (Anbau, Transport, Landnutzung) deutlich höher.",
+      "Verfügbarkeit 0,86 trifft den Korridor realer Biogas- und Holz-HKW (85–90 %), bildet Wartungsfenster aber nicht stundenscharf ab.",
+      "Biomasse ist im Modell nicht als regelbare Last konfigurierbar — Baseload-Annahme entspricht der zunehmend flexiblen Realfahrweise (Direktvermarktung, Spitzenlast-Erweiterungen) nicht."
+    ]
+  },
+  "data": {
+    "id": "biomasse",
+    "name": "Biomasse",
+    "installed2025GW": 4.8,
+    "defaultInstalledGW": 4.8,
+    "minInstalledGW": 0,
+    "maxInstalledGW": 50,
+    "stepGW": 1,
+    "mode": "baseload",
+    "availability": 0.86,
+    "emissions": {
+      "co2eGperKWh": 230
+    },
+    "referenceScales": {
+      "power": {
+        "value": 0.005,
+        "unit": "GW",
+        "label": "5-MW-Biomasse-HKW"
+      }
+    }
+  }
+}

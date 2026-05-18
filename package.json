@@ -3,16 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "KISS-Netzprobe Deutschland: statisch hostbar, Simulation im Browser.",
+  "description": "KISS-Netzprobe Deutschland: React-UI mit Rust-API-Simulation.",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "dev": "bin/dev",
+    "vite": "vite --config app/vite.config.ts --host 0.0.0.0",
+    "build": "tsc -b && vite build --config app/vite.config.ts",
     "build:pages": "GITHUB_PAGES=true npm run build",
-    "data:factors": "node data/erzeugung/einspeisefaktoren-2025/generate.mjs",
-    "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "simulate": "tsx test/scenarios/run.mjs"
+    "data:factors": "node model/erzeugung/einspeisefaktoren-2025/generate.mjs",
+    "preview": "vite preview --config app/vite.config.ts --host 0.0.0.0",
+    "test": "vitest run test/unit",
+    "test:all": "bin/test",
+    "test:watch": "vitest test/unit"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

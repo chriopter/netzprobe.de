@@ -1,0 +1,20 @@
+[Unit]
+Description=Netzprobe API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/netzprobe
+Environment=NETZPROBE_API_ADDR=127.0.0.1:8080
+ExecStart=/var/www/netzprobe/server/target/release/netzprobe-api
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/tmp
+
+[Install]
+WantedBy=multi-user.target
