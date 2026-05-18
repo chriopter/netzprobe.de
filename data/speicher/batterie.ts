@@ -41,7 +41,7 @@ export const description: DatasetDoc = {
   method: [
     'Datei: handgepflegt. Werte in data/speicher/batterie/data.json, Adapter in data/speicher/batterie/model.ts.',
     'Roundtrip-Wirkungsgrad 80 % wird vollständig beim Laden angewandt: ΔSoC = η × Laden, Entladen 1:1.',
-    'Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.',
+    'Initial-SoC: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), der Year-End-SoC dient als Anfangswert für Pass 2. Bei reinen Batterie-Szenarien ohne nennenswerte H₂-Kapazität wird der Warm-up übersprungen — Batterien schwingen sich innerhalb von Stunden ein, der Start-bei-0-Effekt ist im Jahresmittel zu vernachlässigen.',
     'Dispatch-Priorität 1 — wird vor Pumpspeicher und H₂ geladen/entladen.',
   ],
   fields: [
@@ -58,7 +58,7 @@ export const description: DatasetDoc = {
     { name: 'maxEnergyGWh', unit: 'GWh', description: 'Slider-Maximum Energie.' },
     { name: 'stepEnergyGWh', unit: 'GWh', description: 'Slider-Schrittweite Energie.' },
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,8).' },
-    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC am Jahresbeginn (0,5).' },
+    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Seed-SoC für 2-Pass-Lauf (0).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (1 = zuerst).' },
     { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Tesla Megapacks (4 MWh).' },
   ],
@@ -84,7 +84,7 @@ export const data: SpeicherBatterieData = {
   maxEnergyGWh: 5000,
   stepEnergyGWh: 50,
   roundtripEfficiency: 0.8,
-  initialStateOfChargeFraction: 0.5,
+  initialStateOfChargeFraction: 0,
   dispatchPriority: 1,
   referenceScales: {
     energy: { value: 0.004, unit: 'GWh', label: 'Tesla Megapacks (4 MWh)' },

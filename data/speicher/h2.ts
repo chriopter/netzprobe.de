@@ -45,7 +45,7 @@ export const description: DatasetDoc = {
     'Datei: handgepflegt. Werte in data/speicher/h2/data.json, Adapter in data/speicher/h2/model.ts.',
     'Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.',
     'Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.',
-    'Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht. Ohne Warm-up würde der konfigurierte SoC × Kapazität (bei H₂ bis zu 500 TWh × 50 % = 250 TWh) als Phantasie-Energie ins Modell laufen, auch wenn das Szenario gar keinen Überschuss zum Laden bietet.',
+    'Initial-SoC wird per 2-Pass-Lauf kalibriert: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), simuliert das Jahr und übergibt den Year-End-SoC als Anfangswert an Pass 2. Damit beginnt der ausgegebene Pass mit dem natürlichen saisonalen Anfangszustand — Sommer-Überschüsse füllen den Speicher, Winter-Defizite entladen ihn, ohne dass eine geratene Initial-Füllung das Ergebnis verfälscht.',
     'Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher.',
   ],
   fields: [
@@ -67,7 +67,7 @@ export const description: DatasetDoc = {
     { name: 'maxEnergyGWh', unit: 'GWh', description: 'Slider-Maximum Energie (500 TWh).' },
     { name: 'stepEnergyGWh', unit: 'GWh', description: 'Slider-Schrittweite Energie.' },
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,34).' },
-    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC (0,5).' },
+    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Seed-SoC für 2-Pass-Lauf (0).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (3).' },
     { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Salzkavernen-Speicher (200 GWh).' },
   ],
@@ -99,7 +99,7 @@ export const data: SpeicherH2Data = {
   maxEnergyGWh: 500000,
   stepEnergyGWh: 5000,
   roundtripEfficiency: 0.34,
-  initialStateOfChargeFraction: 0.5,
+  initialStateOfChargeFraction: 0,
   dispatchPriority: 3,
   referenceScales: {
     energy: { value: 200, unit: 'GWh', label: 'Salzkavernen-Speicher (200 GWh)' },

@@ -37,7 +37,7 @@ export const description: DatasetDoc = {
   overview: [
     {
       label: 'Zeitschritt',
-      value: '**Auflösung:** `1 Stunde`, `8.760` Stunden pro Jahr. Warm-up-Pass kalibriert Initial-SoC auf Steady-State, falls die Phantasie-Energie der Speicher `> 1.000 GWh` übersteigt.',
+      value: '**Auflösung:** `1 Stunde`, `8.760` Stunden pro Jahr. 2-Pass-Lauf wenn H₂-Kapazität `> 100 GWh`: Pass 1 startet alle Speicher leer, der Year-End-SoC ist Anfangswert für Pass 2.',
     },
     {
       label: 'Dispatch bei Überschuss',
@@ -598,16 +598,15 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
     return { hours, finalStorage: storage };
   };
 
-  // Warm-up-Pass: kalibriert Initial-SoC auf Steady-State, sodass am Jahresende
-  // ≈ derselbe SoC herauskommt wie am Anfang. Verhindert "Phantasie-Energie"
-  // wenn der konfigurierte Initial-Anteil × Kapazität durch das Szenario gar
-  // nicht erzielbar wäre. Historische Pässe brauchen das nicht (kein Storage-Dispatch).
-  // Skippt den Warm-up wenn die initiale Phantasie-Energie klein ist (< 1 TWh);
-  // bei reinen Batterie/PSP-Szenarien ist Initial-SoC sowieso nahe Steady-State.
+  // 2-Pass-Lauf für saisonalen H2-Speicher: Pass 1 startet alle Speicher leer
+  // (initialStateOfChargeFraction = 0 in allen speicher-* Bausteinen), simuliert
+  // das Jahr und übergibt den Year-End-SoC als Seed an Pass 2. Damit beginnt der
+  // ausgegebene Pass mit einem natürlichen saisonalen Anfangszustand statt mit
+  // 0 oder geratener Phantasie-Energie. Batterie/PSP brauchen das nicht (Tages-
+  // Zyklus, schwingen sich in Stunden ein); Warm-up nur wenn H2 nennenswerte
+  // Kapazität hat. Historische Pässe brauchen das nicht (kein Storage-Dispatch).
   let seedStorage = initialStorageState(speicher, scenario);
-  const PHANTOM_ENERGY_THRESHOLD_GWH = 1000;
-  const initialSocTotalGWh = seedStorage.batterie + seedStorage.pumpspeicher + seedStorage.h2;
-  if (!isHistorical && initialSocTotalGWh > PHANTOM_ENERGY_THRESHOLD_GWH) {
+  if (!isHistorical && scenario.storage.h2EnergyGWh > 100) {
     seedStorage = runLoop(seedStorage).finalStorage;
   }
 

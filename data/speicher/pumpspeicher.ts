@@ -43,7 +43,7 @@ export const description: DatasetDoc = {
   method: [
     'Datei: handgepflegt. Werte in data/speicher/pumpspeicher/data.json, Adapter in data/speicher/pumpspeicher/model.ts.',
     'Roundtrip-Wirkungsgrad 80 % entspricht MTGermany; reale Pumpspeicher 70-78 % je nach Anlage.',
-    'Initial-SoC wird per zyklischem Warm-Up-Pass kalibriert: die Engine simuliert das Jahr zweimal, der erste Pass dient nur dazu, den Anfangs-SoC auf den Steady-State zu bringen. Konfigurierter `initialStateOfChargeFraction` (0,5) ist nur Seed für den Warm-up und beeinflusst das zurückgegebene Ergebnis nicht.',
+    'Initial-SoC: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), der Year-End-SoC dient als Anfangswert für Pass 2. Bei reinen Pumpspeicher-Szenarien ohne nennenswerte H₂-Kapazität wird der Warm-up übersprungen — der tägliche Pumpspeicher-Zyklus schwingt sich in wenigen Tagen ein.',
     'Dispatch-Priorität 2 — wird nach Batterie eingesetzt.',
   ],
   fields: [
@@ -60,7 +60,7 @@ export const description: DatasetDoc = {
     { name: 'maxEnergyGWh', unit: 'GWh', description: 'Slider-Maximum Energie.' },
     { name: 'stepEnergyGWh', unit: 'GWh', description: 'Slider-Schrittweite Energie.' },
     { name: 'roundtripEfficiency', unit: 'Anteil', description: 'Roundtrip-Wirkungsgrad (0,8).' },
-    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Start-SoC (0,5).' },
+    { name: 'initialStateOfChargeFraction', unit: 'Anteil', description: 'Seed-SoC für 2-Pass-Lauf (0).' },
     { name: 'dispatchPriority', unit: 'Rang', description: 'Reihenfolge im Dispatch (2).' },
     { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa Pumpspeicher Goldisthal (8,5 GWh).' },
   ],
@@ -85,7 +85,7 @@ export const data: SpeicherPumpspeicherData = {
   maxEnergyGWh: 100,
   stepEnergyGWh: 10,
   roundtripEfficiency: 0.8,
-  initialStateOfChargeFraction: 0.5,
+  initialStateOfChargeFraction: 0,
   dispatchPriority: 2,
   referenceScales: {
     energy: { value: 8.5, unit: 'GWh', label: 'Pumpspeicher Goldisthal (8,5 GWh)' },
