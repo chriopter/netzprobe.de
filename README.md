@@ -32,19 +32,14 @@ deploy/   Server-Deploy bleibt stabil
 
 ## Stack
 
-| Baustein | Rolle | Wofür konkret | Läuft in Produktion? |
-| --- | --- | --- | --- |
-| React | UI-Library | Sidebar, Slider, Tabs, Wiki, Status, Chart-Flächen und UI-State. | Ja, als gebündeltes Browser-JS. |
-| TypeScript | Typgeprüfter Browser-Code | URL-State, `Scenario`, API-Antworten, Chart-Datenformen und UI-Logik prüfen. | Ja, nach Build als JavaScript. |
-| Vite | Build- und Dev-Werkzeug | Dev-Server mit `/api`-Proxy, React/TS-Bundling, `__BUILD_COMMIT__`, Changelog-Daten und Kopieren von `model/` nach `dist/`. | Nein, nur Build/Dev; ausgeliefert werden statische Dateien. |
-| ECharts | Chart-Library | Polar- und Liniencharts rendern. | Ja, im Browser-Bundle. |
-| Tailwind CSS | Styling | Kompakte Utility-Klassen für Layout, Farben, Abstände und Zustände. | Ja, als generierte CSS-Datei. |
-| Rust | Simulation und API | Stündliche Systembilanz, Speicherdispatch, Preset-Auflösung, KPI-Berechnung. | Ja, als `netzprobe-api`-Binary. |
-| Axum | Rust HTTP-Server | `/api/simulate`, `/api/resolve`, `/api/status`, `/api/health`. | Ja, im API-Binary. |
-| Serde/JSON | Datenformat | Modellpakete lesen, API-Requests/-Responses serialisieren. | Ja, im API-Binary. |
-| Tokio | Async-Runtime | Netzwerkbetrieb für Axum. | Ja, im API-Binary. |
-| Caddy | Reverse Proxy | TLS, SPA-Fallback, `/api/*` zur Rust-API weiterleiten. | Ja, auf dem Server. |
-| systemd | Prozessverwaltung | Rust-API und Deploy-Job starten/restarten. | Ja, auf dem Server. |
-| Vitest/Rust-Tests | Qualitätssicherung | UI-/Manifest-Tests, Rust-Parity, Golden-Fälle. | Nein, nur lokal/Deploy-Gate. |
+| Baustein | Zweck |
+| --- | --- |
+| React + TypeScript | Browser-UI, URL-State, Typen für Szenarien/API/Charts. |
+| Vite | Dev-Server, Build, `/api`-Proxy, Build-Commit, Kopieren von `model/` nach `dist/`. Läuft nicht in Produktion. |
+| ECharts + Tailwind | Charts und Styling. |
+| Rust + Axum | Simulation und HTTP-API (`/api/simulate`, `/api/status`). |
+| Serde + Tokio | JSON und async Netzwerkbetrieb im Rust-Server. |
+| Caddy + systemd | TLS/Reverse Proxy und Prozessverwaltung auf dem Server. |
+| Vitest + Rust-Tests | Lokale Tests und Deploy-Gate. |
 
-Kurz: Vite baut und serviert lokal, React rendert die Browser-App, TypeScript typisiert den Browser-Code. In Produktion laufen statische JS/CSS-Dateien im Browser, die Rust-API hinter Caddy und systemd.
+Produktion: statische JS/CSS-Dateien im Browser, Rust-API hinter Caddy/systemd.
