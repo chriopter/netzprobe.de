@@ -53,6 +53,15 @@ fn rust_simulation_matches_all_typescript_golden_cases() {
 #[test]
 fn historical_2025_e100_keeps_observed_generation_fixed() {
     let harness = SimulationHarness::new();
+    let resolved = harness
+        .resolve_scenario(&e100_historical_2025_scenario())
+        .expect("historical preset should resolve");
+    assert_eq!(
+        resolved.get("supplyPreset").and_then(Value::as_str),
+        Some("historical-2025"),
+        "historical presets must not resolve to custom because that hides the fixed-generation semantics"
+    );
+
     let result = harness
         .run_api_result(&e100_historical_2025_scenario())
         .expect("e100 historical 2025 simulation should run");
