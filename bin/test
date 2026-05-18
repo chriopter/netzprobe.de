@@ -7,7 +7,7 @@ echo "-> TypeScript/Vitest"
 npm test
 
 echo "-> Rust-Tests"
-cargo test --workspace
+NETZPROBE_BUILD_COMMIT="$(git rev-parse HEAD)" cargo test --workspace
 
 
 echo "-> Produktionsbuild"
