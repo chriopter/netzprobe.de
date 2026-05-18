@@ -1,6 +1,6 @@
 import type { DatasetDoc } from '../src/ui/dataCatalog';
 import type { CoreModel, CoreModelInput } from '../src/simulation/coreModel';
-import { demandGW } from '../src/simulation/demand';
+import { demandGW, totalSectorH2DemandGW } from '../src/simulation/demand';
 import type { DemandScenarioContext } from '../src/simulation/demandContext';
 import type { SimHour, SimulationResult } from '../src/simulation/types';
 import type {
@@ -31,7 +31,7 @@ export const description: DatasetDoc = {
   short: 'Stündlicher Dispatch aus Last, Erzeugung, Speicher und Außenhandel mit CO₂-Bilanz.',
   description: [
     '**Aufgabe:** das Kernmodell iteriert über `8.760` Stunden pro Jahr und schließt in jeder Stunde die Bilanz aus Last (aggregiert via `demand.ts` aus `last-2025` und aktiven `e100-*` Modulen), variabler RE-Erzeugung (PV/Wind mit `einspeisefaktoren-2025[t] × capacityFactorMultiplier`), Baseload (Kernkraft, Biomasse, Laufwasser × `availability`), Dispatchable-Floor (Gas/Kohle auf `minLoadFraction`) und Speicher-Slots. Ergebnis pro Stunde sind alle Quellenbeiträge, Curtailment, Speicher-SoC, Import/Export, Lastabwurf und CO₂ in `t/h`; auf Jahressumme aggregiert das Modell `Last`, `EE-Anteil`, `Import`, `Export`, `Curtailment`, `Lastabwurf`, `CO₂ Mt/a` und `g/kWh`, Peak-Last sowie Stundenkennzahlen.',
-    '**Dispatch-Logik:** in jeder Stunde wird `mismatch = baselineSupply − loadGW` berechnet. Bei **Überschuss** lädt die Engine zunächst die Speicher in der Reihenfolge ihrer `dispatchPriority` (Batterie vor Pumpspeicher vor H₂), exportiert dann bis zum `export.stromGW`-Cap und greift erst danach zum Curtailment der variablen RE nach `curtailmentPriority` (zuerst Wind offshore, dann onshore, PV, zuletzt Kernkraft); reicht das nicht, werden im Notfall Min-Last-Fossile sowie Biomasse und Laufwasser heruntergeregelt. Bei **Unterdeckung** läuft die Reihenfolge gespiegelt — Speicher entladen, Import bis zum `import.stromGW`-Cap, dann `Gas + Kohle` gemeinsam im `rampUpRatio` (Default `2:1`) bis `maxAvailable` hochfahren; der ungedeckte Rest fließt als `loadSheddingGW` in die Bilanz. CO₂ pro Stunde: `Σ supply_q × emissions.co2eGperKWh_q + import × stromEmissionGperKWh`.',
+    '**Dispatch-Logik:** vor der Strombilanz läuft pro Stunde der H₂-Pool-Schritt — Import-Inflow (`h2TWh·1000/8760` GW) addiert sich auf den Pool-SoC, dann deckt der Pool den Sektor-H₂-Bedarf priority-basiert (Flug → Schiff → Chemie → Stahl), ungedeckter Rest wird Direkt-Elektrolyse-Stromlast. Anschließend `mismatch = baselineSupply − loadGW`. Bei **Überschuss** lädt die Engine die Speicher in der Reihenfolge `dispatchPriority` (Batterie → Pumpspeicher → H₂-Pool, mit η = 0,34 für H₂-Charge), exportiert dann bis `export.stromGW`-Cap, curtailed RE nach `curtailmentPriority` (Wind offshore → onshore → PV → Kernkraft); im Notfall werden Min-Last-Fossile/Biomasse/Laufwasser reduziert. Bei **Unterdeckung** Speicher entladen (auch H₂-Pool-Rückverstromung), Import bis `import.stromGW`-Cap, `Gas + Kohle` im `rampUpRatio` (Default `2:1`) bis `maxAvailable`; Rest als `loadSheddingGW`. CO₂ pro Stunde: `Σ supply_q × emissions.co2eGperKWh_q + import × stromEmissionGperKWh`.',
     '**Modellgrenze:** keine Marktlogik, kein preisgetriebener Handel, kein Redispatch, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen, kein Netzmodell mit regionalen Engpässen. Min-Last für Gas (`10 %`) und Kohle (`20 %`) wird auch bei viel RE als Floor erzwungen — dadurch laufen `~9 GW` fossil weiter und der Default-Export sinkt auf `~3 TWh/a` (real `~54 TWh/a`). Import/Export-Caps sind harte Grenzen ohne Preissignal; der `capacityFactorMultiplier` linearisiert Technologiefortschritt zwischen Bestand und Neubau ohne Anlagen-Mix-Verschiebung.',
   ],
   overview: [
@@ -40,12 +40,16 @@ export const description: DatasetDoc = {
       value: '**Auflösung:** `1 Stunde`, `8.760` Stunden pro Jahr. 2-Pass-Lauf wenn H₂-Kapazität `> 100 GWh`: Pass 1 startet alle Speicher leer, der Year-End-SoC ist Anfangswert für Pass 2.',
     },
     {
+      label: 'H₂-Pool-Schritt',
+      value: '**Vor jeder Strom-Bilanz:** Import-H₂ in Pool, Sektor-H₂-Bedarf priority-basiert aus Pool gedeckt (Flug → Schiff → Chemie → Stahl), ungedeckter Bedarf läuft als Direkt-Elektrolyse-Stromlast. Pool-Überhang puffert für Rückverstromung.',
+    },
+    {
       label: 'Dispatch bei Überschuss',
-      value: '**Reihenfolge:** Speicher laden (`dispatchPriority`) → Export bis `export.stromGW`-Cap → Curtailment (`windOff → windOn → pv → kernkraft`) → Fallback: Min-Last `Gas`, `Kohle`, `Biomasse`, `Laufwasser` reduzieren.',
+      value: '**Reihenfolge:** Speicher laden (`dispatchPriority`, H₂-Charge mit η = 0,34) → Export bis `export.stromGW`-Cap → Curtailment (`windOff → windOn → pv → kernkraft`) → Fallback: Min-Last `Gas`, `Kohle`, `Biomasse`, `Laufwasser` reduzieren.',
     },
     {
       label: 'Dispatch bei Unterdeckung',
-      value: '**Reihenfolge:** Speicher entladen → Import bis `import.stromGW`-Cap → `Gas + Kohle` hochfahren im `rampUpRatio` (Default `2:1`) bis `maxAvailable` → `Lastabwurf`.',
+      value: '**Reihenfolge:** Speicher entladen (inkl. H₂-Pool-Rückverstromung) → Import bis `import.stromGW`-Cap → `Gas + Kohle` hochfahren im `rampUpRatio` (Default `2:1`) → `Lastabwurf`.',
     },
   ],
   method: [
@@ -91,7 +95,7 @@ export const data = {
     'Demand: last-2025 plus aktive e100-Sektoren (demandGW aus src/simulation/demand.ts).',
     'Erzeugung: erz-* Bausteine (erz-pv, erz-windon, erz-windoff, erz-kernkraft, erz-biomasse, erz-laufwasser, erz-gas, erz-kohle) skalieren installedGW × einspeisefaktoren-2025[t]; Baseload und Dispatchable per Mode-Tag.',
     'Speicher: speicher-* Bausteine (speicher-batterie, speicher-pumpspeicher, speicher-h2) mit dispatchPriority-Reihenfolge, Roundtrip-Eta beim Laden.',
-    'Außenhandel: import.stromGW / export.stromGW aus Scenario, Import-Emissionsfaktor aus scenario.import.stromEmissionGperKWh; H2-Import als scenario.import.h2TWh reduziert Demand der H2-Sektoren.',
+    'Außenhandel: import.stromGW / export.stromGW aus Scenario, Import-Emissionsfaktor aus scenario.import.stromEmissionGperKWh; H2-Import (scenario.import.h2TWh) fließt stündlich konstant in den H2-Pool (= H2-Speicher SoC), aus dem Sektor-Bedarf und Rückverstromung gedeckt werden.',
   ],
   outputs: [
     'Pro Stunde: Erzeugung je Quelle (dispatched + curtailed), Speicher Charge/Discharge/SoC je Technologie, Import, Export, Lastabwurf, Bilanzrest, CO₂ (t/h).',
@@ -427,17 +431,36 @@ export function runKernmodell(input: CoreModelInput): SimulationResult {
     gas: emGas, kohle: emKohle, importGperKWh: importEmissionGperKWh,
   };
 
+  // H2-Pool: kontinuierliche Senke (Industrie 24/7) und Import-Quelle (Pipeline/Schiff
+  // verteilen sich gleichmäßig übers Jahr). Der H2-Speicher selbst dient als Pool —
+  // Zuflüsse Stromüberschuss-Elektrolyse (chargeStorage, η = 0.34) + Import (verlustfrei,
+  // kommt schon als H2 an); Abflüsse Sektor-H2-Bedarf (verlustfrei) + Rückverstromung
+  // (heute, dischargeStorage). Architektur folgt PyPSA-Eur/REMod/Agora KNDE2045-Konsens.
+  const sectorH2DemandGW = totalSectorH2DemandGW(scenario, demandContext);
+  const h2ImportInflowGW = ((scenario.import.h2TWh ?? 0) * 1000) / 8760;
+  const h2EnergyCap = scenario.storage.h2EnergyGWh;
+
   const runLoop = (initialStorage: StorageState): { hours: SimHour[]; finalStorage: StorageState } => {
     const storage: StorageState = { ...initialStorage };
     const hours: SimHour[] = [];
 
     for (const row of input.hours) {
-      const loadGW = demandGW(row, scenario, demandContext);
-
       if (isHistorical) {
+        const loadGW = demandGW(row, scenario, demandContext);
         hours.push(buildHistoricalHour(row, loadGW, emissions));
         continue;
       }
+
+      // H2-Pool-Schritt vor Strom-Bilanz: Import-H2 fließt durch das Kernnetz direkt
+      // zum Verbraucher, nur der Überhang puffert im Pool. Konkret: verfügbares H2 in
+      // der Stunde = SoC + Import-Inflow. Davon deckt der Sektor seinen Bedarf
+      // (verlustfrei, H2 ist schon H2). Rest landet im Pool (bis Cap); Import-Überschuss
+      // jenseits der Pool-Kapazität fällt weg (entspricht "Pipeline voll/Vertrag
+      // ausgeschöpft" — Modellannahme bei unrealistisch hohen Import-Slider-Werten).
+      const h2AvailableGW = storage.h2 + h2ImportInflowGW;
+      const poolCoverH2GW = sectorH2DemandGW > 0 ? Math.min(sectorH2DemandGW, h2AvailableGW) : 0;
+      storage.h2 = Math.min(h2EnergyCap, h2AvailableGW - poolCoverH2GW);
+      const loadGW = demandGW(row, scenario, demandContext, poolCoverH2GW);
 
     const build = buildSupply(row, scenario, erz);
 

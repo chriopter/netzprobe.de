@@ -15,11 +15,11 @@ export const description: DatasetDoc = {
   period: '2025-2045',
   resolution: 'jährlich',
   unit: 'TWh/Jahr (H2 LHV)',
-  short: 'Importierter Wasserstoff als Jahresbilanz, der den inländischen Strom-Aufwand der H2-Sektoren ersetzt.',
+  short: 'Importierter Wasserstoff als Jahresbilanz, fließt stündlich gleichmäßig in den H2-Pool — versorgt H2-Sektoren und/oder Rückverstromung.',
   description: [
-    '**Sektor:** importierter Wasserstoff, geliefert per Pipeline aus Skandinavien und dem Maghreb oder verschifft als Ammoniak/LOHC. Das Modell behandelt die Importmenge als reine TWh/Jahr-Bilanz (H₂-Heizwert `LHV`) und verteilt sie auf die vier inländischen H₂-Senken: **Stahl-DRI**, H₂-Chemie (`NH₃`/`MeOH`/Olefine), e-Fuels Schiff und PtL-Flug. BMWK-Fortschreibung nennt `50–70 TWh` für 2030 (Pilot-Pipeline plus erste LH₂-Schiffe), Agora und Ariadne setzen für 2045 in Vollelektrifizierungs-Pfaden `200–400 TWh` an.',
-    '**Mechanik:** der Slider läuft von `0` bis `600 TWh/a` mit Schrittweite `10 TWh` und Default `0`. Die Allokation ist priority-basiert — nicht proportional —, und folgt fallendem System-**Wirkungsgrad** des inländischen Power-to-X-Pfads: Flug zuerst (`η ≈ 0,38`), dann Schiff (`0,50`), Chemie (`0,55`), zuletzt Stahl (`0,64`). Pro Sektor gilt `Strom-Reduktion = H2-Anteil / η`; eine TWh H₂-Import an den Flug-Sektor spart so rund `2,6 TWh` heimischen Strom, an den Stahl-Sektor nur `1,6 TWh`. Die Wirkungsgrade kommen aus den jeweiligen `e100-*`-Datenpaketen.',
-    '**Bilanz:** importierter H₂ ist im Modell kein zusätzlicher Energiezufluss in die Strombilanz, sondern senkt nur den Strombedarf der inländischen Elektrolyse. Emissionen werden in der aktuellen Version nicht bilanziert — implizit ist `grüner` H₂ angenommen; grauer oder blauer Import bräuchte Upstream-Faktoren je TWh. Die reale Allokation läuft in der Praxis über Preis-Bids, nicht über η-Priorität. Der Max-Slider `600 TWh` liegt rund beim Doppelten der Agora-2045-Annahmen und dient ausschließlich Stresstests.',
+    '**Sektor:** importierter Wasserstoff, geliefert per Pipeline aus Skandinavien und dem Maghreb oder verschifft als Ammoniak/LOHC. Das Modell behandelt die Importmenge als TWh/Jahr-Bilanz (H₂-Heizwert `LHV`) und speist sie stündlich konstant (`Import-TWh × 1000 / 8760` GW) in den **H₂-Pool** ein — also den H₂-Speicher (Kavernen). Aus diesem Pool decken sich sowohl die vier H₂-Industriesektoren (`Stahl-DRI`, `Chemie`, `Schiff-e-Fuels`, `Flug-PtL`) als auch die Rückverstromung im Strom-Defizit. BMWK-Fortschreibung nennt `50–70 TWh` für 2030, Agora/Ariadne `200–400 TWh` für 2045.',
+    '**Mechanik:** der Slider läuft von `0` bis `600 TWh/a` mit Schrittweite `10 TWh` und Default `0`. In jeder Stunde versucht der Pool zuerst den Sektor-H₂-Bedarf zu decken (priority-basiert nach niedrigstem System-η: Flug `~0,38` → Schiff `~0,50` → Chemie `~0,55` → Stahl `~0,64`). Pro Sektor gilt `Strom-Reduktion = gedeckter H₂-Anteil / η`; eine GW H₂ aus Pool an Flug spart `~2,6 GW` heimischen Strom, an Stahl `~1,6 GW`. Ungedeckter Sektor-Bedarf fällt auf inländische Direkt-Elektrolyse als Stromlast zurück. Pool-Überhang puffert für Rückverstromung in Defizitstunden.',
+    '**Bilanz:** importierter H₂ ist kein zusätzlicher Stromzufluss, sondern ersetzt entweder inländische Elektrolyse-Stromlast (Sektor-Pfad) oder Stromerzeugung im Defizit (Rückverstromungs-Pfad). Architektur folgt dem Pool-Konsens in PyPSA-Eur/REMod/Agora KNDE2045 (H₂ als zentraler Carrier mit mehreren Senken). Emissionen werden in der aktuellen Version nicht bilanziert — implizit ist `grüner` H₂ angenommen. Der Max-Slider `600 TWh` dient Stresstests.',
   ],
   overview: [
     {
@@ -28,19 +28,20 @@ export const description: DatasetDoc = {
     },
     {
       label: 'Verteilung',
-      value: '**Priority-Allokation** nach fallendem System-Wirkungsgrad: Flug (`η = 0,38`) → Schiff (`0,50`) → Chemie (`0,55`) → Stahl (`0,64`). Wirkungsgrade aus den jeweiligen `e100-*`-Sektorpaketen.',
+      value: '**Pool-Zufluss** stündlich konstant (`Import-TWh × 1000 / 8760` GW). Pool deckt Sektor-H₂-Bedarf priority-basiert (Flug `η ≈ 0,38` → Schiff `0,50` → Chemie `0,55` → Stahl `0,64`); Pool-Überhang puffert für Rückverstromung in Defizitstunden.',
     },
     {
       label: 'Formel',
-      value: '**Rechnung:** `Strom-Reduktion(Sektor) = H2-Anteil(Sektor) / η(Sektor)`. Beispiel Flug: `1 TWh H₂ / 0,38 ≈ 2,6 TWh` heimischer Strom gespart; Summe über alle Sektoren ergibt die Gesamtentlastung.',
+      value: '**Rechnung:** `Strom-Reduktion(Sektor) = Pool-Deckung(Sektor) / η(Sektor)`. Beispiel Flug: `1 GW H₂ aus Pool / 0,38 ≈ 2,6 GW` heimischer Strom gespart. Ohne aktive H₂-Sektoren landet der Import als Pool-Inflow und steht für Rückverstromung zur Verfügung.',
     },
   ],
   method: [
     'Scenario-Mapping: `data.import.{minTWh, maxTWh, stepTWh, defaultTWh}` ↦ Slider-Bounds und Defaults für `scenario.import.h2TWh`. Datei: handgepflegt, Adapter in data/aussenhandel/h2-handel/model.ts.',
-    'Slider-Werte werden vom Engine via `demandGW` als Demand-Reduktion auf die aktiven H2-Sektoren angewandt — kein zusätzlicher Strom-Import.',
-    'Allokation ist priority-basiert (nicht proportional): der Sektor mit dem höchsten Strom-pro-H2-Hebel kriegt zuerst H2-Import zugewiesen, bis er gedeckt ist; Rest geht an den nächsten.',
-    'Importemissionen werden in der jetzigen Version nicht bilanziert — implizit grüner H2 angenommen. Bei grauer/blauer H2-Importannahme müssten Upstream-Emissionen pro TWh eingerechnet werden.',
-    'Bounds: Min 0 TWh (keine Importe), Max 600 TWh (rund das Doppelte der Agora-Vollelektrifizierungs-Annahmen für 2045).',
+    'Import wird stündlich konstant in den H2-Pool (= H2-Speicher SoC) eingespeist: `Import-Inflow = h2TWh × 1000 / 8760` GW. Verlustfrei (importierter H2 ist schon H2). Überschuss jenseits der Pool-Kapazität fällt weg.',
+    'Sektor-H2-Bedarf wird priority-basiert aus Pool gedeckt (höchster Strom-Hebel zuerst). Ungedeckter Bedarf läuft als Direkt-Elektrolyse-Stromlast — entspricht der heutigen Sektor-Last bei leerem Pool.',
+    'Pool-Überhang kann im Strom-Defizit rückverstromt werden (heutige H2-Speicher-Discharge-Logik). Damit wirkt der Import-Slider auch ohne aktive H2-Sektoren.',
+    'Importemissionen werden nicht bilanziert — implizit grüner H2 angenommen.',
+    'Bounds: Min 0 TWh, Max 600 TWh (rund das Doppelte der Agora-2045-Annahmen).',
   ],
   fields: [
     { name: 'id', unit: 'Text', description: 'Technische Kennung.' },
@@ -52,10 +53,11 @@ export const description: DatasetDoc = {
     { name: 'referenceScales', unit: 'Objekt', description: 'Größenanker zur Einordnung: 1 Einheit entspricht etwa BMWK-H₂-Importziel 2030.' },
   ],
   caveats: [
-    'Importierter H2 senkt nur den inländischen Strombedarf, kommt nicht als zusätzliche Energiequelle in die Bilanz.',
+    'Importierter H2 ist kein direkter Stromzufluss — er ersetzt entweder Sektor-Elektrolyse-Strom oder kann via Rückverstromung Stromerzeugung im Defizit ersetzen.',
+    'Sektor-Priority innerhalb des Pools ist eine Modellannahme; realwirtschaftlich verteilt sich H2 nach Preis-Bid, nicht nach η.',
+    'Pool-Cap-Überschuss fällt verlustfrei weg — bei unrealistisch hohen Import-Slider-Werten relativ zur Pool-Kapazität wirkt die Mehrmenge nicht.',
     'Grüner H2 angenommen — keine Upstream-Emissionen für importierten Wasserstoff modelliert.',
-    'Priority-Allokation ist eine Modellannahme; realwirtschaftlich verteilt sich H2-Import nach Preis-Bid, nicht nach η.',
-    'Max-Slider von 600 TWh ist über realistischen 2045-Szenarien angesetzt, um Stresstests zu erlauben — keine Empfehlung.',
+    'Max-Slider 600 TWh ist über realistischen 2045-Szenarien — Stresstest, keine Empfehlung.',
   ],
 };
 

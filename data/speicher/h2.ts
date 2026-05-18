@@ -21,11 +21,11 @@ export const description: DatasetDoc = {
   period: '2025',
   resolution: 'stündlich',
   unit: 'GW, GWh',
-  short: 'Slider für Elektrolyse-, Rückverstromungs- und Kavernen-Energie; saisonaler Speicher mit `~34 %` Roundtrip-Wirkungsgrad.',
+  short: 'H2-Pool für Industrie und Rückverstromung; Slider für Elektrolyse-, Rückverstromungs-Leistung und Kavernen-Energie; `~34 %` Power-to-Power-Roundtrip.',
   description: [
-    '**Auslegung:** der Baustein bildet einen Power-to-Power-Pfad mit drei unabhängigen Slidern ab — **Elektrolyse-Leistung** (Laden, Default `0,1 GW`, Max `300 GW`), **Rückverstromungs-Leistung** (Entladen, Default `0 GW`, Max `300 GW`) und Kavernen-Energie (Default `0,1 GWh`, Max `500 TWh`). Die Defaults bilden den effektiv leeren Bestand Ende `2025` ab. Das Slider-Maximum `500 TWh` schöpft das in Norddeutschland geologisch erschließbare Kavernen-Volumen (DEEP.KBB) aus; ohne aktiv gesetzte Slider bleibt H₂ in der Simulation inaktiv.',
-    '**Wirkungsgradkette:** die `34 %` Roundtrip ergeben sich als Produkt aus Elektrolyse `~65 %` (PEM/Alkali Stand 2024–2025) × Kavernen-Speicher `~95 %` (inkl. Verdichtung) × Rückverstromung `~55 %` (H₂-ready GuD bzw. Brennstoffzelle); der publizierte Quellen-Korridor liegt bei `30–42 %` (Fraunhofer IKTS/ISE, IEA). Die getrennten Lade- und Entlade-Slider tragen der Realität Rechnung, dass Elektrolyseure und Rückverstromer physikalisch unterschiedliche Anlagen mit eigenen Investitionskosten sind. Die Bilanz `SoC(t+1) = SoC(t) + 0,34 · ΔLaden − ΔEntladen` schreibt die kompletten Roundtrip-Verluste der Ladeseite zu — eine bilanzielle Vereinfachung, die die reale Aufteilung zwischen Elektrolyseur und Rückverstromer nicht abbildet.',
-    '**Modellgrenze:** **Dispatch-Priorität** `3` ordnet H₂ hinter Batterie und Pumpspeicher ein: er ist die letzte Reserve und übernimmt damit faktisch den **saisonalen Ausgleich** zwischen Sommerüberschüssen und Winterspitzen. Der `34 %`-Wert gilt nur für Power-to-Power; bei stofflicher Nutzung in Stahl oder Chemie ist der Pfad-Wirkungsgrad höher, weil die Rückverstromungsstufe entfällt. Eine Mindest-SoC-Restriktion und Temperatur- bzw. Druckverluste der Kaverne bleiben außen vor.',
+    '**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–300 GW`, Default `0,1 GW`, η = `0,34` roundtrip) und H₂-Import (siehe `aussenhandel/h2-handel`, verlustfrei). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–300 GW`, Default `0 GW`). Kavernen-Energie `0–500 TWh` (Default `0,1 GWh`). Das `500 TWh`-Maximum schöpft das norddeutsche Kavernen-Volumen (DEEP.KBB) aus.',
+    '**Wirkungsgradkette:** die `34 %` Roundtrip gelten für den Power-to-Power-Pfad und ergeben sich aus Elektrolyse `~65 %` × Kavernen-Speicher `~95 %` × Rückverstromung `~55 %`; Quellen-Korridor `30–42 %` (Fraunhofer IKTS/ISE, IEA). Im Pool-Modell schreibt die Bilanz `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung` die Lade-Verluste nur dem Stromüberschuss-Pfad zu — importierter und für Industrie genutzter H₂ ist verlustfrei (kein Power-to-Power-Pfad).',
+    '**Modellgrenze:** **Dispatch-Priorität** `3` ordnet die Rückverstromung hinter Batterie/Pumpspeicher ein — H₂ übernimmt damit den **saisonalen Ausgleich**. Sektor-H₂-Bedarf wird im Pool-Schritt vor der Strom-Bilanz gedeckt: ungedeckter Bedarf bei leerem Pool fällt auf inländische Direkt-Elektrolyse als Stromlast zurück (entspricht der heutigen Sektor-Last). Eine Mindest-SoC-Restriktion und Temperatur-/Druckverluste der Kaverne bleiben außen vor.',
   ],
   overview: [
     {
@@ -34,11 +34,11 @@ export const description: DatasetDoc = {
     },
     {
       label: 'Verteilung',
-      value: '**Greedy-Dispatch:** Laden in H₂-Kavernen bei Überschuss, Rückverstromung bei Unterdeckung. **Priorität** `3` — letzter Speicher nach Batterie und Pumpspeicher; übernimmt damit den saisonalen Hub.',
+      value: '**H₂-Pool-Dispatch:** Zuflüsse aus Stromüberschuss-Elektrolyse (η = 0,34) + Import (verlustfrei). Abflüsse: Sektor-H₂-Bedarf priority-basiert + Rückverstromung (Priorität `3`, nach Batterie und Pumpspeicher; saisonaler Hub).',
     },
     {
       label: 'Formel',
-      value: '**Bilanz:** `SoC(t+1) = SoC(t) + 0,34 · ΔLaden − ΔEntladen`. Roundtrip-Verluste fallen vollständig auf der Ladeseite an.',
+      value: '**Bilanz:** `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung`. Lade-Verluste nur auf dem Power-to-Power-Pfad.',
     },
   ],
   method: [
