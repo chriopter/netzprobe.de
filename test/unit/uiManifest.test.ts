@@ -22,6 +22,6 @@ describe('ui manifest', () => {
     for (const value of [lkwTWh, ghdTWh, industrieTWh, stahlTWh, chemieTWh]) {
       expect(Number.isFinite(value)).toBe(true);
     }
-    expect(uiManifest.e100.chemie.defaultTargetTotalTWh).toBe(440);
+    expect(uiManifest.e100.chemie.defaultTargetTotalTWh).toBe(685);
   });
 });
