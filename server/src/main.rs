@@ -57,7 +57,10 @@ struct CpuStatus {
 }
 
 static STARTED_AT: OnceLock<Instant> = OnceLock::new();
-const BUILD_COMMIT: &str = option_env!("NETZPROBE_BUILD_COMMIT").unwrap_or("unknown");
+const BUILD_COMMIT: &str = match option_env!("NETZPROBE_BUILD_COMMIT") {
+    Some(commit) => commit,
+    None => "unknown",
+};
 
 fn app() -> Router {
     Router::new()
