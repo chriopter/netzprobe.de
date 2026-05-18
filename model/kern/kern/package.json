@@ -1,0 +1,141 @@
+{
+  "description": {
+    "id": "kern",
+    "domain": "modell",
+    "kind": "model",
+    "title": "Kernmodell",
+    "file": "kern/data.json",
+    "scripts": [
+      "kern/model.rs"
+    ],
+    "source": "Eigene Implementierung; Dispatch-Reihenfolge inspiriert von MTGermany energy-simulation-de.",
+    "sourceUrls": [
+      "https://github.com/MTGermany/energy-simulation-de"
+    ],
+    "period": "laufend",
+    "resolution": "stündlich",
+    "unit": "GW, GWh, TWh, g/kWh",
+    "short": "Stündlicher Dispatch aus Last, Erzeugung, Speicher und Außenhandel mit CO₂-Bilanz.",
+    "description": [
+      "**Aufgabe:** das Kernmodell iteriert über `8.760` Stunden pro Jahr und schließt in jeder Stunde die Bilanz aus Last (aggregiert via `demand.ts` aus `last-2025` und aktiven `e100-*` Modulen), variabler RE-Erzeugung (PV/Wind mit `einspeisefaktoren-2025[t] × capacityFactorMultiplier`), Baseload (Kernkraft, Biomasse, Laufwasser × `availability`), Dispatchable-Floor (Gas/Kohle auf `minLoadFraction`) und Speicher-Slots. Ergebnis pro Stunde sind alle Quellenbeiträge, Curtailment, Speicher-SoC, Import/Export, Lastabwurf und CO₂ in `t/h`; auf Jahressumme aggregiert das Modell `Last`, `EE-Anteil`, `Import`, `Export`, `Curtailment`, `Lastabwurf`, `CO₂ Mt/a` und `g/kWh`, Peak-Last sowie Stundenkennzahlen.",
+      "**Dispatch-Logik:** vor der Strombilanz läuft pro Stunde der H₂-Pool-Schritt — Import-Inflow (`h2TWh·1000/8760` GW) addiert sich auf den Pool-SoC, dann deckt der Pool den Sektor-H₂-Bedarf priority-basiert (Flug → Schiff → Chemie → Stahl), ungedeckter Rest wird Direkt-Elektrolyse-Stromlast. Anschließend `mismatch = baselineSupply − loadGW`. Bei **Überschuss** lädt die Engine die Speicher in der Reihenfolge `dispatchPriority` (Batterie → Pumpspeicher → H₂-Pool, mit η = 0,34 für H₂-Charge), exportiert dann bis `export.stromGW`-Cap, curtailed RE nach `curtailmentPriority` (Wind offshore → onshore → PV → Kernkraft); im Notfall werden Min-Last-Fossile/Biomasse/Laufwasser reduziert. Bei **Unterdeckung** Speicher entladen (auch H₂-Pool-Rückverstromung), Import bis `import.stromGW`-Cap, `Gas + Kohle` im `rampUpRatio` (Default `2:1`) bis `maxAvailable`; Rest als `loadSheddingGW`. CO₂ pro Stunde: `Σ supply_q × emissions.co2eGperKWh_q + import × stromEmissionGperKWh`.",
+      "**Modellgrenze:** keine Marktlogik, kein preisgetriebener Handel, kein Redispatch, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen, kein Netzmodell mit regionalen Engpässen. Min-Last für Gas (`10 %`) und Kohle (`20 %`) wird auch bei viel RE als Floor erzwungen — dadurch laufen `~9 GW` fossil weiter und der Default-Export sinkt auf `~3 TWh/a` (real `~54 TWh/a`). Import/Export-Caps sind harte Grenzen ohne Preissignal; der `capacityFactorMultiplier` linearisiert Technologiefortschritt zwischen Bestand und Neubau ohne Anlagen-Mix-Verschiebung."
+    ],
+    "overview": [
+      {
+        "label": "Zeitschritt",
+        "value": "**Auflösung:** `1 Stunde`, `8.760` Stunden pro Jahr. 2-Pass-Lauf wenn H₂-Kapazität `> 100 GWh`: Pass 1 startet alle Speicher leer, der Year-End-SoC ist Anfangswert für Pass 2."
+      },
+      {
+        "label": "H₂-Pool-Schritt",
+        "value": "**Vor jeder Strom-Bilanz:** Import-H₂ in Pool, Sektor-H₂-Bedarf priority-basiert aus Pool gedeckt (Flug → Schiff → Chemie → Stahl), ungedeckter Bedarf läuft als Direkt-Elektrolyse-Stromlast. Pool-Überhang puffert für Rückverstromung."
+      },
+      {
+        "label": "Dispatch bei Überschuss",
+        "value": "**Reihenfolge:** Speicher laden (`dispatchPriority`, H₂-Charge mit η = 0,34) → Export bis `export.stromGW`-Cap → Curtailment (`windOff → windOn → pv → kernkraft`) → Fallback: Min-Last `Gas`, `Kohle`, `Biomasse`, `Laufwasser` reduzieren."
+      },
+      {
+        "label": "Dispatch bei Unterdeckung",
+        "value": "**Reihenfolge:** Speicher entladen (inkl. H₂-Pool-Rückverstromung) → Import bis `import.stromGW`-Cap → `Gas + Kohle` hochfahren im `rampUpRatio` (Default `2:1`) → `Lastabwurf`."
+      }
+    ],
+    "method": [
+      "Last bestimmen: demandGW aus Demand-Modul (last-2025 plus aktive e100-Sektoren).",
+      "Erzeugungssockel bauen: variable RE als installedGW × einspeisefaktor[t] × capacityFactorMultiplier, Baseload als installedGW × availability konstant, dispatchable startet auf Min-Last als Floor.",
+      "Capacity-Factor-Multiplier (pvCapacityFactorMultiplier, windOnCapacityFactorMultiplier, windOffCapacityFactorMultiplier) skalieren den historischen einspeisefaktor-2025-Realwert auf eine fiktive Neubau-Flotte. Default 1.0 (heutige DE-Flotte: PV ~702 kWh/kWp, Wind gemischt ~1745 VLH). Empfohlen für 2045-Szenarien: PV 1.5 (bifazial+Tracker → ~1100 kWh/kWp), Wind onshore 1.4 (4-6 MW Klasse → ~2400 VLH), Wind offshore 1.8 (15 MW Nordsee → ~4000 VLH; korrigiert den gemittelten Faktor in einspeisefaktoren-2025 wo Offshore und Onshore zusammen gemessen werden). Pro Stunde wird auf Math.min(1, …) gecapt (kein Output über Nameplate).",
+      "Mismatch = Sockel − Last. Bei Überschuss: Speicher laden → Export → Curtailment der RE in fester Reihenfolge → Notfall-Reduktion von Min-Last fossil → Biomasse/Laufwasser.",
+      "Bei Unterdeckung: Speicher entladen → Import bis Cap → Gas + Kohle gemeinsam hochfahren im Verhältnis rampUpRatio (2:1 Default) bis maxAvailable → Rest als loadSheddingGW.",
+      "CO₂ je Stunde: Σ supply_q × emissions.co2eGperKWh_q + import × Nachbarmix. Jahreswert dividiert durch Strom-Nachfrage = g/kWh.",
+      "Jahreskennzahlen: Last, Import, Export, Curtailment, Lastabwurf, Erneuerbarenanteil, CO₂ Mt/Jahr und g/kWh, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, Peak Load, monatliche Erzeugung."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung."
+      },
+      {
+        "name": "title",
+        "unit": "Text",
+        "description": "Name des Modellbausteins."
+      },
+      {
+        "name": "source",
+        "unit": "Text",
+        "description": "Ursprung der Modelllogik."
+      },
+      {
+        "name": "modelPath",
+        "unit": "Pfad",
+        "description": "Implementierungspfad im Datenpaket."
+      },
+      {
+        "name": "timeStep",
+        "unit": "Text",
+        "description": "Zeitliche Auflösung."
+      },
+      {
+        "name": "inputs",
+        "unit": "Liste",
+        "description": "Pakete und Felder die der Kernmodell-Dispatch konsumiert."
+      },
+      {
+        "name": "outputs",
+        "unit": "Liste",
+        "description": "Stündliche und jährliche Ausgaben des Dispatch."
+      },
+      {
+        "name": "notes",
+        "unit": "Liste",
+        "description": "Default-Lauf-Kennzahlen und Modell-Annahmen."
+      }
+    ],
+    "caveats": [
+      "Min-Last gas (10 %) und kohle (20 %) werden als Floor erzwungen — auch bei viel RE laufen ~9 GW fossil weiter. Drückt den Export im Default-Lauf nach unten (~3 TWh statt real ~54 TWh). Realistisches Marktverhalten würde Kraftwerke unter Mindestpreis abschalten; das modellieren wir nicht.",
+      "Curtailment-Fallback (greift nur wenn Speicher voll, Export am Cap und alle RE auf 0): reduziert Min-Last fossil, danach Biomasse und Laufwasser. Physikalisch fragwürdig (KWK-Wärmesenken, Wasser-Bypass), aber Sicherheitsventil zur Schließung der Bilanz. Greift im Default praktisch nie.",
+      "Import/Export-Cap sind harte Grenzen, kein preisgetriebener Handel. Default Import 13 GW reproduziert 2025-Brutto-Import; Export 25 GW orientiert sich am NTC.",
+      "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore (einspeisefaktoren-2025 hat keinen Offshore-Faktor).",
+      "Kein Netzmodell: keine regionalen Engpässe, keine Redispatch-Kosten, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen."
+    ]
+  },
+  "data": {
+    "id": "kern",
+    "title": "Kernmodell",
+    "source": "Eigene stündliche Bilanzrechnung im Browser, Dispatch-Reihenfolge nach MTGermany energy-simulation-de.",
+    "modelPath": "model/kern/kern/model.rs",
+    "dispatchOrder": {
+      "curtailmentPriority": [
+        "windOff",
+        "windOn",
+        "pv",
+        "kernkraft"
+      ],
+      "rampUpPriority": [
+        "gas",
+        "kohle"
+      ],
+      "rampUpRatio": {
+        "gas": 2,
+        "kohle": 1
+      }
+    },
+    "timeStep": "1 Stunde",
+    "inputs": [
+      "Demand: last-2025 plus aktive e100-Sektoren (Rust-Lastmodell in server/src/simulation.rs).",
+      "Erzeugung: erz-* Bausteine (erz-pv, erz-windon, erz-windoff, erz-kernkraft, erz-biomasse, erz-laufwasser, erz-gas, erz-kohle) skalieren installedGW × einspeisefaktoren-2025[t]; Baseload und Dispatchable per Mode-Tag.",
+      "Speicher: speicher-* Bausteine (speicher-batterie, speicher-pumpspeicher, speicher-h2) mit dispatchPriority-Reihenfolge, Roundtrip-Eta beim Laden.",
+      "Außenhandel: import.stromGW / export.stromGW aus Scenario, Import-Emissionsfaktor aus scenario.import.stromEmissionGperKWh; H2-Import (scenario.import.h2TWh) fließt stündlich konstant in den H2-Pool (= H2-Speicher SoC), aus dem Sektor-Bedarf und Rückverstromung gedeckt werden."
+    ],
+    "outputs": [
+      "Pro Stunde: Erzeugung je Quelle (dispatched + curtailed), Speicher Charge/Discharge/SoC je Technologie, Import, Export, Lastabwurf, Bilanzrest, CO₂ (t/h).",
+      "Jahressumme: Last, Erneuerbarenanteil, Curtailment, Import, Export, Lastabwurf, CO₂ Mt und g/kWh, Peak-Last, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, monatliche Erzeugung."
+    ],
+    "notes": [
+      "Default-Lauf reproduziert 2025 etwa 466 TWh Last, 55 % EE, 76 TWh Brutto-Import, 332 g/kWh CO₂.",
+      "Reihenfolge bei Überschuss: Speicher laden → Export → Curtailment RE → Min-Last fossil reduzieren.",
+      "Reihenfolge bei Unterdeckung: Speicher entladen → Import → Gas+Kohle hochfahren (2:1) → Lastabwurf.",
+      "Min-Last gas/kohle werden als Floor erzwungen — auch bei hoher RE laufen ~9 GW fossil. Senkt Default-Export gegenüber Realität.",
+      "Keine Marktlogik, kein Redispatch, kein Reservebedarf, kein Netzmodell."
+    ]
+  }
+}

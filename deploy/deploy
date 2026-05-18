@@ -4,7 +4,7 @@ set -euo pipefail
 APP_DIR="/var/www/netzprobe"
 BRANCH="main"
 LOCK_FILE="/tmp/netzprobe-deploy.lock"
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 log() {
   printf '[netzprobe-deploy] %s\n' "$*"
@@ -37,7 +37,13 @@ fi
 log "deploying $after"
 
 npm ci
+cargo test --manifest-path server/Cargo.toml
 npm test
 npm run build
+cargo build --release --manifest-path server/Cargo.toml
+
+if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files netzprobe-api.service >/dev/null 2>&1; then
+  systemctl restart netzprobe-api.service || log "could not restart netzprobe-api.service"
+fi
 
 log "built $APP_DIR/dist"

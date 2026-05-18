@@ -7,5 +7,7 @@ After=network-online.target
 Type=oneshot
 Environment=APP_DIR=/var/www/netzprobe
 Environment=BRANCH=main
+Environment=PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WorkingDirectory=/var/www/netzprobe
 ExecStart=/var/www/netzprobe/deploy/deploy
+TimeoutStartSec=900

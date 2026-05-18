@@ -5,7 +5,7 @@ $log = function($message) use ($logFile) {
 };
 
 $secretFile = '/var/www/netzprobe/deploy/.secret';
-$deployScript = '/var/www/netzprobe/deploy/deploy';
+$deployService = 'netzprobe-deploy.service';
 $maxPayloadBytes = 4096;
 
 $log('Webhook received');
@@ -62,11 +62,11 @@ if (($data['ref'] ?? '') !== 'refs/heads/main') {
     die('Not main branch');
 }
 
-$log('Starting deploy');
+$log('Queueing deploy service');
 $output = [];
-exec('sudo ' . escapeshellarg($deployScript) . ' 2>&1', $output, $code);
-$log('Deploy finished code=' . $code . ' output=' . implode(' | ', $output));
+exec('sudo systemctl start ' . escapeshellarg($deployService) . ' 2>&1', $output, $code);
+$log('Deploy service start code=' . $code . ' output=' . implode(' | ', $output));
 
-http_response_code($code === 0 ? 200 : 500);
+http_response_code($code === 0 ? 202 : 500);
 header('Content-Type: text/plain; charset=utf-8');
-echo implode("\n", $output);
+echo $code === 0 ? "Deploy gestartet\n" : implode("\n", $output);

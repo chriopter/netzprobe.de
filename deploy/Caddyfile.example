@@ -1,0 +1,35 @@
+# Beispiel-Caddyfile für netzprobe.de.
+
+netzprobe.de {
+    handle /api/* {
+        request_body {
+            max_size 256KB
+        }
+        reverse_proxy 127.0.0.1:8080 {
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 10s
+            }
+        }
+    }
+
+    handle {
+        root * /var/www/netzprobe/dist
+        try_files {path} /index.html
+        file_server
+    }
+
+    log {
+        output file /var/log/caddy/netzprobe-access.log {
+            roll_size 10mb
+            roll_keep 5
+            roll_keep_for 720h
+        }
+        format json
+    }
+}
+
+deploy.netzprobe.de {
+    root * /var/www/netzprobe/deploy
+    php_fastcgi unix//run/php/php-fpm.sock
+}

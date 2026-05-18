@@ -1,0 +1,158 @@
+{
+  "description": {
+    "id": "batterie",
+    "domain": "speicher",
+    "kind": "scenario",
+    "title": "Batterie",
+    "file": "speicher/batterie/data.json",
+    "scripts": [
+      "speicher/batterie/model.rs"
+    ],
+    "source": "Energy-Charts (Batterie-Bestand 2025); MTGermany energy-simulation-de (Eta, Initial-SoC).",
+    "sourceUrls": [
+      "https://www.energy-charts.info/",
+      "https://github.com/MTGermany/energy-simulation-de"
+    ],
+    "period": "2025",
+    "resolution": "stündlich",
+    "unit": "GW, GWh",
+    "short": "Slider für Batterie-Großspeicher: kurzfristiger Tagesausgleich mit `80 %` Roundtrip-Wirkungsgrad.",
+    "description": [
+      "**Auslegung:** der Default `10 GW / 25 GWh` entspricht dem deutschen Großbatterie-Bestand Ende `2025` (Energy-Charts). Das Verhältnis von rund `2,5 h` Volllast-Entladedauer ist typisch für Front-of-the-Meter-Systeme, die heute primär Regelleistung und kurzfristige Spotmarkt-Arbitrage abdecken. Der **Roundtrip-Wirkungsgrad** liegt bei `80 %` — am unteren Rand des Lithium-Korridors (`85–92 %` AC-AC bei modernen Systemen), aber inklusive Trafo- und Klimatisierungsverlusten plausibel.",
+      "**Mechanik:** der Dispatch ist symmetrisch (gleicher Slider für Lade- und Entladeleistung) und folgt einer einfachen Greedy-Regel: bei Residuallast-Überschuss wird bis zur Leistungsgrenze und freier Speicherenergie geladen, bei Unterdeckung analog entladen. Die Bilanz `SoC(t+1) = SoC(t) + η · ΔLaden − ΔEntladen` schreibt die Verluste vollständig dem Ladevorgang zu. **Dispatch-Priorität** `1` bedeutet: Batterie wird vor Pumpspeicher und H₂ bedient — sie deckt damit den schnellen Tageshub ab, während die anderen Speicher mittlere bis saisonale Lücken füllen.",
+      "**Modellgrenze:** keine Selbstentladung, keine getrennte Lade-/Entlade-Effizienz, keine Mindest-SoC- oder Depth-of-Discharge-Restriktion — der Füllstand kann zwischen `0` und Max-Energie frei schwingen. Zyklenabhängige Alterung und Temperaturabhängigkeit bleiben außen vor."
+    ],
+    "overview": [
+      {
+        "label": "Verwendung",
+        "value": "**Slider:** Leistung `0` bis `500 GW` (Default `10 GW`, Schritt `10 GW`), Energie `0` bis `5.000 GWh` (Default `25 GWh`, Schritt `50 GWh`). Default ist der Bestand Ende `2025`; das Maximum lässt Raum für ein durch BEV-Second-Life und Heimspeicher getriebenes Ausbauszenario."
+      },
+      {
+        "label": "Verteilung",
+        "value": "**Greedy-Dispatch:** Laden bei Residuallast-Überschuss bis Leistungs-Cap und freier Energie, Entladen bei Unterdeckung bis Leistungs-Cap und verfügbarem SoC. **Priorität** `1` — Batterie wird vor Pumpspeicher und H₂ bedient."
+      },
+      {
+        "label": "Formel",
+        "value": "**Bilanz:** `SoC(t+1) = SoC(t) + η · ΔLaden − ΔEntladen` mit `η = 0,8`. Der Default-Lauf zyklet typischerweise wenige Prozent des Energieinhalts pro Tag."
+      }
+    ],
+    "method": [
+      "Datei: handgepflegt. Werte in model/speicher/batterie/package.json, Adapter in model/speicher/batterie/model.rs.",
+      "Roundtrip-Wirkungsgrad 80 % wird vollständig beim Laden angewandt: ΔSoC = η × Laden, Entladen 1:1.",
+      "Initial-SoC: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), der Year-End-SoC dient als Anfangswert für Pass 2. Bei reinen Batterie-Szenarien ohne nennenswerte H₂-Kapazität wird der Warm-up übersprungen — Batterien schwingen sich innerhalb von Stunden ein, der Start-bei-0-Effekt ist im Jahresmittel zu vernachlässigen.",
+      "Dispatch-Priorität 1 — wird vor Pumpspeicher und H₂ geladen/entladen."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung."
+      },
+      {
+        "name": "name",
+        "unit": "Text",
+        "description": "Anzeigename."
+      },
+      {
+        "name": "power2025GW",
+        "unit": "GW",
+        "description": "Installierte Leistung Ende 2025."
+      },
+      {
+        "name": "defaultPowerGW",
+        "unit": "GW",
+        "description": "Slider-Default Leistung."
+      },
+      {
+        "name": "minPowerGW",
+        "unit": "GW",
+        "description": "Slider-Minimum Leistung."
+      },
+      {
+        "name": "maxPowerGW",
+        "unit": "GW",
+        "description": "Slider-Maximum Leistung."
+      },
+      {
+        "name": "stepPowerGW",
+        "unit": "GW",
+        "description": "Slider-Schrittweite Leistung."
+      },
+      {
+        "name": "energy2025GWh",
+        "unit": "GWh",
+        "description": "Installierter Energieinhalt Ende 2025."
+      },
+      {
+        "name": "defaultEnergyGWh",
+        "unit": "GWh",
+        "description": "Slider-Default Energie."
+      },
+      {
+        "name": "minEnergyGWh",
+        "unit": "GWh",
+        "description": "Slider-Minimum Energie."
+      },
+      {
+        "name": "maxEnergyGWh",
+        "unit": "GWh",
+        "description": "Slider-Maximum Energie."
+      },
+      {
+        "name": "stepEnergyGWh",
+        "unit": "GWh",
+        "description": "Slider-Schrittweite Energie."
+      },
+      {
+        "name": "roundtripEfficiency",
+        "unit": "Anteil",
+        "description": "Roundtrip-Wirkungsgrad (0,8)."
+      },
+      {
+        "name": "initialStateOfChargeFraction",
+        "unit": "Anteil",
+        "description": "Seed-SoC für 2-Pass-Lauf (0)."
+      },
+      {
+        "name": "dispatchPriority",
+        "unit": "Rang",
+        "description": "Reihenfolge im Dispatch (1 = zuerst)."
+      },
+      {
+        "name": "referenceScales",
+        "unit": "Objekt",
+        "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa Tesla Megapacks (4 MWh)."
+      }
+    ],
+    "caveats": [
+      "Keine Selbstentladung modelliert.",
+      "Wirkungsgrad vollständig beim Laden — getrennte Lade-/Entlade-Effizienz nicht abgebildet.",
+      "Keine Mindest-SoC oder DoD-Restriktionen — Batterie kann zwischen 0 und Max schwingen.",
+      "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung."
+    ]
+  },
+  "data": {
+    "id": "batterie",
+    "name": "Batterie",
+    "power2025GW": 10,
+    "defaultPowerGW": 10,
+    "minPowerGW": 0,
+    "maxPowerGW": 500,
+    "stepPowerGW": 10,
+    "energy2025GWh": 25,
+    "defaultEnergyGWh": 25,
+    "minEnergyGWh": 0,
+    "maxEnergyGWh": 5000,
+    "stepEnergyGWh": 50,
+    "roundtripEfficiency": 0.8,
+    "initialStateOfChargeFraction": 0,
+    "dispatchPriority": 1,
+    "referenceScales": {
+      "energy": {
+        "value": 0.004,
+        "unit": "GWh",
+        "label": "Tesla Megapacks (4 MWh)"
+      }
+    }
+  }
+}

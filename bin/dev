@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
-# Startet den Vite-Dev-Server (Host 0.0.0.0, Default-Port aus vite.config.ts).
+# Startet API und Vite-Dev-Server.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-exec npm run dev
+
+bin/api &
+api_pid="$!"
+
+cleanup() {
+  kill "$api_pid" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+npm run vite

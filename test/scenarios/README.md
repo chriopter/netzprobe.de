@@ -42,8 +42,6 @@ Optional: bekannte Vereinfachungen.
 ## Ausführung
 
 ```bash
-node test/scenarios/run.mjs                    # alle Szenarien
-node test/scenarios/run.mjs 01-                # nur Szenario 01
 ```
 
 Der Runner gibt für jedes Szenario alle Summary-KPIs aus und vergleicht mit
