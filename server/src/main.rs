@@ -57,6 +57,7 @@ struct CpuStatus {
 }
 
 static STARTED_AT: OnceLock<Instant> = OnceLock::new();
+const BUILD_COMMIT: &str = option_env!("NETZPROBE_BUILD_COMMIT").unwrap_or("unknown");
 
 fn app() -> Router {
     Router::new()
@@ -74,7 +75,7 @@ async fn status() -> Json<StatusResponse> {
     Json(StatusResponse {
         ok: true,
         version: VersionStatus {
-            commit: env!("NETZPROBE_BUILD_COMMIT"),
+            commit: BUILD_COMMIT,
         },
         uptime_seconds: STARTED_AT
             .get()

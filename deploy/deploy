@@ -31,6 +31,7 @@ cd "$APP_DIR"
 before="$(git rev-parse HEAD)"
 git pull --ff-only origin "$BRANCH"
 after="$(git rev-parse HEAD)"
+export NETZPROBE_BUILD_COMMIT="$after"
 
 if [ "$before" = "$after" ]; then
   log "already up to date: $after"
@@ -43,7 +44,7 @@ npm ci
 cargo test --workspace
 npm test
 npm run build
-NETZPROBE_BUILD_COMMIT="$after" cargo build --release --workspace
+cargo build --release --workspace
 
 if [ ! -x "$API_BINARY" ]; then
   log "missing API binary after build: $API_BINARY"
