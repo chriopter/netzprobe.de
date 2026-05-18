@@ -756,7 +756,7 @@ impl StaticModel {
         mut storage: StorageState,
     ) -> Result<(Vec<SimHour>, StorageState), ModelError> {
         let slots = self.storage_slots(scenario)?;
-        let fixed_generation = fixed_generation_year(scenario).is_some();
+        let fixed_generation = is_fixed_generation_scenario(scenario);
         let import_limit_gw = if fixed_generation {
             0.0
         } else {
@@ -1367,8 +1367,20 @@ struct SectorH2 {
 }
 
 fn fixed_generation_year(scenario: &Value) -> Option<u32> {
-    scenario
+    let marker = scenario
         .get("_fixedGenerationYear")
         .and_then(Value::as_u64)
-        .map(|value| value as u32)
+        .map(|value| value as u32);
+    if marker.is_some() {
+        return marker;
+    }
+    match scenario.get("supplyPreset").and_then(Value::as_str) {
+        Some("historical-2025") => Some(2025),
+        Some("historical-2017") => Some(2017),
+        _ => None,
+    }
+}
+
+fn is_fixed_generation_scenario(scenario: &Value) -> bool {
+    fixed_generation_year(scenario).is_some()
 }
