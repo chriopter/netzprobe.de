@@ -115,7 +115,7 @@ const angleAxis = (hours: SimHour[], chartHours: SimHour[], compact = false) => 
   startAngle: 90,
   clockwise: true,
   axisTick: { show: false },
-  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: compact ? 9 : 10, margin: compact ? 8 : 18 },
+  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: compact ? 8 : 10, margin: compact ? 3 : 18 },
   axisLine: { lineStyle: { color: '#e4e4e7' } },
   splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
 });
@@ -137,8 +137,8 @@ const yAxis = (unit = 'GW') => ({
 const isCompactChart = (viewport?: ChartViewport) => (viewport?.width ?? 9999) < 640;
 const compactPolarOuterRadius = (viewport?: ChartViewport) => {
   const width = viewport?.width ?? 0;
-  if (width > 0 && width < 380) return '84%';
-  if (width > 0 && width < 430) return '87%';
+  if (width > 0 && width < 380) return '86%';
+  if (width > 0 && width < 430) return '88%';
   return '90%';
 };
 const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport) => {

@@ -114,11 +114,12 @@ describe('mix chart options', () => {
 
   it('keeps compact radial charts inset enough for mobile labels', () => {
     const option = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'sunburst', { width: 390, height: 420 });
-    const polar = option.polar as { radius: string[] };
+    const polar = option.polar as { center: string[]; radius: string[] };
     const angleAxis = option.angleAxis as { axisLabel: { fontSize: number; margin: number } };
 
-    expect(polar.radius).toEqual(['3%', '87%']);
-    expect(angleAxis.axisLabel).toMatchObject({ fontSize: 9, margin: 8 });
+    expect(polar.center).toEqual(['50%', '50%']);
+    expect(polar.radius).toEqual(['3%', '88%']);
+    expect(angleAxis.axisLabel).toMatchObject({ fontSize: 8, margin: 3 });
   });
 
   it('orders full-year daily buckets by day of month first and spreads month labels across the axis', () => {

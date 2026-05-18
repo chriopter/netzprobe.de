@@ -1022,7 +1022,7 @@ function Dashboard() {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <ChartPanel className="flex h-[100dvh] flex-col sm:h-[calc(100vh-1.5rem)]">
+          <ChartPanel className="flex flex-col sm:h-[calc(100vh-1.5rem)]">
             <div className="grid shrink-0 gap-2 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
               <div className="flex min-w-0 items-start gap-2">
                 {sidebarCollapsed && <SidebarOpenButton onClick={openSidebar}/>}
@@ -1049,7 +1049,7 @@ function Dashboard() {
               </div>
               <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
             </div>
-            <div className="relative min-h-0 flex-1 bg-white">
+            <div className="relative aspect-square min-h-0 w-full bg-white sm:aspect-auto sm:flex-1">
               <div
                 id="mix-chart"
                 className={cx(
