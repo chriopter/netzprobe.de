@@ -4,7 +4,7 @@ Kompakte Stromsystem-Simulation für Deutschland. Die React-App konfiguriert Las
 
 Live: https://netzprobe.de/
 
-<img width="600" height="2530" alt="image" src="https://github.com/user-attachments/assets/eff492eb-a29d-4d09-9619-3aca9ade93ac" />
+<img width="600"  alt="image" src="https://github.com/user-attachments/assets/eff492eb-a29d-4d09-9619-3aca9ade93ac" />
 
 Die Zahlen sind dokumentierte Modellannahmen aus öffentlichen Quellen. Sie sind als Orientierung gedacht, nicht als Prognose.
 
