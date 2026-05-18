@@ -439,6 +439,7 @@ impl StaticModel {
             .and_then(Value::as_str)
             .unwrap_or("custom")
             != "custom"
+            && fixed_generation_year(&scenario).is_none()
         {
             return Err(ModelError::Unsupported {
                 message: "Rust-Parity-Harness unterstützt aktuell nur supplyPreset=custom"
@@ -471,12 +472,14 @@ impl StaticModel {
             .as_object_mut()
             .ok_or_else(|| data_error("scenario must be an object"))?;
         let override_values = self.supply_override(preset, demand_twh)?;
-        obj.insert("supplyPreset".to_string(), json!("custom"));
         if preset == "historical-2025" {
+            obj.insert("supplyPreset".to_string(), json!("historical-2025"));
             obj.insert("_fixedGenerationYear".to_string(), json!(2025));
         } else if preset == "historical-2017" {
+            obj.insert("supplyPreset".to_string(), json!("historical-2017"));
             obj.insert("_fixedGenerationYear".to_string(), json!(2017));
         } else {
+            obj.insert("supplyPreset".to_string(), json!("custom"));
             obj.remove("_fixedGenerationYear");
         }
         obj.insert("generation".to_string(), override_values.0);

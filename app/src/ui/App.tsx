@@ -824,7 +824,7 @@ function Dashboard() {
     [selectedPeriod.start, selectedPeriod.end],
   );
 
-  const { result, isPending: simPending, isStale: simStale } = useRustSimulation(data, resolvedScenario, simulationView, {
+  const { result, isPending: simPending, isStale: simStale } = useRustSimulation(data, scenario, simulationView, {
     live: liveSimulation,
     interactionActive: sliderActive,
     runToken: manualRunToken,
