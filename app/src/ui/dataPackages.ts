@@ -38,9 +38,5 @@ export const dataPackageIds = {
 
 export type DataPackageId = typeof dataPackageIds[keyof typeof dataPackageIds];
 
-// URL-Helper für statische Paket-Dateien. Templates bleiben unter data/,
-// Modellpakete liegen unter model/.
-export const dataFileUrl = (path: string) => {
-  const root = path.startsWith('templates/') ? 'data' : 'model';
-  return `${import.meta.env.BASE_URL}${root}/${path}`;
-};
+// URL-Helper für statische Modellpaket-Dateien.
+export const dataFileUrl = (path: string) => `${import.meta.env.BASE_URL}model/${path}`;
