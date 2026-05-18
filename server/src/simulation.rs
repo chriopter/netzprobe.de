@@ -1,4 +1,4 @@
-use crate::{fingerprint::ResultFingerprint, kern::StaticModel, model_registry::ModelRegistry};
+use netzprobe_kern::{ModelError, ResultFingerprint, StaticModel};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -21,26 +21,20 @@ pub struct GoldenCase {
 }
 
 #[derive(Debug, Clone)]
-pub struct SimulationHarness {
-    registry: ModelRegistry,
-}
+pub struct SimulationHarness;
 
 impl SimulationHarness {
-    pub fn new(registry: ModelRegistry) -> Self {
-        Self { registry }
+    pub fn new() -> Self {
+        Self
     }
 
-    pub fn registry(&self) -> &ModelRegistry {
-        &self.registry
-    }
-
-    pub fn run_fingerprint(&self, scenario: &Value) -> Result<ResultFingerprint, SimulationError> {
+    pub fn run_fingerprint(&self, scenario: &Value) -> Result<ResultFingerprint, ModelError> {
         let model = StaticModel::load()?;
         let result = model.run(scenario)?;
         Ok(result.fingerprint())
     }
 
-    pub fn run_api_result(&self, scenario: &Value) -> Result<Value, SimulationError> {
+    pub fn run_api_result(&self, scenario: &Value) -> Result<Value, ModelError> {
         self.run_api_result_with_view(scenario, None)
     }
 
@@ -48,57 +42,26 @@ impl SimulationHarness {
         &self,
         scenario: &Value,
         view: Option<ApiView>,
-    ) -> Result<Value, SimulationError> {
+    ) -> Result<Value, ModelError> {
         let model = StaticModel::load()?;
         let result = model.run(scenario)?;
         Ok(result.to_api_value(view.as_ref()))
     }
 
-    pub fn resolve_scenario(&self, scenario: &Value) -> Result<Value, SimulationError> {
+    pub fn resolve_scenario(&self, scenario: &Value) -> Result<Value, ModelError> {
         StaticModel::load()?.resolve_supply_preset(scenario)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ApiView {
-    pub start: Option<String>,
-    pub end: Option<String>,
-    pub max_points: Option<usize>,
-}
+pub use netzprobe_kern::ApiView;
 
 pub fn load_golden_fixture(raw: &str) -> Result<GoldenFixture, serde_json::Error> {
     serde_json::from_str(raw)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SimulationError {
-    Unsupported { message: String },
-    Data { message: String },
-}
-
-impl SimulationError {
-    pub fn is_not_implemented(&self) -> bool {
-        false
-    }
-}
-
-impl std::fmt::Display for SimulationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SimulationError::Unsupported { message } | SimulationError::Data { message } => {
-                f.write_str(message)
-            }
-        }
-    }
-}
-
-impl std::error::Error for SimulationError {}
-
 #[cfg(test)]
 mod tests {
     use super::{SimulationHarness, load_golden_fixture};
-    use crate::model_registry::ModelRegistry;
 
     #[test]
     fn parses_minimal_fixture_with_typed_fingerprint() {
@@ -154,7 +117,7 @@ mod tests {
     fn simulation_can_run_first_golden_case() {
         let raw = include_str!("../../test/fixtures/rust-parity-v1.json");
         let fixture = load_golden_fixture(raw).unwrap();
-        let harness = SimulationHarness::new(ModelRegistry::empty());
+        let harness = SimulationHarness::new();
         let fingerprint = harness.run_fingerprint(&fixture.cases[0].scenario).unwrap();
 
         assert_eq!(fingerprint.hours.len(), 9);

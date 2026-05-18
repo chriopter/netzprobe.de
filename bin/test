@@ -7,7 +7,7 @@ echo "-> TypeScript/Vitest"
 npm test
 
 echo "-> Rust-Tests"
-cargo test --manifest-path server/Cargo.toml
+cargo test --workspace
 
 
 echo "-> Produktionsbuild"

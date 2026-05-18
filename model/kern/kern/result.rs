@@ -1,14 +1,14 @@
 use crate::fingerprint::{
     GOLDEN_HOUR_SAMPLES, HourFingerprint, ResultFingerprint, SecurityStatus, SummaryFingerprint,
 };
-use crate::simulation::ApiView;
+use crate::ApiView;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
 use super::{EPS, SimHour, SimulationResult};
 
 impl SimulationResult {
-    pub(crate) fn to_api_value(&self, view: Option<&ApiView>) -> Value {
+    pub fn to_api_value(&self, view: Option<&ApiView>) -> Value {
         let demand_twh = sum(&self.hours, |hour| hour.load_gw);
         let renewable_twh = sum(&self.hours, |hour| {
             hour.pv_gw + hour.wind_on_gw + hour.wind_off_gw + hour.biomasse_gw + hour.laufwasser_gw
@@ -60,7 +60,7 @@ impl SimulationResult {
         })
     }
 
-    pub(crate) fn fingerprint(&self) -> ResultFingerprint {
+    pub fn fingerprint(&self) -> ResultFingerprint {
         let demand_twh = sum(&self.hours, |hour| hour.load_gw);
         let renewable_twh = sum(&self.hours, |hour| {
             hour.pv_gw + hour.wind_on_gw + hour.wind_off_gw + hour.biomasse_gw + hour.laufwasser_gw
@@ -205,10 +205,10 @@ fn api_hour_value(hour: &SimHour) -> Value {
     out.insert("solarGW".to_string(), json!(hour.pv_gw));
     out.insert("biomassGW".to_string(), json!(hour.biomasse_gw));
     out.insert("hydroGW".to_string(), json!(hour.laufwasser_gw));
-    out.insert("geothermalGW".to_string(), json!(0));
-    out.insert("wasteGW".to_string(), json!(0));
-    out.insert("oilGW".to_string(), json!(0));
-    out.insert("otherGW".to_string(), json!(0));
+    out.insert("geothermalGW".to_string(), json!(hour.geothermal_gw));
+    out.insert("wasteGW".to_string(), json!(hour.waste_gw));
+    out.insert("oilGW".to_string(), json!(hour.oil_gw));
+    out.insert("otherGW".to_string(), json!(hour.other_gw));
     out.insert("coalGW".to_string(), json!(hour.kohle_gw));
     out.insert("nuclearGW".to_string(), json!(hour.kernkraft_gw));
     out.insert("historicalImportGW".to_string(), json!(hour.import_gw));

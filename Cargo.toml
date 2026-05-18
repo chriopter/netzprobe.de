@@ -1,0 +1,3 @@
+[workspace]
+members = ["server", "model/kern/kern"]
+resolver = "3"

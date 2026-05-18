@@ -358,11 +358,20 @@ name = "netzprobe-api"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "netzprobe-kern",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "netzprobe-kern"
+version = "0.1.0"
+dependencies = [
  "chrono",
  "chrono-tz",
  "serde",
  "serde_json",
- "tokio",
 ]
 
 [[package]]

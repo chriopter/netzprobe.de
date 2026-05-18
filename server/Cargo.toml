@@ -5,8 +5,7 @@ edition = "2024"
 
 [dependencies]
 axum = "*"
+netzprobe-kern = { path = "../model/kern/kern" }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 tokio = { version = "*", features = ["macros", "rt-multi-thread", "net", "signal"] }
-chrono = "*"
-chrono-tz = "*"

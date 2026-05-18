@@ -16,7 +16,7 @@ sudo /root/.cargo/bin/rustup default stable
 
 cd /var/www/netzprobe
 sudo npm ci
-sudo /root/.cargo/bin/cargo build --release --manifest-path server/Cargo.toml
+sudo /root/.cargo/bin/cargo build --release --workspace
 # Binary: /var/www/netzprobe/server/target/release/netzprobe-api
 
 sudo cp /var/www/netzprobe/deploy/netzprobe-api.service /etc/systemd/system/netzprobe-api.service
