@@ -111,7 +111,7 @@ fn e100_historical_2025_scenario() -> Value {
             "e100-ghd": true, "e100-ghd-target-heat-twh": 163,
             "e100-industrie-waerme": true, "e100-industrie-waerme-target-heat-twh": 220,
             "e100-stahl": true, "e100-stahl-target-mio-ton": 28,
-            "e100-chemie": true, "e100-chemie-target-twh": 440
+            "e100-chemie": true, "e100-chemie-target-twh": 685
         },
         "generation": {
             "pvInstalledGW": 102.5,

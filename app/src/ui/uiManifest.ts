@@ -181,7 +181,7 @@ export const uiManifest = {
     },
     "chemie": {
       "alreadyElectricTWh": 55,
-      "defaultTargetTotalTWh": 440,
+      "defaultTargetTotalTWh": 685,
       "maxTargetTotalTWh": 700,
       "stepTWh": 10,
       "currentElectricityTWh": 55,
