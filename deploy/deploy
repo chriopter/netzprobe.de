@@ -5,6 +5,9 @@ APP_DIR="/var/www/netzprobe"
 BRANCH="main"
 LOCK_FILE="/tmp/netzprobe-deploy.lock"
 export PATH="/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export CARGO_TARGET_DIR="$APP_DIR/server/target"
+API_BINARY="$CARGO_TARGET_DIR/release/netzprobe-api"
+API_SERVICE="netzprobe-api.service"
 
 log() {
   printf '[netzprobe-deploy] %s\n' "$*"
@@ -42,8 +45,31 @@ npm test
 npm run build
 cargo build --release --workspace
 
-if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files netzprobe-api.service >/dev/null 2>&1; then
-  systemctl restart netzprobe-api.service || log "could not restart netzprobe-api.service"
+if [ ! -x "$API_BINARY" ]; then
+  log "missing API binary after build: $API_BINARY"
+  exit 1
 fi
 
-log "built $APP_DIR/dist"
+log "built API binary: $API_BINARY"
+
+if ! command -v systemctl >/dev/null 2>&1; then
+  log "systemctl not available; cannot restart $API_SERVICE"
+  exit 1
+fi
+
+if ! systemctl list-unit-files "$API_SERVICE" >/dev/null 2>&1; then
+  log "missing systemd unit: $API_SERVICE"
+  exit 1
+fi
+
+systemctl restart "$API_SERVICE"
+sleep 1
+if ! systemctl is-active --quiet "$API_SERVICE"; then
+  log "$API_SERVICE failed to become active"
+  systemctl --no-pager --full status "$API_SERVICE" || true
+  exit 1
+fi
+
+main_pid="$(systemctl show "$API_SERVICE" --property=MainPID --value 2>/dev/null || true)"
+log "restarted $API_SERVICE: active (pid ${main_pid:-unknown})"
+log "built frontend: $APP_DIR/dist"
