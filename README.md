@@ -35,11 +35,8 @@ deploy/   Server-Deploy bleibt stabil
 | Baustein | Zweck |
 | --- | --- |
 | React + TypeScript | Browser-UI, URL-State, Typen für Szenarien/API/Charts. |
-| Vite | Dev-Server, Build, `/api`-Proxy, Build-Commit, Kopieren von `model/` nach `dist/`. Läuft nicht in Produktion. |
 | ECharts + Tailwind | Charts und Styling. |
-| Rust + Axum | Simulation und HTTP-API (`/api/simulate`, `/api/status`). |
-| Serde + Tokio | JSON und async Netzwerkbetrieb im Rust-Server. |
-| Caddy + systemd | TLS/Reverse Proxy und Prozessverwaltung auf dem Server. |
-| Vitest + Rust-Tests | Lokale Tests und Deploy-Gate. |
+| Rust + Axum | Simulation und HTTP-API (`/api/simulate`, `/api/status`), inkl. Serde/JSON und Tokio-Runtime. |
+| Vite | Dev-Server, Build, `/api`-Proxy, Build-Commit, Kopieren von `model/` nach `dist/`. Läuft nicht in Produktion. |
 
-Produktion: statische JS/CSS-Dateien im Browser, Rust-API hinter Caddy/systemd.
+Produktion: statische JS/CSS-Dateien im Browser und Rust-API.
