@@ -64,7 +64,7 @@ export function ApiStatusDot() {
         const versionMismatch = data.ok && !sameCommit(data.version?.commit);
         setStatus(data.ok ? (versionMismatch ? 'mismatch' : 'connected') : 'offline');
         setDetails(data.ok
-          ? `API ${versionMismatch ? 'Version abweichend' : 'verbunden'} · FE ${__BUILD_COMMIT__} / API ${data.version?.commit ?? 'unknown'} · Load ${data.load_average.one_minute.toLocaleString('de-DE', { maximumFractionDigits: 2 })} / ${formatCpu(data.cpu)} · ${formatMemory(data.memory)} · Uptime ${formatUptime(data.uptime_seconds)}`
+          ? `API ${versionMismatch ? 'Version abweichend' : 'verbunden'} · Load ${data.load_average.one_minute.toLocaleString('de-DE', { maximumFractionDigits: 2 })} / ${formatCpu(data.cpu)} · ${formatMemory(data.memory)} · Uptime ${formatUptime(data.uptime_seconds)}`
           : 'API offline');
       })
       .catch(() => {
