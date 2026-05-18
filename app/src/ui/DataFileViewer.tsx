@@ -7,7 +7,6 @@ const isJsonPath = (path: string) => path.endsWith('.json');
 
 export function DataFileViewer({ path }: { path: string }) {
   const url = dataFileUrl(path);
-  const root = path.startsWith('templates/') ? 'data' : 'model';
   const rawUrl = url;
   const json = isJsonPath(path);
   const [data, setData] = useState<unknown | null>(null);
@@ -28,7 +27,7 @@ export function DataFileViewer({ path }: { path: string }) {
       .catch(e => {
         if (!cancelled) setError(String(e));
       });
-    document.title = `${root}/${path} – Netzprobe`;
+    document.title = `model/${path} – Netzprobe`;
     return () => {
       cancelled = true;
     };
@@ -39,7 +38,7 @@ export function DataFileViewer({ path }: { path: string }) {
       <div className="flex items-baseline justify-between gap-3 border-b border-zinc-200 pb-3">
         <div>
           <a href={import.meta.env.BASE_URL} className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950">netzprobe.de</a>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em]"><code>{root}/{path}</code></h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em]"><code>model/{path}</code></h1>
         </div>
         <a href={rawUrl} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950">raw</a>
       </div>

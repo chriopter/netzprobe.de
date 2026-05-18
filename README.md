@@ -6,6 +6,19 @@ Live: https://netzprobe.de/
 
 Die Zahlen sind dokumentierte Modellannahmen aus öffentlichen Quellen. Sie sind als Orientierung gedacht, nicht als Prognose.
 
+## Modelle
+
+Modelle liegen unter `model/<domäne>/<id>/`:
+
+- `last/` — historische Last und Sektor-Elektrifizierung
+- `erzeugung/` — Erzeuger, historische Erzeugung, Einspeisefaktoren
+- `speicher/` — Batterie, Pumpspeicher, H₂
+- `aussenhandel/` — Strom- und H₂-Handel
+- `presets/` — vorkonfigurierte Kombinationen
+- `kern/` — Dispatch-Modell
+
+Ein Modell enthält typischerweise `package.json` für Wiki/Metadaten/Daten, `model.rs` für Rust-Typen oder Modelllogik und bei großen Reihen `hours.json` oder `data.json`. Generatoren liegen kolokiert im jeweiligen Modell.
+
 ## Struktur
 
 ```txt
@@ -23,16 +36,3 @@ deploy/   Server-Deploy bleibt stabil
 - Simulation/API: Rust, Axum
 - Tests: Vitest, Rust-Tests, Golden-Fälle, Szenario-Runner
 - Daten: JSON-Modelle unter `model/`, lazy im Wiki und per Rust-Server eingebunden
-
-## Modelle
-
-Modelle liegen unter `model/<domäne>/<id>/`:
-
-- `last/` — historische Last und Sektor-Elektrifizierung
-- `erzeugung/` — Erzeuger, historische Erzeugung, Einspeisefaktoren
-- `speicher/` — Batterie, Pumpspeicher, H₂
-- `aussenhandel/` — Strom- und H₂-Handel
-- `presets/` — vorkonfigurierte Kombinationen
-- `kern/` — Dispatch-Modell
-
-Ein Modell enthält typischerweise `package.json` für Wiki/Metadaten/Daten, `model.rs` für Rust-Typen oder Modelllogik und bei großen Reihen `hours.json` oder `data.json`. Generatoren liegen kolokiert im jeweiligen Modell.

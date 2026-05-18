@@ -41,9 +41,9 @@ Vor dem Mergen jedes neuen oder geänderten Szenarios:
 ## Wiki-Stil
 
 Description-JSONs rendern im Datenhandbuch als Wiki-Eintrag. Vorbilder:
-- Arbeitsvorlage: `data/templates/scenario-description.template.json` — Struktur und Mindestniveau für neue Szenarien.
-- Reine Daten ohne Slider: `data/last/2025/description.json` — kein `overview`, kein `sections`.
-- Szenarien mit Slider und Formel: `data/last/e100-pkw/description.json` — aktueller Qualitätsanker für fachbuchartigen Lesefluss.
+- Arbeitsvorlage: `model/templates/scenario-description.template.json` — Struktur und Mindestniveau für neue Szenarien.
+- Reine Daten ohne Slider: `model/last/2025/package.json` — kein `overview`, kein `sections`.
+- Szenarien mit Slider und Formel: `model/last/e100-pkw/package.json` — aktueller Qualitätsanker für fachbuchartigen Lesefluss.
 
 Regeln:
 
@@ -55,10 +55,10 @@ Regeln:
   - **Verteilung**: zeitliche Verteilung und Profil-Quelle.
   - **Formel**: Rechenvorschrift inklusive Default-Auswertung.
   Kein zusätzlicher `Quelle`-Eintrag — Quellen stehen in `source`/`sourceUrls` und werden als eigenes Wiki-Kapitel gerendert.
-- `method`: technische Herleitung mit Bezeichnern aus `data.json`/`model.ts`. Hier gehören Mengenrechnung, Faktorenkorridore und Profilnormierung hin.
+- `method`: technische Herleitung mit Bezeichnern aus `package.json`, `data.json` und `model.rs`. Hier gehören Mengenrechnung, Faktorenkorridore und Profilnormierung hin.
 - `method`-Einträge mit Präfix `Datei:` werden nicht in der Herleitung gezeigt, sondern im `Files`-Tab als Reproduktionshinweis gerendert.
 - `fields`: eine knappe Zeile pro Top-Level-Feld. Verschachtelte Strukturen (`degreeDayProfile`, `hourlyProfile`) als ein einziger Eintrag mit Inhalt-Zusammenfassung, nicht jede Sub-Property einzeln.
-- `file`: auf `<domain>/<paket>/data.json`, wenn vorhanden. `scripts`: mindestens `<domain>/<paket>/model.ts`, plus `<domain>/<paket>/generate.mjs` wenn vorhanden. Ordnername, `id` und Modellcode-Pfad müssen identisch sein.
+- `file`: auf `<domain>/<paket>/data.json`, wenn vorhanden. `scripts`: mindestens `<domain>/<paket>/model.rs`, plus `<domain>/<paket>/generate.mjs` wenn vorhanden. Ordnername, `id` und Modellcode-Pfad müssen identisch sein.
 - `caveats`: 3–5 Punkte, jeweils ein Satz, nur echte Grenzen. Scope-Lücken (nicht-modellierte Teilbereiche) mit Mengenangabe explizit benennen; optimistische Annahmen am Rand der Realweltdaten als solche flaggen, idealerweise mit Quellenverweis.
 - `sections` vermeiden. „Erwägungsgründe" und pädagogische Bullet-Listen gehören weder ins Wiki noch in den Code.
 - Keine tote Wiederholung: Zahlen dürfen in `description`, `overview` und `method` vorkommen, wenn sie dort unterschiedliche Aufgaben erfüllen (Lesefluss, Bedienung, Herleitung). Keine reinen Copy-Paste-Dubletten.

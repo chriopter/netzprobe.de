@@ -677,13 +677,12 @@ function DataJsonTabPanel({ path }: { path: string }) {
 }
 
 function FilePathLine({ label, path, viewer = false }: { label: string; path: string; viewer?: boolean }) {
-  const root = path.startsWith('templates/') ? 'data' : 'model';
   return <div className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_70px_minmax(0,1fr)]">
     <dt className="min-w-0"><code className="break-words">{label}</code></dt>
     <dd className="min-w-0 text-zinc-500">Pfad</dd>
     <dd className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
       <a href={viewer ? dataFileViewerUrl(path) : dataFileUrl(path)} target="_blank" rel="noreferrer" className="break-all underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">
-        <code>{root}/{path}</code>
+        <code>model/{path}</code>
       </a>
       <a href={dataFileUrl(path)} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
     </dd>
