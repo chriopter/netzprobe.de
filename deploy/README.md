@@ -16,7 +16,7 @@ sudo /root/.cargo/bin/rustup default stable
 
 cd /var/www/netzprobe
 sudo npm ci
-sudo CARGO_TARGET_DIR=/var/www/netzprobe/server/target /root/.cargo/bin/cargo build --release --workspace
+sudo CARGO_TARGET_DIR=/var/www/netzprobe/server/target NETZPROBE_BUILD_COMMIT="$(git rev-parse HEAD)" /root/.cargo/bin/cargo build --release --workspace
 # Binary: /var/www/netzprobe/server/target/release/netzprobe-api
 
 sudo cp /var/www/netzprobe/deploy/netzprobe-api.service /etc/systemd/system/netzprobe-api.service

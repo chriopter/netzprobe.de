@@ -23,10 +23,16 @@ struct HealthResponse {
 #[derive(Serialize)]
 struct StatusResponse {
     ok: bool,
+    version: VersionStatus,
     uptime_seconds: u64,
     load_average: LoadAverage,
     memory: MemoryStatus,
     cpu: CpuStatus,
+}
+
+#[derive(Serialize)]
+struct VersionStatus {
+    commit: &'static str,
 }
 
 #[derive(Serialize)]
@@ -67,6 +73,9 @@ async fn health() -> Json<HealthResponse> {
 async fn status() -> Json<StatusResponse> {
     Json(StatusResponse {
         ok: true,
+        version: VersionStatus {
+            commit: env!("NETZPROBE_BUILD_COMMIT"),
+        },
         uptime_seconds: STARTED_AT
             .get()
             .map(Instant::elapsed)

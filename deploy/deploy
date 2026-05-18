@@ -43,7 +43,7 @@ npm ci
 cargo test --workspace
 npm test
 npm run build
-cargo build --release --workspace
+NETZPROBE_BUILD_COMMIT="$after" cargo build --release --workspace
 
 if [ ! -x "$API_BINARY" ]; then
   log "missing API binary after build: $API_BINARY"

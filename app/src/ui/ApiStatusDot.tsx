@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 
-type ApiStatus = 'checking' | 'connected' | 'offline';
+type ApiStatus = 'checking' | 'connected' | 'mismatch' | 'offline';
 type ApiStatusResponse = {
   ok: boolean;
+  version?: {
+    commit?: string;
+  };
   uptime_seconds: number;
   load_average: {
     one_minute: number;
@@ -40,6 +43,11 @@ const formatMemory = (memory: ApiStatusResponse['memory']) => {
 const formatCpu = (cpu: ApiStatusResponse['cpu']) =>
   `${cpu.cores.toLocaleString('de-DE', { maximumFractionDigits: 1 })} CPU`;
 
+const sameCommit = (apiCommit?: string) => {
+  if (!apiCommit || apiCommit === 'unknown' || __BUILD_COMMIT__ === 'unknown') return true;
+  return apiCommit === __BUILD_COMMIT__ || apiCommit.startsWith(__BUILD_COMMIT__) || __BUILD_COMMIT__.startsWith(apiCommit);
+};
+
 export function ApiStatusDot() {
   const [status, setStatus] = useState<ApiStatus>('checking');
   const [details, setDetails] = useState<string>('API wird geprüft');
@@ -53,9 +61,10 @@ export function ApiStatusDot() {
       })
       .then(data => {
         if (cancelled) return;
-        setStatus(data.ok ? 'connected' : 'offline');
+        const versionMismatch = data.ok && !sameCommit(data.version?.commit);
+        setStatus(data.ok ? (versionMismatch ? 'mismatch' : 'connected') : 'offline');
         setDetails(data.ok
-          ? `API verbunden · Load ${data.load_average.one_minute.toLocaleString('de-DE', { maximumFractionDigits: 2 })} / ${formatCpu(data.cpu)} · ${formatMemory(data.memory)} · Uptime ${formatUptime(data.uptime_seconds)}`
+          ? `API ${versionMismatch ? 'Version abweichend' : 'verbunden'} · FE ${__BUILD_COMMIT__} / API ${data.version?.commit ?? 'unknown'} · Load ${data.load_average.one_minute.toLocaleString('de-DE', { maximumFractionDigits: 2 })} / ${formatCpu(data.cpu)} · ${formatMemory(data.memory)} · Uptime ${formatUptime(data.uptime_seconds)}`
           : 'API offline');
       })
       .catch(() => {
@@ -69,6 +78,8 @@ export function ApiStatusDot() {
 
   const className = status === 'connected'
     ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)]'
+    : status === 'mismatch'
+      ? 'bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.18)]'
     : status === 'offline'
       ? 'bg-zinc-300'
       : 'animate-pulse bg-zinc-300';
