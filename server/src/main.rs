@@ -3,10 +3,7 @@ use axum::{
     http::StatusCode,
     routing::{get, post},
 };
-use netzprobe_api::{
-    model_registry::ModelRegistry,
-    simulation::{ApiView, SimulationHarness},
-};
+use netzprobe_api::simulation::{ApiView, SimulationHarness};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -90,7 +87,7 @@ struct SimulateRequest {
 async fn simulate(
     Json(payload): Json<SimulateRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let harness = SimulationHarness::new(ModelRegistry::empty());
+    let harness = SimulationHarness::new();
     harness
         .run_api_result_with_view(&payload.scenario, payload.view)
         .map(Json)
@@ -108,7 +105,7 @@ async fn simulate(
 async fn resolve_scenario(
     Json(payload): Json<SimulateRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let harness = SimulationHarness::new(ModelRegistry::empty());
+    let harness = SimulationHarness::new();
     harness
         .resolve_scenario(&payload.scenario)
         .map(Json)

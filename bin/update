@@ -17,7 +17,7 @@ echo "→ Type-Check"
 npx tsc --noEmit
 
 echo "→ Rust-Tests"
-cargo test --manifest-path server/Cargo.toml
+cargo test --workspace
 
 echo "→ Tests"
 npm test
@@ -26,7 +26,7 @@ echo "→ Build"
 npm run build
 
 echo "→ Rust-Build"
-cargo build --release --manifest-path server/Cargo.toml
+cargo build --release --workspace
 
 echo ""
 echo "✓ Alle Pakete aktualisiert, Type-Check + Tests + Build grün."

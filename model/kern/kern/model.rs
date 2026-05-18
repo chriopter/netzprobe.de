@@ -1,8 +1,15 @@
+pub mod api;
 mod data;
 mod dispatch;
+pub mod error;
+pub mod fingerprint;
 mod result;
 
-use crate::simulation::SimulationError;
+pub use api::ApiView;
+pub use error::ModelError;
+pub use fingerprint::{
+    GOLDEN_HOUR_SAMPLES, HourFingerprint, ResultFingerprint, SecurityStatus, SummaryFingerprint,
+};
 use data::{
     berlin_date_and_hour, data_error, gen_number, number, number_or, package_data, parse_json,
     path_number, s_bool, s_number, snap_gen, snap_storage, snap_trade, storage_number,
@@ -30,6 +37,39 @@ struct FactorHour {
     time: String,
     solar_irradiance: Vec<f64>,
     wind100m: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct HistoricalGenerationHour {
+    #[serde(rename = "time")]
+    _time: String,
+    #[serde(rename = "pvMW")]
+    pv_mw: f64,
+    #[serde(rename = "windOnMW")]
+    wind_on_mw: f64,
+    #[serde(rename = "windOffMW")]
+    wind_off_mw: f64,
+    #[serde(rename = "nuclearMW", default)]
+    nuclear_mw: f64,
+    #[serde(rename = "gasMW")]
+    gas_mw: f64,
+    #[serde(rename = "coalMW")]
+    coal_mw: f64,
+    #[serde(rename = "hydroMW")]
+    hydro_mw: f64,
+    #[serde(rename = "biomassMW")]
+    biomass_mw: f64,
+    #[serde(rename = "wasteMW")]
+    waste_mw: f64,
+    #[serde(rename = "oilMW")]
+    oil_mw: f64,
+    #[serde(rename = "geothermalMW")]
+    geothermal_mw: f64,
+    #[serde(rename = "otherMW")]
+    other_mw: f64,
+    #[serde(rename = "importExportMW")]
+    import_export_mw: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -86,6 +126,7 @@ struct StoragePackage {
 
 #[derive(Debug, Clone)]
 struct HourInput {
+    index: usize,
     time: String,
     load_mw: f64,
     solar_factor: f64,
@@ -95,8 +136,10 @@ struct HourInput {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct StaticModel {
+pub struct StaticModel {
     hours: Vec<HourInput>,
+    historical_2025: Vec<HistoricalGenerationHour>,
+    historical_2017: Vec<HistoricalGenerationHour>,
     demand: HashMap<DemandId, DemandPackage>,
     generation: HashMap<&'static str, GenerationPackage>,
     storage: HashMap<&'static str, StoragePackage>,
@@ -124,6 +167,7 @@ struct StorageSlot {
 
 #[derive(Debug, Clone, Copy, Default)]
 struct SupplyBuild {
+    fixed_generation: bool,
     pv_available_gw: f64,
     wind_on_available_gw: f64,
     wind_off_available_gw: f64,
@@ -134,6 +178,12 @@ struct SupplyBuild {
     kohle_min_gw: f64,
     gas_max_gw: f64,
     kohle_max_gw: f64,
+    geothermal_gw: f64,
+    waste_gw: f64,
+    oil_gw: f64,
+    other_gw: f64,
+    fixed_import_gw: f64,
+    fixed_export_gw: f64,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -146,6 +196,10 @@ struct SimHour {
     kernkraft_gw: f64,
     biomasse_gw: f64,
     laufwasser_gw: f64,
+    geothermal_gw: f64,
+    waste_gw: f64,
+    oil_gw: f64,
+    other_gw: f64,
     gas_gw: f64,
     kohle_gw: f64,
     pv_curtailed_gw: f64,
@@ -173,13 +227,17 @@ struct SimHour {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct SimulationResult {
+pub struct SimulationResult {
     hours: Vec<SimHour>,
 }
 
 impl StaticModel {
-    pub(crate) fn load() -> Result<Self, SimulationError> {
+    pub fn load() -> Result<Self, ModelError> {
         let loads: Vec<LoadHour> = parse_json(include_str!("../../last/2025/hours.json"))?;
+        let historical_2025: Vec<HistoricalGenerationHour> =
+            parse_json(include_str!("../../erzeugung/2025/hours.json"))?;
+        let historical_2017: Vec<HistoricalGenerationHour> =
+            parse_json(include_str!("../../erzeugung/2017/hours.json"))?;
         let factors_raw = value_field(
             include_str!("../../erzeugung/einspeisefaktoren-2025/data.json"),
             "hours",
@@ -205,7 +263,7 @@ impl StaticModel {
             .collect();
 
         let mut hours = Vec::with_capacity(loads.len());
-        for load in loads {
+        for (index, load) in loads.into_iter().enumerate() {
             let factor = factors_by_time
                 .get(&load.time)
                 .ok_or_else(|| data_error(format!("missing factors for {}", load.time)))?;
@@ -214,6 +272,7 @@ impl StaticModel {
                 .get(&date)
                 .ok_or_else(|| data_error(format!("missing heating day for {}", date)))?;
             hours.push(HourInput {
+                index,
                 time: load.time,
                 load_mw: load.load_mw,
                 solar_factor: factor.solar_irradiance.first().copied().unwrap_or(0.0),
@@ -361,6 +420,8 @@ impl StaticModel {
 
         Ok(Self {
             hours,
+            historical_2025,
+            historical_2017,
             demand,
             generation,
             storage,
@@ -370,7 +431,7 @@ impl StaticModel {
         })
     }
 
-    pub(crate) fn run(&self, scenario: &Value) -> Result<SimulationResult, SimulationError> {
+    pub fn run(&self, scenario: &Value) -> Result<SimulationResult, ModelError> {
         let scenario = self.resolve_supply_preset(scenario)?;
 
         if scenario
@@ -379,7 +440,7 @@ impl StaticModel {
             .unwrap_or("custom")
             != "custom"
         {
-            return Err(SimulationError::Unsupported {
+            return Err(ModelError::Unsupported {
                 message: "Rust-Parity-Harness unterstützt aktuell nur supplyPreset=custom"
                     .to_string(),
             });
@@ -393,7 +454,7 @@ impl StaticModel {
         Ok(SimulationResult { hours })
     }
 
-    pub(crate) fn resolve_supply_preset(&self, scenario: &Value) -> Result<Value, SimulationError> {
+    pub fn resolve_supply_preset(&self, scenario: &Value) -> Result<Value, ModelError> {
         let preset = scenario
             .get("supplyPreset")
             .and_then(Value::as_str)
@@ -411,6 +472,13 @@ impl StaticModel {
             .ok_or_else(|| data_error("scenario must be an object"))?;
         let override_values = self.supply_override(preset, demand_twh)?;
         obj.insert("supplyPreset".to_string(), json!("custom"));
+        if preset == "historical-2025" {
+            obj.insert("_fixedGenerationYear".to_string(), json!(2025));
+        } else if preset == "historical-2017" {
+            obj.insert("_fixedGenerationYear".to_string(), json!(2017));
+        } else {
+            obj.remove("_fixedGenerationYear");
+        }
         obj.insert("generation".to_string(), override_values.0);
         obj.insert("storage".to_string(), override_values.1);
         obj.insert("import".to_string(), override_values.2);
@@ -422,20 +490,20 @@ impl StaticModel {
         &self,
         preset: &str,
         demand_twh: f64,
-    ) -> Result<(Value, Value, Value, Value), SimulationError> {
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         match preset {
             "historical-2025" => self.preset_historical_2025(),
             "historical-2017" => self.preset_historical_2017(),
             "100ee-noimport" => self.preset_100ee_noimport(demand_twh),
             "50ee-50import" => self.preset_50ee_50import(demand_twh),
             "2025-skaliert" => self.preset_2025_scaled(demand_twh),
-            _ => Err(SimulationError::Unsupported {
+            _ => Err(ModelError::Unsupported {
                 message: format!("Unbekanntes supplyPreset: {preset}"),
             }),
         }
     }
 
-    fn preset_historical_2025(&self) -> Result<(Value, Value, Value, Value), SimulationError> {
+    fn preset_historical_2025(&self) -> Result<(Value, Value, Value, Value), ModelError> {
         Ok((
             json!({
                 "pvInstalledGW": gen_number("pv", "defaultInstalledGW")?,
@@ -470,7 +538,7 @@ impl StaticModel {
         ))
     }
 
-    fn preset_historical_2017(&self) -> Result<(Value, Value, Value, Value), SimulationError> {
+    fn preset_historical_2017(&self) -> Result<(Value, Value, Value, Value), ModelError> {
         Ok((
             json!({
                 "pvInstalledGW": 42.4,
@@ -506,7 +574,7 @@ impl StaticModel {
     fn preset_100ee_noimport(
         &self,
         demand_twh: f64,
-    ) -> Result<(Value, Value, Value, Value), SimulationError> {
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         self.preset_100ee_with_demand(
             demand_twh,
             0.0,
@@ -517,7 +585,7 @@ impl StaticModel {
     fn preset_50ee_50import(
         &self,
         demand_twh: f64,
-    ) -> Result<(Value, Value, Value, Value), SimulationError> {
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         let (generation, storage, _import, _export) = self.preset_100ee_with_demand(
             demand_twh / 3.0,
             0.0,
@@ -542,7 +610,7 @@ impl StaticModel {
         demand_twh: f64,
         import_gw: f64,
         export_gw: f64,
-    ) -> Result<(Value, Value, Value, Value), SimulationError> {
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
         let yield_wind = self.annual_yield_twh_per_gw("wind").max(0.1);
         let baseline_bio_twh = gen_number("biomasse", "defaultInstalledGW")? * 8.76;
@@ -587,7 +655,7 @@ impl StaticModel {
     fn preset_2025_scaled(
         &self,
         demand_twh: f64,
-    ) -> Result<(Value, Value, Value, Value), SimulationError> {
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         let factor = demand_twh / 466.0;
         Ok((
             json!({
@@ -637,7 +705,7 @@ impl StaticModel {
             / 1000.0
     }
 
-    fn initial_storage_state(&self, scenario: &Value) -> Result<StorageState, SimulationError> {
+    fn initial_storage_state(&self, scenario: &Value) -> Result<StorageState, ModelError> {
         Ok(StorageState {
             batterie: s_number(scenario, &["storage", "batterieEnergyGWh"])?
                 * self.storage["batterie"].initial_state_of_charge_fraction,
@@ -648,7 +716,7 @@ impl StaticModel {
         })
     }
 
-    fn storage_slots(&self, scenario: &Value) -> Result<Vec<StorageSlot>, SimulationError> {
+    fn storage_slots(&self, scenario: &Value) -> Result<Vec<StorageSlot>, ModelError> {
         let mut slots = vec![
             StorageSlot {
                 id: "batterie",
@@ -683,10 +751,19 @@ impl StaticModel {
         &self,
         scenario: &Value,
         mut storage: StorageState,
-    ) -> Result<(Vec<SimHour>, StorageState), SimulationError> {
+    ) -> Result<(Vec<SimHour>, StorageState), ModelError> {
         let slots = self.storage_slots(scenario)?;
-        let import_limit_gw = s_number(scenario, &["import", "stromGW"])?;
-        let export_limit_gw = s_number(scenario, &["export", "stromGW"])?;
+        let fixed_generation = fixed_generation_year(scenario).is_some();
+        let import_limit_gw = if fixed_generation {
+            0.0
+        } else {
+            s_number(scenario, &["import", "stromGW"])?
+        };
+        let export_limit_gw = if fixed_generation {
+            0.0
+        } else {
+            s_number(scenario, &["export", "stromGW"])?
+        };
         let import_emission = s_number(scenario, &["import", "stromEmissionGperKWh"])?;
         let sector_h2_demand_gw = self.total_sector_h2_demand_gw(scenario)?;
         let h2_import_inflow_gw = s_number(scenario, &["import", "h2TWh"])? * 1000.0 / 8760.0;
@@ -710,6 +787,10 @@ impl StaticModel {
             let mut kernkraft_gw = build.kernkraft_available_gw;
             let mut biomasse_gw = build.biomasse_gw;
             let mut laufwasser_gw = build.laufwasser_gw;
+            let geothermal_gw = build.geothermal_gw;
+            let waste_gw = build.waste_gw;
+            let oil_gw = build.oil_gw;
+            let other_gw = build.other_gw;
             let mut gas_gw = build.gas_min_gw;
             let mut kohle_gw = build.kohle_min_gw;
             let mut pv_curtailed_gw = 0.0;
@@ -722,8 +803,8 @@ impl StaticModel {
             let mut pumpspeicher_discharge_gw = 0.0;
             let mut h2_charge_gw = 0.0;
             let mut h2_discharge_gw = 0.0;
-            let mut import_gw = 0.0;
-            let mut export_gw = 0.0;
+            let mut import_gw = build.fixed_import_gw;
+            let mut export_gw = build.fixed_export_gw;
             let mut load_shedding_gw = 0.0;
 
             let baseline_supply = pv_gw
@@ -732,9 +813,13 @@ impl StaticModel {
                 + kernkraft_gw
                 + biomasse_gw
                 + laufwasser_gw
+                + geothermal_gw
+                + waste_gw
+                + oil_gw
+                + other_gw
                 + gas_gw
                 + kohle_gw;
-            let mut mismatch = baseline_supply - load_gw;
+            let mut mismatch = baseline_supply + import_gw - export_gw - load_gw;
 
             if mismatch > EPS {
                 for slot in &slots {
@@ -754,8 +839,10 @@ impl StaticModel {
                     }
                     mismatch -= charged;
                 }
-                export_gw = mismatch.min(export_limit_gw).max(0.0);
-                mismatch -= export_gw;
+                if !build.fixed_generation {
+                    export_gw = mismatch.min(export_limit_gw).max(0.0);
+                    mismatch -= export_gw;
+                }
 
                 if mismatch > EPS {
                     let curtail = self.curtail_variable_sources(mismatch, build);
@@ -805,9 +892,11 @@ impl StaticModel {
                     }
                     deficit -= discharged;
                 }
-                import_gw = deficit.min(import_limit_gw).max(0.0);
-                deficit -= import_gw;
-                if deficit > EPS {
+                if !build.fixed_generation {
+                    import_gw = deficit.min(import_limit_gw).max(0.0);
+                    deficit -= import_gw;
+                }
+                if deficit > EPS && !build.fixed_generation {
                     let gas_headroom = build.gas_max_gw - gas_gw;
                     let kohle_headroom = build.kohle_max_gw - kohle_gw;
                     let ramp = ramp_dispatchables(
@@ -832,6 +921,10 @@ impl StaticModel {
                 + kernkraft_gw
                 + biomasse_gw
                 + laufwasser_gw
+                + geothermal_gw
+                + waste_gw
+                + oil_gw
+                + other_gw
                 + gas_gw
                 + kohle_gw;
             let storage_charge_gw = batterie_charge_gw + pumpspeicher_charge_gw + h2_charge_gw;
@@ -864,6 +957,10 @@ impl StaticModel {
                 kernkraft_gw,
                 biomasse_gw,
                 laufwasser_gw,
+                geothermal_gw,
+                waste_gw,
+                oil_gw,
+                other_gw,
                 gas_gw,
                 kohle_gw,
                 pv_curtailed_gw,
@@ -898,7 +995,38 @@ impl StaticModel {
         &self,
         row: &HourInput,
         scenario: &Value,
-    ) -> Result<SupplyBuild, SimulationError> {
+    ) -> Result<SupplyBuild, ModelError> {
+        if let Some(year) = fixed_generation_year(scenario) {
+            let source = match year {
+                2025 => &self.historical_2025,
+                2017 => &self.historical_2017,
+                _ => return Err(data_error(format!("unknown fixed generation year {year}"))),
+            };
+            let hour = source
+                .get(row.index)
+                .ok_or_else(|| data_error(format!("missing historical generation for hour {}", row.index)))?;
+            let import_gw = (hour.import_export_mw / 1000.0).max(0.0);
+            let export_gw = (-hour.import_export_mw / 1000.0).max(0.0);
+            return Ok(SupplyBuild {
+                fixed_generation: true,
+                pv_available_gw: hour.pv_mw / 1000.0,
+                wind_on_available_gw: hour.wind_on_mw / 1000.0,
+                wind_off_available_gw: hour.wind_off_mw / 1000.0,
+                kernkraft_available_gw: hour.nuclear_mw / 1000.0,
+                biomasse_gw: hour.biomass_mw / 1000.0,
+                laufwasser_gw: hour.hydro_mw / 1000.0,
+                gas_min_gw: hour.gas_mw / 1000.0,
+                kohle_min_gw: hour.coal_mw / 1000.0,
+                gas_max_gw: hour.gas_mw / 1000.0,
+                kohle_max_gw: hour.coal_mw / 1000.0,
+                geothermal_gw: hour.geothermal_mw / 1000.0,
+                waste_gw: hour.waste_mw / 1000.0,
+                oil_gw: hour.oil_mw / 1000.0,
+                other_gw: hour.other_mw / 1000.0,
+                fixed_import_gw: import_gw,
+                fixed_export_gw: export_gw,
+            });
+        }
         let pv_factor = (row.solar_factor
             * s_number(scenario, &["generation", "pvCapacityFactorMultiplier"])?)
         .min(1.0);
@@ -909,6 +1037,7 @@ impl StaticModel {
             * s_number(scenario, &["generation", "windOffCapacityFactorMultiplier"])?)
         .min(1.0);
         Ok(SupplyBuild {
+            fixed_generation: false,
             pv_available_gw: s_number(scenario, &["generation", "pvInstalledGW"])? * pv_factor,
             wind_on_available_gw: s_number(scenario, &["generation", "windOnInstalledGW"])?
                 * wind_on_factor,
@@ -930,6 +1059,12 @@ impl StaticModel {
                 * self.generation["gas"].availability,
             kohle_max_gw: s_number(scenario, &["generation", "kohleInstalledGW"])?
                 * self.generation["kohle"].availability,
+            geothermal_gw: 0.0,
+            waste_gw: 0.0,
+            oil_gw: 0.0,
+            other_gw: 0.0,
+            fixed_import_gw: 0.0,
+            fixed_export_gw: 0.0,
         })
     }
 
@@ -979,7 +1114,7 @@ impl StaticModel {
         row: &HourInput,
         scenario: &Value,
         pool_cover_h2_gw: f64,
-    ) -> Result<f64, SimulationError> {
+    ) -> Result<f64, ModelError> {
         let mut load = if s_bool(scenario, &["demand", "last-2025"])? {
             row.load_mw / 1000.0
         } else {
@@ -1065,7 +1200,7 @@ impl StaticModel {
         id: DemandId,
         enabled_key: &str,
         target_key: &str,
-    ) -> Result<f64, SimulationError> {
+    ) -> Result<f64, ModelError> {
         if !s_bool(scenario, &["demand", enabled_key])? {
             return Ok(0.0);
         }
@@ -1109,7 +1244,7 @@ impl StaticModel {
         }
     }
 
-    fn total_sector_h2_demand_gw(&self, scenario: &Value) -> Result<f64, SimulationError> {
+    fn total_sector_h2_demand_gw(&self, scenario: &Value) -> Result<f64, ModelError> {
         let d = self.sector_h2_demand_twh(scenario)?;
         Ok((d.stahl + d.chemie + d.schiff + d.flug) * 1000.0 / 8760.0)
     }
@@ -1118,7 +1253,7 @@ impl StaticModel {
         &self,
         pool_cover_h2_gw: f64,
         scenario: &Value,
-    ) -> Result<f64, SimulationError> {
+    ) -> Result<f64, ModelError> {
         if pool_cover_h2_gw <= 0.0 {
             return Ok(0.0);
         }
@@ -1149,7 +1284,7 @@ impl StaticModel {
         Ok(reduction)
     }
 
-    fn sector_h2_demand_twh(&self, scenario: &Value) -> Result<SectorH2, SimulationError> {
+    fn sector_h2_demand_twh(&self, scenario: &Value) -> Result<SectorH2, ModelError> {
         let strom = self.sector_h2_strom_twh(scenario)?;
         let ratio = self.sector_strom_per_h2()?;
         Ok(SectorH2 {
@@ -1176,7 +1311,7 @@ impl StaticModel {
         })
     }
 
-    fn sector_h2_strom_twh(&self, scenario: &Value) -> Result<SectorH2, SimulationError> {
+    fn sector_h2_strom_twh(&self, scenario: &Value) -> Result<SectorH2, ModelError> {
         let mut out = SectorH2::default();
         if s_bool(scenario, &["demand", "e100-stahl"])? {
             let m = &self.demand[&DemandId::Stahl].data;
@@ -1203,7 +1338,7 @@ impl StaticModel {
         Ok(out)
     }
 
-    fn sector_strom_per_h2(&self) -> Result<SectorH2, SimulationError> {
+    fn sector_strom_per_h2(&self) -> Result<SectorH2, ModelError> {
         Ok(SectorH2 {
             stahl: number(
                 &self.demand[&DemandId::Stahl].data,
@@ -1226,4 +1361,11 @@ struct SectorH2 {
     chemie: f64,
     schiff: f64,
     flug: f64,
+}
+
+fn fixed_generation_year(scenario: &Value) -> Option<u32> {
+    scenario
+        .get("_fixedGenerationYear")
+        .and_then(Value::as_u64)
+        .map(|value| value as u32)
 }

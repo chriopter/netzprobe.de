@@ -37,10 +37,10 @@ fi
 log "deploying $after"
 
 npm ci
-cargo test --manifest-path server/Cargo.toml
+cargo test --workspace
 npm test
 npm run build
-cargo build --release --manifest-path server/Cargo.toml
+cargo build --release --workspace
 
 if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files netzprobe-api.service >/dev/null 2>&1; then
   systemctl restart netzprobe-api.service || log "could not restart netzprobe-api.service"

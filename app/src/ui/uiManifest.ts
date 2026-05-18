@@ -65,6 +65,7 @@ export const uiManifest = {
     },
     "lkw": {
       "referenceBnKm": 93,
+      "alreadyElectricBnKm": 1.5,
       "kwhPerKm": 0.6,
       "defaultTargetBnKm": 117,
       "maxTargetBnKm": 170,
@@ -125,6 +126,7 @@ export const uiManifest = {
       "defaultTargetHeatTWh": 163,
       "maxTargetHeatTWh": 220,
       "stepHeatTWh": 1,
+      "seasonalCop": 2.8,
       "summary": "JAZ 2,8",
       "referenceScales": {
         "activity": {
@@ -136,9 +138,11 @@ export const uiManifest = {
     },
     "industrie-waerme": {
       "referenceHeatTWh": 220,
+      "alreadyElectricHeatTWh": 25,
       "defaultTargetHeatTWh": 220,
       "maxTargetHeatTWh": 320,
       "stepHeatTWh": 5,
+      "electricityPerHeat": 0.55,
       "temperatureMix": {
         "ntShare": 0.3,
         "mtShare": 0.45,
@@ -164,6 +168,8 @@ export const uiManifest = {
       "hydrogenKgPerTonSteel": 60,
       "electrolyzerKwhPerKgH2": 52,
       "eafMwhPerTon": 0.6,
+      "mwhPerTon": 3.72,
+      "alreadyElectricTWh": 4.9,
       "summary": "DRI-H2 + EAF · 3,72 MWh/t",
       "referenceScales": {
         "activity": {
@@ -175,7 +181,7 @@ export const uiManifest = {
     },
     "chemie": {
       "alreadyElectricTWh": 55,
-      "defaultTargetTotalTWh": 685,
+      "defaultTargetTotalTWh": 440,
       "maxTargetTotalTWh": 700,
       "stepTWh": 10,
       "currentElectricityTWh": 55,
