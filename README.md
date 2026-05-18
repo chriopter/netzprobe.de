@@ -11,32 +11,22 @@ Die Zahlen sind dokumentierte Modellannahmen aus öffentlichen Quellen. Sie sind
 ```txt
 app/      React/Vite-UI
 server/   Rust-API
-model/    Modellpakete und Datensätze
+model/    Modelle und Datensätze
 test/     Vitest, Golden-Fälle, Szenario-Runner
 bin/      lokale Kommandos
 deploy/   Server-Deploy bleibt stabil
 ```
 
-## Entwicklung
+## Stack
 
-```bash
-npm install
-bin/dev       # Rust-API + Vite
-bin/test      # Vitest + Rust-Tests + Szenario-Runner + Build
-bin/update    # latest-Abhängigkeiten frisch auflösen und prüfen
-```
+- Frontend: React, TypeScript, Vite
+- Simulation/API: Rust, Axum
+- Tests: Vitest, Rust-Tests, Golden-Fälle, Szenario-Runner
+- Daten: JSON-Modelle unter `model/`, lazy im Wiki und per Rust-Server eingebunden
 
-Einzelne Gates:
+## Modelle
 
-```bash
-npm test
-npm run build
-cargo test --manifest-path server/Cargo.toml
-```
-
-## Modellpakete
-
-Pakete liegen unter `model/<domäne>/<id>/`:
+Modelle liegen unter `model/<domäne>/<id>/`:
 
 - `last/` — historische Last und Sektor-Elektrifizierung
 - `erzeugung/` — Erzeuger, historische Erzeugung, Einspeisefaktoren
@@ -45,8 +35,4 @@ Pakete liegen unter `model/<domäne>/<id>/`:
 - `presets/` — vorkonfigurierte Kombinationen
 - `kern/` — Dispatch-Modell
 
-Ein Paket enthält typischerweise `package.json` für Wiki/Metadaten/Daten, `model.rs` für Rust-Typen oder Paketlogik und bei großen Reihen `hours.json` oder `data.json`. Generatoren liegen kolokiert im jeweiligen Paket.
-
-## Deploy
-
-`deploy/` bleibt top-level, damit bestehende Serverpfade, Webhook, systemd und Caddy-Konfiguration stabil bleiben.
+Ein Modell enthält typischerweise `package.json` für Wiki/Metadaten/Daten, `model.rs` für Rust-Typen oder Modelllogik und bei großen Reihen `hours.json` oder `data.json`. Generatoren liegen kolokiert im jeweiligen Modell.
