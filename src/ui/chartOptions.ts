@@ -120,16 +120,54 @@ const angleAxis = (hours: SimHour[], chartHours: SimHour[], compact = false) => 
   splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
 });
 
-const radiusAxis = (unit = 'GW') => ({
+const roundedAxisMax = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) return undefined;
+  if (value <= 10) return Math.ceil(value);
+  const step = value <= 100 ? 10 : 25;
+  return Math.ceil(value / step) * step;
+};
+
+export function roundedMixScaleMaxGW(value: number) {
+  return roundedAxisMax(value);
+}
+
+export function mixReferenceScaleMaxGW(peakGW: number, headroom = 1.5) {
+  if (!Number.isFinite(peakGW) || peakGW <= 0) return undefined;
+  const target = peakGW * headroom;
+  const step = target <= 100 ? 10 : target <= 250 ? 25 : 100;
+  const roundedDownTarget = Math.floor(target / step) * step;
+  const peakCeiling = roundedAxisMax(peakGW);
+  if (!peakCeiling) return undefined;
+  return Math.max(roundedDownTarget, peakCeiling);
+}
+
+export function mixScalePeakGW(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY) {
+  return hours.reduce((currentMax, hour) => {
+    const supply = MIX_GROUPS.reduce((sum, group) => sum + group.leaves.reduce((groupSum, leaf) => groupSum + (visibility[leaf.key] ? valueOf(hour, leaf.key) : 0), 0), 0)
+      + (visibility.storageDischargeGW ? hour.storageDischargeGW : 0)
+      + (visibility.importGW ? hour.importGW : 0)
+      + (visibility.loadSheddingGW ? hour.loadSheddingGW : 0);
+    const load = visibility.loadGW ? hour.loadGW : 0;
+    return Math.max(currentMax, supply, load);
+  }, 0);
+}
+
+export function mixScaleMaxGW(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY) {
+  return roundedAxisMax(mixScalePeakGW(hours, visibility));
+}
+
+const radiusAxis = (unit = 'GW', max?: number) => ({
   type: 'value' as const,
+  ...(max ? { max } : {}),
   axisLabel: { show: true, color: '#71717a', fontSize: 9, formatter: `{value} ${unit}` },
   axisLine: { show: false },
   axisTick: { show: false },
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
 });
 
-const yAxis = (unit = 'GW') => ({
+const yAxis = (unit = 'GW', max?: number) => ({
   type: 'value' as const,
+  ...(max ? { max } : {}),
   axisLabel: { color: '#71717a', formatter: `{value} ${unit}` },
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
 });
@@ -141,7 +179,7 @@ const compactPolarOuterRadius = (viewport?: ChartViewport) => {
   if (width > 0 && width < 430) return '88%';
   return '90%';
 };
-const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport) => {
+const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport, scaleMaxGW?: number) => {
   if (mode === 'sunburst') {
     const compact = isCompactChart(viewport);
     return {
@@ -150,7 +188,7 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
         radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '96%'],
       },
       angleAxis: angleAxis(hours, chartHours, compact),
-      radiusAxis: radiusAxis('GW'),
+      radiusAxis: radiusAxis('GW', scaleMaxGW),
     };
   }
   const compact = isCompactChart(viewport);
@@ -159,7 +197,7 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
       ? { left: 4, right: 4, top: 6, bottom: 24, containLabel: true }
       : { left: 44, right: 20, top: 10, bottom: 48 },
     xAxis: xAxis(hours, chartHours),
-    yAxis: yAxis('GW'),
+    yAxis: yAxis('GW', scaleMaxGW),
   };
 };
 
@@ -177,10 +215,10 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number): EChartsOption {
   const chartHours = compressHours(hours);
   const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
-  const coordinate = mixCoordinate(mode, hours, chartHours, viewport);
+  const coordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW);
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
   // farbige Punkte / Bold / Muted-Zeilen.

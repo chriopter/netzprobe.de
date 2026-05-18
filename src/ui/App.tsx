@@ -4,7 +4,7 @@ import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { buildMixChartOption, buildStorageChartOption, type ChartViewport } from './chartOptions';
+import { buildMixChartOption, buildStorageChartOption, mixReferenceScaleMaxGW, mixScalePeakGW, type ChartViewport } from './chartOptions';
 import { dataFileUrl } from './dataPackages';
 import { loadDefaultData, loadHistorical2017, loadJson, type Historical2017Data } from './defaultData';
 import type { DataSet } from '../types/data';
@@ -355,9 +355,9 @@ function useMainThreadChart<TData>(
   return pending;
 }
 
-function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode } : null, [hours, visibility, mode]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport), mode === 'sunburst');
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, scaleMaxGW?: number): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, scaleMaxGW } : null, [hours, visibility, mode, scaleMaxGW]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW), mode === 'sunburst');
 }
 
 function useStorageChart(containerId: string, hours: SimHour[] | undefined): boolean {
@@ -748,6 +748,7 @@ function Dashboard() {
   const [liveSimulation, setLiveSimulation] = useState(true);
   const [manualRunToken, setManualRunToken] = useState(0);
   const [sliderActive, setSliderActive] = useState(false);
+  const [referenceScaleMaxGW, setReferenceScaleMaxGW] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     loadDefaultData().then(setRawData).catch(console.error);
@@ -885,11 +886,18 @@ function Dashboard() {
   // Defer chart-source updates: Slider-Tick triggert sofortige KPI-Updates, der
   // Chart läuft hinterher und blockiert Input nicht.
   const deferredChartSource = useDeferredValue<SimulationResult | null>(chartResult ?? result);
+  useEffect(() => {
+    if (!deferredChartSource) return;
+    const currentMax = mixScalePeakGW(deferredChartSource.hours, DEFAULT_MIX_VISIBILITY);
+    if (!currentMax) return;
+    const nextScale = mixReferenceScaleMaxGW(currentMax);
+    setReferenceScaleMaxGW(prev => prev && prev >= currentMax ? prev : nextScale);
+  }, [deferredChartSource]);
   const sliced = useMemo(() => deferredChartSource?.hours.filter(hour => {
     const day = localDate(hour.time);
     return day >= selectedPeriod.start && day <= selectedPeriod.end;
   }) ?? [], [deferredChartSource, selectedPeriod.start, selectedPeriod.end]);
-  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode);
+  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, referenceScaleMaxGW);
   const storagePending = useStorageChart('storage-chart', sliced);
   // Indikator bleibt sichtbar, solange die Simulation rechnet, der 180ms-
   // Chart-Debounce läuft oder ECharts den letzten Frame noch nicht fertig
@@ -897,6 +905,12 @@ function Dashboard() {
   const debouncing = !!result && chartResult !== result;
   const isOutdated = simStale || debouncing;
   const isPending = simPending || debouncing || mixPending || storagePending;
+  const resetMixScale = () => {
+    if (!deferredChartSource) return;
+    const currentMax = mixScalePeakGW(deferredChartSource.hours, DEFAULT_MIX_VISIBILITY);
+    const nextScale = mixReferenceScaleMaxGW(currentMax);
+    if (nextScale) setReferenceScaleMaxGW(nextScale);
+  };
 
   const setQuickStart = (date: string) => {
     setPeriodPreset('custom');
@@ -1047,7 +1061,19 @@ function Dashboard() {
                   <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
                 </div>
               </div>
-              <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  aria-label="Skala zurücksetzen"
+                  title="Skala auf aktuelles Szenario zurücksetzen"
+                  className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:bg-white hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+                  onClick={resetMixScale}
+                  disabled={!deferredChartSource}
+                >
+                  <RotateCcw className="h-4 w-4"/>
+                </button>
+                <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
+              </div>
             </div>
             <div className="relative aspect-square min-h-0 w-full bg-white sm:aspect-auto sm:flex-1">
               <div

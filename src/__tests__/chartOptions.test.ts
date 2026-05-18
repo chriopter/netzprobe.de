@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MIX_VISIBILITY, buildMixChartOption, buildStorageChartOption } from '../ui/chartOptions';
+import { DEFAULT_MIX_VISIBILITY, buildMixChartOption, buildStorageChartOption, mixReferenceScaleMaxGW, mixScaleMaxGW, mixScalePeakGW } from '../ui/chartOptions';
 import type { SimHour } from '../simulation/engine';
 
 const hour = (loadSheddingGW: number): SimHour => ({
@@ -120,6 +120,25 @@ describe('mix chart options', () => {
     expect(polar.center).toEqual(['50%', '50%']);
     expect(polar.radius).toEqual(['3%', '88%']);
     expect(angleAxis.axisLabel).toMatchObject({ fontSize: 8, margin: 3 });
+  });
+
+  it('can pin the radial and linear GW scale to the whole simulation result', () => {
+    const fullYearMax = mixScaleMaxGW([hourAt('2025-01-01', 72), hourAt('2025-02-01', 113)]);
+    const radial = buildMixChartOption([hourAt('2025-01-01', 72)], DEFAULT_MIX_VISIBILITY, 'sunburst', undefined, fullYearMax);
+    const linear = buildMixChartOption([hourAt('2025-01-01', 72)], DEFAULT_MIX_VISIBILITY, 'linie', undefined, fullYearMax);
+
+    expect(fullYearMax).toBe(125);
+    expect(radial.radiusAxis).toMatchObject({ max: 125 });
+    expect(linear.yAxis).toMatchObject({ max: 125 });
+  });
+
+  it('can derive a stable reference scale with headroom for scenario comparisons', () => {
+    const initialMax = mixScalePeakGW([hourAt('2025-01-01', 76)]);
+
+    expect(initialMax).toBe(76);
+    expect(mixReferenceScaleMaxGW(initialMax)).toBe(100);
+    expect(mixReferenceScaleMaxGW(280)).toBe(400);
+    expect(mixReferenceScaleMaxGW(330)).toBe(400);
   });
 
   it('orders full-year daily buckets by day of month first and spreads month labels across the axis', () => {
