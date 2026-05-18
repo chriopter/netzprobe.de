@@ -30,13 +30,13 @@
     }
   ],
   "method": [
-    "Datei: Vorlage unter data/templates/scenario-description.template.json. Neue Szenarien bekommen eigene Dateien unter data/<domain>/<scenario-id>/.",
+    "Datei: Vorlage unter model/templates/scenario-description.template.json. Neue Szenarien bekommen eigene Dateien unter model/<domain>/<scenario-id>/.",
     "description: 2-3 Markdown-Absätze. Nenne konkrete Bezugswerte, aber vermeide vollständige Copy-Paste-Wiederholung aus overview und method.",
     "overview.Verwendung: Slider-Spanne, Default-Bedeutung und Mindestwert in einem bedienbaren Satz; Maximum mit fachlicher Rationale begründen (Wachstum, nicht-modellierte Teilbereiche).",
     "overview.Verteilung: Profilquelle, Peak/Tal oder saisonale Mechanik und zentrale Vereinfachung.",
     "overview.Formel: Rechenvorschrift inklusive eingesetzter Default-Rechnung und Ergebnisgröße.",
     "method-Datei-Konvention: Einträge mit Präfix `Datei:` wandern aus der Herleitung in den Files-Tab und erscheinen dort als Reproduktionshinweis.",
-    "method: technische Herleitung mit Bezeichnern aus data.json/model.ts, Mengenrechnung, Faktorenkorridor, Profilnormierung und Reproduktionshinweis.",
+    "method: technische Herleitung mit Bezeichnern aus data.json/model.rs, Mengenrechnung, Faktorenkorridor, Profilnormierung und Reproduktionshinweis.",
     "caveats: 3–5 echte Modellgrenzen. Scope-Lücken (z. B. nur private statt aller Pkw) mit Mengenangabe nennen; optimistische Annahmen am Rand der Realweltdaten flaggen, idealerweise mit Quellenverweis (ICCT, UBA, KBA o. Ä.)."
   ],
   "fields": [
@@ -53,7 +53,7 @@
     {
       "name": "method",
       "unit": "Liste",
-      "description": "Technische Herleitung mit data.json/model.ts-Bezeichnern, Quellenlogik und Normierung; `Datei:`-Einträge werden in Files gerendert."
+      "description": "Technische Herleitung mit data.json/model.rs-Bezeichnern, Quellenlogik und Normierung; `Datei:`-Einträge werden in Files gerendert."
     },
     {
       "name": "fields",
