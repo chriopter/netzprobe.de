@@ -12,6 +12,7 @@ export const EXTRA_LEAVES: ExtraLeaf[] = [
   { key: 'loadSheddingGW', label: 'Fehlend', color: '#b91c1c', glyph: '▨' },
 ];
 export type ChartMode = 'sunburst' | 'linie';
+export type ChartViewport = { width: number; height: number };
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 export const MIX_GROUPS: MixGroup[] = [
@@ -107,14 +108,14 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
   axisLine: { lineStyle: { color: '#e4e4e7' } },
 });
 
-const angleAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
+const angleAxis = (hours: SimHour[], chartHours: SimHour[], compact = false) => ({
   type: 'category' as const,
   data: angleAxisLabels(hours, chartHours),
   boundaryGap: false,
   startAngle: 90,
   clockwise: true,
   axisTick: { show: false },
-  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: 10, margin: 18 },
+  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: compact ? 9 : 10, margin: compact ? 8 : 18 },
   axisLine: { lineStyle: { color: '#e4e4e7' } },
   splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
 });
@@ -133,6 +134,35 @@ const yAxis = (unit = 'GW') => ({
   splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
 });
 
+const isCompactChart = (viewport?: ChartViewport) => (viewport?.width ?? 9999) < 640;
+const compactPolarOuterRadius = (viewport?: ChartViewport) => {
+  const width = viewport?.width ?? 0;
+  if (width > 0 && width < 380) return '84%';
+  if (width > 0 && width < 430) return '87%';
+  return '90%';
+};
+const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport) => {
+  if (mode === 'sunburst') {
+    const compact = isCompactChart(viewport);
+    return {
+      polar: {
+        center: ['50%', compact ? '50%' : '52%'],
+        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '96%'],
+      },
+      angleAxis: angleAxis(hours, chartHours, compact),
+      radiusAxis: radiusAxis('GW'),
+    };
+  }
+  const compact = isCompactChart(viewport);
+  return {
+    grid: compact
+      ? { left: 4, right: 4, top: 6, bottom: 24, containLabel: true }
+      : { left: 44, right: 20, top: 10, bottom: 48 },
+    xAxis: xAxis(hours, chartHours),
+    yAxis: yAxis('GW'),
+  };
+};
+
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
 const areaSeries = (name: string, color: string, data: number[], mode: ChartMode) => ({
   name,
@@ -147,12 +177,10 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst'): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport): EChartsOption {
   const chartHours = compressHours(hours);
   const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
-  const coordinate = mode === 'sunburst'
-    ? { polar: { center: ['50%', '52%'], radius: ['6%', '96%'] }, angleAxis: angleAxis(hours, chartHours), radiusAxis: radiusAxis('GW') }
-    : { grid: { left: 44, right: 20, top: 10, bottom: 48 }, xAxis: xAxis(hours, chartHours), yAxis: yAxis('GW') };
+  const coordinate = mixCoordinate(mode, hours, chartHours, viewport);
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
   // farbige Punkte / Bold / Muted-Zeilen.

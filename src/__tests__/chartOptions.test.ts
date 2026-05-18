@@ -112,6 +112,15 @@ describe('mix chart options', () => {
     expect(linearSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBeUndefined();
   });
 
+  it('keeps compact radial charts inset enough for mobile labels', () => {
+    const option = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'sunburst', { width: 390, height: 420 });
+    const polar = option.polar as { radius: string[] };
+    const angleAxis = option.angleAxis as { axisLabel: { fontSize: number; margin: number } };
+
+    expect(polar.radius).toEqual(['3%', '87%']);
+    expect(angleAxis.axisLabel).toMatchObject({ fontSize: 9, margin: 8 });
+  });
+
   it('orders full-year daily buckets by day of month first and spreads month labels across the axis', () => {
     const yearHours: SimHour[] = [];
     for (let month = 0; month < 12; month += 1) {

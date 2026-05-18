@@ -1,10 +1,10 @@
-import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type MutableRefObject, type ReactNode } from 'react';
 import { Camera, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { buildMixChartOption, buildStorageChartOption } from './chartOptions';
+import { buildMixChartOption, buildStorageChartOption, type ChartViewport } from './chartOptions';
 import { dataFileUrl } from './dataPackages';
 import { loadDefaultData, loadHistorical2017, loadJson, type Historical2017Data } from './defaultData';
 import type { DataSet } from '../types/data';
@@ -64,6 +64,7 @@ const aussenhandelModell = aggregateAussenhandelPool(
 );
 
 type SimulationWorkerResponse = { requestId: number; result: SimulationResult; elapsedMs: number };
+type ChartRoamState = { scale: number; x: number; y: number };
 
 const defaultExpandedRow: SidebarExpandedRow = null;
 const defaultCustomStart = '2025-01-01';
@@ -285,10 +286,14 @@ echarts.use([LineChart, GridComponent, LegendComponent, PolarComponent, TooltipC
 function useMainThreadChart<TData>(
   containerId: string,
   data: TData | null,
-  buildOption: (data: TData) => echarts.EChartsCoreOption,
+  buildOption: (data: TData, viewport: ChartViewport) => echarts.EChartsCoreOption,
+  roam: boolean = false,
 ): boolean {
   const chartRef = useRef<echarts.ECharts | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const roamCleanupRef = useRef<(() => void) | null>(null);
+  const roamStateRef = useRef<ChartRoamState>({ scale: 1, x: 0, y: 0 });
+  const [viewport, setViewport] = useState<ChartViewport>({ width: 0, height: 0 });
   const [pending, setPending] = useState(false);
 
   // Lazy-Init beim ersten Render mit Daten. Pending-Flag wird per double-RAF
@@ -301,15 +306,30 @@ function useMainThreadChart<TData>(
     if (!chartRef.current) {
       const chart = echarts.init(el);
       chartRef.current = chart;
-      const ro = new ResizeObserver(() => chart.resize());
+      setViewport({ width: el.clientWidth, height: el.clientHeight });
+      const ro = new ResizeObserver(([entry]) => {
+        const width = Math.round(entry.contentRect.width);
+        const height = Math.round(entry.contentRect.height);
+        setViewport(prev => prev.width === width && prev.height === height ? prev : { width, height });
+        chart.resize();
+      });
       ro.observe(el);
       resizeObserverRef.current = ro;
+    }
+    if (roam) {
+      roamCleanupRef.current?.();
+      roamCleanupRef.current = attachChartRoam(el, chartRef.current, roamStateRef);
+    } else {
+      roamCleanupRef.current?.();
+      roamCleanupRef.current = null;
+      roamStateRef.current = { scale: 1, x: 0, y: 0 };
+      resetChartRoam(chartRef.current);
     }
     setPending(true);
     // notMerge: alte Option komplett verwerfen statt mergen. Sonst überleben
     // Polar-Achsen/Series-Coords den Wechsel auf Linien-Modus und der Chart
     // sieht unverändert aus.
-    chartRef.current.setOption(buildOption(data), { notMerge: true });
+    chartRef.current.setOption(buildOption(data, viewport), { notMerge: true });
     // Zwei RAFs: erste fired wenn Browser layoutet, zweite wenn der Frame
     // wirklich gemalt ist. Danach kann der Spinner aus.
     let raf2 = 0;
@@ -321,9 +341,11 @@ function useMainThreadChart<TData>(
       cancelAnimationFrame(raf2);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containerId, data]);
+  }, [containerId, data, viewport, roam]);
 
   useEffect(() => () => {
+    roamCleanupRef.current?.();
+    roamCleanupRef.current = null;
     resizeObserverRef.current?.disconnect();
     resizeObserverRef.current = null;
     chartRef.current?.dispose();
@@ -335,12 +357,114 @@ function useMainThreadChart<TData>(
 
 function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode): boolean {
   const data = useMemo(() => hours && hours.length ? { hours, visibility, mode } : null, [hours, visibility, mode]);
-  return useMainThreadChart(containerId, data, d => buildMixChartOption(d.hours, d.visibility, d.mode));
+  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport), mode === 'sunburst');
 }
 
 function useStorageChart(containerId: string, hours: SimHour[] | undefined): boolean {
   const data = useMemo(() => hours && hours.length ? { hours } : null, [hours]);
   return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours));
+}
+
+function chartViewportRoot(chart: echarts.ECharts): HTMLElement | null {
+  const zr = chart.getZr() as unknown as { painter?: { getViewportRoot?: () => HTMLElement } };
+  return zr.painter?.getViewportRoot?.() ?? null;
+}
+
+function applyChartRoam(chart: echarts.ECharts, state: ChartRoamState) {
+  const root = chartViewportRoot(chart);
+  if (!root) return;
+  root.style.transformOrigin = '0 0';
+  root.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+  root.style.willChange = 'transform';
+}
+
+function resetChartRoam(chart: echarts.ECharts | null) {
+  if (!chart) return;
+  const root = chartViewportRoot(chart);
+  if (!root) return;
+  root.style.transform = '';
+  root.style.transformOrigin = '';
+  root.style.willChange = '';
+}
+
+function attachChartRoam(el: HTMLElement, chart: echarts.ECharts, stateRef: MutableRefObject<ChartRoamState>) {
+  const pointers = new Map<number, { x: number; y: number }>();
+  let lastPinchDistance = 0;
+  let lastTap = 0;
+  const clampScale = (scale: number) => Math.min(4, Math.max(1, scale));
+  const setState = (next: ChartRoamState) => {
+    stateRef.current = { ...next, scale: clampScale(next.scale) };
+    if (stateRef.current.scale === 1) stateRef.current = { scale: 1, x: 0, y: 0 };
+    applyChartRoam(chart, stateRef.current);
+  };
+  const zoomAt = (clientX: number, clientY: number, factor: number) => {
+    const rect = el.getBoundingClientRect();
+    const pointX = clientX - rect.left;
+    const pointY = clientY - rect.top;
+    const prev = stateRef.current;
+    const scale = clampScale(prev.scale * factor);
+    const ratio = scale / prev.scale;
+    setState({
+      scale,
+      x: pointX - (pointX - prev.x) * ratio,
+      y: pointY - (pointY - prev.y) * ratio,
+    });
+  };
+  const onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    zoomAt(event.clientX, event.clientY, Math.exp(-event.deltaY * 0.0015));
+  };
+  const onPointerDown = (event: PointerEvent) => {
+    el.setPointerCapture(event.pointerId);
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      lastPinchDistance = Math.hypot(a.x - b.x, a.y - b.y);
+    }
+  };
+  const onPointerMove = (event: PointerEvent) => {
+    const prevPoint = pointers.get(event.pointerId);
+    if (!prevPoint) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointers.size === 1 && stateRef.current.scale > 1) {
+      event.preventDefault();
+      setState({
+        ...stateRef.current,
+        x: stateRef.current.x + event.clientX - prevPoint.x,
+        y: stateRef.current.y + event.clientY - prevPoint.y,
+      });
+      return;
+    }
+    if (pointers.size === 2) {
+      event.preventDefault();
+      const [a, b] = [...pointers.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      if (lastPinchDistance > 0) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, distance / lastPinchDistance);
+      lastPinchDistance = distance;
+    }
+  };
+  const onPointerUp = (event: PointerEvent) => {
+    pointers.delete(event.pointerId);
+    lastPinchDistance = 0;
+    const now = Date.now();
+    if (now - lastTap < 280) setState({ scale: 1, x: 0, y: 0 });
+    lastTap = now;
+  };
+  el.style.touchAction = 'none';
+  el.addEventListener('wheel', onWheel, { passive: false });
+  el.addEventListener('pointerdown', onPointerDown);
+  el.addEventListener('pointermove', onPointerMove);
+  el.addEventListener('pointerup', onPointerUp);
+  el.addEventListener('pointercancel', onPointerUp);
+  applyChartRoam(chart, stateRef.current);
+  return () => {
+    el.style.touchAction = '';
+    el.removeEventListener('wheel', onWheel);
+    el.removeEventListener('pointerdown', onPointerDown);
+    el.removeEventListener('pointermove', onPointerMove);
+    el.removeEventListener('pointerup', onPointerUp);
+    el.removeEventListener('pointercancel', onPointerUp);
+  };
 }
 
 function localDate(iso: string) {
@@ -898,24 +1022,24 @@ function Dashboard() {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <ChartPanel className="flex h-[calc(100vh-1.5rem)] flex-col">
-            <div className="grid shrink-0 gap-2 border-b border-zinc-200/70 px-3 py-3 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
+          <ChartPanel className="flex h-[100dvh] flex-col sm:h-[calc(100vh-1.5rem)]">
+            <div className="grid shrink-0 gap-2 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
               <div className="flex min-w-0 items-start gap-2">
                 {sidebarCollapsed && <SidebarOpenButton onClick={openSidebar}/>}
                 <div className="min-w-0">
-                  <h2 className="text-lg font-semibold text-zinc-950">Energiemix vs. Last</h2>
+                  <h2 className="text-base font-semibold text-zinc-950 sm:text-lg">Energiemix vs. Last</h2>
                   <span className={cx(muted, 'mt-0.5 block text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
                 </div>
               </div>
               <div className="grid min-w-0 gap-1.5">
-                <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
                   <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
                   <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
                   <InlineKpi label="Import" value={twh(result.summary.importTWh)}/>
                   <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'}/>
                   <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
                 </div>
-                <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
                   <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`}/>
                   <InlineKpi label="CO₂ Jahr" value={`${fmt.format(result.summary.co2MtPerYear)} Mt`}/>
                   <InlineKpi label="Export" value={twh(result.summary.exportTWh)}/>
@@ -1172,8 +1296,8 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
 
 function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
   const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="grid gap-1.5 border-t border-zinc-200 bg-zinc-50/40 px-3 py-2.5 text-xs">
-    <div className="flex flex-wrap gap-1.5">
+  return <div className="grid gap-1.5 border-t border-zinc-200 bg-zinc-50/40 px-2 py-2 text-xs sm:px-3 sm:py-2.5">
+    <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible">
       {EXTRA_LEAVES.map(item => {
         const active = visibility[item.key];
         return <button
@@ -1181,7 +1305,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
           type="button"
           aria-pressed={active}
           className={cx(
-            'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
+            'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
             active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
           )}
           onClick={() => onToggleLeaf(item.key, !active)}
@@ -1191,7 +1315,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
         </button>;
       })}
     </div>
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible">
       {leaves.map(leaf => {
         const active = visibility[leaf.key];
         return <button
@@ -1199,7 +1323,7 @@ function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; on
         type="button"
         aria-pressed={active}
         className={cx(
-          'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
+          'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
           active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
         )}
         onClick={() => onToggleLeaf(leaf.key, !active)}
@@ -1216,8 +1340,8 @@ function InlineKpi({ label, value, tone }: { label: string; value: string; tone?
   const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-700' : 'text-zinc-950';
   const isAlarm = tone === 'kritisch';
   const containerClass = isAlarm
-    ? 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-red-300 px-2.5 py-1.5 leading-tight'
-    : 'grid min-w-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 leading-tight';
+    ? 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-red-300 px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5'
+    : 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200 bg-white px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5';
   const alarmStyle = isAlarm
     ? { backgroundImage: 'repeating-linear-gradient(45deg, rgba(220,38,38,0.10) 0 6px, rgba(220,38,38,0.20) 6px 12px)' }
     : undefined;
