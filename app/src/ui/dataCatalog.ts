@@ -1,5 +1,4 @@
 export { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataLinks';
-import type { SliderZone } from '../types/data';
 
 export type DatasetMethod = {
   title: string;
@@ -16,8 +15,6 @@ export type DatasetMethod = {
   sections?: Array<{ title: string; items: string[] }>;
   fields?: Array<{ name: string; unit: string; description: string }>;
   caveats?: string[];
-  /** Slider-Zonen (Ampel + Grau) mit Schwellen, Farbe, Hinweistext. */
-  zones?: SliderZone[];
   file?: string;
   scripts?: string[];
   note?: string;
