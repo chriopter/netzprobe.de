@@ -43,8 +43,9 @@ import speicherPumpspeicherPackage from '../../model/speicher/pumpspeicher/packa
 import speicherH2Package from '../../model/speicher/h2/package.json';
 import kernConfigPackage from '../../model/kern/kern/package.json';
 
-type ModelPackage<T> = { data: T };
-const packageData = <T>(pkg: unknown) => (pkg as ModelPackage<T>).data;
+// Engine-Inputs liegen seit dem method/parameters-Refactor im parameters-Subtree.
+type PackageJson = { parameters: unknown };
+const packageData = <T>(pkg: unknown) => (pkg as PackageJson).parameters as T;
 
 export const e100Pkw = packageData<DataSet['e100-pkw']>(e100PkwPackage);
 export const e100Heiz = packageData<DataSet['e100-heiz']>(e100HeizPackage);

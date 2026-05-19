@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://netzprobe.de/schemas/_common.schema.json",
+  "title": "Netzprobe-Paket — gemeinsames Skelett",
+  "type": "object",
+  "required": ["id", "domain", "kind", "method", "parameters"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "domain": {
+      "type": "string",
+      "enum": ["aussenhandel", "erzeugung", "last", "modell", "presets", "speicher"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["dataset", "scenario", "composition", "model", "template"]
+    },
+    "method": {
+      "type": "object",
+      "required": ["title", "source", "period", "resolution", "unit", "description"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "short": { "type": "string" },
+        "parentId": { "type": "string" },
+        "source": { "type": "string", "minLength": 1 },
+        "sourceUrls": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "period": { "type": "string", "minLength": 1 },
+        "resolution": { "type": "string", "minLength": 1 },
+        "unit": { "type": "string", "minLength": 1 },
+        "description": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "overview": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "value"],
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": "string" }
+            }
+          }
+        },
+        "reasoning": { "type": "array", "items": { "type": "string" } },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "unit", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "unit": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "caveats": { "type": "array", "items": { "type": "string" } },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "items"],
+            "properties": {
+              "title": { "type": "string" },
+              "items": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "file": { "type": "string" },
+        "scripts": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" },
+        "summary": { "type": "string" }
+      }
+    },
+    "parameters": {
+      "type": "object"
+    }
+  }
+}

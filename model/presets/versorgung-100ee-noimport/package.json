@@ -1,12 +1,11 @@
 {
-  "description": {
-    "id": "versorgung-100ee-noimport",
-    "domain": "presets",
-    "kind": "composition",
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "versorgung-100ee-noimport",
+  "domain": "presets",
+  "kind": "composition",
+  "method": {
     "title": "Versorgung: 100% EE ohne Import",
-    "scripts": [
-      "presets/versorgung-100ee-noimport/model.rs"
-    ],
+    "short": "PV/Wind/Speicher auf `1,4 × Last` dimensioniert; Fossil und Stromimport auf null.",
     "source": "Eigene Komposition; Mix-Anteile orientiert an BMWK-Langfristszenarien T45-Strom.",
     "sourceUrls": [
       "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php"
@@ -14,7 +13,6 @@
     "period": "laufend",
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
-    "short": "PV/Wind/Speicher auf `1,4 × Last` dimensioniert; Fossil und Stromimport auf null.",
     "description": [
       "**Komposition:** das Preset setzt fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und den Import-Cap auf null, behält `Biomasse` und `Laufwasser` auf Baseline-Bestand und dimensioniert PV, Wind onshore, Wind offshore sowie Batterie und H₂-Saisonspeicher proportional zur Jahres-Last. Variable RE-Anteile werden im Verhältnis `PV 30 % / Wind on 45 % / Wind off 15 %` aufgeteilt, anschließend per `snap()` auf das Slider-Raster gerundet.",
       "**Werte:** Auslegungsziel `Jahres-RE = 1,4 × Demand − Biomasse − Laufwasser`, dieser **Cushion-Faktor** deckt H₂-Roundtrip (`η ≈ 0,24` saisonal), Curtailment und Direkt-RE-Anteil ab. Speicher-Faustregeln: Batterie `0,1 GW/TWh` und `0,5 GWh/TWh` (z. B. `47 GW / 233 GWh` bei `466 TWh`, `120 GW / 605 GWh` bei `1.211 TWh`); H₂ `0,06 GW/TWh` Elektrolyse, `0,12 GW/TWh` Rückverstromung, Energie `0,15 × Demand` in TWh → `~130 TWh` Saisonspeicher bei `~750 TWh` Last (Fraunhofer-ISE-Benchmark). Pumpspeicher bleibt Default 2025.",
@@ -38,7 +36,7 @@
         "value": "**Import-Cap:** `0 GW` (autark). **Export-Cap:** Default — Überschuss kann exportiert werden."
       }
     ],
-    "method": [
+    "reasoning": [
       "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
       "target = max(0, demandTWh × 1,4 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (45%), WindOff (15%).",
       "PV-GW = target × 0,30 / yieldPV. WindOn-GW = target × 0,45 / yieldWind. WindOff-GW = target × 0,15 / yieldWind.",
@@ -57,6 +55,10 @@
       "Cushion 1,4 deckt Speicherverluste und Curtailment grob ab; reale Anforderung hängt von Speichergröße und Saisonalität ab.",
       "Speicher-Sizing nach Daumenregel (Batterie 0,5 GWh/TWh Last; H₂-Saisonspeicher 15 % Demand) — keine optimierte Dimensionierung.",
       "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore — siehe erz-windoff Caveats."
+    ],
+    "scripts": [
+      "presets/versorgung-100ee-noimport/model.rs"
     ]
-  }
+  },
+  "parameters": {}
 }

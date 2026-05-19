@@ -17,11 +17,13 @@ pub(super) fn berlin_date_and_hour(iso: &str) -> Result<(String, usize), ModelEr
 }
 
 pub(super) fn package_data(raw: &str) -> Result<Value, ModelError> {
+    // Engine-Inputs liegen seit dem method/parameters-Refactor unter dem
+    // `parameters`-Subtree.
     let package: Value = parse_json(raw)?;
     package
-        .get("data")
+        .get("parameters")
         .cloned()
-        .ok_or_else(|| data_error("package.data fehlt"))
+        .ok_or_else(|| data_error("package.parameters fehlt"))
 }
 
 pub(super) fn value_field(raw: &str, key: &str) -> Result<String, ModelError> {

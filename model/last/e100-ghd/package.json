@@ -1,15 +1,12 @@
 {
-  "description": {
-    "id": "e100-ghd",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-ghd",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "GHD Elektrifizierung",
-    "file": "last/e100-ghd/data.json",
-    "scripts": [
-      "last/e100-ghd/generate.mjs",
-      "last/e100-ghd/model.rs"
-    ],
+    "short": "Zusatzlast aus Umstellung der GHD-Heizung und Warmwasser auf Wärmepumpen.",
+    "parentId": "e100",
     "source": "BDEW Statusreport Wärme 09/2025 (Raumwärme 153 TWh + Warmwasser 10 TWh = 163 TWh GHD 2023), AGEB, UBA, BMWK Energiedaten, BWP, Fraunhofer ISE Annex 28, BDEW SLP G0, DWD.",
     "sourceUrls": [
       "https://www.bdew.de/media/documents/2025_09_24_Statusreport_Waerme_final.pdf",
@@ -19,12 +16,13 @@
       "https://www.waermepumpe.de/normen-technik/grossanlagen-gewerbe/",
       "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html",
       "https://www.bdew.de/energie/standardlastprofile-strom/",
-      "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html"
+      "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html",
+      "https://archive-api.open-meteo.com/v1/era5",
+      "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
     ],
     "period": "2023 (Mengen), reale Tagesmitteltemperaturen 2025 (Profil)",
     "resolution": "Tag x Stunde",
     "unit": "TWh Waerme, TWh Strom, JAZ",
-    "short": "Zusatzlast aus Umstellung der GHD-Heizung und Warmwasser auf Wärmepumpen.",
     "description": [
       "**Bezugsjahr 2023:** der GHD-Sektor benötigt `153 TWh` Raumwärme + `10 TWh` Warmwasser = `163 TWh` Endenergie (BDEW Statusreport Wärme 09/2025); kompatibel mit AGEB-Anwendungsbilanz GHD (`~314 TWh` Endenergie, davon `~59,9 %` Wärmeanwendungen). Bereits elektrisch gedeckt sind rund `7 TWh` aus Direktheizung, kleinen Bestands-WPs und Boilern (Gastronomie, Pflege, Krankenhaus); dieser Strom steckt in der historischen Last und ist das Slider-Minimum.",
       "**Faktor:** Wärmepumpen heben den Strombedarf über die **Jahresarbeitszahl** `2,8` — gewichteter Bestandsmix Großgebäude (Fraunhofer-ISE-Feldtest weist `3,1` für Wohngebäude aus; GHD liegt konservativ darunter wegen höherer Vorlauftemperaturen, Multisplit-Anteilen und nicht-modernisierter Hülle). Default-Zusatzlast: `(163 − 7) / 2,8 ≈ 55,71 TWh/a`.",
@@ -44,7 +42,7 @@
         "value": "**Rechnung:** `Zusatzstrom = (Ziel − 7) / JAZ`. Default: `(163 − 7) / 2,8 ≈ 55,71 TWh/a`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: erzeugt durch model/last/e100-ghd/generate.mjs. Skript ausfuehren mit `node model/last/e100-ghd/generate.mjs > model/last/e100-ghd/package.json`; Rechenlogik in model/last/e100-ghd/model.rs.",
       "Referenz-Waermebedarf referenceHeatDemandTWh: BDEW Statusreport Waerme 09/2025 weist GHD 2023 mit 153 TWh Raumwaerme und 10 TWh Warmwasser = 163 TWh Endenergie aus; AGEB Anwendungsbilanz GHD-Endenergie 2023 rund 314 TWh, Waermeanwendungen rund 59,9 %, kompatibel mit dem BDEW-Wert.",
       "Slider-Mindestwert alreadyElectricHeatTWh: rund 7 TWh aus Direktheizung, kleinen Bestands-Waermepumpen und elektrischen Boilern (Gastronomie, Pflege, Krankenhaus). Strom dafuer ist bereits in der historischen Last.",
@@ -132,6 +130,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -143,23 +146,16 @@
       "Sommer-Heizspitzen (Jun–Aug ~1 TWh Gesamt, einzelne Tage bis ~7 GW Peak-Stunden-Last) sind ein Modellartefakt der starren DIN-Heizgrenze 15 °C — identische Mechanik wie bei e100-heiz auf demselben Klima-Profil. Reale Beispieltage 2025: 8.–11. Juni, 8. Juli, 22.–25. August mit Tagesmittel 12,6–15,0 °C. GHD-Anlagen wären saisonal aus, Gebäudemasse dämpft kurze Kühl-Stöße. Bewusst nicht gefixt (Überschlagsrechnung).",
       "Slider-Werte oberhalb 163 TWh decken Upside-Szenarien (Sanierungsstau, Lueftungs- und Prozesswaerme-Mitnahme) ab.",
       "Methodenwechsel Klimanormale → Wetterjahr 2025: das alte Verfahren (DWD-Klimanormale 1991–2020 als 12 Monatsanker + lineare Interpolation, identische Klimareihe wie e100-heiz) legte Jun–Aug exakt auf 0 TWh. Das neue Verfahren teilt die Klimareihe mit e100-heiz (Symlink temperatures-2025.json, Open-Meteo ERA5, 8 Großstädte additiv auf DWD-Gebietsmittel DE kalibriert) und hält die Jahressumme bei 55,7 TWh Strom (HDD 3.486 → 3.461, −0,7 %; Heiztage 266 → 262). Monatsverlauf TWh alt→neu u. a.: Feb 7,7→8,4 (Kältewelle), Apr 5,0→4,5 (warmer Apr), Jun–Aug 0,0→0,4/0,1/0,5, Sep 2,6→1,9. Peak-Tag wandert vom 16. Jan (T=1,5 °C, HDD 18,5) auf den 18. Feb (T=−3,6 °C, HDD 23,6); Peak-Stunden-Leistung steigt von 18,5 auf 23,8 GW (+29 %) — gleiche Mechanik wie bei e100-heiz, Klimanormalen unterschätzen den realen Worst-Case-Heiztag deutlich."
-    ]
-  },
-  "data": {
-    "id": "e100-ghd",
-    "title": "GHD Elektrifizierung",
-    "source": "Raumwaerme- und Warmwasserbedarf Sektor Gewerbe, Handel, Dienstleistungen Deutschland nach BDEW Statusreport Waerme 09/2025 (rund 153 TWh Raumwaerme + 10 TWh Warmwasser = 163 TWh Endenergie 2023) und AGEB Anwendungsbilanz; bereits elektrisch gedeckt rund 7 TWh Waerme (Direktheizung, kleine WPs, elektrische Boiler in Gastronomie/Pflege); JAZ-Bestandsmix Grossgebaeude 2,8 (Fraunhofer ISE Annex 28, BWP); Gradtagszahl-Profil aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Staedte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat); Tagesgang BDEW-SLP G0 (Gewerbe allgemein).",
-    "sourceUrls": [
-      "https://www.bdew.de/media/documents/2025_09_24_Statusreport_Waerme_final.pdf",
-      "https://ag-energiebilanzen.de/daten-und-fakten/anwendungsbilanzen/",
-      "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
-      "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Publikationen/Energie/energiedaten-gesamtausgabe.html",
-      "https://www.waermepumpe.de/normen-technik/grossanlagen-gewerbe/",
-      "https://www.ise.fraunhofer.de/de/forschungsprojekte/wpsmart-im-bestand.html",
-      "https://www.bdew.de/energie/standardlastprofile-strom/",
-      "https://archive-api.open-meteo.com/v1/era5",
-      "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
     ],
+    "file": "last/e100-ghd/data.json",
+    "scripts": [
+      "last/e100-ghd/generate.mjs",
+      "last/e100-ghd/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile GHD-Heizung (Buero, Handel, Schule, Krankenhaus, Gastronomie, Kommunalbau) zu Waermepumpe; bestehende elektrische GHD-Heizung bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das G0-Bueroprofil mit Nachtabsenkung und Plateau 8-18 Uhr.",
+    "summary": "JAZ 2,8"
+  },
+  "parameters": {
     "referenceYear": 2023,
     "referenceHeatDemandTWh": 163,
     "alreadyElectricHeatTWh": 7,
@@ -167,9 +163,7 @@
     "maxTargetHeatTWh": 220,
     "stepHeatTWh": 1,
     "seasonalCop": 2.8,
-    "summary": "JAZ 2,8",
     "distribution": "heating-degree-days",
-    "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile GHD-Heizung (Buero, Handel, Schule, Krankenhaus, Gastronomie, Kommunalbau) zu Waermepumpe; bestehende elektrische GHD-Heizung bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das G0-Bueroprofil mit Nachtabsenkung und Plateau 8-18 Uhr.",
     "hourlyProfile": {
       "source": "BDEW SLP G0 Gewerbe allgemein — Bueroprofil mit Nachtabsenkung 0-5 Uhr, Ramp 6-8 Uhr, Plateau 8-18 Uhr (Buero-/Oeffnungszeiten), Abfall 19-23 Uhr. Auf Tagesmittel 1,0 normiert, Summe = 24.",
       "sourceUrls": [

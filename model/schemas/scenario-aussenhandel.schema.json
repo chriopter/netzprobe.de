@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://netzprobe.de/schemas/scenario-aussenhandel.schema.json",
+  "title": "Aussenhandel-Szenario",
+  "allOf": [{ "$ref": "./_common.schema.json" }],
+  "properties": {
+    "domain": { "const": "aussenhandel" },
+    "kind": { "const": "scenario" }
+  }
+}

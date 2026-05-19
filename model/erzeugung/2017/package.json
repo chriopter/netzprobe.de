@@ -1,14 +1,11 @@
 {
-  "description": {
-    "id": "erzeugung-2017",
-    "domain": "erzeugung",
-    "kind": "dataset",
+  "$schema": "../../schemas/dataset.schema.json",
+  "id": "erzeugung-2017",
+  "domain": "erzeugung",
+  "kind": "dataset",
+  "method": {
     "title": "Erzeugung 2017",
-    "file": "erzeugung/2017/data.json",
-    "scripts": [
-      "erzeugung/2017/model.rs",
-      "erzeugung/2017/generate.mjs"
-    ],
+    "short": "Beobachtete öffentliche Stromerzeugung Deutschland 2017, stündlich, inklusive Kernkraft vor dem Ausstieg.",
     "source": "Energy-Charts public_power API: stündliche öffentliche Erzeugung, Kernkraft und Stromhandel für Deutschland 2017, aus 15-min Werten gemittelt.",
     "sourceUrls": [
       "https://api.energy-charts.info/public_power?country=de&start=2017-01-01T00:00%2B01:00&end=2018-01-01T00:00%2B01:00"
@@ -16,22 +13,41 @@
     "period": "2017",
     "resolution": "stündlich",
     "unit": "MW",
-    "short": "Beobachtete öffentliche Stromerzeugung Deutschland 2017, stündlich, inklusive Kernkraft vor dem Ausstieg.",
     "description": [
       "**Datengrundlage:** stündliche öffentliche Nettostromerzeugung Deutschlands 2017 aus der Energy-Charts-API (Fraunhofer ISE/ENTSO-E), aus 15-Minuten-Werten zu Stundenmitteln aggregiert. Schema identisch zu `erzeugung-2025`, ergänzt um das Feld `nuclearMW` für die noch laufenden Kernkraftwerke (`Brokdorf`, `Grohnde`, `Gundremmingen B/C`, `Isar 2`, `Philippsburg 2`, `Neckarwestheim 2`, `Emsland`).",
       "**Jahresgang:** die Gesamterzeugung summiert sich auf rund `553,8 TWh`, getragen von Kohle (`215,8 TWh`, davon Stein- und Braunkohle), Wind Onshore (`86,3 TWh`), **Kernkraft** (`72,2 TWh`), Gas (`45,3 TWh`), Biomasse (`40,2 TWh`), **PV** (`35,4 TWh`), Wasserkraft (`19,4 TWh`) und Wind Offshore (`17,4 TWh`). Der Netto-Handelssaldo ist exportlastig (`+0,4` versus `60,5 TWh`); Deutschland ist 2017 deutlicher Stromnettoexporteur.",
       "**Modellgrenze:** der Datensatz dient als Referenz-Pass-Through für das Preset `versorgung-historisch-2017` und erlaubt den Direktvergleich mit dem postnuklearen Erzeugungsmix. Wie bei `erzeugung-2025` gilt: nur öffentliche Erzeugung, Handel als Netto-Saldo aus ENTSO-E commercial flows (weicht von der AGEB-Brutto-Außenhandelsstatistik ab — `-60 TWh` Modell versus `-32 TWh` AGEB), Pumpspeicher ausgeklammert."
     ],
-    "method": [
+    "reasoning": [
       "Generiert lokal aus model/erzeugung/2017/generate.mjs, das die Energy-Charts public_power-API für 2017 abruft.",
       "Aggregation: 4 Quarter-Hour-Werte → Stunden-Mittelwert.",
       "Mapping: Solar→pvMW, Wind onshore/offshore→windOnMW/windOffMW, Nuclear→nuclearMW, Hydro Run-of-River→hydroMW, Biomass→biomassMW, Fossil hard coal + Fossil brown coal/lignite→coalMW, Fossil gas→gasMW, Fossil oil→oilMW, Geothermal→geothermalMW, Waste→wasteMW, Others + Hydro water reservoir + Fossil coal-derived gas→otherMW, Cross border electricity trading→importExportMW (positiv=Import)."
     ],
     "fields": [
       {
+        "name": "generatedAt",
+        "unit": "ISO-Zeit",
+        "description": "Zeitpunkt der lokalen Datendatei-Erzeugung."
+      },
+      {
         "name": "year",
         "unit": "Jahr",
         "description": "2017."
+      },
+      {
+        "name": "source",
+        "unit": "Text",
+        "description": "Quellenkurzname und Abrufhinweis."
+      },
+      {
+        "name": "sourceUrl",
+        "unit": "URL",
+        "description": "Energy-Charts-API-Abruf."
+      },
+      {
+        "name": "unit",
+        "unit": "Text",
+        "description": "Einheit der Stundenwerte."
       },
       {
         "name": "sumTWh",
@@ -54,23 +70,25 @@
         "description": "Stundennegative Cross-Border-Summe (Export-Volumen)."
       },
       {
-        "name": "hours[]",
-        "unit": "MW",
-        "description": "Stündliche Erzeugung je Quelle plus Cross-Border-Saldo."
+        "name": "sumNote",
+        "unit": "Text",
+        "description": "Rechenhinweis zur Summenbildung."
       }
     ],
     "caveats": [
       "Energy-Charts public_power nutzt commercial-flows aus ENTSO-E und weicht von AGEB-Brutto-Außenhandelsstatistik ab; 2017 zeigt das Modell etwa -60 TWh Saldo, AGEB nennt -32 TWh.",
       "Pumpspeicher-Erzeugung und -Verbrauch sind ausgeklammert (separate Energy-Charts-Series, nicht Teil der net public generation).",
       "Hydro water reservoir und Fossil coal-derived gas in 'otherMW' gebündelt — selbe Konvention wie erzeugung-2025."
+    ],
+    "file": "erzeugung/2017/data.json",
+    "scripts": [
+      "erzeugung/2017/model.rs",
+      "erzeugung/2017/generate.mjs"
     ]
   },
-  "data": {
+  "parameters": {
     "generatedAt": "2026-05-15T16:09:37.343Z",
     "year": 2017,
-    "source": "Energy-Charts public_power API: hourly public generation, nuclear and import/export for Germany 2017, averaged from 15-minute values.",
-    "sourceUrl": "https://api.energy-charts.info/public_power?country=de&start=2017-01-01T00:00%2B01:00&end=2018-01-01T00:00%2B01:00",
-    "unit": "MW",
     "sumTWh": 553.8,
     "sumPartsTWh": {
       "pvTWh": 35.4,

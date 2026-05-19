@@ -1,13 +1,11 @@
 {
-  "description": {
-    "id": "kohle",
-    "domain": "erzeugung",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-erzeugung.schema.json",
+  "id": "kohle",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "method": {
     "title": "Kohle",
-    "file": "erzeugung/kohle/data.json",
-    "scripts": [
-      "erzeugung/kohle/model.rs"
-    ],
+    "short": "Installierte Kohlekraftwerksleistung; dispatchable mit Min-Last 20 % der verfügbaren Leistung.",
     "source": "Energy-Charts installed_power 2025 (Stein- und Braunkohle Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Min-Last, Emissionsfaktor).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -17,7 +15,6 @@
     "period": "2025",
     "resolution": "stündlich (regelbar) / jährlich (installierte Leistung)",
     "unit": "GW, g/kWh",
-    "short": "Installierte Kohlekraftwerksleistung; dispatchable mit Min-Last 20 % der verfügbaren Leistung.",
     "description": [
       "**Anlagenpark:** rund `60` Stein- und Braunkohle-Kraftwerksblöcke in den Revieren Rheinland, Lausitz, Mitteldeutschland sowie Steinkohle-Standorten an den Wasserstraßen mit installierter Gesamtleistung `31 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Der Pfad des **Kohleausstiegsgesetzes** sieht im Trend `2030/2038` aus; das Slider-Maximum `310 GW` (Schritt `5 GW`) ist ein reiner Rechenhorizont — er erlaubt jeden Pfad zwischen sofortigem Ausstieg und kontrafaktischer Verlängerung.",
       "**Einspeisecharakteristik:** das Modell bildet Kohle als **dispatchable** ab — Min-Last `installedGW × 0,9 × 0,2` läuft immer mit (Dampfkessel-**Trägheit**, doppelt so hoher Floor wie Gas), der Ramp-up greift bis maximal `installedGW × 0,9`. Im Lastfolge-Wettbewerb übernimmt Gas Hochlauf im Verhältnis `2:1` gegenüber Kohle, weil Kohlekraftwerke deutlich langsamer regeln. Spezifische Emissionen `1170 g/kWh` (electricitymaps DE) als braunkohle-gewichteter Mix; Steinkohle alleine liegt bei rund `950 g/kWh`, Braunkohle bei `1200–1400 g/kWh`. Im Substitutions-Vergleich entspricht eine Kohle-zu-Wind-Verdrängung daher etwa Faktor `90` Emissionsreduktion pro kWh.",
@@ -37,7 +34,7 @@
         "value": "**Rechnung:** `Emissionen(t) = supplyGW(t) × 1170 g/kWh` (braunkohle-gewichteter Mix). Bei Überschuss curtailed das Kernmodell Kohle vor Biomasse und Laufwasser, nach Gas."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/erzeugung/kohle/package.json, Adapter in model/erzeugung/kohle/model.rs.",
       "Verfügbarkeit 90 % als Jahresanteil.",
       "Min-Last 20 % als Floor — höher als Gas wegen Trägheit (Dampfkessel).",
@@ -110,11 +107,13 @@
       "Min-Last 20 % als Floor — keine Kaltstart-Restriktion modelliert; reale Anlagen brauchen 6-12 h Anfahrzeit.",
       "Emissionsfaktor 1170 g/kWh mischt Stein- und Braunkohle; Braunkohle alleine 1200-1400 g/kWh, Steinkohle 950 g/kWh.",
       "Kohleausstiegsgesetz (2030/2038) ist im Default nicht abgebildet — Slider lässt Modell jeden Pfad simulieren."
+    ],
+    "file": "erzeugung/kohle/data.json",
+    "scripts": [
+      "erzeugung/kohle/model.rs"
     ]
   },
-  "data": {
-    "id": "kohle",
-    "name": "Kohle",
+  "parameters": {
     "installed2025GW": 31,
     "defaultInstalledGW": 31,
     "minInstalledGW": 0,

@@ -19,6 +19,9 @@ import {
 import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
+import { getPackage } from './dataCatalog';
+
+const summaryFor = (id: string) => getPackage(id)?.method.summary ?? '';
 import { fmt, fmt0, twh, twh0 } from './format';
 import { MainTabs } from './MainTabs';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
@@ -1501,7 +1504,7 @@ function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onTo
     valueLabel="Pkw-km"
     valueUnit="Mio. km"
     electricTWh={e100PkwAdditionalTWh(millionKm, model)}
-    detail={`${millionKm.toLocaleString('de-DE')} Mio. km · ${formatPercent(millionKm / model.referenceMillionKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${millionKm.toLocaleString('de-DE')} Mio. km · ${formatPercent(millionKm / model.referenceMillionKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Pkw)}`}
     docId={datasetIds.e100Pkw}
     expanded={expanded}
     onChecked={onChecked}
@@ -1524,7 +1527,7 @@ function E100HeizControl({ data, scenario, expanded, onChecked, onTargetHeat, on
     valueLabel="Raumwärme"
     valueUnit="TWh Wärme"
     electricTWh={e100HeizAdditionalElectricityTWh(heatTWh, model)}
-    detail={`${heatTWh.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(heatTWh / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${heatTWh.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(heatTWh / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Heiz)}`}
     docId={datasetIds.e100Heiz}
     expanded={expanded}
     onChecked={onChecked}
@@ -1617,7 +1620,7 @@ function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggle
     valueLabel="Fahrleistung"
     valueUnit="Mrd. km"
     electricTWh={e100LkwAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} Mrd. km · ${formatPercent(target / model.referenceBnKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} Mrd. km · ${formatPercent(target / model.referenceBnKm * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Lkw)}`}
     docId={datasetIds.e100Lkw}
     expanded={expanded}
     onChecked={onChecked}
@@ -1640,7 +1643,7 @@ function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggl
     valueLabel="Zusatz-Bahnstrom"
     valueUnit="TWh"
     electricTWh={e100BahnAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Bahn)}`}
     docId={datasetIds.e100Bahn}
     expanded={expanded}
     onChecked={onChecked}
@@ -1663,7 +1666,7 @@ function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onTog
     valueLabel="Ziel-Strom"
     valueUnit="TWh"
     electricTWh={e100SchiffAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Schiff)}`}
     docId={datasetIds.e100Schiff}
     expanded={expanded}
     onChecked={onChecked}
@@ -1686,7 +1689,7 @@ function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggl
     valueLabel="PtL-Strom"
     valueUnit="TWh"
     electricTWh={e100FlugAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Flug)}`}
     docId={datasetIds.e100Flug}
     expanded={expanded}
     onChecked={onChecked}
@@ -1709,7 +1712,7 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
     valueLabel="GHD-Wärme"
     valueUnit="TWh Wärme"
     electricTWh={e100GhdAdditionalElectricityTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Ghd)}`}
     docId={datasetIds.e100Ghd}
     expanded={expanded}
     onChecked={onChecked}
@@ -1732,7 +1735,7 @@ function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onVal
     valueLabel="Prozesswärme"
     valueUnit="TWh Wärme"
     electricTWh={e100IndustrieAdditionalElectricityTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Wärme${referenceText ? ` · ${referenceText}` : ''} · ohne Stahl/Chemie · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Wärme${referenceText ? ` · ${referenceText}` : ''} · ohne Stahl/Chemie · ${summaryFor(datasetIds.e100IndustrieWaerme)}`}
     docId={datasetIds.e100IndustrieWaerme}
     expanded={expanded}
     onChecked={onChecked}
@@ -1755,7 +1758,7 @@ function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onTogg
     valueLabel="Primärstahl"
     valueUnit="Mio. t"
     electricTWh={e100StahlAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} Mio. t · ${formatPercent(target / model.primarySteelMioTon * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} Mio. t · ${formatPercent(target / model.primarySteelMioTon * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Stahl)}`}
     docId={datasetIds.e100Stahl}
     expanded={expanded}
     onChecked={onChecked}
@@ -1778,7 +1781,7 @@ function E100ChemieControl({ data, scenario, expanded, onChecked, onValue, onTog
     valueLabel="Zielstrom"
     valueUnit="TWh"
     electricTWh={e100ChemieAdditionalTWh(target, model)}
-    detail={`${target.toLocaleString('de-DE')} TWh Gesamt${referenceText ? ` · ${referenceText}` : ''} · ${model.summary}`}
+    detail={`${target.toLocaleString('de-DE')} TWh Gesamt${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Chemie)}`}
     docId={datasetIds.e100Chemie}
     expanded={expanded}
     onChecked={onChecked}

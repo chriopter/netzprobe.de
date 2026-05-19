@@ -1,14 +1,12 @@
 {
-  "description": {
-    "id": "e100-stahl",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-stahl",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "Stahl Elektrifizierung",
-    "file": "last/e100-stahl/data.json",
-    "scripts": [
-      "last/e100-stahl/model.rs"
-    ],
+    "short": "Zusatzlast aus Umstellung der Primärstahlerzeugung auf Direktreduktion mit grünem Wasserstoff.",
+    "parentId": "e100",
     "source": "WV Stahl Jahresbilanz 2023; Vogl/Åhman/Nilsson 2018; IEA Iron & Steel Technology Roadmap 2020; worldsteel Fact Sheet H2-based ironmaking; IRENA Green Hydrogen Cost Reduction 2020; Thyssenkrupp tkH2Steel, Salzgitter SALCOS, ArcelorMittal Bremen, Stegra (H2 Green Steel) Boden.",
     "sourceUrls": [
       "https://www.wvstahl.de/pressemitteilungen/jahresbilanz-2023-stahlproduktion-sinkt-2023-auf-historisch-niedriges-niveau/",
@@ -24,7 +22,6 @@
     "period": "2023 (Mengen), Zielzustand DRI-H2-EAF",
     "resolution": "Jahr × Stunde",
     "unit": "Mio. t Stahl, MWh/t, TWh",
-    "short": "Zusatzlast aus Umstellung der Primärstahlerzeugung auf Direktreduktion mit grünem Wasserstoff.",
     "description": [
       "**Bezugsjahr 2023:** Deutschland produziert `35,4 Mio. t` Rohstahl, davon `25,6 Mio. t` Oxygenstahl über die Hochofen-Konverter-Route und `9,8 Mio. t` Sekundärstahl im Schrott-EAF (WV Stahl Jahresbilanz). Sekundärstahl läuft bereits elektrisch (`~0,5 MWh/t × 9,8 Mt = 4,9 TWh`) und ist Teil der historischen Last; das Szenario modelliert ausschließlich den DRI-H2-Mehrbedarf der Primärroute.",
       "**Faktor:** der Strombedarf je Tonne Primärstahl baut sich aus zwei Bausteinen auf — Wasserstoffeinsatz `60 kg H2/t` (Vogl/Åhman/Nilsson `52–58 kg/t`, worldsteel `~54 kg/t`, DECHEMA H2-Kompass bis `70 kg/t`; stöchiometrisch `51,5 kg/t` plus Überschuss) × Elektrolyseur `52 kWh/kg H2` (IRENA-2030er-Mitte zwischen Stack-Bestwert `~44 kWh/kg` und heutigen Bestandsanlagen `53–58 kWh/kg`) = `3,12 MWh/t`, plus EAF-Einschmelzstrom `0,6 MWh/t` (DRI-EAF braucht durch fehlendes Charge-Carbon `500–650 kWh/t`). Summe `3,72 MWh/t`. **System-η** Stahl `33,33/52 ≈ 0,64`; `1 TWh` H2-Import ersetzt `1,56 TWh` inländischen DRI-Strom. Default `28 Mio. t × 3,72 − 4,9 = 99,3 TWh/a`.",
@@ -44,7 +41,7 @@
         "value": "**Rechnung:** `Zusatzlast = Ziel × 3,72 − 4,9`. Default: `28 × 3,72 − 4,9 = 99,3 TWh/a`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-stahl/package.json; Rechenlogik in model/last/e100-stahl/model.rs.",
       "Primärstahl-Referenz 2023: 25,6 Mio. t Oxygenstahl (Hochofen-Konverter-Route) aus WV Stahl Jahresbilanz 2023; Sekundärstahl 9,8 Mio. t Elektrostahl (Schrott-EAF).",
       "Wasserstoffbedarf hydrogenKgPerTonSteel: 60 kg H2 je Tonne Rohstahl aus Vogl/Åhman/Nilsson 2018 (52-58 kg/t, stöchiometrisch 51,5 kg/t plus Überschuss), worldsteel Fact Sheet H2-based ironmaking (rund 54 kg/t DRI) und IEA Iron & Steel Technology Roadmap; Großprojekte tkH2Steel, SALCOS, ArcelorMittal Bremen und Stegra rechnen in derselben Größenordnung (DECHEMA H2-Kompass bis 70 kg/t).",
@@ -143,6 +140,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -152,23 +154,15 @@
       "Elektrolyseur-Wirkungsgrad 52 kWh/kg H2 ist ein 2030er-Zielwert (IRENA-Korridor 44-51 kWh/kg); heutige Bestandsanlagen liegen bei 53-58 kWh/kg.",
       "Erdgas-DRI als Übergangslösung (Salzgitter, Thyssenkrupp im Hochlauf) ist nicht abgebildet — der Slider unterstellt vollständigen H2-Betrieb.",
       "H2-Bedarf 60 kg/t liegt zwischen Vogl 2018 (52-58 kg/t), worldsteel (54 kg/t) und DECHEMA H2-Kompass (bis 70 kg/t); ein realistischer Korridor wäre 50-70 kg/t Stahl (±15 %)."
-    ]
-  },
-  "data": {
-    "id": "e100-stahl",
-    "title": "Stahl Elektrifizierung",
-    "source": "WV Stahl Jahresbilanz 2023 (35,4 Mio. t Rohstahl, davon 25,6 Mio. t Oxygenstahl/Primär und 9,8 Mio. t Elektrostahl/Sekundär); Anlagenkennzahlen aus Vogl/Åhman/Nilsson 2018, IEA Iron & Steel Technology Roadmap 2020, worldsteel Fact Sheet H2-based ironmaking, IRENA Green Hydrogen Cost Reduction 2020, Thyssenkrupp tkH2Steel, Salzgitter SALCOS, ArcelorMittal Bremen, Stegra (H2 Green Steel) Boden.",
-    "sourceUrls": [
-      "https://www.wvstahl.de/pressemitteilungen/jahresbilanz-2023-stahlproduktion-sinkt-2023-auf-historisch-niedriges-niveau/",
-      "https://www.stahl-online.de/startseite/stahl-in-deutschland/zahlen-und-fakten/",
-      "https://www.thyssenkrupp-steel.com/de/unternehmen/nachhaltigkeit/klimaschutz/",
-      "https://salcos.salzgitter-ag.com/",
-      "https://corporate.arcelormittal.com/climate-action/decarbonisation-investment-plans/germany",
-      "https://www.iea.org/reports/iron-and-steel-technology-roadmap",
-      "https://worldsteel.org/wp-content/uploads/Fact-sheet-hydrogen-H2-based-ironmaking.pdf",
-      "https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2020/Dec/IRENA_Green_hydrogen_cost_2020.pdf",
-      "https://doi.org/10.1016/j.jclepro.2018.08.279"
     ],
+    "file": "last/e100-stahl/data.json",
+    "scripts": [
+      "last/e100-stahl/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-Mio. t Primärstahl * 3,72 MWh/t - alreadyElectricTWh). Strombedarf je Tonne = 60 kg H2/t * 52 kWh/kg H2 / 1000 + 0,6 MWh/t EAF = 3,12 + 0,6 = 3,72 MWh/t. Default 28 Mio. t * 3,72 MWh/t - 4,9 TWh = 99,3 TWh/Jahr. Sekundärstahl (Schrott-EAF, rund 9,8 Mio. t * 0,5 MWh/t = 4,9 TWh) ist bereits in der historischen Last enthalten und wird vom Bruttobedarf abgezogen, um Doppelzählung zu vermeiden. Stundenverteilung: konstant 1,0 (24/7-Dauerbetrieb).",
+    "summary": "DRI-H2 + EAF · 3,72 MWh/t"
+  },
+  "parameters": {
     "referenceScales": {
       "activity": {
         "value": 5.7,
@@ -220,8 +214,6 @@
         1,
         1
       ]
-    },
-    "note": "Zusatzlast = max(0, Ziel-Mio. t Primärstahl * 3,72 MWh/t - alreadyElectricTWh). Strombedarf je Tonne = 60 kg H2/t * 52 kWh/kg H2 / 1000 + 0,6 MWh/t EAF = 3,12 + 0,6 = 3,72 MWh/t. Default 28 Mio. t * 3,72 MWh/t - 4,9 TWh = 99,3 TWh/Jahr. Sekundärstahl (Schrott-EAF, rund 9,8 Mio. t * 0,5 MWh/t = 4,9 TWh) ist bereits in der historischen Last enthalten und wird vom Bruttobedarf abgezogen, um Doppelzählung zu vermeiden. Stundenverteilung: konstant 1,0 (24/7-Dauerbetrieb).",
-    "summary": "DRI-H2 + EAF · 3,72 MWh/t"
+    }
   }
 }

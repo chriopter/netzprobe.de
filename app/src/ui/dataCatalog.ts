@@ -1,48 +1,49 @@
 export { dataWikiHomeUrl, dataWikiUrl, datasetIds } from './dataLinks';
 
-export type DatasetDoc = {
-  id: string;
-  parentId?: string;
-  domain: string;
-  kind: 'dataset' | 'scenario' | 'composition' | 'model' | 'template';
+export type DatasetMethod = {
   title: string;
-  file?: string;
-  scripts?: string[];
+  short: string;
+  parentId?: string;
   source: string;
   sourceUrls?: string[];
   period: string;
   resolution: string;
   unit: string;
-  short: string;
   description: string | string[];
   overview?: Array<{ label: string; value: string }>;
-  method?: string[];
+  reasoning?: string[];
   sections?: Array<{ title: string; items: string[] }>;
   fields?: Array<{ name: string; unit: string; description: string }>;
   caveats?: string[];
+  file?: string;
+  scripts?: string[];
+  note?: string;
+  summary?: string;
+};
+
+export type DatasetDoc = {
+  id: string;
+  domain: string;
+  kind: 'dataset' | 'scenario' | 'composition' | 'model' | 'template';
+  method: DatasetMethod;
+};
+
+// Volle Paket-Form: DatasetDoc plus parameters-Subobjekt.
+export type DatasetPackage = DatasetDoc & {
+  parameters: Record<string, unknown>;
 };
 
 export const templateDescriptionPaths = [
   'templates/scenario-description.template.json',
 ] as const;
 
-// Eager glob über alle Modell-Pakete. `import: 'description'` lässt Vite nur
-// den Wiki-Export inlinen; die großen `data`-/Hours-Dateien lädt defaultData
-// separat.
-const descriptionModules = import.meta.glob<DatasetDoc | undefined>(
+// Eager glob über alle Modell-Pakete. Jede package.json wird als JSON-Default
+// importiert; method, parameters und Identifikation sind sofort da.
+const packageModules = import.meta.glob<DatasetPackage | undefined>(
   '../../../model/**/package.json',
-  { eager: true, import: 'description' },
+  { eager: true, import: 'default' },
 );
 
-// Lazy-Glob für die `data`-Objekte: das Wiki lädt sie on-demand, wenn der
-// Felder-Tab geöffnet wird.
-const dataLoaders = import.meta.glob<unknown>(
-  '../../../model/**/package.json',
-  { import: 'data' },
-);
-
-// Raw-Source jeder Rust-Moduldatei — wird vom DataHandbook-Modul-Tab on-demand
-// nachgeladen.
 const moduleSources = import.meta.glob<string>(
   '../../../model/**/model.rs',
   { query: '?raw', import: 'default' },
@@ -52,33 +53,31 @@ const generatorSources = import.meta.glob<string>(
   { query: '?raw', import: 'default' },
 );
 
-// Mapping doc.id → relativer Modellordner (z. B. `last/e100-pkw`). Wir leiten
-// den Pfad aus dem Glob-Key ab, indem wir das passende Paket mit der gleichen
-// `description.id` finden.
 function relPathFromGlobKey(key: string): string {
   return key.replace(/^\.\.\/\.\.\/\.\.\/model\//, '');
 }
 
 const folderPathById = new Map<string, string>();
-const dataLoaderByDocId = new Map<string, () => Promise<unknown>>();
-for (const [key, doc] of Object.entries(descriptionModules)) {
-  const id = doc?.id;
+const packageById = new Map<string, DatasetPackage>();
+for (const [key, pkg] of Object.entries(packageModules)) {
+  if (!pkg) continue;
+  const id = pkg.id;
   if (!id) continue;
   const packagePath = relPathFromGlobKey(key);
   const folderPath = packagePath.replace(/\/package\.json$/, '');
   folderPathById.set(id, folderPath);
-  const loader = dataLoaders[key];
-  if (loader) dataLoaderByDocId.set(id, loader);
+  packageById.set(id, pkg);
 }
 
-export async function loadDataForDocId(id: string): Promise<Record<string, unknown> | null> {
-  const loader = dataLoaderByDocId.get(id);
-  if (!loader) return null;
-  const data = await loader();
-  return (data && typeof data === 'object') ? data as Record<string, unknown> : null;
+export function getPackage(id: string): DatasetPackage | null {
+  return packageById.get(id) ?? null;
 }
 
-// Pfad-Lookup für Source-Loader (lazy): glob-Key per Pfad-Stem.
+export function getParameters<T = Record<string, unknown>>(id: string): T | null {
+  const pkg = packageById.get(id);
+  return (pkg?.parameters as T) ?? null;
+}
+
 const moduleSourceLoaderByPath = new Map<string, () => Promise<string>>();
 for (const [key, loader] of Object.entries(moduleSources)) {
   moduleSourceLoaderByPath.set(relPathFromGlobKey(key), loader);
@@ -89,8 +88,6 @@ for (const [key, loader] of Object.entries(generatorSources)) {
   generatorSourceLoaderByPath.set(relPathFromGlobKey(key), loader);
 }
 
-// Die 4 Generator-Pakete (mit generate.mjs + data.json) — bei diesen behalten
-// wir den data.json-Tab und einen generate.mjs-Tab.
 export const generatorPackageIds = new Set<string>([
   'e100-heiz',
   'e100-ghd',
@@ -127,8 +124,6 @@ export async function loadGeneratorSource(path: string): Promise<string | null> 
   return loader();
 }
 
-// Pfad zur Generator-data.json (nur für Generator-Pakete) — wird vom Viewer
-// als JSON geladen.
 export function generatorDataJsonPathForId(id: string): string | null {
   if (!generatorPackageIds.has(id)) return null;
   const folder = folderPathById.get(id);
@@ -136,5 +131,4 @@ export function generatorDataJsonPathForId(id: string): string | null {
   return `${folder}/data.json`;
 }
 
-export const datasetDocs: DatasetDoc[] = Object.values(descriptionModules)
-  .filter((doc): doc is DatasetDoc => !!doc);
+export const datasetDocs: DatasetDoc[] = Array.from(packageById.values());

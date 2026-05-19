@@ -13,5 +13,8 @@ NETZPROBE_BUILD_COMMIT="$(git rev-parse HEAD)" cargo test --workspace
 echo "-> Produktionsbuild"
 npm run build
 
+echo "-> Parity-Report Online (netzprobe.de) vs Local (Reporting, non-failing)"
+npm run test:parity || echo "  (Parity-Report-Fehler ignoriert - kein Test-Gate.)"
+
 echo ""
 echo "✓ Rewrite-Gate gruen."

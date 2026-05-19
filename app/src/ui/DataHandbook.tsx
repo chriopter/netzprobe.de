@@ -3,7 +3,7 @@ import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, Exte
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
-import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, loadDataForDocId, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
+import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, getPackage, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { MainTabs } from './MainTabs';
 import { cx, iconButton, iconTile, panelHeader, rowActive, rowHover, sectionBox, sidebarInset, sidebarWidthClass } from './ui';
@@ -80,19 +80,19 @@ function groupDocsForWiki(docs: DatasetDoc[]) {
 }
 
 function visibleMethodItems(selected: DatasetDoc) {
-  return selected.method?.filter(item => !isTechnicalMethodItem(item)) ?? [];
+  return selected.method.reasoning?.filter(item => !isTechnicalMethodItem(item)) ?? [];
 }
 
 function technicalMethodItems(selected: DatasetDoc) {
-  return selected.method?.filter(isTechnicalMethodItem) ?? [];
+  return selected.method.reasoning?.filter(isTechnicalMethodItem) ?? [];
 }
 
 function hasModelSection(selected: DatasetDoc) {
-  return !!selected.overview?.length || !!visibleMethodItems(selected).length || !!selected.sections?.length || !!selected.caveats?.length;
+  return !!selected.method.overview?.length || !!visibleMethodItems(selected).length || !!selected.method.sections?.length || !!selected.method.caveats?.length;
 }
 
 function hasFileRows(selected: DatasetDoc) {
-  return !!modulePathForId(selected.id) || !!selected.fields?.length || !!technicalMethodItems(selected).length || generatorPackageIds.has(selected.id);
+  return !!modulePathForId(selected.id) || !!selected.method.fields?.length || !!technicalMethodItems(selected).length || generatorPackageIds.has(selected.id);
 }
 
 function sectionAnchor(title: string) {
@@ -112,10 +112,10 @@ function articleToc(selected: DatasetDoc): TocItem[] {
   if (hasModelSection(selected)) {
     items.push({ id: tocAnchors.model, label: 'Modellansatz' });
     if (visibleMethodItems(selected).length) items.push({ id: tocAnchors.derivation, label: 'Herleitung', level: 2 });
-    selected.sections?.forEach(section => items.push({ id: sectionAnchor(section.title), label: section.title, level: 2 }));
-    if (selected.caveats?.length) items.push({ id: tocAnchors.caveats, label: 'Grenzen', level: 2 });
+    selected.method.sections?.forEach(section => items.push({ id: sectionAnchor(section.title), label: section.title, level: 2 }));
+    if (selected.method.caveats?.length) items.push({ id: tocAnchors.caveats, label: 'Grenzen', level: 2 });
   }
-  if (selected.source) items.push({ id: tocAnchors.sources, label: 'Quellen' });
+  if (selected.method.source) items.push({ id: tocAnchors.sources, label: 'Quellen' });
   if (hasFileRows(selected)) items.push({ id: tocAnchors.files, label: 'Files' });
   return items;
 }
@@ -342,19 +342,19 @@ function DataHandbookNav({
           {!!bausteine.length && <>
             {showGroups && <TreeSubheader>{domain === 'presets' ? 'Baustein-Presets' : 'Bausteine'}</TreeSubheader>}
             <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
-              {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+              {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
           {!!presets.length && <>
             <TreeSubheader variant="preset">Presets</TreeSubheader>
             <div className="ml-1.5 grid gap-0.5 border-l border-amber-300 pl-2">
-              {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+              {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
           {!!models.length && <>
             {showGroups && <TreeSubheader>Engine</TreeSubheader>}
             <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
-              {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.title} selected={selectedId === doc.id}/>)}
+              {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
         </CollapsibleSection>;
@@ -364,7 +364,7 @@ function DataHandbookNav({
 }
 
 function DatasetArticle({ selected }: { selected: DatasetDoc }) {
-  const descriptionParas = Array.isArray(selected.description) ? selected.description : [selected.description];
+  const descriptionParas = Array.isArray(selected.method.description) ? selected.method.description : [selected.method.description];
   const descriptionMarkdown = descriptionParas.join('\n\n');
   const methodItems = visibleMethodItems(selected);
   const fileMethodItems = technicalMethodItems(selected);
@@ -373,10 +373,10 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   return <div>
     <p className="text-xs font-medium uppercase text-zinc-400">{domainLabels[selected.domain] ?? selected.domain} · {kindLabels[selected.kind]}</p>
     <h1 className="mt-2 flex flex-wrap items-center gap-x-3 text-4xl font-semibold leading-tight">
-      {selected.title}
+      {selected.method.title}
       <KindTag kind={selected.kind}/>
     </h1>
-    {selected.short && <p className="mt-3 max-w-3xl text-lg leading-8 text-zinc-700">{selected.short}</p>}
+    {selected.method.short && <p className="mt-3 max-w-3xl text-lg leading-8 text-zinc-700">{selected.method.short}</p>}
     <DatasetMeta selected={selected}/>
     <section id={tocAnchors.overview} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Übersicht</h2>
@@ -384,27 +384,27 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
     </section>
     {showModelSection && <section id={tocAnchors.model} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Modellansatz</h2>
-      {!!selected.overview?.length && <ModelOverview items={selected.overview}/>}
+      {!!selected.method.overview?.length && <ModelOverview items={selected.method.overview}/>}
       {!!methodItems.length && <section id={tocAnchors.derivation} className="mt-7 max-w-3xl scroll-mt-8">
         <h3 className="text-base font-semibold text-zinc-900">Herleitung</h3>
         <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
           {methodItems.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>}
-      {selected.sections?.map(section => <section key={section.title} id={sectionAnchor(section.title)} className="mt-7 max-w-3xl scroll-mt-8">
+      {selected.method.sections?.map(section => <section key={section.title} id={sectionAnchor(section.title)} className="mt-7 max-w-3xl scroll-mt-8">
         <h3 className="text-base font-semibold text-zinc-900">{section.title}</h3>
         <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
           {section.items.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>)}
-      {!!selected.caveats?.length && <section id={tocAnchors.caveats} className="mt-7 max-w-3xl scroll-mt-8">
+      {!!selected.method.caveats?.length && <section id={tocAnchors.caveats} className="mt-7 max-w-3xl scroll-mt-8">
         <h3 className="text-base font-semibold text-zinc-900">Grenzen</h3>
         <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
-          {selected.caveats.map(item => <li key={item}>• {item}</li>)}
+          {selected.method.caveats.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>}
     </section>}
-    {selected.source && <SourcesSection selected={selected}/>}
+    {selected.method.source && <SourcesSection selected={selected}/>}
     {showFileRows && <section id={tocAnchors.files} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Files</h2>
       <FileContentTabs selected={selected} reproductionItems={fileMethodItems}/>
@@ -416,10 +416,10 @@ function SourcesSection({ selected }: { selected: DatasetDoc }) {
   return <section id={tocAnchors.sources} className="mt-9 scroll-mt-8">
     <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Quellen</h2>
     <div className="mt-4 max-w-3xl text-sm leading-6">
-      <p className="text-zinc-700">{selected.source}</p>
-      {selected.sourceUrls?.length
+      <p className="text-zinc-700">{selected.method.source}</p>
+      {selected.method.sourceUrls?.length
         ? <ul className="mt-3 grid gap-1 text-zinc-700">
-            {selected.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
+            {selected.method.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
           </ul>
         : null}
     </div>
@@ -432,9 +432,9 @@ function DatasetMeta({ selected }: { selected: DatasetDoc }) {
       <dt className="font-medium text-zinc-400">ID</dt>
       <dd className="min-w-0"><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-700">{selected.id}</code></dd>
     </div>
-    <MetaLine label="Zeitraum" value={selected.period}/>
-    <MetaLine label="Auflösung" value={selected.resolution}/>
-    <MetaLine label="Einheit" value={selected.unit}/>
+    <MetaLine label="Zeitraum" value={selected.method.period}/>
+    <MetaLine label="Auflösung" value={selected.method.resolution}/>
+    <MetaLine label="Einheit" value={selected.method.unit}/>
   </dl>;
 }
 
@@ -553,7 +553,7 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
 
 function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): FileContentTab[] {
   const tabs: FileContentTab[] = [];
-  if (selected.fields?.length || reproductionItems.length) {
+  if (selected.method.fields?.length || reproductionItems.length) {
     tabs.push({ id: 'fields', label: 'Modell (model.json)', kind: 'fields' });
   }
   const modulePath = modulePathForId(selected.id);
@@ -607,23 +607,8 @@ function formatFieldValue(value: unknown): string | null {
 }
 
 function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    setData(null);
-    loadDataForDocId(selected.id)
-      .then(result => { if (!cancelled) setData(result); })
-      .catch(() => { if (!cancelled) setData(null); });
-    return () => { cancelled = true; };
-  }, [selected.id]);
-  const documentedFields = selected.fields ?? [];
-  const documentedNames = new Set(documentedFields.map(field => field.name));
-  const dataFields = data
-    ? Object.keys(data)
-      .filter(name => !documentedNames.has(name))
-      .map(name => ({ name, unit: 'Wert', description: 'Feld aus dem Modell-Datenobjekt.' }))
-    : [];
-  const fields = [...documentedFields, ...dataFields];
+  const data = getPackage(selected.id) as Record<string, unknown> | null;
+  const fields = selected.method.fields ?? [];
   return <div>
     <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
       {fields.map(field => {
@@ -739,7 +724,7 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
             <p className="mt-3 text-sm leading-6 text-zinc-600">{domainBlurbs[domain] ?? ''}</p>
             <ul className="mt-3 flex flex-wrap gap-1.5">
               {items.slice(0, 6).map(item => <li key={item.id}>
-                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] leading-5 text-zinc-700">{item.title}</span>
+                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] leading-5 text-zinc-700">{item.method.title}</span>
               </li>)}
               {items.length > 6 && <li>
                 <span className="inline-block rounded-full px-2 py-0.5 text-[11px] leading-5 text-zinc-400">+{items.length - 6}</span>

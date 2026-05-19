@@ -1,13 +1,11 @@
 {
-  "description": {
-    "id": "kernkraft",
-    "domain": "erzeugung",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-erzeugung.schema.json",
+  "id": "kernkraft",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "method": {
     "title": "Kernkraft",
-    "file": "erzeugung/kernkraft/data.json",
-    "scripts": [
-      "erzeugung/kernkraft/model.rs"
-    ],
+    "short": "Hypothetische installierte Kernkraftleistung; Baseload mit Verfügbarkeit 0,9.",
     "source": "Energy-Charts installed_power 2025 (Kernkraft Deutschland nach Abschaltung 15.04.2023 = 0 GW); IPCC AR6 WG3 Annex III (Lebenszyklus-Emissionen Kernkraft Median 12 g/kWh, Range 5-110); UBA Climate Change 13/2025 (Vorketten-Faktoren Strom).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -18,7 +16,6 @@
     "period": "2025",
     "resolution": "stündlich (Verfügbarkeitsmittel) / jährlich (installierte Leistung)",
     "unit": "GW, g/kWh",
-    "short": "Hypothetische installierte Kernkraftleistung; Baseload mit Verfügbarkeit 0,9.",
     "description": [
       "**Anlagenpark:** Deutschland hat den letzten Reaktor (Isar 2, Emsland, Neckarwestheim 2) am `15.04.2023` vom Netz genommen — installierter Bestand 2025 ist `0 GW`, der **Default**. Der Slider erlaubt eine hypothetische Wiederinbetriebnahme bis `500 GW` (Schritt `0,5 GW`); das Maximum geht weit über die historische Spitzenkapazität Deutschlands (rund `21 GW`) hinaus und bedient extrem hypothetische Vollkernkraft-Szenarien inklusive europäischer Importperspektive.",
       "**Einspeisecharakteristik:** das Modell bildet Kernkraft als **Baseload** ab — `supplyGW(t) = installedGW × 0,9` konstant über alle `8760 h/a`. Bei einer Verfügbarkeit von `0,9` ergibt das Volllaststunden von rund `7900 h/a`; bereits `50 GW` reichen für einen Jahresertrag von etwa `395 TWh/a` — zum Vergleich: die deutsche Gesamt-Bruttostromerzeugung liegt bei rund `500 TWh/a`. Spezifische Emissionen sind mit `12 g/kWh` als **IPCC-AR6-Median** angesetzt (Spannweite `5–110 g/kWh`); enthalten sind Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau.",
@@ -38,7 +35,7 @@
         "value": "**Rechnung:** `Emissionen(t) = supplyGW(t) × 12 g/kWh` (IPCC-AR6-Median inkl. Vorketten und Anlagenbau). Bei Überschuss curtailed das Kernmodell Kernkraft nach Wind und PV als letztes."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/erzeugung/kernkraft/package.json, Adapter in model/erzeugung/kernkraft/model.rs.",
       "Verfügbarkeit 90 % als konstanter Jahresanteil — entspricht typischer Revisionsbilanz.",
       "Emissionsfaktor 12 g/kWh als Median IPCC AR6 / UBA-Vorkettenwert — beinhaltet Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau."
@@ -104,11 +101,13 @@
       "Default 0 GW reflektiert den Status Deutschland 2025 — Szenarien mit Kernkraft-Wiederinbetriebnahme sind hypothetisch.",
       "Verfügbarkeit konstant 0,9 — Revisionsfenster und planbare Ausfälle nicht stundenaufgelöst.",
       "Emissionsfaktor 12 g/kWh entspricht IPCC-AR6-Median (Spannweite 5-110 g/kWh, je nach Methodik); konservativer Wert inkl. Vorketten und Anlagenbau. Frühere Annahme 5 g/kWh war pro-nuklear-optimistisch."
+    ],
+    "file": "erzeugung/kernkraft/data.json",
+    "scripts": [
+      "erzeugung/kernkraft/model.rs"
     ]
   },
-  "data": {
-    "id": "kernkraft",
-    "name": "Kernkraft",
+  "parameters": {
     "installed2025GW": 0,
     "defaultInstalledGW": 0,
     "minInstalledGW": 0,

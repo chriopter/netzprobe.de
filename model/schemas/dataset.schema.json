@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://netzprobe.de/schemas/dataset.schema.json",
+  "title": "Dataset (Beobachtungsdaten)",
+  "allOf": [{ "$ref": "./_common.schema.json" }],
+  "properties": {
+    "kind": { "const": "dataset" },
+    "domain": { "type": "string", "enum": ["erzeugung", "last"] },
+    "year": { "type": "integer" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sumTWh": { "type": "number" }
+  }
+}

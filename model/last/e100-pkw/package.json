@@ -1,22 +1,24 @@
 {
-  "description": {
-    "id": "e100-pkw",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-pkw",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "PKW Elektrifizierung",
+    "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
+    "parentId": "e100",
     "source": "Destatis Pkw-Fahrleistung 2023 (472,2 Mrd. km), KBA/BMWK Fahrzeugbestand, KIT-IIP Heinz 2018.",
     "sourceUrls": [
       "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
       "https://www.bmwk.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.html",
       "https://www.umweltbundesamt.de/daten/umweltzustand-trends/verkehr/verkehrsinfrastruktur-fahrzeugbestand",
       "https://publikationen.bibliothek.kit.edu/1000086372",
-      "https://www.iip.kit.edu/3559.php"
+      "https://www.iip.kit.edu/3559.php",
+      "https://data.gov.de/suche/daten/verkehr-in-kilometern-vk-fahrleistungen-2014-2023"
     ],
     "period": "2023",
     "resolution": "Jahr × Stunde",
     "unit": "Mio. km, kWh/100 km, TWh",
-    "short": "Zusatzlast aus elektrifizierten privaten Pkw-Kilometern.",
     "description": [
       "**Bezugsjahr 2023:** private Pkw fahren rund `472.200 Mio. km`. Davon sind etwa `20.000 Mio. km` bereits elektrisch gefahren und damit schon in der historischen Stromlast enthalten; dieser Sockel ist das Slider-Minimum.",
       "**Verbrauch:** das Modell setzt `20 kWh/100 km` Strom ab Netz an, inklusive AC-Ladeverlusten. Der Wert liegt im Flottenmittel-Korridor (`18–22 kWh/100 km`); Einzelmodelle streuen segment- und wetterabhängig zwischen `14` und `28 kWh/100 km`. Eine vollständige Elektrifizierung der 2023er privaten Pkw-Fahrleistung ergibt so rund `90 TWh/a` Zusatzlast — sie ersetzt etwa das Dreifache an fossiler Kraftstoff-Endenergie, weil der **Antriebsstrang-Wirkungsgrad** vom Verbrenner (`~25 %`) zum BEV (`75–85 %`) um Faktor 3 steigt.",
@@ -36,7 +38,7 @@
         "value": "**Rechnung:** `Zusatzlast = max(0, Ziel − 20.000) × 20 / 100.000`. Default: `(472.200 − 20.000) × 20 / 100.000 = 90,44 TWh/a`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt, kein Generator-Skript. Konstanten und Rechenlogik liegen in model/last/e100-pkw/model.rs.",
       "Referenz-Fahrleistung referenceMillionKm: Destatis-Pkw-Fahrleistung privater Haushalte 2023, 472.200 Mio. km.",
       "Slider-Mindestwert alreadyElectricMillionKm: 1,4 Mio. BEV (KBA-Bestand Ende 2023) × rund 11.000 km/a plus 0,9 Mio. PHEV × rund 14.000 km/a × 40 % elektrischer Anteil ≈ 20.000 Mio. km. Strom für diese Kilometer ist bereits in der historischen Last enthalten; das Szenario modelliert nur die darüber hinausgehende Elektrifizierung.",
@@ -110,9 +112,19 @@
         "description": "24 Stundenmultiplikatoren Berlin-Zeit (Summe 24); Quellen und Quell-URLs."
       },
       {
+        "name": "referenceScales",
+        "unit": "Objekt",
+        "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa Mio. Pkw."
+      },
+      {
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -121,18 +133,11 @@
       "Kein Saisonprofil; realer Winterverbrauch liegt 20–30 % höher (Heizung, Kalt-Batterie).",
       "PHEV-Stromquote pauschal 40 % — am oberen Rand der Realweltdaten (ICCT/Plötz: faktisch 20–35 %).",
       "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert; Mieter ohne Heim-Wallbox laden in der Praxis mit anderem Tagesprofil."
-    ]
-  },
-  "data": {
-    "id": "e100-pkw",
-    "title": "PKW Elektrifizierung",
-    "source": "Destatis Pkw-Fahrleistung privater Haushalte 2023; KBA/BMWK Fahrzeugbestand und durchschnittliche Fahrleistung alternativer Antriebe 2023.",
-    "sourceUrls": [
-      "https://www.destatis.de/DE/Presse/Pressemitteilungen/Zahl-der-Woche/2025/PD25_37_p002.html",
-      "https://data.gov.de/suche/daten/verkehr-in-kilometern-vk-fahrleistungen-2014-2023",
-      "https://www.bmwk.de/Redaktion/DE/Publikationen/Energie/20241129-erneuerbare-energien-in-zahlen-2023.html",
-      "https://www.umweltbundesamt.de/daten/umweltzustand-trends/verkehr/verkehrsinfrastruktur-fahrzeugbestand"
     ],
+    "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr).",
+    "summary": "20 kWh/100 km"
+  },
+  "parameters": {
     "referenceScales": {
       "activity": {
         "value": 11000,
@@ -182,8 +187,6 @@
         1.279,
         1.016
       ]
-    },
-    "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr).",
-    "summary": "20 kWh/100 km"
+    }
   }
 }

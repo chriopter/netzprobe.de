@@ -92,11 +92,11 @@ export type WithEmissions = {
   emissions: EmissionsData;
 };
 
+// Engine-Inputs (parameters-Block der package.json). Identitäts-Texte
+// (id, title, source, sourceUrls, note, summary) leben im method-Block und
+// sind hier nicht mehr typisiert.
+
 export type E100PkwData = {
-  id: 'e100-pkw';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   referenceMillionKm: number;
   alreadyElectricMillionKm: number;
@@ -106,15 +106,9 @@ export type E100PkwData = {
   kwhPer100Km: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100HeizData = {
-  id: 'e100-heiz';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   referenceHeatDemandTWh: number;
   alreadyElectricHeatTWh: number;
@@ -125,15 +119,9 @@ export type E100HeizData = {
   distribution: 'heating-degree-days';
   degreeDayProfile: DegreeDayProfile;
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100LkwData = {
-  id: 'e100-lkw';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   referenceBnKm: number;
   alreadyElectricBnKm: number;
@@ -143,15 +131,9 @@ export type E100LkwData = {
   kwhPerKm: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100BahnData = {
-  id: 'e100-bahn';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   dieselSubstitutionTWh: number;
   modalShiftTWh: number;
@@ -160,15 +142,9 @@ export type E100BahnData = {
   stepTWh: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100SchiffData = {
-  id: 'e100-schiff';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   directElectrificationTWh: number;
   eFuelSynthesisTWh: number;
@@ -180,15 +156,9 @@ export type E100SchiffData = {
   stepTWh: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100FlugData = {
-  id: 'e100-flug';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   kerosineDemandMioT: number;
   kerosineEnergyTWh: number;
@@ -200,15 +170,9 @@ export type E100FlugData = {
   stepTWh: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100GhdData = {
-  id: 'e100-ghd';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   referenceHeatDemandTWh: number;
   alreadyElectricHeatTWh: number;
@@ -219,15 +183,9 @@ export type E100GhdData = {
   distribution: 'heating-degree-days';
   degreeDayProfile: DegreeDayProfile;
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100IndustrieWaermeData = {
-  id: 'e100-industrie-waerme';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   referenceHeatTWh: number;
   alreadyElectricHeatTWh: number;
@@ -245,15 +203,9 @@ export type E100IndustrieWaermeData = {
   };
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100StahlData = {
-  id: 'e100-stahl';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   primarySteelMioTon: number;
   hydrogenKgPerTonSteel: number;
@@ -266,15 +218,9 @@ export type E100StahlData = {
   stepMioTon: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type E100ChemieData = {
-  id: 'e100-chemie';
-  title: string;
-  source: string;
-  sourceUrls: string[];
   referenceYear: number;
   currentElectricityTWh: number;
   processHeatSubstitutionTWh: number;
@@ -290,8 +236,6 @@ export type E100ChemieData = {
   alreadyElectricTWh: number;
   distribution: 'hourly-profile';
   hourlyProfile: HourlyProfile;
-  note: string;
-  summary: string;
 } & WithReferenceScales;
 
 export type ErzeugungsModellSourceId =
@@ -356,15 +300,11 @@ export type ErzeugungsPool = {
 };
 
 export type AussenhandelStromData = {
-  id: 'strom-handel';
-  name: string;
   import: ErzeugungsModellImport;
   export: ErzeugungsModellExport;
 } & WithReferenceScales;
 
 export type AussenhandelH2Data = {
-  id: 'h2-handel';
-  name: string;
   import: {
     default2025TWh: number;
     defaultTWh: number;
@@ -392,23 +332,17 @@ export type AussenhandelPool = {
 };
 
 export type ErzPackageVariableRe = {
-  id: string;
-  name: string;
   mode: 'variable-re';
   factorPackage: 'einspeisefaktoren-2025';
   factorField: 'solarIrradiance' | 'wind100m';
 } & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageBaseload = {
-  id: string;
-  name: string;
   mode: 'baseload';
   availability: number;
 } & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageDispatchable = {
-  id: string;
-  name: string;
   mode: 'dispatchable';
   availability: number;
   minLoadFraction: number;
@@ -420,7 +354,6 @@ export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPa
 export type SpeicherModellStorageId = 'batterie' | 'pumpspeicher' | 'h2';
 
 export type SpeicherModellSymmetricStorage = {
-  name: string;
   power2025GW: number;
   defaultPowerGW: number;
   minPowerGW: number;
@@ -437,7 +370,6 @@ export type SpeicherModellSymmetricStorage = {
 } & WithReferenceScales;
 
 export type SpeicherModellAsymmetricStorage = {
-  name: string;
   chargePower2025GW: number;
   defaultChargePowerGW: number;
   minChargePowerGW: number;
@@ -467,18 +399,13 @@ export type SpeicherPool = {
   };
 };
 
-export type SpeicherBatterieData = SpeicherModellSymmetricStorage & { id: 'batterie' };
-export type SpeicherPumpspeicherData = SpeicherModellSymmetricStorage & { id: 'pumpspeicher' };
-export type SpeicherH2Data = SpeicherModellAsymmetricStorage & { id: 'h2' };
+export type SpeicherBatterieData = SpeicherModellSymmetricStorage;
+export type SpeicherPumpspeicherData = SpeicherModellSymmetricStorage;
+export type SpeicherH2Data = SpeicherModellAsymmetricStorage;
 
 export type SplitDataFile<T> = {
-  source: string;
   year?: number;
   generatedAt?: string;
-  sourceUrl?: string;
-  sourceUrls?: string[];
-  notes?: string[];
-  unit?: string;
   sumTWh?: number;
   sumImportTWh?: number;
   sumExportTWh?: number;
