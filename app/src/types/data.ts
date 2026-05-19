@@ -92,18 +92,6 @@ export type WithEmissions = {
   emissions: EmissionsData;
 };
 
-/** Slider-Zonen (Ampel + Grau): erklärende Phasen-Texte mit Schwellen.
- *  Liegen unter `method.zones`, weil sie reine UI-/Wiki-Hinweise sind und
- *  nicht von der Compute-Engine gelesen werden.
- *  Die `from`-Schwellen wirken zugleich als Einrast-Punkte beim Ziehen.
- *  `from` ist immer in der Einheit des jeweiligen Sliders (GW, TWh, Mio. km, ...). */
-export type SliderZoneColor = 'good' | 'neutral' | 'warn' | 'critical';
-export type SliderZone = {
-  /** Untere Schwelle der Zone. Bei der ersten Zone weglassen oder 0. */
-  from?: number;
-  color: SliderZoneColor;
-  text: string;
-};
 
 // Engine-Inputs (parameters-Block der package.json). Identitäts-Texte
 // (id, title, source, sourceUrls, note, summary) leben im method-Block und
