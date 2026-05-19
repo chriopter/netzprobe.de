@@ -22,10 +22,11 @@ import { dataWikiUrl, datasetIds } from './dataLinks';
 import { getPackage } from './dataCatalog';
 
 const summaryFor = (id: string) => getPackage(id)?.method.summary ?? '';
+const zonesFor = (id: string) => getPackage(id)?.method.zones;
 import { fmt, fmt0, twh, twh0 } from './format';
 import { MainTabs } from './MainTabs';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
-import type { DataSet, ReferenceScale } from '../types/data';
+import type { DataSet, ReferenceScale, SliderZone } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
@@ -286,6 +287,7 @@ type GenerationFieldSpec = {
   baseline?: number;
   co2eGperKWh?: number;
   referenceScale?: ReferenceScale;
+  zones?: SliderZone[];
 };
 
 type GenerationGroup = {
@@ -298,18 +300,18 @@ type GenerationGroup = {
 function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] {
   return [
     { id: 'erneuerbar', title: 'Erneuerbar', fields: [
-      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power },
-      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power },
-      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power },
-      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power },
-      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power },
+      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,         zones: zonesFor(datasetIds.erzPv) },
+      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power,     zones: zonesFor(datasetIds.erzWindOn) },
+      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,    zones: zonesFor(datasetIds.erzWindOff) },
+      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,   zones: zonesFor(datasetIds.erzBiomasse) },
+      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power, zones: zonesFor(datasetIds.erzLaufwasser) },
     ], summary: (s) => `${fmt0.format(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW)} GW` },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
-      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power },
+      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power, zones: zonesFor(datasetIds.erzKernkraft) },
     ], summary: (s) => `${fmt0.format(s.generation.kernkraftInstalledGW)} GW` },
     { id: 'konventionell', title: 'Konventionell', fields: [
-      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power },
-      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power },
+      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,   zones: zonesFor(datasetIds.erzGas) },
+      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power, zones: zonesFor(datasetIds.erzKohle) },
     ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
   ];
 }
@@ -699,6 +701,7 @@ function SupplyGroupAccordions({
         baseline={field.baseline}
         co2eGperKWh={field.co2eGperKWh}
         referenceScale={field.referenceScale}
+        zones={field.zones}
         onValue={value => onGenerationChange(field.key, value)}
       />)}
     </GroupAccordion>)}
@@ -821,7 +824,55 @@ function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {
   return `CO₂e: ${fmt0.format(co2eGperKWh)} g/kWh`;
 }
 
-function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, onValue }: {
+// Track-Farben pro Zonentyp (Ampel + Grau).
+const ZONE_COLOR: Record<SliderZone['color'], string> = {
+  good: '#bbf7d0',     // green-200
+  neutral: '#e4e4e7',  // zinc-200
+  warn: '#fde68a',     // amber-200
+  critical: '#fecaca', // red-200
+};
+// Text-Farben pro Zonentyp (fuer den Hinweistext unter dem Slider).
+const ZONE_TEXT: Record<SliderZone['color'], string> = {
+  good: 'text-emerald-700',
+  neutral: 'text-zinc-500',
+  warn: 'text-amber-700',
+  critical: 'text-red-700',
+};
+
+// Erstellt den Zonen-Gradient fuer den Slider-Track aus der zones-Liste.
+function buildZoneStyle(min: number, max: number, zones?: SliderZone[]): Record<string, string> {
+  if (!zones || zones.length === 0) return {};
+  const pctOf = (v: number) => Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100));
+  const stops = zones
+    .map(z => ({ pct: pctOf(z.from ?? min), color: ZONE_COLOR[z.color] }))
+    .sort((a, b) => a.pct - b.pct);
+  const parts: string[] = [];
+  for (let i = 0; i < stops.length; i++) {
+    const start = stops[i].pct;
+    const end = i + 1 < stops.length ? stops[i + 1].pct : 100;
+    parts.push(`${stops[i].color} ${start}% ${end}%`);
+  }
+  const gradient = `linear-gradient(to right, ${parts.join(', ')})`;
+  return { ['--track-zones' as string]: gradient, ['--track-progress' as string]: 'transparent' };
+}
+
+// Findet die aktive Zone fuer einen gegebenen Wert.
+function activeZone(value: number, zones?: SliderZone[]): SliderZone | null {
+  if (!zones || zones.length === 0) return null;
+  const sorted = [...zones].sort((a, b) => (a.from ?? 0) - (b.from ?? 0));
+  let current: SliderZone | null = null;
+  for (const z of sorted) {
+    if (value >= (z.from ?? -Infinity)) current = z;
+  }
+  return current;
+}
+
+// Snap-Punkte = alle from-Schwellen jenseits der ersten Zone.
+function zoneSnapPoints(zones?: SliderZone[]): number[] {
+  return (zones ?? []).map(z => z.from).filter((v): v is number => typeof v === 'number' && v > 0);
+}
+
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, zones, onValue }: {
   label: string;
   unit: string;
   value: number;
@@ -831,18 +882,42 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   baseline?: number;
   co2eGperKWh?: number;
   referenceScale?: ReferenceScale;
+  zones?: SliderZone[];
   onValue: (value: number) => void;
 }) {
-  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
-  const multiplier = formatMultiplier(value, baseline);
+  // Lokaler Drag-State: waehrend Pointer-Drag wird nur der lokale Wert
+  // aktualisiert, der teure onValue-Callback (Simulation) feuert erst beim
+  // Loslassen. Keyboard-Eingaben (Pfeiltasten) commiten direkt, weil dort kein
+  // Drag-Vorgang stattfindet.
+  const [dragValue, setDragValue] = useState<number | null>(null);
+  const display = dragValue ?? value;
+  const pct = max > min ? ((display - min) / (max - min)) * 100 : 0;
+  const multiplier = formatMultiplier(display, baseline);
   const emissionText = formatEmissionFactor(co2eGperKWh);
-  const referenceText = formatReferenceScale(value, referenceScale);
+  const referenceText = formatReferenceScale(display, referenceScale);
   const detailText = [emissionText, referenceText].filter(Boolean).join(' · ');
+  const snapPoints = zoneSnapPoints(zones);
+  // Wenn ein vom Slider gewaehlter Wert innerhalb einer halben Schritt-Toleranz
+  // an einem Snap-Punkt liegt, rastet er ein.
+  const snap = (raw: number) => {
+    if (snapPoints.length === 0) return raw;
+    const tolerance = Math.max(step, max * 0.02);
+    for (const sp of snapPoints) {
+      if (Math.abs(raw - sp) <= tolerance) return sp;
+    }
+    return raw;
+  };
+  const commit = (raw: number) => {
+    const snapped = snap(raw);
+    setDragValue(null);
+    onValue(snapped);
+  };
+  const zone = activeZone(display, zones);
   return <div className="grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-xs font-medium text-zinc-950">{label}</span>
       <span className="flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500">
-        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
+        <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
         <span>{unit}</span>
         {multiplier && <span className="ml-1 text-zinc-400">({multiplier})</span>}
       </span>
@@ -851,14 +926,25 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
     <input
       aria-label={label}
       className="w-full"
-      style={{ ['--range-pct' as string]: `${pct}%` }}
+      style={{
+        ['--range-pct' as string]: `${pct}%`,
+        ...buildZoneStyle(min, max, zones),
+      }}
       type="range"
       min={min}
       max={max}
       step={step}
-      value={value}
-      onChange={event => onValue(Number(event.target.value))}
+      value={display}
+      onChange={event => {
+        const raw = Number(event.target.value);
+        if (dragValue !== null) setDragValue(raw);
+        else onValue(snap(raw));
+      }}
+      onPointerDown={() => setDragValue(value)}
+      onPointerUp={event => commit(Number(event.currentTarget.value))}
+      onPointerCancel={() => setDragValue(null)}
     />
+    {zone && <div className={cx('px-0.5 text-xs leading-5', ZONE_TEXT[zone.color])}>{zone.text}</div>}
   </div>;
 }
 
@@ -1509,6 +1595,7 @@ function E100PkwControl({ data, scenario, expanded, onChecked, onMillionKm, onTo
     expanded={expanded}
     onChecked={onChecked}
     onValue={onMillionKm}
+    zones={zonesFor(datasetIds.e100Pkw)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1532,6 +1619,7 @@ function E100HeizControl({ data, scenario, expanded, onChecked, onTargetHeat, on
     expanded={expanded}
     onChecked={onChecked}
     onValue={onTargetHeat}
+    zones={zonesFor(datasetIds.e100Heiz)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1549,14 +1637,32 @@ type SectorRowProps = {
   detail: string;
   docId: string;
   expanded: boolean;
+  zones?: SliderZone[];
   onChecked: (checked: boolean) => void;
   onValue: (value: number) => void;
   onToggleExpand: () => void;
 };
 
-function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, onChecked, onValue, onToggleExpand }: SectorRowProps) {
-  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUnit, electricTWh, detail, docId, expanded, zones, onChecked, onValue, onToggleExpand }: SectorRowProps) {
+  const [dragValue, setDragValue] = useState<number | null>(null);
+  const display = dragValue ?? value;
+  const pct = max > min ? ((display - min) / (max - min)) * 100 : 0;
   const Chevron = expanded ? ChevronUp : ChevronDown;
+  const snapPoints = zoneSnapPoints(zones);
+  const snap = (raw: number) => {
+    if (snapPoints.length === 0) return raw;
+    const tolerance = Math.max(step, max * 0.02);
+    for (const sp of snapPoints) {
+      if (Math.abs(raw - sp) <= tolerance) return sp;
+    }
+    return raw;
+  };
+  const commit = (raw: number) => {
+    const snapped = snap(raw);
+    setDragValue(null);
+    onValue(snapped);
+  };
+  const zone = activeZone(display, zones);
   return <div className={cx(
     'group transition',
     expanded && enabled ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
@@ -1587,19 +1693,30 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
       <input
         aria-label={`${label}: ${valueLabel}`}
         className="w-full"
-        style={{ ['--range-pct' as string]: `${pct}%` }}
+        style={{
+          ['--range-pct' as string]: `${pct}%`,
+          ...buildZoneStyle(min, max, zones),
+        }}
         type="range"
         min={min}
         max={max}
         step={step}
-        value={value}
-        onChange={event => onValue(Number(event.target.value))}
+        value={display}
+        onChange={event => {
+          const raw = Number(event.target.value);
+          if (dragValue !== null) setDragValue(raw);
+          else onValue(snap(raw));
+        }}
+        onPointerDown={() => setDragValue(value)}
+        onPointerUp={event => commit(Number(event.currentTarget.value))}
+        onPointerCancel={() => setDragValue(null)}
       />
       {valueUnit && <div className="flex items-baseline gap-1 text-xs leading-5 text-zinc-500">
-        <EditableNumber value={value} min={min} max={max} step={step} onChange={onValue} title={`${valueLabel}: direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${valueUnit})`}/>
+        <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${valueLabel}: direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${valueUnit})`}/>
         <span>{valueUnit}</span>
       </div>}
       <p className="text-xs leading-5 text-zinc-500">{detail}</p>
+      {zone && <p className={cx('text-xs leading-5', ZONE_TEXT[zone.color])}>{zone.text}</p>}
     </div>}
   </div>;
 }
@@ -1625,6 +1742,7 @@ function E100LkwControl({ data, scenario, expanded, onChecked, onValue, onToggle
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Lkw)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1648,6 +1766,7 @@ function E100BahnControl({ data, scenario, expanded, onChecked, onValue, onToggl
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Bahn)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1671,6 +1790,7 @@ function E100SchiffControl({ data, scenario, expanded, onChecked, onValue, onTog
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Schiff)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1694,6 +1814,7 @@ function E100FlugControl({ data, scenario, expanded, onChecked, onValue, onToggl
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Flug)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1717,6 +1838,7 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Ghd)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1740,6 +1862,7 @@ function E100IndustrieWaermeControl({ data, scenario, expanded, onChecked, onVal
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100IndustrieWaerme)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1763,6 +1886,7 @@ function E100StahlControl({ data, scenario, expanded, onChecked, onValue, onTogg
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Stahl)}
     onToggleExpand={onToggleExpand}
   />;
 }
@@ -1786,6 +1910,7 @@ function E100ChemieControl({ data, scenario, expanded, onChecked, onValue, onTog
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}
+    zones={zonesFor(datasetIds.e100Chemie)}
     onToggleExpand={onToggleExpand}
   />;
 }
