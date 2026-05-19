@@ -7,7 +7,7 @@
     "title": "Chemie Elektrifizierung",
     "short": "Zusatzlast aus vollständiger Elektrifizierung und Defossilisierung der Chemie- und Petrochemie-Industrie (inkl. H2-Feedstock für NH3, MeOH, Olefine).",
     "parentId": "e100",
-    "source": "VCI/DECHEMA/FutureCamp/Prognos Roadmap 2050 'Treibhausgasneutralität Chemieindustrie Deutschland' (2019, H2-Maximalpfad rund 685 TWh — Default des Szenarios); VCI/VDI Chemistry4Climate (C4C) 2023 und Update 2024 als alternative Pfade (258–508 TWh nach teilweiser CCS-/Recycling-Mitnahme und Produktionsrückgang); BMWK Langfristszenarien 3 T45-Strom Modul Industrie (Fraunhofer ISI); DECHEMA Technology Study Low Carbon Energy and Feedstock for the European Chemical Industry; VCI Chemiewirtschaft in Zahlen 2024; AGEB Anwendungsbilanz; produktionsseitig: Statistisches Bundesamt / VCI Mengengerüst (Ammoniak ~2,0 Mt 2023, Ethylen 4,1 Mt, Propylen 3,0 Mt, BTX ~2,8 Mt).",
+    "source": "VCI/VDI Chemistry4Climate (C4C) Update 2024 (H2-Maximalpfad rund 440 TWh — Default des Szenarios, nach Produktionsrückgang seit Energiepreiskrise: NH3 −32 %, MeOH −40 %, Chlor −26 %); C4C 2023 als Vorläufer (Strom max 464 / H2 max 508 TWh); VCI/DECHEMA/FutureCamp/Prognos Roadmap 2050 (2019, voller H2-Pfad rund 628 TWh, vor Krise); BMWK Langfristszenarien 3 T45-Strom Modul Industrie (Fraunhofer ISI); DECHEMA Technology Study Low Carbon Energy and Feedstock for the European Chemical Industry; VCI Chemiewirtschaft in Zahlen 2024; AGEB Anwendungsbilanz; produktionsseitig: Statistisches Bundesamt / VCI Mengengerüst (Ammoniak ~2,0 Mt 2023, Methanol ~0,9 Mt 2023, Ethylen 4,1 Mt, Propylen 3,0 Mt, BTX ~2,8 Mt).",
     "sourceUrls": [
       "https://www.vci.de/services/publikationen/broschueren-faltblaetter/vci-dechema-futurecamp-studie-roadmap-2050-treibhausgasneutralitaet-chemieindustrie-deutschland-langfassung.jsp",
       "https://www.vci.de/vci/downloads-vci/publikation/broschueren-und-faltblaetter/2024-11-07-c4c-update-publikation-kurzfassung-doppelseiten.pdf",
@@ -23,13 +23,13 @@
     "unit": "TWh Strom",
     "description": [
       "**Bezugsjahr 2023:** die Chemie- und Petrochemie-Industrie verbraucht heute rund `55 TWh` Strom (AGEB-Anwendungsbilanz), der bereits in der historischen Last steckt und das Slider-Minimum bildet. Mengenanker für die Defossilisierungs-Rechnung sind die inländischen Produktionsmengen 2023: `~2,0 Mt NH3`, `~1,3 Mt MeOH` sowie der HVC-Naphtha-Output mit `4,1 Mt` Ethylen, `3,0 Mt` Propylen und `~2,8 Mt` BTX.",
-      "**Verbrauch:** der Slider liefert den **Ziel-Gesamtstromverbrauch** der Branche. Das Modell summiert drei Sektorgruppen — Bestand und Hilfsenergie `85 TWh` (`55 TWh` Status quo, `30 TWh` Direktstrom-Zuwachs für Antriebe und IKT), Prozesswärme `75 TWh` (HT-WP bis `200 °C` und E-Dampfkessel) sowie H2-basierte Synthese `275 TWh` (`35 TWh` Ammoniak, `60 TWh` Methanol inkl. CO2-Bereitstellung, `180 TWh` e-Olefine via Methanol-to-Olefins/-Aromatics). Die hinterlegten C4C-Update-Bausteine summieren auf `435 TWh`; der Default `685 TWh` entspricht dem VCI/DECHEMA-2019-Pfad mit voller Inlandsproduktion. **System-η** Strom → H2-Endprodukt-Mix `0,55` — `1 TWh` H2-Import ersetzt `1,82 TWh` inländischen Synthese-Strom.",
+      "**Verbrauch:** der Slider liefert den **Ziel-Gesamtstromverbrauch** der Branche. Das Modell summiert drei Sektorgruppen — Bestand und Hilfsenergie `85 TWh` (`55 TWh` Status quo, `30 TWh` Direktstrom-Zuwachs für Antriebe und IKT), Prozesswärme `75 TWh` (HT-WP bis `200 °C` und E-Dampfkessel) sowie H2-basierte Synthese `275 TWh` (`35 TWh` Ammoniak, `60 TWh` Methanol inkl. CO2-Bereitstellung, `180 TWh` e-Olefine via Methanol-to-Olefins/-Aromatics). Die hinterlegten Bausteine summieren auf `435 TWh`; der Default `440 TWh` entspricht dem VCI/VDI-C4C-Update-2024-H2-max-Pfad mit Mengen nach Produktionsrückgang (NH3 −32 %, MeOH −40 %). **System-η** Strom → H2-Endprodukt-Mix `0,55` — `1 TWh` H2-Import ersetzt `1,82 TWh` inländischen Synthese-Strom.",
       "**Lastform:** Chemie ist `24/7`-Kontibetrieb (BDEW-Industrielast G3): konstantes Tagesprofil, Multiplikatoren alle `1,0`. Elektrolyseur-Flexibilität, H2-Speicherung und zeitliche Entkopplung von Stromabnahme und Stoffsynthese bleiben außen vor."
     ],
     "overview": [
       {
         "label": "Verwendung",
-        "value": "**Slider:** `55` bis `700 TWh` Ziel-Gesamtstrom. Default `685 TWh` entspricht dem VCI/DECHEMA-Pfad mit voller Inlandsproduktion; der C4C-Update-2024-Pfad (`~440 TWh`) und der C4C-Original-2023-Korridor (`258–508 TWh`) lassen sich per Slider anfahren."
+        "value": "**Slider:** `55` bis `700 TWh` Ziel-Gesamtstrom. Default `440 TWh` entspricht dem VCI/VDI-C4C-Update-2024-H2-max-Pfad (nach Produktionsrückgang seit Energiepreiskrise). Der C4C-2023-Korridor (`258–508 TWh`) und der VCI/DECHEMA-Roadmap-2050-Pfad (`~628 TWh`, voller H2-Pfad vor Krise) lassen sich per Slider anfahren."
       },
       {
         "label": "Verteilung",
@@ -37,7 +37,7 @@
       },
       {
         "label": "Formel",
-        "value": "**Rechnung:** `Zusatzstrom = max(0, Ziel − 55)`. Default: `685 − 55 = 630 TWh/a`."
+        "value": "**Rechnung:** `Zusatzstrom = max(0, Ziel − 55)`. Default: `440 − 55 = 385 TWh/a`."
       }
     ],
     "reasoning": [
@@ -47,8 +47,8 @@
       "H2-Elektrolyse für Methanol hydrogenMethanolTWh ~60 TWh: rund 1,3 Mio. t MeOH/a Direktbedarf plus zusätzliche MeOH-Vorstufe für die MTO-Olefin-Route; Stromaufwand inkl. CO2-Bereitstellung und Methanol-Synthese (C4C 2024 nach −40 % Produktionsrückgang).",
       "e-Olefine via Methanol-to-Olefins/Aromatics eOlefinsViaH2TWh ~180 TWh: Substitution des Naphtha-Cracker-Outputs (Ethylen 4,1 Mt + Propylen 3,0 Mt + Butylene ~1,9 Mt + BTX ~2,8 Mt) durch e-Methanol mit anschließender MtO/MtA-Route; größter Einzelblock wegen H2-intensivem Pfad und MtO-Selektivitätsverlusten. Im C4C-Update-2024-Pfad teils durch Recycling und Importverlagerung gedämpft.",
       "Direktstrom-Zuwachs additionalDirectElectricityTWh ~30 TWh über die heutigen 55 TWh hinaus: Pumpen, Kompressoren, Hilfsantriebe, IKT-Last bei wachsender Elektrifizierung des Anlagenparks.",
-      "Default-Ziel defaultTargetTotalTWh 685 TWh entspricht dem VCI/DECHEMA-2019-Pfad mit voller Inlandsproduktion; der C4C-Update-2024-H2-max-Wert von rund 440 TWh bleibt als niedrigerer Vergleichspfad über den Slider erreichbar.",
-      "Quellen: VCI/DECHEMA/FutureCamp/Prognos Roadmap 2050 (2019, ~685 TWh), Chemistry4Climate 2023 (Strom max 464 / H2 max 508 TWh) und Update 2024 (258–440 TWh nach Produktionsrückgang), BMWK Langfristszenarien T45-Strom Modul Industrie (Fraunhofer ISI), DECHEMA Technology Study Low Carbon Energy, AGEB Anwendungsbilanz Chemie+Petrochemie 2023, VCI Chemiewirtschaft in Zahlen 2024."
+      "Default-Ziel defaultTargetTotalTWh 440 TWh entspricht dem VCI/VDI-C4C-Update-2024-H2-max-Pfad (nach Produktionsrückgang: NH3 −32 %, MeOH −40 %, Chlor −26 %); die Bausteine 55+75+30+35+60+180 = 435 TWh decken diesen Pfad physikalisch konsistent ab. Der voll-inländische Roadmap-2050-Pfad (~628 TWh, 2019, vor Krise) und der C4C-2023-Korridor (258–508 TWh) bleiben über den Slider erreichbar.",
+      "Quellen: Chemistry4Climate Update 2024 (Default 440 TWh, H2-max nach Produktionsrückgang) und C4C 2023 (Strom max 464 / H2 max 508 TWh), VCI/DECHEMA/FutureCamp/Prognos Roadmap 2050 (2019, ~628 TWh voller H2-Pfad), BMWK Langfristszenarien T45-Strom Modul Industrie (Fraunhofer ISI), DECHEMA Technology Study Low Carbon Energy, AGEB Anwendungsbilanz Chemie+Petrochemie 2023, VCI Chemiewirtschaft in Zahlen 2024."
     ],
     "fields": [
       {
@@ -158,7 +158,7 @@
       }
     ],
     "caveats": [
-      "Sehr große Bandbreite zwischen den Studien: VCI/DECHEMA Roadmap 2050 (2019, voller H2-Pfad mit Naphtha- und Ammoniak-Substitution) rund 685 TWh — Default des Szenarios; C4C Original 2023 (Strom max 464 / H2 max 508 / Sekundär max 325 TWh); C4C Update 2024 mit Produktionsrückgang seit Energiepreiskrise 400 / 440 / 258 TWh. Per Slider lassen sich die anderen Pfade direkt anfahren.",
+      "Sehr große Bandbreite zwischen den Studien: C4C Update 2024 mit Produktionsrückgang seit Energiepreiskrise 258 / 400 / 440 TWh — Default 440 TWh (H2-max); C4C 2023 (Strom max 464 / H2 max 508 / Sekundär max 325 TWh); VCI/DECHEMA Roadmap 2050 (2019, voller H2-Pfad mit Naphtha- und Ammoniak-Substitution, vor Krise) rund 628 TWh. Per Slider lassen sich die anderen Pfade direkt anfahren.",
       "Wasserstoff-Speicherung, Elektrolyseur-Flexibilität und mögliche zeitliche Entkopplung von Stromabnahme und Stoffsynthese sind nicht modelliert (24/7-Profil).",
       "CCS-Alternative für Steamcracker und Ammoniak-Reformer (blauer Wasserstoff) ist nicht modelliert; sie würde den Strombedarf erheblich senken.",
       "Importchemie-Verlagerung: ein Teil von NH3/MeOH/Olefinen könnte als Import grüner Grundstoffe statt als Inlandsproduktion realisiert werden (C4C Update zeigt: Strombedarf für Wasserstoff allein 287 TWh bei voller Inlandsproduktion könnte teilweise durch H2-/Derivate-Importe verlagert werden). Das Modell unterstellt vollständige Inlandsproduktion.",
@@ -169,7 +169,7 @@
     "scripts": [
       "last/e100-chemie/model.rs"
     ],
-    "note": "Slider zeigt den Ziel-Gesamtstromverbrauch der Chemie inkl. der heutigen 55 TWh. Zusatzlast = max(0, Ziel − 55 TWh). Default 685 TWh entspricht dem VCI/DECHEMA-2019-H2-Maximalpfad mit voller Inlandsproduktion. Bandbreite alternativer Studien: VCI/VDI C4C 2023 bei 325–508 TWh durch teilweise CCS-/Recycling-Mitnahme; C4C Update 2024 bei 258–440 TWh nach Produktionsrückgang seit Energiepreiskrise. Slider lässt sich auf alle Pfade einstellen. Tagesgang ist Dauerlast (24/7-Kontibetrieb).",
+    "note": "Slider zeigt den Ziel-Gesamtstromverbrauch der Chemie inkl. der heutigen 55 TWh. Zusatzlast = max(0, Ziel − 55 TWh). Default 440 TWh entspricht dem VCI/VDI Chemistry4Climate Update 2024 im H2-Maximalpfad nach Produktionsrückgang seit Energiepreiskrise (NH3 −32 %, MeOH −40 %, Chlor −26 %). Bandbreite alternativer Studien: C4C Update 2024 bei 258–440 TWh nach Pfad; C4C 2023 bei 325–508 TWh; VCI/DECHEMA Roadmap 2050 (2019) bei rund 628 TWh im voll-inländischen H2-Pfad vor Krise. Slider lässt sich auf alle Pfade einstellen. Tagesgang ist Dauerlast (24/7-Kontibetrieb).",
     "summary": "VCI C4C 2024 · H2-max-Mix"
   },
   "parameters": {
@@ -188,7 +188,7 @@
     "eOlefinsViaH2TWh": 180,
     "additionalDirectElectricityTWh": 30,
     "h2SystemEfficiency": 0.55,
-    "defaultTargetTotalTWh": 685,
+    "defaultTargetTotalTWh": 440,
     "maxTargetTotalTWh": 700,
     "stepTWh": 10,
     "alreadyElectricTWh": 55,
