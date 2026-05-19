@@ -11,10 +11,13 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
-const DataFileViewer = lazy(() => import('./DataFileViewer').then(m => ({ default: m.DataFileViewer })));
-const DataHandbookContent = lazy(() => import('./DataHandbook').then(m => ({ default: m.DataHandbookContent })));
-const DataHandbookSidebar = lazy(() => import('./DataHandbook').then(m => ({ default: m.DataHandbookSidebar })));
-const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })));
+const loadDataFileViewer = () => import('./DataFileViewer');
+const loadDataHandbook = () => import('./DataHandbook');
+const loadChangelogPage = () => import('./ChangelogPage');
+const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.DataFileViewer })));
+const DataHandbookContent = lazy(() => loadDataHandbook().then(m => ({ default: m.DataHandbookContent })));
+const DataHandbookSidebar = lazy(() => loadDataHandbook().then(m => ({ default: m.DataHandbookSidebar })));
+const ChangelogPage = lazy(() => loadChangelogPage().then(m => ({ default: m.ChangelogPage })));
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
@@ -602,14 +605,87 @@ function urlView() {
   }
 }
 
+function clientRouteUrlFromClick(event: MouseEvent) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return null;
+  const target = event.target instanceof Element ? event.target : null;
+  const anchor = target?.closest('a[href]');
+  if (!(anchor instanceof HTMLAnchorElement)) return null;
+  if (anchor.target && anchor.target !== '_self') return null;
+  if (anchor.hasAttribute('download')) return null;
+  const href = anchor.getAttribute('href');
+  if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return null;
+
+  const next = new URL(anchor.href, window.location.href);
+  if (next.origin !== window.location.origin) return null;
+
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname;
+  if (!next.pathname.startsWith(basePath)) return null;
+
+  const current = new URL(window.location.href);
+  const samePageHash = next.pathname === current.pathname && next.search === current.search && next.hash;
+  if (samePageHash) return null;
+
+  return next;
+}
+
 const RouteFallback = () => <div className="flex h-screen items-center justify-center text-sm text-zinc-400">Lade …</div>;
 
 export function App() {
-  const [route] = useState(urlView);
-  if (route.view === 'datei' && route.path) return <Suspense fallback={<RouteFallback/>}><DataFileViewer path={route.path}/></Suspense>;
-  if (route.view === 'daten') return <Suspense fallback={<RouteFallback/>}><DataHandbookRoute/></Suspense>;
-  if (route.view === 'changelog') return <Suspense fallback={<RouteFallback/>}><ChangelogRoute/></Suspense>;
-  return <Dashboard/>;
+  const [route, setRoute] = useState(urlView);
+  const routeIsDashboard = route.view !== 'datei' && route.view !== 'daten' && route.view !== 'changelog';
+  const [dashboardMounted, setDashboardMounted] = useState(routeIsDashboard);
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(urlView());
+    const onClick = (event: MouseEvent) => {
+      const next = clientRouteUrlFromClick(event);
+      if (!next) return;
+      event.preventDefault();
+
+      const current = new URL(window.location.href);
+      if (next.pathname === current.pathname && next.search === current.search && next.hash === current.hash) return;
+
+      window.history.pushState(null, '', next);
+      syncRoute();
+      if (!next.hash) window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('popstate', syncRoute);
+    document.addEventListener('click', onClick);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      document.removeEventListener('click', onClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const preload = () => {
+      void loadDataHandbook();
+      void loadChangelogPage();
+    };
+    const idle = window.requestIdleCallback?.(preload) ?? window.setTimeout(preload, 700);
+    return () => {
+      if (typeof idle === 'number') window.clearTimeout(idle);
+      else window.cancelIdleCallback?.(idle);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (routeIsDashboard) setDashboardMounted(true);
+  }, [routeIsDashboard]);
+
+  const routeContent = route.view === 'datei' && route.path
+    ? <Suspense fallback={<RouteFallback/>}><DataFileViewer path={route.path}/></Suspense>
+    : route.view === 'daten'
+      ? <Suspense fallback={<RouteFallback/>}><DataHandbookRoute/></Suspense>
+      : route.view === 'changelog'
+        ? <Suspense fallback={<RouteFallback/>}><ChangelogRoute/></Suspense>
+        : null;
+
+  return <>
+    {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard/></div>}
+    {!routeIsDashboard && routeContent}
+  </>;
 }
 
 function DataHandbookRoute() {
