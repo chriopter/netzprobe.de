@@ -1,13 +1,11 @@
 {
-  "description": {
-    "id": "h2",
-    "domain": "speicher",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-speicher.schema.json",
+  "id": "h2",
+  "domain": "speicher",
+  "kind": "scenario",
+  "method": {
     "title": "Wasserstoff",
-    "file": "speicher/h2/data.json",
-    "scripts": [
-      "speicher/h2/model.rs"
-    ],
+    "short": "H2-Pool für Industrie und Rückverstromung; Slider für Elektrolyse-, Rückverstromungs-Leistung und Kavernen-Energie; `~34 %` Power-to-Power-Roundtrip.",
     "source": "Energy-Charts (H₂-Bestand 2025 quasi null); Fraunhofer IKTS Faktencheck Wasserstoff (Roundtrip-Korridor 30-42 %); Fraunhofer ISE Wasserstoff-Balance (Power-to-Power); IEA Future of Hydrogen 2019 (30-42 % je nach Pfad); BNetzA Szenariorahmen 2025.",
     "sourceUrls": [
       "https://www.energy-charts.info/",
@@ -19,7 +17,6 @@
     "period": "2025",
     "resolution": "stündlich",
     "unit": "GW, GWh",
-    "short": "H2-Pool für Industrie und Rückverstromung; Slider für Elektrolyse-, Rückverstromungs-Leistung und Kavernen-Energie; `~34 %` Power-to-Power-Roundtrip.",
     "description": [
       "**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–300 GW`, Default `0,1 GW`, η = `0,34` roundtrip) und H₂-Import (siehe `aussenhandel/h2-handel`, verlustfrei). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–300 GW`, Default `0 GW`). Kavernen-Energie `0–500 TWh` (Default `0,1 GWh`). Das `500 TWh`-Maximum schöpft das norddeutsche Kavernen-Volumen (DEEP.KBB) aus.",
       "**Wirkungsgradkette:** die `34 %` Roundtrip gelten für den Power-to-Power-Pfad und ergeben sich aus Elektrolyse `~65 %` × Kavernen-Speicher `~95 %` × Rückverstromung `~55 %`; Quellen-Korridor `30–42 %` (Fraunhofer IKTS/ISE, IEA). Im Pool-Modell schreibt die Bilanz `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung` die Lade-Verluste nur dem Stromüberschuss-Pfad zu — importierter und für Industrie genutzter H₂ ist verlustfrei (kein Power-to-Power-Pfad).",
@@ -39,7 +36,7 @@
         "value": "**Bilanz:** `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung`. Lade-Verluste nur auf dem Power-to-Power-Pfad."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/speicher/h2/package.json, Adapter in model/speicher/h2/model.rs.",
       "Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.",
       "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
@@ -159,11 +156,13 @@
       "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
       "Maximum 500 TWh Speicherenergie entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
       "Modell trennt Lade-/Entlade-Leistung, nicht aber Elektrolyseur-Effizienz vs. Rückverstromung — Verluste vollständig beim Laden."
+    ],
+    "file": "speicher/h2/data.json",
+    "scripts": [
+      "speicher/h2/model.rs"
     ]
   },
-  "data": {
-    "id": "h2",
-    "name": "Wasserstoff",
+  "parameters": {
     "chargePower2025GW": 0.1,
     "defaultChargePowerGW": 0.1,
     "minChargePowerGW": 0,

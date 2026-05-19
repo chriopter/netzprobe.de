@@ -1,12 +1,11 @@
 {
-  "description": {
-    "id": "versorgung-historisch-2025",
-    "domain": "presets",
-    "kind": "composition",
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "versorgung-historisch-2025",
+  "domain": "presets",
+  "kind": "composition",
+  "method": {
     "title": "Versorgung: Historisch 2025",
-    "scripts": [
-      "presets/versorgung-historisch-2025/model.rs"
-    ],
+    "short": "Setzt alle Versorgungs-Slider auf die 2025-Defaults; keine Auto-Skalierung an die Last.",
     "source": "Energy-Charts 2025 (installierte Leistung, Bestand Speicher).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -15,7 +14,6 @@
     "period": "2025",
     "resolution": "stündlich",
     "unit": "GW, GWh",
-    "short": "Setzt alle Versorgungs-Slider auf die 2025-Defaults; keine Auto-Skalierung an die Last.",
     "description": [
       "**Komposition:** das Preset überschreibt sämtliche Erzeugungs-, Speicher- und Außenhandels-Slider mit den Default-Werten der `erz-*`, `speicher-*` und `aussenhandel-*` Bausteine — also dem installierten Bestand 2025 laut Energy-Charts. Das Kernmodell rechnet den vollen Dispatch (kein Pass-Through-Branch); die Erzeugung folgt damit dem skalierbaren `erzeugungs-modell`, nicht den historischen Stundenwerten.",
       "**Installierte Leistung 2025:** der **fossile Block** stellt mit `Gas 35,5 GW` und `Kohle 31 GW` rund `66 GW` regelbare Backup-Leistung; **Kernkraft** ist seit dem Ausstieg 2023 auf `0 GW`. Der **erneuerbare Block** liegt bei `PV 102,5 GW`, `Wind onshore 62,8 GW`, `Wind offshore 9,4 GW`, `Biomasse 4,8 GW` und `Laufwasser 4,8 GW`. **Speicher** sind dünn: Batterie `10 GW / 25 GWh` (Heimspeicher- und Großbatterie-Bestand), Pumpspeicher `9,4 GW / 45 GWh`, H₂-Saisonspeicher praktisch null. Der **Außenhandel** ist mit Import-Cap `13 GW` und Export-Cap `25 GW` auf historischen Maximalflüssen gedeckelt. Der Default-Lauf reproduziert `~466 TWh/a` Last, `~55 %` EE-Anteil und `~332 g/kWh` CO₂.",
@@ -35,7 +33,7 @@
         "value": "**Reproduktion 2025:** `~466 TWh` Last, `~55 %` EE-Anteil, `~332 g/kWh` CO₂."
       }
     ],
-    "method": [
+    "reasoning": [
       "compute(demand, factors, erz, speicher) → SupplyOverride mit allen Default-Werten aus dem ErzeugungsPool und SpeicherPool.",
       "Datei: model/presets/versorgung-historisch-2025/model.rs.",
       "Demand-Parameter wird nicht genutzt — das Preset passt sich nicht an die Last an."
@@ -51,6 +49,10 @@
       "Statisch: Slider werden auf die 2025-Defaults gesetzt, keine Skalierung an Demand.",
       "Bei aktivierter E100-Last unterdeckt das Preset — Modell rechnet Lastabwurf.",
       "H₂-Werte praktisch null entsprechen 2025-Realität, sind aber für Zukunftsszenarien unrealistisch."
+    ],
+    "scripts": [
+      "presets/versorgung-historisch-2025/model.rs"
     ]
-  }
+  },
+  "parameters": {}
 }

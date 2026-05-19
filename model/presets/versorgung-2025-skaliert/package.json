@@ -1,18 +1,16 @@
 {
-  "description": {
-    "id": "versorgung-2025-skaliert",
-    "domain": "presets",
-    "kind": "composition",
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "versorgung-2025-skaliert",
+  "domain": "presets",
+  "kind": "composition",
+  "method": {
     "title": "Versorgung: 2025 hochskaliert",
-    "scripts": [
-      "presets/versorgung-2025-skaliert/model.rs"
-    ],
+    "short": "Alle Versorgungs-Slider proportional zur Last: `Skalierungsfaktor = Demand / 466 TWh`.",
     "source": "Eigene Komposition: 2025-Mix proportional zur Last.",
     "sourceUrls": [],
     "period": "laufend",
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
-    "short": "Alle Versorgungs-Slider proportional zur Last: `Skalierungsfaktor = Demand / 466 TWh`.",
     "description": [
       "**Komposition:** das Preset multipliziert sämtliche Default-Werte der `erz-*`, `speicher-*` und `aussenhandel-*` Bausteine — inklusive Kohle, Gas und Import-Cap — mit dem **Skalierungsfaktor** `f = demandTWh / 466 TWh` und rundet das Ergebnis pro Slider auf das Min/Max/Step-Raster des jeweiligen Bausteins. Die Mix-Anteile aus 2025 bleiben damit erhalten; der Mix als Ganzes wächst proportional mit der Last.",
       "**Werte:** Baseline `466 TWh/a` (Default-Lauf 2025). Bei `Demand = 932 TWh/a` ergibt sich `f = 2` und damit zum Beispiel `PV 205 GW`, `Wind onshore 125,6 GW`, `Kohle 62 GW`, `Batterie 20 GW / 50 GWh`. Werte werden vor dem Snap an die Slider-Maxima begrenzt — bei `f > 2` läuft etwa die PV in den `2.000 GW`-Anschlag, während Kohle weiter wächst, sodass der Mix langsam von 2025 abweicht.",
@@ -32,7 +30,7 @@
         "value": "**Begrenzung an Slider-Maxima:** bei `f > 2` läuft z. B. PV gegen `2.000 GW`-Max, während Kohle weiter skaliert; bei moderaten Faktoren (`< 2`) bleibt der Mix nahezu konsistent."
       }
     ],
-    "method": [
+    "reasoning": [
       "factor = demandTWh / SCALING_BASELINE_DEMAND_TWH (= 466 TWh).",
       "Für jede Quelle: snap(defaultInstalledGW × factor, minInstalledGW, maxInstalledGW, stepGW).",
       "Auch Import/Export-Caps und alle Speicher-Slider werden mitskaliert; Importemissionsfaktor bleibt auf dem 300 g/kWh aus aussenhandel/strom-handel.",
@@ -50,6 +48,10 @@
       "An Slider-Maxima wird geclippt, dadurch Mix-Verzerrung bei großen Faktoren.",
       "Lineare Skalierung ignoriert Skaleneffekte (Speicher-Sizing, Netz-Topologie).",
       "Importemissionsfaktor bleibt Default 300 g/kWh (Nachbarmix laut aussenhandel/strom-handel) — kein H₂-Import modelliert."
+    ],
+    "scripts": [
+      "presets/versorgung-2025-skaliert/model.rs"
     ]
-  }
+  },
+  "parameters": {}
 }

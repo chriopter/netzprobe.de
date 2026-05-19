@@ -1,15 +1,12 @@
 {
-  "description": {
-    "id": "e100-heiz",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-heiz",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "Haushalte Elektrifizierung",
-    "file": "last/e100-heiz/data.json",
-    "scripts": [
-      "last/e100-heiz/generate.mjs",
-      "last/e100-heiz/model.rs"
-    ],
+    "short": "Zusatzlast aus Umstellung fossiler Heizung und Warmwasser auf Wärmepumpen.",
+    "parentId": "e100",
     "source": "UBA, AGEB, BWP, Fraunhofer ISE, WPZ Buchs (OST Rapperswil), Lokale Agenda 21 Lahr, DWD, When2Heat, WPuQ Hamelin.",
     "sourceUrls": [
       "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
@@ -24,12 +21,14 @@
       "http://www.agenda-energie-lahr.de/WP_FeldtestPhase2.html",
       "https://www.dwd.de/DE/leistungen/klimadatendeutschland/vielj_mittelwerte.html",
       "https://www.nature.com/articles/s41597-019-0199-y",
-      "https://www.nature.com/articles/s41597-022-01156-1"
+      "https://www.nature.com/articles/s41597-022-01156-1",
+      "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
+      "https://archive-api.open-meteo.com/v1/era5",
+      "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
     ],
     "period": "2023 (Mengen), reale Tagesmitteltemperaturen 2025 (Profil)",
     "resolution": "Tag × Stunde",
     "unit": "TWh Wärme, TWh Strom, JAZ",
-    "short": "Zusatzlast aus Umstellung fossiler Heizung und Warmwasser auf Wärmepumpen.",
     "description": [
       "**Bezugsjahr 2023:** private Haushalte verbrauchen `445 TWh` Raumwärme + `85 TWh` Warmwasser = `530 TWh` Endenergie (UBA/AGEB). Bereits elektrisch gedeckt sind `50 TWh`: rund `22 TWh` aus `~1,8 Mio.` Bestand-WPs, `~13 TWh` Direktheizung (Nachtspeicher, Heizlüfter) und `~15 TWh` Warmwasser-Boiler/Durchlauferhitzer; dieser Strom steckt bereits in der historischen Last und ist das Slider-Minimum.",
       "**Faktor:** das Modell rechnet mit **JAZ** `3,3` als bewusster Mitte der empirischen Spannbreite Luft-Wasser `2,8–3,4` — pessimistisches Ende WPZ Buchs (CH, herstellerunabhängig) `2,9` und Lokale Agenda 21 Lahr `2,8`; optimistisches Ende Fraunhofer ISE WP-QS im Bestand (`2025`, 77 Anlagen, Herstellerbeteiligung) `3,4`; mittig UBA Climate Change `11/2024` mit `3,1`. Sole-Wasser-Bestand (Anteil `~25 %`) liegt mit `4,3–4,4` deutlich höher. Default-Zusatzlast: `(530 − 50) / 3,3 ≈ 145,45 TWh/a`.",
@@ -49,7 +48,7 @@
         "value": "**Rechnung:** `Zusatzstrom = (Ziel − 50) / JAZ`. Default: `(530 − 50) / 3,3 ≈ 145,45 TWh/a`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: erzeugt durch model/last/e100-heiz/generate.mjs. Skript ausführen mit `node model/last/e100-heiz/generate.mjs > model/last/e100-heiz/package.json`; Rechenlogik in model/last/e100-heiz/model.rs.",
       "Referenz-Wärmebedarf referenceHeatDemandTWh: UBA-Anwendungsbilanz private Haushalte 2023, Raumwärme 445 TWh + Warmwasser 85 TWh = 530 TWh.",
       "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus etwa 1,8 Mio. Wärmepumpen im Betrieb plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
@@ -137,6 +136,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -148,25 +152,16 @@
       "Sommer-Heizspitzen (Jun–Aug ~2,5 TWh Gesamt, einzelne Tage bis ~17 GW Peak-Stunden-Last) sind ein Modellartefakt der starren DIN-Heizgrenze 15 °C. Reale Beispieltage 2025: 8.–11. Juni mit Tagesmittel 12,6–14,6 °C, 8. Juli 14,2 °C, 22.–25. August 13,6–15,0 °C — das Modell zählt diese als Heiztage und rechnet HDD = 20 − T. Reale Wärmepumpen wären saisonal aus, Gebäudemasse dämpft kurze Kühl-Stöße. Eine saisonale Heizgrenze, harte Jun–Aug-Pause oder ein gleitendes Tagesmittel würden das fixen; aktuell bewusst nicht implementiert (Überschlagsrechnung).",
       "Slider-Werte oberhalb 530 TWh decken Upside-Szenarien (Sanierungsstau, GHD-Mitnahme) ab.",
       "Methodenwechsel Klimanormale → Wetterjahr 2025: das alte Verfahren (DWD-Klimanormale 1991–2020 als 12 Monatsanker + lineare Interpolation) kreuzte die 15-°C-Heizgrenze genau bei Tag 150 und legte Jun–Aug exakt auf 0 TWh. Das neue Verfahren (Open-Meteo ERA5-Tagesmittel 8 Großstädte, additiv auf DWD-Gebietsmittel DE pro Monat kalibriert) hält die Jahressumme bei 145,5 TWh Strom (HDD 3.486 → 3.461, −0,7 %; Heiztage 266 → 262), zeigt aber intra-monatliche Streuung: Feb 20,1→21,8 TWh (Kältewelle Mitte Feb), Apr 13,1→11,8 (warmer Apr), Jun–Aug 0,0→1,1/0,2/1,2, Sep 6,7→4,9. Peak-Tag wandert vom 16. Jan (T=1,5 °C, HDD 18,5) auf den 18. Feb (T=−3,6 °C, HDD 23,6); die Peak-Stunden-Leistung steigt von 45,8 auf 58,9 GW (+29 %) — Klimanormalen unterschätzten den realen Worst-Case-Heiztag deutlich, was für Netz- und Reserve-Planung der wichtigere Befund ist."
-    ]
-  },
-  "data": {
-    "id": "e100-heiz",
-    "title": "Haushalte Elektrifizierung",
-    "source": "Raumwaerme- und Warmwasserbedarf privater Haushalte Deutschland nach UBA und AGEB Anwendungsbilanz 2023 (445 TWh Raumwaerme + 85 TWh Warmwasser); bereits elektrisch gedeckt rund 50 TWh Waerme (Bestand-WP ~22 TWh, Nachtspeicher/Direktheizung ~13 TWh, Durchlauferhitzer/Boiler ~15 TWh); JAZ 3,3 als bewusste Mitte der empirischen Spannbreite Luft-Wasser 2,8-3,4 (pessimistisch: WPZ Buchs/OST 2,9 herstellerunabhaengig, Lokale Agenda 21 Lahr 2,8; mittig: UBA Climate Change 11/2024 3,1; optimistisch: Fraunhofer ISE WP-QS im Bestand 2025 3,4 mit Herstellerbeteiligung); Gradtagszahl-Profil aus realen Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Staedte-Mittel, kalibriert aufs DWD-Gebietsmittel DE pro Monat).",
-    "sourceUrls": [
-      "https://www.umweltbundesamt.de/daten/private-haushalte-konsum/wohnen/energieverbrauch-privater-haushalte",
-      "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/11_2024_cc_waermepumpensysteme.pdf",
-      "https://www.umweltbundesamt.de/daten/energie/energieverbrauch-nach-energietraegern-sektoren",
-      "https://ag-energiebilanzen.de/daten-und-fakten/",
-      "https://www.bundeswirtschaftsministerium.de/Redaktion/DE/Dossier/Gebaeudesanierung/waermepumpen.html",
-      "https://www.ise.fraunhofer.de/de/presse-und-medien/news/2024/waermepumpenfeldstest-zwischenergebnisse-bestaetigen-effizienten-betrieb-auch-im-altbau.html",
-      "https://www.ise.fraunhofer.de/en/research-projects/wp-qs-im-bestand.html",
-      "https://www.ost.ch/en/research-and-consulting-services/technology/system-technology/ies-institute-for-energy-systems/heat-pump-test-center-wpz/heat-pump-field-test/",
-      "http://www.agenda-energie-lahr.de/WP_FeldtestPhase2.html",
-      "https://archive-api.open-meteo.com/v1/era5",
-      "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
     ],
+    "file": "last/e100-heiz/data.json",
+    "scripts": [
+      "last/e100-heiz/generate.mjs",
+      "last/e100-heiz/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das 24-h-Profil.",
+    "summary": "JAZ 3,3"
+  },
+  "parameters": {
     "referenceYear": 2023,
     "referenceHeatDemandTWh": 530,
     "alreadyElectricHeatTWh": 50,
@@ -174,9 +169,7 @@
     "maxTargetHeatTWh": 700,
     "stepHeatTWh": 5,
     "seasonalCop": 3.3,
-    "summary": "JAZ 3,3",
     "distribution": "heating-degree-days",
-    "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das 24-h-Profil.",
     "hourlyProfile": {
       "source": "Bimodaler WP-Tagesgang nach BDEW-SFH-Gas-SLP (When2Heat h-Funktionen, Ruhnau/Hirth 2019), WPuQ-Feldmessungen Hamelin (Schlemminger et al. 2022, 38 EFH) und VDI 4655. Auf Grid-Aggregat gedaempft, Summe = 24.",
       "sourceUrls": [

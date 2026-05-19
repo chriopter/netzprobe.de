@@ -1,14 +1,12 @@
 {
-  "description": {
-    "id": "e100-bahn",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-bahn",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "Bahn Elektrifizierung",
-    "file": "last/e100-bahn/data.json",
-    "scripts": [
-      "last/e100-bahn/model.rs"
-    ],
+    "short": "Zusätzliche Bahnstromlast aus Diesel-Substitution und Modal Shift on top der historischen Traktion.",
+    "parentId": "e100",
     "source": "DB Konzern Integrierter Bericht 2023 (Bahnstrom rund 11 TWh, bereits in der historischen Last), DB Energie (rund 450 Mio. l Diesel/a DB-Konzern), BMWK Langfristszenarien 3 Modul Verkehr (T45-Strom: Endenergiebedarf Bahn bis 2045 nahezu konstant, Verkehrsleistung +26-62 %), BMDV Verkehr in Zahlen 2024, Allianz pro Schiene, Deutschlandtakt und Klimaschutzprogramm Bundesregierung.",
     "sourceUrls": [
       "https://ibir.deutschebahn.com/2023/de/lagebericht/zusaetzliche-informationen/energie-und-klimaschutz/",
@@ -21,7 +19,6 @@
     "period": "2023 (Bezug), 2045 (Zielhorizont Deutschlandtakt)",
     "resolution": "Stunde",
     "unit": "TWh Strom",
-    "short": "Zusätzliche Bahnstromlast aus Diesel-Substitution und Modal Shift on top der historischen Traktion.",
     "description": [
       "**Bezugsjahr 2023:** der DB-Konzern setzt rund `11 TWh` Bahnstrom für die elektrische Traktion ab; diese Last steckt bereits in der historischen Stromreihe und ist nicht Teil des Sliders. Hinzu kommen rund `500–600 Mio. l Diesel/a` (DB plus NE-Bahnen) für die verbleibende Dieseltraktion, was etwa `5–6 TWh` thermischer Endenergie entspricht (`9,86 kWh/l`).",
       "**Faktor:** der **Wirkungsgradhebel** Diesellok → E-Lok liegt bei rund `3` (Antriebseffizienz plus Rekuperation), sodass die Substitution der gesamten Dieseltraktion mit rund `2 TWh` Strom auskommt. Hinzu addiert das Szenario `8 TWh` Modal Shift: BMWK Langfristszenarien T45-Strom rechnen mit `+26–62 %` Verkehrsleistung Schiene bis 2045 bei nahezu konstantem Endenergiebedarf (Effizienzgewinne); ambitioniertere Deutschlandtakt-Ziele (Verdopplung Personenverkehr, `+50 %` Güter) liegen darüber. Default-Zusatzlast: `10 TWh/a`.",
@@ -41,7 +38,7 @@
         "value": "**Rechnung:** `Zusatzlast = max(0, Ziel-TWh)`. Default: `2 + 8 = 10 TWh/a`, stündlich nach Bahnstromprofil verteilt."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-bahn/package.json; Rechenlogik in model/last/e100-bahn/model.rs.",
       "Diesel-Substitution dieselSubstitutionTWh: DB Energie meldet rund 450 Mio. l Diesel/a im Konzern; zusammen mit NE-Bahnen rund 500-600 Mio. l/a entsprechend rund 5-6 TWh thermisch (9,86 kWh/l). Umstellung auf Oberleitungsausbau, Batterie- und Wasserstofftriebzüge ergibt mit Wirkungsgradfaktor rund 3 (Antriebseffizienz plus Rekuperation E-Lok vs. Diesellok) rund 2 TWh elektrische Traktion.",
       "Modal Shift modalShiftTWh: BMWK Langfristszenarien T45-Strom: Verkehrsleistung Schiene steigt bis 2045 um 26-62 % gegenüber 2019, der Endenergiebedarf bleibt durch Effizienzgewinne nahezu konstant. Deutschlandtakt und Klimaschutzprogramm sind ambitionierter (Verdopplung Personenverkehr, +50 % Güter). Mittlerer Wert 8 TWh deckt diese Bandbreite ab.",
@@ -118,6 +115,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -126,20 +128,15 @@
       "Wirkungsgradannahme Diesel zu elektrisch (Faktor 3) ist ein typischer Mittelwert; Oberleitung, Akku und Wasserstoff unterscheiden sich in der tatsächlichen Effizienz.",
       "Modal-Shift-Volumen ist politisch gesetzt (Deutschlandtakt); reale Umsetzung hängt von Infrastrukturausbau und Fahrplandichte ab.",
       "Wasserstoff-Brennstoffzellenzüge haben deutlich höhere Stromaufwendungen je Trkm als Oberleitungsbetrieb; das Szenario unterstellt überwiegend Oberleitung und Batteriebetrieb."
-    ]
-  },
-  "data": {
-    "id": "e100-bahn",
-    "title": "Bahn Elektrifizierung",
-    "source": "DB Konzern Integrierter Bericht 2023 (Bahnstrombedarf rund 11 TWh, bereits in der historischen Last); DB Energie (rund 450 Mio. l Diesel/a im Konzern, dazu NE-Bahnen); BMWK Langfristszenarien 3 (Modul Verkehr, T45-Strom: Endenergiebedarf Bahnverkehr bis 2045 nahezu konstant durch Effizienzgewinne, Verkehrsleistung Schiene +26-62 % bis 2045); BMDV Verkehrsverflechtungsprognose und Deutschlandtakt (Verdopplung Personenverkehr, +50 % Güterverkehr); Allianz pro Schiene (90 % der Verkehrsleistung bereits elektrisch).",
-    "sourceUrls": [
-      "https://ibir.deutschebahn.com/2023/de/lagebericht/zusaetzliche-informationen/energie-und-klimaschutz/",
-      "https://langfristszenarien.de/enertile-explorer-wAssets/docs/LFS3_T45_Verkehr_V2_0_barrierefrei.pdf",
-      "https://bmdv.bund.de/SharedDocs/DE/Publikationen/G/verkehr-in-zahlen-2024.html",
-      "https://www.allianz-pro-schiene.de/themen/umwelt/energieverbrauch/",
-      "https://www.deutschlandtakt.de/",
-      "https://www.bundesregierung.de/breg-de/themen/klimaschutz/klimaschutzprogramm-2030-1673502"
     ],
+    "file": "last/e100-bahn/data.json",
+    "scripts": [
+      "last/e100-bahn/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-TWh) zusätzlich zum historischen Bahnstrom 2025 (rund 11 TWh DB Konzern Integrierter Bericht 2023, bereits in der Last enthalten). Default 10 TWh = 2 TWh Diesel-Substitution (rund 450 Mio. l Diesel/a DB Konzern plus NE-Bahnen Anteil, in Summe rund 500-600 Mio. l/a entsprechend rund 5-6 TWh thermisch; mit Wirkungsgradfaktor rund 3 für elektrische Traktion inklusive Rekuperation ergibt sich rund 2 TWh Strom) + 8 TWh Modal Shift (Verkehrsleistung Schiene laut BMWK Langfristszenarien T45 plus 26-62 % bis 2045, plus Effizienzgewinne kompensieren den Bedarf weitgehend; Deutschlandtakt-Ziele Verdopplung Personenverkehr und plus 50 % Güter sind ambitionierter, daher mittlerer Wert 8 TWh). Maximum 25 TWh deckt aggressive Modal-Shift- und Wasserstoff-Szenarien ab. Stundenverteilung folgt typischem Bahnstrom-Tagesgang mit Morgen- und Nachmittagspeak laut DB Energie.",
+    "summary": "Diesel + Modal Shift"
+  },
+  "parameters": {
     "referenceScales": {
       "activity": {
         "value": 11,
@@ -187,8 +184,6 @@
         0.7,
         0.55
       ]
-    },
-    "note": "Zusatzlast = max(0, Ziel-TWh) zusätzlich zum historischen Bahnstrom 2025 (rund 11 TWh DB Konzern Integrierter Bericht 2023, bereits in der Last enthalten). Default 10 TWh = 2 TWh Diesel-Substitution (rund 450 Mio. l Diesel/a DB Konzern plus NE-Bahnen Anteil, in Summe rund 500-600 Mio. l/a entsprechend rund 5-6 TWh thermisch; mit Wirkungsgradfaktor rund 3 für elektrische Traktion inklusive Rekuperation ergibt sich rund 2 TWh Strom) + 8 TWh Modal Shift (Verkehrsleistung Schiene laut BMWK Langfristszenarien T45 plus 26-62 % bis 2045, plus Effizienzgewinne kompensieren den Bedarf weitgehend; Deutschlandtakt-Ziele Verdopplung Personenverkehr und plus 50 % Güter sind ambitionierter, daher mittlerer Wert 8 TWh). Maximum 25 TWh deckt aggressive Modal-Shift- und Wasserstoff-Szenarien ab. Stundenverteilung folgt typischem Bahnstrom-Tagesgang mit Morgen- und Nachmittagspeak laut DB Energie.",
-    "summary": "Diesel + Modal Shift"
+    }
   }
 }

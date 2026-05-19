@@ -1,9 +1,11 @@
 {
-  "description": {
-    "id": "strom-handel",
-    "domain": "aussenhandel",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-aussenhandel.schema.json",
+  "id": "strom-handel",
+  "domain": "aussenhandel",
+  "kind": "scenario",
+  "method": {
     "title": "Strom-Außenhandel",
+    "short": "Stundenscharfe Import-/Export-Caps und Emissionsfaktor für den grenzüberschreitenden Stromhandel.",
     "source": "Energy-Charts cross_border_flows 2025 (Import/Export Deutschland); Electricity Maps DE-Imports 2024 (Emissionsfaktor Nachbarmix); ENTSO-E Transparency Platform.",
     "sourceUrls": [
       "https://api.energy-charts.info/cross_border_electricity?country=de",
@@ -13,7 +15,6 @@
     "period": "2025",
     "resolution": "stündlich (Cap) / jährlich (Default)",
     "unit": "GW, g/kWh",
-    "short": "Stundenscharfe Import-/Export-Caps und Emissionsfaktor für den grenzüberschreitenden Stromhandel.",
     "description": [
       "**Sektor:** grenzüberschreitender Stromhandel über die deutschen Kuppelstellen zu acht Nachbarländern (`FR`, `NL`, `AT`, `DK`, `CH`, `PL`, `CZ`, `BE`). Im Bezugsjahr 2025 lag der Brutto-Import bei rund `76 TWh`, der Brutto-Export bei rund `54 TWh`; physikalische Stundenflüsse erreichten Spitzen von `25–30 GW` je Richtung. Das Szenario bildet diesen Saldo nicht historisch ab, sondern stellt der Engine zwei harte Stunden-Caps für die Dispatch-Entscheidung bereit.",
       "**Mechanik:** der Import-Slider läuft von `0` bis `200 GW` mit Default `13 GW`, der Export-Slider analog mit Default `25 GW` (Schrittweite `5 GW`); beide Defaults sind so gewählt, dass sie die 2025-Jahresbilanz reproduzieren. Importierter Strom wird pauschal mit `300 g CO₂/kWh` bilanziert — ein gewichteter **Nachbarmix** zwischen `~30 g/kWh` (CH-Wasser) und `~660 g/kWh` (PL-Kohle); Electricity Maps weist für DE-Imports 2024 etwa `250–280 g/kWh` aus, der Modellwert liegt wegen erwarteter PL/CZ-Lastflussanteile leicht darüber. Pro Stunde gilt `Importemissionen = importGW(t) × 300 g/kWh`; Exporte werden der eigenen Bilanz nicht zugerechnet.",
@@ -33,7 +34,7 @@
         "value": "**Rechnung:** `Importemissionen(t) = importGW(t) × 300 g/kWh`. Exporte sind in der eigenen CO₂-Bilanz emissionsneutral."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/aussenhandel/strom-handel/package.json, Adapter in model/aussenhandel/strom-handel/model.rs.",
       "Scenario-Mapping: `data.import.{minGW, maxGW, stepGW, defaultMaxGW, emissionGperKWh}` ↦ `scenario.import.stromGW` (Slider) und `scenario.import.stromEmissionGperKWh`; `data.export.*` ↦ `scenario.export.stromGW`. Presets können Defaults überschreiben (z.B. `versorgung-50ee-50import` setzt Emission auf 100 g/kWh).",
       "Import- und Export-Cap getrennt: Default Import 13 GW (reproduziert 2025 Brutto-Import 76 TWh), Export 25 GW (NTC, real 2025 Export 54 TWh).",
@@ -53,29 +54,14 @@
         "description": "Anzeigename."
       },
       {
-        "name": "import.defaultMaxGW",
-        "unit": "GW",
-        "description": "Default Import-Cap."
+        "name": "import",
+        "unit": "Objekt",
+        "description": "Import-Cap-Sliderwerte und Emissionsfaktor für Importstrom."
       },
       {
-        "name": "import.maxGW",
-        "unit": "GW",
-        "description": "Slider-Maximum Import."
-      },
-      {
-        "name": "import.emissionGperKWh",
-        "unit": "g/kWh",
-        "description": "Import-Strom Emissionsfaktor (Nachbarland-Mittel)."
-      },
-      {
-        "name": "export.defaultMaxGW",
-        "unit": "GW",
-        "description": "Default Export-Cap."
-      },
-      {
-        "name": "export.maxGW",
-        "unit": "GW",
-        "description": "Slider-Maximum Export."
+        "name": "export",
+        "unit": "Objekt",
+        "description": "Export-Cap-Sliderwerte."
       },
       {
         "name": "referenceScales",
@@ -90,9 +76,7 @@
       "Export-Emissionen werden ausgeklammert — bei strenger Bilanzierung müssten sie der Quelle (DE-Mix) zugeordnet werden."
     ]
   },
-  "data": {
-    "id": "strom-handel",
-    "name": "Strom-Außenhandel",
+  "parameters": {
     "import": {
       "default2025GW": 13,
       "defaultMaxGW": 13,

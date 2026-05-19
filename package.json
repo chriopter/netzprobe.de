@@ -13,7 +13,8 @@
     "preview": "vite preview --config app/vite.config.ts --host 0.0.0.0",
     "test": "vitest run test/unit",
     "test:all": "bin/test",
-    "test:watch": "vitest test/unit"
+    "test:watch": "vitest test/unit",
+    "test:parity": "tsx test/parity/online-vs-local.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -30,6 +31,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "playwright-core": "^1.60.0",
     "tailwindcss": "latest",
     "tsx": "latest"
   }

@@ -1,13 +1,11 @@
 {
-  "description": {
-    "id": "gas",
-    "domain": "erzeugung",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-erzeugung.schema.json",
+  "id": "gas",
+  "domain": "erzeugung",
+  "kind": "scenario",
+  "method": {
     "title": "Gas",
-    "file": "erzeugung/gas/data.json",
-    "scripts": [
-      "erzeugung/gas/model.rs"
-    ],
+    "short": "Installierte Gas-Kraftwerksleistung; dispatchable mit Min-Last 5 % der verfügbaren Leistung.",
     "source": "Energy-Charts installed_power 2025 (Gas-Kraftwerke Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Min-Last, Emissionsfaktor).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -17,7 +15,6 @@
     "period": "2025",
     "resolution": "stündlich (regelbar) / jährlich (installierte Leistung)",
     "unit": "GW, g/kWh",
-    "short": "Installierte Gas-Kraftwerksleistung; dispatchable mit Min-Last 5 % der verfügbaren Leistung.",
     "description": [
       "**Anlagenpark:** Erdgas-GuD, offene Gasturbinen und mit Erdgas befeuerte Kraft-Wärme-Kopplung mit installierter Gesamtleistung `35,5 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Im Kraftwerkssicherheitsgesetz/KWSG-Pfad sind weitere `H2-Ready`-GuD im Zubau; das Slider-Maximum `360 GW` (Schritt `5 GW`) ist deutlich überdimensioniert, damit auch reine Backup-Welten und Wasserstoff-Konversionsszenarien rechenbar sind.",
       "**Einspeisecharakteristik:** das Modell bildet Gas als **dispatchable** ab — Min-Last `installedGW × 0,9 × 0,05` läuft immer mit, der Ramp-up greift bei Unterdeckung bis maximal `installedGW × 0,9`, also der Jahresverfügbarkeit von `90 %`. Im Lastfolge-Wettbewerb mit Kohle übernimmt Gas Hochlauf im **Verhältnis 2:1** (höhere Ramp-Rate von GuD und Gasturbinen). Spezifische Emissionen `494 g/kWh` (electricitymaps DE) als gewichteter Mix aus GuD (`~370 g/kWh`) und offenen Spitzenlast-Turbinen (`~550 g/kWh`).",
@@ -37,7 +34,7 @@
         "value": "**Rechnung:** `Emissionen(t) = supplyGW(t) × 494 g/kWh`. Bei Überschuss curtailed das Kernmodell Gas vor Biomasse und Laufwasser."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/erzeugung/gas/package.json, Adapter in model/erzeugung/gas/model.rs.",
       "Verfügbarkeit 90 % — Revisionsfenster und planbare Ausfälle.",
       "Min-Last minLoadFraction 0,05 als Floor auf die verfügbare Leistung: installedGW × 0,9 × 0,05 läuft immer mit, dispatcht nicht darunter.",
@@ -110,11 +107,13 @@
       "Min-Last 5 % als Floor — keine Kaltstart-Restriktion oder Vorhaltezeit modelliert.",
       "Emissionsfaktor mischt GuD (370 g/kWh) und Gasturbine (550 g/kWh); reale Marginal-Effizienz variiert.",
       "Methan-Slip in Vorkette (Förderung, Transport) nicht im Emissionsfaktor enthalten — reale Lebenszyklus-Bilanz höher."
+    ],
+    "file": "erzeugung/gas/data.json",
+    "scripts": [
+      "erzeugung/gas/model.rs"
     ]
   },
-  "data": {
-    "id": "gas",
-    "name": "Gas",
+  "parameters": {
     "installed2025GW": 35.5,
     "defaultInstalledGW": 35.5,
     "minInstalledGW": 0,

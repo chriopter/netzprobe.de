@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://netzprobe.de/schemas/scenario-speicher.schema.json",
+  "title": "Speicher-Szenario",
+  "allOf": [{ "$ref": "./_common.schema.json" }],
+  "properties": {
+    "domain": { "const": "speicher" },
+    "kind": { "const": "scenario" }
+  }
+}

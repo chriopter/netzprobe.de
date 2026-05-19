@@ -1,14 +1,12 @@
 {
-  "description": {
-    "id": "e100-flug",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-flug",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "Flug Elektrifizierung",
-    "file": "last/e100-flug/data.json",
-    "scripts": [
-      "last/e100-flug/model.rs"
-    ],
+    "short": "Zusatzlast aus Umstellung des Flugverkehrs ab DE auf strombasiertes e-Kerosin (PtL-SAF).",
+    "parentId": "e100",
     "source": "BAFA Mineralölabsatz 2023 (Flugturbinenkraftstoff schwer 9,47 Mio. t), Destatis Energieverwendung / AG Energiebilanzen 2023, BDL Verkehrsdaten, Fraunhofer ISE PtL-Studie, DECHEMA E-Fuels-White-Paper, ICCT, Öko-Institut RESCUE, EU-Kommission ReFuelEU Aviation.",
     "sourceUrls": [
       "https://www.bafa.de/DE/Energie/Rohstoffe/Mineraloelstatistik/mineraloel_node.html",
@@ -26,7 +24,6 @@
     "period": "2023",
     "resolution": "Jahr × Stunde",
     "unit": "Mio. t Kerosin, TWh thermisch, TWh Strom",
-    "short": "Zusatzlast aus Umstellung des Flugverkehrs ab DE auf strombasiertes e-Kerosin (PtL-SAF).",
     "description": [
       "**Bezugsjahr 2023:** ab deutschen Flughäfen werden `9,47 Mio. t` Flugturbinenkraftstoff schwer abgesetzt (BAFA Mineralölstatistik, Inland + internationaler Bunker). 2024 sank der Absatz auf `9,02 Mio. t`, Vor-Corona 2019 lag bei rund `10 Mio. t`. Elektrischer Flugbetrieb ist praktisch nicht vorhanden; der Flughafen-Bodenstrom steckt bereits in der historischen Last und ist nicht Teil des Sliders.",
       "**Faktor:** mit dem Jet-A-1-Heizwert (LHV `43,1 MJ/kg ≈ 12 MWh/t`) ergibt der Kerosinabsatz `~114 TWh` thermische Endenergie. Substituiert wird über **Power-to-Liquid** (Elektrolyse → Fischer-Tropsch oder Methanol-to-Jet mit DAC-CO2) bei System-η `0,38` (Fraunhofer ISE, DECHEMA, ICCT, Öko-Institut RESCUE; Bandbreite `30–50 %`). Vollumstellung kostet `114 / 0,38 ≈ 300 TWh/a` Strom.",
@@ -46,7 +43,7 @@
         "value": "**Rechnung:** `Zusatzstrom = Kerosin (Mio. t) × 12 MWh/t / η_PtL`. Default: `9,47 × 12 / 0,38 ≈ 299 TWh/a`, gerundet `300 TWh`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-flug/package.json; Rechenlogik in model/last/e100-flug/model.rs.",
       "Kerosinmenge kerosineDemandMioT: BAFA Mineralölstatistik 2023 weist 9,47 Mio. t Flugturbinenkraftstoff schwer ab deutschen Flughäfen aus (Inland + international Bunker). 2024 ging der Absatz laut BAFA auf 9,02 Mio. t zurück. Vor-Corona 2019 lag bei rund 10 Mio. t; Slider-Maximum berücksichtigt Rückkehr und Wachstum.",
       "Energieinhalt kerosineEnergyTWh: Heizwert Jet A-1 (LHV) 43,1 MJ/kg = 11,97 kWh/kg ≈ 12 MWh/t (DIN, ASTM D1655, DLR Kerosene-Properties); 9,47 Mio. t × 12 MWh/t ≈ 114 TWh Endenergie thermisch.",
@@ -135,6 +132,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -143,25 +145,15 @@
       "Mengenrisiko Vor-Corona vs. Wachstum: Slider-Maximum unterstellt Rückkehr auf rund 10 Mio. t plus moderates Wachstum; politische Nachfragedämpfung (Kerosinsteuer, Kurzstrecken-Substitution Bahn) würde den Bedarf senken.",
       "Batterie-Elektrifizierung der Kurzstrecke (Inlandsflüge unter 500 km) ist nicht separat modelliert und im PtL-Anteil mitgerechnet.",
       "Hybrid-Pfade mit HEFA- oder Bio-SAF (kein Strombedarf, aber begrenzte Reststoffmenge) sind nicht abgebildet — ReFuelEU verlangt 70 % SAF bis 2050, davon 35 % synthetisch; Vollumstellung auf PtL ist daher Obergrenze."
-    ]
-  },
-  "data": {
-    "id": "e100-flug",
-    "title": "Flug Elektrifizierung",
-    "source": "BAFA Mineralölabsatz 2023 (Flugturbinenkraftstoff schwer 9,47 Mio. t), Destatis Energiebilanz / AGEB 2023, BDL Verkehrsdaten; PtL-Wirkungsgrad 38 % nach Fraunhofer ISE PtL-Studie, DECHEMA E-Fuels-White-Paper, ICCT eFuel-Analysen, Öko-Institut RESCUE; ReFuelEU Aviation für Ziel-Pfade.",
-    "sourceUrls": [
-      "https://www.bafa.de/DE/Energie/Rohstoffe/Mineraloelstatistik/mineraloel_node.html",
-      "https://www.bafa.de/SharedDocs/Kurzmeldungen/DE/Energie/Mineraloel/2023_12_mineraloelinfo.html",
-      "https://www.bafa.de/SharedDocs/Kurzmeldungen/DE/Energie/Mineraloel/2024_12_mineraloelinfo.html",
-      "https://www.destatis.de/DE/Themen/Branchen-Unternehmen/Energie/Verwendung/_inhalt.html",
-      "https://ag-energiebilanzen.de/wp-content/uploads/2024/04/AGEB_Jahresbericht2023_20240403_dt.pdf",
-      "https://www.bdl.aero/de/publikation/report-luftverkehr-und-klima/",
-      "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-power-to-x.html",
-      "https://dechema.de/dechema_media/Downloads/Positionspapiere/WhitePaper_E_Fuels-p-20002780.pdf",
-      "https://theicct.org/publication/fuel-burn-of-new-commercial-jet-aircraft-1960-to-2019/",
-      "https://www.oeko.de/publikationen/p-details/rescue-langfristszenarien-fuer-eine-treibhausgasneutrale-energieversorgung",
-      "https://transport.ec.europa.eu/transport-modes/air/environment/refueleu-aviation_en"
     ],
+    "file": "last/e100-flug/data.json",
+    "scripts": [
+      "last/e100-flug/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-TWh − bereits elektrisch). Default-Ableitung: 9,47 Mio. t Kerosin × 12 MWh/t = 113,6 TWh thermisch (gerundet 114); 113,6 / 0,38 ≈ 299 TWh Strom, gerundet 300 TWh. Slider-Maximum 380 TWh deckt Rückkehr auf rund 10 Mio. t plus moderates Wachstum bzw. konservativere Wirkungsgrade (35 %) ab. Stundenverteilung konstant (24/7-Betrieb mit Speicherpuffern).",
+    "summary": "PtL · η 38 %"
+  },
+  "parameters": {
     "referenceScales": {
       "activity": {
         "value": 114,
@@ -210,8 +202,6 @@
         1,
         1
       ]
-    },
-    "note": "Zusatzlast = max(0, Ziel-TWh − bereits elektrisch). Default-Ableitung: 9,47 Mio. t Kerosin × 12 MWh/t = 113,6 TWh thermisch (gerundet 114); 113,6 / 0,38 ≈ 299 TWh Strom, gerundet 300 TWh. Slider-Maximum 380 TWh deckt Rückkehr auf rund 10 Mio. t plus moderates Wachstum bzw. konservativere Wirkungsgrade (35 %) ab. Stundenverteilung konstant (24/7-Betrieb mit Speicherpuffern).",
-    "summary": "PtL · η 38 %"
+    }
   }
 }

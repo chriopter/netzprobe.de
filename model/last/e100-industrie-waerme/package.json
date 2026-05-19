@@ -1,14 +1,12 @@
 {
-  "description": {
-    "id": "e100-industrie-waerme",
-    "parentId": "e100",
-    "domain": "last",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "e100-industrie-waerme",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
     "title": "Prozesswärme Elektrifizierung",
-    "file": "last/e100-industrie-waerme/data.json",
-    "scripts": [
-      "last/e100-industrie-waerme/model.rs"
-    ],
+    "short": "Zusatzlast aus Elektrifizierung der Prozesswärme in sonstiger Industrie (ohne Stahl, ohne Chemie).",
+    "parentId": "e100",
     "source": "AGEB Anwendungsbilanz Industrie 2023 (sonstige Industrie ohne Stahl/Chemie rund 220 TWh Endenergie Wärme); Fraunhofer ISI/RWTH IOB Wärmewende-Studie 2023; Wuppertal Institut/sci4climate.NRW 4-Stufen-Modell 2023; IEA HPT Annex 58 (Hochtemperatur-Wärmepumpen); dena Technologie-Fakten HT-WP; BV Glas; VDP Papierindustrie.",
     "sourceUrls": [
       "https://ag-energiebilanzen.de/wp-content/uploads/2024/11/Anwendungsbilanz_Industrie_2023_final_20250324.pdf",
@@ -24,7 +22,6 @@
     "period": "2023",
     "resolution": "Jahr × Stunde",
     "unit": "TWh Wärme, TWh Strom",
-    "short": "Zusatzlast aus Elektrifizierung der Prozesswärme in sonstiger Industrie (ohne Stahl, ohne Chemie).",
     "description": [
       "**Bezugsjahr 2023:** die AGEB-Anwendungsbilanz Industrie weist `506 TWh` Endenergie Prozesswärme aus. Davon sind Eisen/Stahl `~120 TWh` (e100-stahl) und Chemie `~165 TWh` (e100-chemie) ausgegliedert; verbleibend sonstige Industrie `~220 TWh` — Papier/Zellstoff `~18 TWh`, Glas/Keramik `~19 TWh`, NE-Metalle/Gießereien, Lebensmittel, Maschinenbau, Bauindustrie, Trocknung. Bereits elektrisch gedeckt sind `~25 TWh` (Glas-Elektroschmelze `~4 TWh`, Papier-E-Kessel-Pilot, Al-Sekundär-Induktion, Lebensmittel-/Pharma-Elektrobeheizung) und Teil der historischen Last; das ist das Slider-Minimum.",
       "**Faktor:** der **Strom-pro-Wärme-Faktor** `0,55` mittelt über die Temperaturschichtung (Fraunhofer ISI/Wuppertal): `30 %` NT (<`100 °C`) → Großwärmepumpen COP `3,5`; `45 %` MT (`100–500 °C`) → 50/50-Mix HT-WP COP `2,0` (IEA HPT Annex 58 zeigt `1,6–5,8` je nach Lift) und E-Dampfkessel η `0,98`; `25 %` HT (>`500 °C`) → Lichtbogen/Induktion/Plasma/Widerstand η `0,95`. Roh-Mix `0,30/3,5 + 0,45 × 0,75 + 0,25/0,95 ≈ 0,69`; mit pauschalem Abwärme-Recycling- und Prozessintegrations-Bonus (`~20 %` Wärmerückgewinnung über Mehrstufen-HT-WP, Brüden- und Rauchgaskondensation) sinkt der effektive Brutto-Faktor auf `0,55`. Default-Zusatzlast: `(220 − 25) × 0,55 ≈ 107 TWh/a`. Materialsubstitution und Wirkungsgrad-Drift einzelner Anlagen sind nicht modelliert.",
@@ -44,7 +41,7 @@
         "value": "**Rechnung:** `Zusatzstrom = (Ziel − 25) × 0,55`. Default: `(220 − 25) × 0,55 ≈ 107 TWh/a`."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-industrie-waerme/package.json; Rechenlogik in model/last/e100-industrie-waerme/model.rs.",
       "Sektorabgrenzung: AGEB-Anwendungsbilanz Industrie 2023 (Fraunhofer ISI im Auftrag der AGEB, März 2025) weist 506 TWh Endenergie Prozesswärme für die Gesamtindustrie aus. Davon Eisen/Stahl rund 120 TWh und Chemie (Grundstoffchemie und sonst. chem. Industrie) rund 165 TWh in separaten Paketen (e100-stahl, e100-chemie). Verbleibend sonstige Industrie rund 220 TWh — Papier/Zellstoff (rund 18 TWh Endenergie Wärme; VDP), Glas/Keramik (rund 19 TWh; BV Glas), NE-Metalle/Gießereien (Aluminium-Sekundär, Kupfer, Zink), Ernährung+Tabak (Dampf, Sterilisation, Trocknung), Maschinenbau, Bauindustrie/Steine+Erden (ohne Zement, der überwiegend Chemie/Mineralien-Klinker zugerechnet ist), Sonstiges Verarbeitendes Gewerbe und Trocknung.",
       "Temperaturschichtung temperatureMix (Fraunhofer ISI/RWTH IOB Wärmewende-Studie 2023, Wuppertal Institut sci4climate 4-Stufen-Modell 2023): Niedertemperatur < 100 °C rund 30 % (Trocknung, Waschen, Vorwärmung, Sterilisation) → Großwärmepumpen COP 3,5. Mitteltemperatur 100–500 °C rund 45 % (Lebensmittel-Dampf, Papier-Eindampfung, Trocknung, Lackieren, Galvanik-Bad) → 50/50-Mix aus Hochtemperatur-Wärmepumpen (IEA HPT Annex 58: COP 1,6–5,8 je nach Lift; konservative Annahme COP 2,0 bei rund 150 °C) und E-Dampfkesseln (Bosch ELSB / Babcock Wanson VAP-EL: η > 0,98), ergibt Strom-pro-Wärme-Faktor 0,75. Hochtemperatur > 500 °C rund 25 % (Glas-/Keramik-Schmelzwannen, NE-Sintern, Backöfen, Trocknungsöfen Bau) → Lichtbogen/Induktion/Plasma/Widerstand η 0,95 (Branchenmittel; reale Glasschmelze-Wirkungsgrade liegen niedriger und werden durch Hybridschmelzen kompensiert).",
@@ -132,6 +129,11 @@
         "name": "note",
         "unit": "Text",
         "description": "Rechenhinweis."
+      },
+      {
+        "name": "summary",
+        "unit": "Text",
+        "description": "Kurzlabel für Kennzahl und Szenarioannahme."
       }
     ],
     "caveats": [
@@ -141,23 +143,15 @@
       "Schichtbetrieb-Tagesgang ist eine Mittelung aus 24/7- und Tagschichtanlagen; einzelne Branchen (Lebensmittel mit ausgeprägtem Werktag-Tagesgang vs. Papier/Glas mit konstantem 24/7-Lauf) sind nicht differenziert.",
       "Wachstumspfad sonstiger Industrie bis 2045 ist unsicher (De-Industrialisierung vs. Re-Industrialisierung); der Slider deckt bis 320 TWh Upside ab.",
       "Effizienzgewinne durch Prozessoptimierung, Abwärmenutzung und Materialsubstitution sind nicht separat modelliert und würden den Wärmebedarf vor Elektrifizierung senken."
-    ]
-  },
-  "data": {
-    "id": "e100-industrie-waerme",
-    "title": "Industrie-Prozesswärme Elektrifizierung",
-    "source": "AGEB Anwendungsbilanz Industrie 2023 (Industrie-Prozesswärme insgesamt rund 506 TWh; ohne Eisen/Stahl rund 120 TWh und Chemie rund 165 TWh verbleibt sonstige Industrie rund 220 TWh). Temperaturschichtung 30/45/25 % NT/MT/HT abgeleitet aus Fraunhofer ISI/RWTH IOB Wärmewende-Studie (2023), Wuppertal Institut sci4climate.NRW 4-Stufen-Modell (2023) und IEA HPT Annex 58.",
-    "sourceUrls": [
-      "https://ag-energiebilanzen.de/wp-content/uploads/2024/11/Anwendungsbilanz_Industrie_2023_final_20250324.pdf",
-      "https://www.isi.fraunhofer.de/de/presse/2023/presseinfo-19-waermewende-in-der-industrie.html",
-      "https://www.umweltbundesamt.de/themen/industrielle-prozesswaerme-kann-bis-2045-co2",
-      "https://wupperinst.org/p/wi/p/s/pd/938",
-      "https://sci4climate.nrw/wp-content/uploads/2023/12/Schuewer_Holtz_2023_Bereitstellung-klimaneutraler-Prozesswaerme-fuer-die-Industrie.-Ein-4-Stufen-Modell.pdf",
-      "https://heatpumpingtechnologies.org/publications/annex-58-high-temperature-heat-pumps-final-report/",
-      "https://www.dena.de/fileadmin/dena/Publikationen/PDFs/2022/Technologie-Fakten_Klimaschutz_in_der_Industrie_Hochtemperatur-Waermepumpen.pdf",
-      "https://www.bvglas.de/presse/presseinformation/news/glasindustrie-steigende-energiekosten-gefaehrden-energiewende/",
-      "https://www.papierindustrie-transformation.de/transformation"
     ],
+    "file": "last/e100-industrie-waerme/data.json",
+    "scripts": [
+      "last/e100-industrie-waerme/model.rs"
+    ],
+    "note": "Zusatzlast = max(0, Ziel-TWh-Wärme − bereits elektrisch gedeckt) × electricityPerHeat. Default-Ableitung: AGEB 2023 Anwendungsbilanz Industrie weist 506 TWh Prozesswärme aus (Endenergie, Brennstoffe + Strom). Davon Eisen/Stahl rund 120 TWh und Chemie (Grundstoff- + sonstige chem. Industrie) rund 165 TWh separat in e100-stahl bzw. e100-chemie. Verbleibend sonstige Industrie rund 220 TWh — Papier/Zellstoff (rund 18 TWh Endenergie Wärme), Glas+Keramik (rund 19 TWh), NE-Metalle/Gießereien, Lebensmittel (Dampf+Trocknung), Maschinenbau, Bauindustrie, Trocknung. Temperaturmix Fraunhofer ISI/Wuppertal: 30 % NT (<100 °C) → Großwärmepumpen COP 3,5 / 45 % MT (100–500 °C) → 50/50 HT-WP COP 2,0 + E-Dampfkessel η 0,98, Faktor 0,75 / 25 % HT (>500 °C) → Lichtbogen/Induktion/Plasma η 0,95. Roher Mix-Mittelwert 0,30/3,5 + 0,45×0,75 + 0,25/0,95 ≈ 0,69; mit pauschalem Abwärme-/Prozessintegrations-Bonus (rund 20 % Rückgewinnung über Mehrstufen-HT-WP, Brüden-/Rauchgaskondensation) effektiv 0,55. Default-Strom: (220 − 25) × 0,55 ≈ 107 TWh. Mindestwert 25 TWh bereits elektrisch entspricht Glas-Elektroschmelze (rund 4 TWh), Papier-Elektrokessel-Pilotanlagen, NE-Aluminium-Sekundär und Lebensmittel-Sterilisation.",
+    "summary": "Strom/Wärme 0,55"
+  },
+  "parameters": {
     "referenceScales": {
       "activity": {
         "value": 10,
@@ -214,8 +208,6 @@
         0.86,
         0.88
       ]
-    },
-    "note": "Zusatzlast = max(0, Ziel-TWh-Wärme − bereits elektrisch gedeckt) × electricityPerHeat. Default-Ableitung: AGEB 2023 Anwendungsbilanz Industrie weist 506 TWh Prozesswärme aus (Endenergie, Brennstoffe + Strom). Davon Eisen/Stahl rund 120 TWh und Chemie (Grundstoff- + sonstige chem. Industrie) rund 165 TWh separat in e100-stahl bzw. e100-chemie. Verbleibend sonstige Industrie rund 220 TWh — Papier/Zellstoff (rund 18 TWh Endenergie Wärme), Glas+Keramik (rund 19 TWh), NE-Metalle/Gießereien, Lebensmittel (Dampf+Trocknung), Maschinenbau, Bauindustrie, Trocknung. Temperaturmix Fraunhofer ISI/Wuppertal: 30 % NT (<100 °C) → Großwärmepumpen COP 3,5 / 45 % MT (100–500 °C) → 50/50 HT-WP COP 2,0 + E-Dampfkessel η 0,98, Faktor 0,75 / 25 % HT (>500 °C) → Lichtbogen/Induktion/Plasma η 0,95. Roher Mix-Mittelwert 0,30/3,5 + 0,45×0,75 + 0,25/0,95 ≈ 0,69; mit pauschalem Abwärme-/Prozessintegrations-Bonus (rund 20 % Rückgewinnung über Mehrstufen-HT-WP, Brüden-/Rauchgaskondensation) effektiv 0,55. Default-Strom: (220 − 25) × 0,55 ≈ 107 TWh. Mindestwert 25 TWh bereits elektrisch entspricht Glas-Elektroschmelze (rund 4 TWh), Papier-Elektrokessel-Pilotanlagen, NE-Aluminium-Sekundär und Lebensmittel-Sterilisation.",
-    "summary": "Strom/Wärme 0,55"
+    }
   }
 }

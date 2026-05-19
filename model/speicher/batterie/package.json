@@ -1,13 +1,11 @@
 {
-  "description": {
-    "id": "batterie",
-    "domain": "speicher",
-    "kind": "scenario",
+  "$schema": "../../schemas/scenario-speicher.schema.json",
+  "id": "batterie",
+  "domain": "speicher",
+  "kind": "scenario",
+  "method": {
     "title": "Batterie",
-    "file": "speicher/batterie/data.json",
-    "scripts": [
-      "speicher/batterie/model.rs"
-    ],
+    "short": "Slider für Batterie-Großspeicher: kurzfristiger Tagesausgleich mit `80 %` Roundtrip-Wirkungsgrad.",
     "source": "Energy-Charts (Batterie-Bestand 2025); MTGermany energy-simulation-de (Eta, Initial-SoC).",
     "sourceUrls": [
       "https://www.energy-charts.info/",
@@ -16,7 +14,6 @@
     "period": "2025",
     "resolution": "stündlich",
     "unit": "GW, GWh",
-    "short": "Slider für Batterie-Großspeicher: kurzfristiger Tagesausgleich mit `80 %` Roundtrip-Wirkungsgrad.",
     "description": [
       "**Auslegung:** der Default `10 GW / 25 GWh` entspricht dem deutschen Großbatterie-Bestand Ende `2025` (Energy-Charts). Das Verhältnis von rund `2,5 h` Volllast-Entladedauer ist typisch für Front-of-the-Meter-Systeme, die heute primär Regelleistung und kurzfristige Spotmarkt-Arbitrage abdecken. Der **Roundtrip-Wirkungsgrad** liegt bei `80 %` — am unteren Rand des Lithium-Korridors (`85–92 %` AC-AC bei modernen Systemen), aber inklusive Trafo- und Klimatisierungsverlusten plausibel.",
       "**Mechanik:** der Dispatch ist symmetrisch (gleicher Slider für Lade- und Entladeleistung) und folgt einer einfachen Greedy-Regel: bei Residuallast-Überschuss wird bis zur Leistungsgrenze und freier Speicherenergie geladen, bei Unterdeckung analog entladen. Die Bilanz `SoC(t+1) = SoC(t) + η · ΔLaden − ΔEntladen` schreibt die Verluste vollständig dem Ladevorgang zu. **Dispatch-Priorität** `1` bedeutet: Batterie wird vor Pumpspeicher und H₂ bedient — sie deckt damit den schnellen Tageshub ab, während die anderen Speicher mittlere bis saisonale Lücken füllen.",
@@ -36,7 +33,7 @@
         "value": "**Bilanz:** `SoC(t+1) = SoC(t) + η · ΔLaden − ΔEntladen` mit `η = 0,8`. Der Default-Lauf zyklet typischerweise wenige Prozent des Energieinhalts pro Tag."
       }
     ],
-    "method": [
+    "reasoning": [
       "Datei: handgepflegt. Werte in model/speicher/batterie/package.json, Adapter in model/speicher/batterie/model.rs.",
       "Roundtrip-Wirkungsgrad 80 % wird vollständig beim Laden angewandt: ΔSoC = η × Laden, Entladen 1:1.",
       "Initial-SoC: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), der Year-End-SoC dient als Anfangswert für Pass 2. Bei reinen Batterie-Szenarien ohne nennenswerte H₂-Kapazität wird der Warm-up übersprungen — Batterien schwingen sich innerhalb von Stunden ein, der Start-bei-0-Effekt ist im Jahresmittel zu vernachlässigen.",
@@ -129,11 +126,13 @@
       "Wirkungsgrad vollständig beim Laden — getrennte Lade-/Entlade-Effizienz nicht abgebildet.",
       "Keine Mindest-SoC oder DoD-Restriktionen — Batterie kann zwischen 0 und Max schwingen.",
       "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung."
+    ],
+    "file": "speicher/batterie/data.json",
+    "scripts": [
+      "speicher/batterie/model.rs"
     ]
   },
-  "data": {
-    "id": "batterie",
-    "name": "Batterie",
+  "parameters": {
     "power2025GW": 10,
     "defaultPowerGW": 10,
     "minPowerGW": 0,
