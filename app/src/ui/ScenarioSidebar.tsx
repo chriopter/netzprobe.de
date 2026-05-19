@@ -1628,6 +1628,7 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
       {valueUnit && <div className="flex items-baseline gap-1 text-xs leading-5 text-zinc-500">
         <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${valueLabel}: direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${valueUnit})`}/>
         <span>{valueUnit}</span>
+        <span className="text-zinc-400">· davon Zusatz: {twh(electricTWh)}</span>
       </div>}
       <p className="text-xs leading-5 text-zinc-500">{detail}</p>
     </div>}
