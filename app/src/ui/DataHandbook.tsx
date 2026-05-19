@@ -515,7 +515,7 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
   if (!activeTab) return null;
 
   return <div className="mt-4 max-w-3xl">
-    <div role="tablist" aria-label="Files" className="flex flex-wrap gap-1 border-b border-zinc-200">
+    <div role="tablist" aria-label="Dateien" className="flex flex-wrap gap-1 border-b border-zinc-200">
       {tabs.map(tab => {
         const active = tab.id === activeTab.id;
         const tabId = `file-tab-${tab.id}`;
@@ -554,12 +554,12 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
 function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): FileContentTab[] {
   const tabs: FileContentTab[] = [];
   if (selected.fields?.length || reproductionItems.length) {
-    tabs.push({ id: 'fields', label: 'Felder', kind: 'fields' });
+    tabs.push({ id: 'fields', label: 'Modell (model.json)', kind: 'fields' });
   }
   const modulePath = modulePathForId(selected.id);
   if (modulePath) {
     const filename = modulePath.split('/').pop() ?? modulePath;
-    tabs.push({ id: `module-${modulePath}`, label: `Modul (${filename})`, kind: 'module', path: modulePath });
+    tabs.push({ id: `module-${modulePath}`, label: `Logik (${filename})`, kind: 'module', path: modulePath });
   }
   if (generatorPackageIds.has(selected.id)) {
     const generatorPath = generatorPathForId(selected.id);
@@ -616,9 +616,17 @@ function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc;
       .catch(() => { if (!cancelled) setData(null); });
     return () => { cancelled = true; };
   }, [selected.id]);
+  const documentedFields = selected.fields ?? [];
+  const documentedNames = new Set(documentedFields.map(field => field.name));
+  const dataFields = data
+    ? Object.keys(data)
+      .filter(name => !documentedNames.has(name))
+      .map(name => ({ name, unit: 'Wert', description: 'Feld aus dem Modell-Datenobjekt.' }))
+    : [];
+  const fields = [...documentedFields, ...dataFields];
   return <div>
     <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      {selected.fields?.map(field => {
+      {fields.map(field => {
         const rawValue = resolveFieldValue(data, field.name);
         const formatted = rawValue === undefined ? null : formatFieldValue(rawValue);
         return <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
