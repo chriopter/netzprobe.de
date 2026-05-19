@@ -30,17 +30,20 @@
   input[type='range']::-webkit-slider-runnable-track{
     height:4px;
     border-radius:999px;
-    background:linear-gradient(to right, #18181b 0 var(--range-pct,0%), #e4e4e7 var(--range-pct,0%) 100%);
+    /* Default: dunkler Fill bis zum Daumen. Slider mit --track-zones
+       ueberschreiben das mit einem mehrfarbigen Zonen-Gradient. */
+    background: var(--track-zones, linear-gradient(to right, #18181b 0 var(--range-pct,0%), #e4e4e7 var(--range-pct,0%) 100%));
   }
   input[type='range']::-moz-range-track{
     height:4px;
     border-radius:999px;
-    background:#e4e4e7;
+    background: var(--track-zones, #e4e4e7);
   }
   input[type='range']::-moz-range-progress{
     height:4px;
     border-radius:999px;
-    background:#18181b;
+    /* Wenn Zonen aktiv sind, kein zusaetzlicher Fill. */
+    background: var(--track-progress, #18181b);
   }
   input[type='range']::-webkit-slider-thumb{
     -webkit-appearance:none;
