@@ -1,4 +1,6 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { ChangelogPage } from './ChangelogPage';
+import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
 import { Camera, ChevronRight, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -11,13 +13,11 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixLeafKey, type MixVisibility } from './chartOptions';
+// DataFileViewer bleibt lazy — Spezial-Route, selten genutzt. Wiki und
+// Changelog werden statisch importiert, damit der Tab-Wechsel kein
+// Suspense-Flash mehr erzeugt (Sidebar bleibt sichtbar, Layout stabil).
 const loadDataFileViewer = () => import('./DataFileViewer');
-const loadDataHandbook = () => import('./DataHandbook');
-const loadChangelogPage = () => import('./ChangelogPage');
 const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.DataFileViewer })));
-const DataHandbookContent = lazy(() => loadDataHandbook().then(m => ({ default: m.DataHandbookContent })));
-const DataHandbookSidebar = lazy(() => loadDataHandbook().then(m => ({ default: m.DataHandbookSidebar })));
-const ChangelogPage = lazy(() => loadChangelogPage().then(m => ({ default: m.ChangelogPage })));
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
@@ -669,17 +669,6 @@ export function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const preload = () => {
-      void loadDataHandbook();
-      void loadChangelogPage();
-    };
-    const idle = window.requestIdleCallback?.(preload) ?? window.setTimeout(preload, 700);
-    return () => {
-      if (typeof idle === 'number') window.clearTimeout(idle);
-      else window.cancelIdleCallback?.(idle);
-    };
-  }, []);
 
   useEffect(() => {
     if (routeIsDashboard) setDashboardMounted(true);
@@ -688,9 +677,9 @@ export function App() {
   const routeContent = route.view === 'datei' && route.path
     ? <Suspense fallback={<RouteFallback/>}><DataFileViewer path={route.path}/></Suspense>
     : route.view === 'daten'
-      ? <Suspense fallback={<RouteFallback/>}><DataHandbookRoute/></Suspense>
+      ? <DataHandbookRoute/>
       : route.view === 'changelog'
-        ? <Suspense fallback={<RouteFallback/>}><ChangelogRoute/></Suspense>
+        ? <ChangelogRoute/>
         : null;
 
   return <>
@@ -1457,7 +1446,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
     </button>;
   };
   const activeGroup = openGroup ? MIX_GROUPS.find(g => g.id === openGroup) : null;
-  return <div className="grid gap-1.5 bg-white px-2 py-2 text-xs sm:px-3 sm:py-2.5">
+  return <div className="grid gap-1.5 bg-white px-2 pb-3 pt-6 text-xs sm:px-3 sm:pb-3.5 sm:pt-8">
     <div className="flex flex-wrap items-center justify-center gap-1.5">
       {EXTRA_LEAVES.map(item => renderPill(item.key, item.label, item.color, item.glyph))}
       {MIX_GROUPS.map(group => {
