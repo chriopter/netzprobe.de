@@ -2,39 +2,50 @@ import type { EChartsOption } from 'echarts';
 import type { SimHour } from '../types/simulation';
 import { fmt } from './format';
 
-export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'storageDischargeGW' | 'loadGW' | 'loadSheddingGW';
+export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'batterieDischargeGW' | 'pumpspeicherDischargeGW' | 'h2DischargeGW' | 'loadGW' | 'loadSheddingGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
 export type ExtraLeaf = { key: MixLeafKey; label: string; color: string; glyph: '●' | '▨' };
 export const EXTRA_LEAVES: ExtraLeaf[] = [
   { key: 'loadGW', label: 'Last', color: '#111827', glyph: '●' },
   { key: 'importGW', label: 'Import', color: '#dc2626', glyph: '●' },
-  { key: 'storageDischargeGW', label: 'Speicher (Batterie/PSP/H₂)', color: '#14b8a6', glyph: '●' },
   { key: 'loadSheddingGW', label: 'Fehlend', color: '#b91c1c', glyph: '▨' },
 ];
 export type ChartMode = 'sunburst' | 'linie';
 export type ChartViewport = { width: number; height: number };
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
+// Stack-Reihenfolge im Chart (Energy-Charts-Konvention: firme Layer unten, Solar oben).
+// Unabhaengig von der Legenden-Gruppierung in MIX_GROUPS — die ist nur fuer
+// die UI-Pillen relevant.
+export const STACK_ORDER: MixLeafKey[] = [
+  'hydroGW', 'biomassGW', 'geothermalGW', 'nuclearGW',
+  'coalGW', 'oilGW', 'otherGW', 'wasteGW', 'gasGW',
+  'windOffGW', 'windOnGW', 'solarGW',
+];
+
 export const MIX_GROUPS: MixGroup[] = [
-  { id: 'base', label: 'Grundlast', color: '#2563eb', leaves: [
-    { key: 'hydroGW', label: 'Wasser', color: '#4338ca' },
-    { key: 'biomassGW', label: 'Bio', color: '#16a34a' },
-    { key: 'geothermalGW', label: 'Geo', color: '#3730a3' },
-    { key: 'nuclearGW', label: 'Kernkraft', color: '#ec4899' },
+  { id: 'renewable', label: 'Erneuerbar', color: '#16a34a', leaves: [
+    { key: 'hydroGW', label: 'Laufwasser', color: '#4338ca' },
+    { key: 'biomassGW', label: 'Biomasse', color: '#16a34a' },
+    { key: 'geothermalGW', label: 'Geothermie', color: '#3730a3' },
+    { key: 'windOffGW', label: 'Wind Offshore', color: '#8aa37f' },
+    { key: 'windOnGW', label: 'Wind Onshore', color: '#c5d8bc' },
+    { key: 'solarGW', label: 'PV', color: '#facc15' },
   ] },
   { id: 'fossil', label: 'Fossil', color: '#fb923c', leaves: [
     { key: 'coalGW', label: 'Kohle', color: '#57534e' },
     { key: 'oilGW', label: 'Öl', color: '#92400e' },
-    { key: 'otherGW', label: 'Sonstige', color: '#8b5cf6' },
-    { key: 'wasteGW', label: 'Müll', color: '#78350f' },
     { key: 'gasGW', label: 'Gas', color: '#fb923c' },
+    { key: 'wasteGW', label: 'Müll', color: '#78350f' },
+    { key: 'otherGW', label: 'Sonstige', color: '#8b5cf6' },
   ] },
-  { id: 'wind', label: 'Wind', color: '#c5d8bc', leaves: [
-    { key: 'windOffGW', label: 'Wind Offshore', color: '#8aa37f' },
-    { key: 'windOnGW', label: 'Wind Onshore', color: '#c5d8bc' },
+  { id: 'nuclear', label: 'Kernkraft', color: '#ec4899', leaves: [
+    { key: 'nuclearGW', label: 'Kernkraft', color: '#ec4899' },
   ] },
-  { id: 'solar', label: 'Solar', color: '#facc15', leaves: [
-    { key: 'solarGW', label: 'Solar', color: '#facc15' },
+  { id: 'storage', label: 'Speicher', color: '#14b8a6', leaves: [
+    { key: 'batterieDischargeGW', label: 'Batterie', color: '#14b8a6' },
+    { key: 'pumpspeicherDischargeGW', label: 'Pumpspeicher', color: '#0284c7' },
+    { key: 'h2DischargeGW', label: 'Wasserstoff', color: '#06b6d4' },
   ] },
 ];
 
@@ -144,7 +155,6 @@ export function mixReferenceScaleMaxGW(peakGW: number, headroom = 1.5) {
 export function mixScalePeakGW(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY) {
   return hours.reduce((currentMax, hour) => {
     const supply = MIX_GROUPS.reduce((sum, group) => sum + group.leaves.reduce((groupSum, leaf) => groupSum + (visibility[leaf.key] ? valueOf(hour, leaf.key) : 0), 0), 0)
-      + (visibility.storageDischargeGW ? hour.storageDischargeGW : 0)
       + (visibility.importGW ? hour.importGW : 0)
       + (visibility.loadSheddingGW ? hour.loadSheddingGW : 0);
     const load = visibility.loadGW ? hour.loadGW : 0;
@@ -217,7 +227,13 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
 
 export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number): EChartsOption {
   const chartHours = compressHours(hours);
-  const supplySeries = MIX_GROUPS.flatMap(group => group.leaves.filter(leaf => visibility[leaf.key]).map(leaf => areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, leaf.key)), mode)));
+  const leafMeta = new Map(MIX_GROUPS.flatMap(group => group.leaves).map(leaf => [leaf.key, leaf]));
+  const supplySeries = STACK_ORDER
+    .filter(key => visibility[key] && leafMeta.has(key))
+    .map(key => {
+      const leaf = leafMeta.get(key)!;
+      return areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, key)), mode);
+    });
   const coordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW);
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
@@ -247,7 +263,18 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
           const detail = active.map(leaf => `${dot(leaf.color)}${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
           lines.push(`${dot(group.color)}${group.label}: ${bold(`${fmt.format(total)} GW`)}<br><span style="margin-left:12px">${muted(detail)}</span>`);
         }
-        if (visibility.storageDischargeGW && hour.storageDischargeGW > 0) lines.push(`${dot('#0d9488')}Speicher: ${bold(`${fmt.format(hour.storageDischargeGW)} GW`)}<br><span style="margin-left:12px">${muted(`${dot('#14b8a6')}Batterie ${fmt.format(hour.batterieDischargeGW)} · ${dot('#0284c7')}PSP ${fmt.format(hour.pumpspeicherDischargeGW)} · ${dot('#06b6d4')}H₂ ${fmt.format(hour.h2DischargeGW)}`)}</span>`);
+        {
+          const parts: string[] = [];
+          if (visibility.batterieDischargeGW && hour.batterieDischargeGW > 0) parts.push(`${dot('#14b8a6')}Batterie ${fmt.format(hour.batterieDischargeGW)}`);
+          if (visibility.pumpspeicherDischargeGW && hour.pumpspeicherDischargeGW > 0) parts.push(`${dot('#0284c7')}Pumpspeicher ${fmt.format(hour.pumpspeicherDischargeGW)}`);
+          if (visibility.h2DischargeGW && hour.h2DischargeGW > 0) parts.push(`${dot('#06b6d4')}Wasserstoff ${fmt.format(hour.h2DischargeGW)}`);
+          if (parts.length) {
+            const total = (visibility.batterieDischargeGW ? hour.batterieDischargeGW : 0)
+              + (visibility.pumpspeicherDischargeGW ? hour.pumpspeicherDischargeGW : 0)
+              + (visibility.h2DischargeGW ? hour.h2DischargeGW : 0);
+            lines.push(`${dot('#0d9488')}Speicher: ${bold(`${fmt.format(total)} GW`)}<br><span style="margin-left:12px">${muted(parts.join(' · '))}</span>`);
+          }
+        }
         if (visibility.importGW) lines.push(`${dot('#dc2626')}Import: ${bold(`${fmt.format(hour.importGW)} GW`)}`);
         if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`);
         if (hour.exportGW > 0) lines.push(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`);
@@ -260,11 +287,9 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     ...coordinate,
     series: [
       ...supplySeries,
-      ...(visibility.storageDischargeGW ? [
-        areaSeries('Batterie ←', '#14b8a6', chartHours.map((h) => h.batterieDischargeGW), mode),
-        areaSeries('Pumpspeicher ←', '#0284c7', chartHours.map((h) => h.pumpspeicherDischargeGW), mode),
-        areaSeries('H₂ ←', '#06b6d4', chartHours.map((h) => h.h2DischargeGW), mode),
-      ] : []),
+      ...(visibility.batterieDischargeGW ? [areaSeries('Batterie ←', '#14b8a6', chartHours.map((h) => h.batterieDischargeGW), mode)] : []),
+      ...(visibility.pumpspeicherDischargeGW ? [areaSeries('Pumpspeicher ←', '#0284c7', chartHours.map((h) => h.pumpspeicherDischargeGW), mode)] : []),
+      ...(visibility.h2DischargeGW ? [areaSeries('Wasserstoff ←', '#06b6d4', chartHours.map((h) => h.h2DischargeGW), mode)] : []),
       ...(visibility.importGW ? [areaSeries('Import', '#dc2626', chartHours.map((h) => h.importGW), mode)] : []),
       ...(visibility.loadSheddingGW ? [{
         name: 'Fehlend',

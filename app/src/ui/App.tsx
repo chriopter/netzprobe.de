@@ -1,5 +1,5 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
-import { Camera, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
+import { Camera, ChevronRight, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -265,6 +265,17 @@ function useMainThreadChart<TData>(
     if (!data) return;
     const el = document.getElementById(containerId);
     if (!el) return;
+    // Falls der Chart-Container zwischenzeitlich unmounted/remounted wurde
+    // (z. B. Tab-Wechsel), zeigt chartRef noch auf die alte ECharts-Instanz
+    // mit verlorenem DOM-Bezug. Dann dispose und neu init.
+    if (chartRef.current && chartRef.current.getDom() !== el) {
+      roamCleanupRef.current?.();
+      roamCleanupRef.current = null;
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
+      chartRef.current.dispose();
+      chartRef.current = null;
+    }
     if (!chartRef.current) {
       const chart = echarts.init(el);
       chartRef.current = chart;
@@ -814,6 +825,18 @@ function Dashboard() {
   const [manualRunToken, setManualRunToken] = useState(0);
   const [sliderActive, setSliderActive] = useState(false);
   const [referenceScaleMaxGW, setReferenceScaleMaxGW] = useState<number | undefined>(undefined);
+  const [mainView, setMainView] = useState<MainViewId>('mix');
+  // Wenn der Energiemix-Tab nach einem Wechsel wieder sichtbar wird,
+  // wurde der Chart-Container per CSS hidden/unhidden — ECharts merkt das
+  // Re-Layout nicht von selbst, also Resize-Event nachtreten.
+  useEffect(() => {
+    if (mainView !== 'mix') return;
+    const id1 = window.requestAnimationFrame(() => {
+      const id2 = window.requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      return () => window.cancelAnimationFrame(id2);
+    });
+    return () => window.cancelAnimationFrame(id1);
+  }, [mainView]);
 
   useEffect(() => {
     loadDefaultData().then(setRawData).catch(console.error);
@@ -1073,46 +1096,42 @@ function Dashboard() {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <ChartPanel className="flex flex-col sm:h-[calc(100vh-1.5rem)]">
-            <div className="grid shrink-0 gap-2 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3 xl:grid-cols-[minmax(180px,0.9fr)_minmax(0,2.7fr)_auto] xl:items-start">
-              <div className="flex min-w-0 items-start gap-2">
-                {sidebarCollapsed && <SidebarOpenButton onClick={openSidebar}/>}
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-zinc-950 sm:text-lg">Energiemix vs. Last</h2>
-                  <span className={cx(muted, 'mt-0.5 block text-xs')}>{formatDate(selectedPeriod.start)} – {formatDate(selectedPeriod.end)}</span>
-                </div>
-              </div>
-              <div className="grid min-w-0 gap-1.5">
-                <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
-                  <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-                  <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)}/>
-                  <InlineKpi label="Import" value={twh(result.summary.importTWh)}/>
-                  <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'}/>
-                  <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
-                </div>
-                <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
-                  <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`}/>
-                  <InlineKpi label="CO₂ Jahr" value={`${fmt.format(result.summary.co2MtPerYear)} Mt`}/>
-                  <InlineKpi label="Export" value={twh(result.summary.exportTWh)}/>
-                  <InlineKpi label="Peak-Last" value={`${fmt0.format(result.summary.peakLoadGW)} GW`}/>
-                  <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  aria-label="Skala zurücksetzen"
-                  title="Skala auf aktuelles Szenario zurücksetzen"
-                  className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:bg-white hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
-                  onClick={resetMixScale}
-                  disabled={!deferredChartSource}
-                >
-                  <RotateCcw className="h-4 w-4"/>
-                </button>
-                <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
+          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
+          {mainView !== 'mix' && <ComingSoonPanel label={MAIN_VIEW_LABELS[mainView]}/>}
+          <div className={cx('contents', mainView !== 'mix' && 'hidden')}>
+          <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
+            <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3">
+              <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-visible">
+                <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)} primary/>
+                <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
+                <InlineKpi label="Import" value={twh(result.summary.importTWh)}/>
+                <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'} primary/>
+                <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
+                <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`} primary/>
+                <InlineKpi label="CO₂ Jahr" value={`${fmt.format(result.summary.co2MtPerYear)} Mt`}/>
+                <InlineKpi label="Export" value={twh(result.summary.exportTWh)}/>
+                <InlineKpi label="Peak-Last" value={`${fmt0.format(result.summary.peakLoadGW)} GW`}/>
+                <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
               </div>
             </div>
             <div className="relative aspect-square min-h-0 w-full bg-white sm:aspect-auto sm:flex-1">
+              <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
+                <div className="pointer-events-auto">
+                  <button
+                    type="button"
+                    aria-label="Skala zurücksetzen"
+                    title="Skala auf aktuelles Szenario zurücksetzen"
+                    className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-500 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+                    onClick={resetMixScale}
+                    disabled={!deferredChartSource}
+                  >
+                    <RotateCcw className="h-4 w-4"/>
+                  </button>
+                </div>
+                <div className="pointer-events-auto">
+                  <ChartModeToggle mode={chartMode} onChange={setChartMode}/>
+                </div>
+              </div>
               <div
                 id="mix-chart"
                 className={cx(
@@ -1173,12 +1192,20 @@ function Dashboard() {
             <MixLegend
               visibility={mixVisibility}
               onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
+              onToggleGroup={(groupId, checked) => setMixVisibility(prev => {
+                const group = MIX_GROUPS.find(g => g.id === groupId);
+                if (!group) return prev;
+                const next = { ...prev };
+                for (const leaf of group.leaves) next[leaf.key] = checked;
+                return next;
+              })}
             />
           </ChartPanel>
 
           <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
             <div id="storage-chart" className="h-[240px] w-full px-3 py-3"/>
           </ChartPanel>
+          </div>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
@@ -1347,6 +1374,60 @@ function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode:
   </div>;
 }
 
+type MainViewId = 'mix' | 'flaeche' | 'ressourcen' | 'netz' | 'kosten';
+
+const MAIN_VIEW_LABELS: Record<MainViewId, string> = {
+  mix: 'Energiemix',
+  flaeche: 'Fläche',
+  ressourcen: 'Ressourcen',
+  netz: 'Netz',
+  kosten: 'Kosten',
+};
+
+const MAIN_VIEW_IMPLEMENTED: Record<MainViewId, boolean> = {
+  mix: true,
+  flaeche: false,
+  ressourcen: false,
+  netz: false,
+  kosten: false,
+};
+
+function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
+  const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
+  return <div className="flex items-center gap-2">
+    {sidebarCollapsed && <SidebarOpenButton onClick={onOpenSidebar}/>}
+    <nav aria-label="Hauptansicht" className="inline-flex shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none">
+      {tabs.map(tab => {
+        const isActive = active === tab.id;
+        return <button
+          key={tab.id}
+          type="button"
+          aria-current={isActive ? 'page' : undefined}
+          onClick={() => onChange(tab.id)}
+          title={tab.ready ? undefined : `${tab.label} – Coming soon`}
+          className={cx(
+            'rounded-full px-3 py-1.5 transition',
+            isActive
+              ? 'bg-zinc-950 text-white'
+              : tab.ready
+                ? 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950'
+                : 'text-zinc-300 hover:text-zinc-500',
+          )}
+        >{tab.label}</button>;
+      })}
+    </nav>
+  </div>;
+}
+
+function ComingSoonPanel({ label }: { label: string }) {
+  return <div className="grid min-h-[calc(100vh-6rem)] place-items-center rounded-lg border border-dashed border-zinc-200 bg-white text-center">
+    <div className="px-6 py-12">
+      <h2 className="text-lg font-semibold text-zinc-950">{label}</h2>
+      <p className="mt-2 text-sm text-zinc-500">Coming soon.</p>
+    </div>
+  </div>;
+}
+
 function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
   return <section className={cx('min-w-0 overflow-hidden bg-white', className)}>
     {title && <div className={cx(panelHeader, 'flex items-center justify-between gap-3 px-3 py-3')}>
@@ -1357,60 +1438,82 @@ function ChartPanel({ title, meta, className, children }: { title?: string; meta
   </section>;
 }
 
-function MixLegend({ visibility, onToggleLeaf }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void }) {
-  const leaves = MIX_GROUPS.flatMap(group => group.leaves);
-  return <div className="grid gap-1.5 border-t border-zinc-200 bg-zinc-50/40 px-2 py-2 text-xs sm:px-3 sm:py-2.5">
-    <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible">
-      {EXTRA_LEAVES.map(item => {
-        const active = visibility[item.key];
-        return <button
-          key={item.key}
-          type="button"
-          aria-pressed={active}
-          className={cx(
-            'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-            active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
-          )}
-          onClick={() => onToggleLeaf(item.key, !active)}
-        >
-          <span aria-hidden className="text-[10px]" style={{ color: active ? item.color : '#d4d4d8' }}>{item.glyph}</span>
-          <span>{item.label}</span>
-        </button>;
+function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleGroup: (groupId: string, checked: boolean) => void }) {
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const renderPill = (key: MixLeafKey, label: string, color: string, glyph: string) => {
+    const active = visibility[key];
+    return <button
+      key={key}
+      type="button"
+      aria-pressed={active}
+      className={cx(
+        'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
+        active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-zinc-100 bg-white text-zinc-400 hover:text-zinc-700',
+      )}
+      onClick={() => onToggleLeaf(key, !active)}
+    >
+      <span aria-hidden className="text-[10px]" style={{ color: active ? color : '#d4d4d8' }}>{glyph}</span>
+      <span>{label}</span>
+    </button>;
+  };
+  const activeGroup = openGroup ? MIX_GROUPS.find(g => g.id === openGroup) : null;
+  return <div className="grid gap-1.5 bg-white px-2 py-2 text-xs sm:px-3 sm:py-2.5">
+    <div className="flex flex-wrap items-center justify-center gap-1.5">
+      {EXTRA_LEAVES.map(item => renderPill(item.key, item.label, item.color, item.glyph))}
+      {MIX_GROUPS.map(group => {
+        const activeCount = group.leaves.filter(leaf => visibility[leaf.key]).length;
+        const total = group.leaves.length;
+        const someActive = activeCount > 0;
+        const allActive = activeCount === total;
+        const isOpen = openGroup === group.id;
+        return <div key={group.id} className={cx(
+          'inline-flex shrink-0 items-stretch overflow-hidden rounded-md border transition',
+          someActive ? 'border-zinc-300 bg-white text-zinc-800' : 'border-zinc-100 bg-white text-zinc-400',
+        )}>
+          <button
+            type="button"
+            aria-pressed={someActive}
+            title={allActive ? 'Alle abwählen' : 'Alle aktivieren'}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 transition hover:bg-zinc-50"
+            onClick={() => onToggleGroup(group.id, !allActive)}
+          >
+            <span aria-hidden className="text-[10px]" style={{ color: someActive ? group.color : '#d4d4d8' }}>●</span>
+            <span className="text-[9px] font-semibold uppercase tracking-[0.08em]">{group.label}</span>
+            <span className="text-[10px] text-zinc-400">{activeCount}/{total}</span>
+          </button>
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            aria-label={isOpen ? `${group.label} einklappen` : `${group.label} aufklappen`}
+            className="inline-flex items-center border-l border-zinc-200 px-1.5 transition hover:bg-zinc-50"
+            onClick={() => setOpenGroup(isOpen ? null : group.id)}
+          >
+            <ChevronRight aria-hidden className={cx('h-3 w-3 text-zinc-400 transition-transform', isOpen && 'rotate-90')}/>
+          </button>
+        </div>;
       })}
     </div>
-    <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible">
-      {leaves.map(leaf => {
-        const active = visibility[leaf.key];
-        return <button
-        key={leaf.key}
-        type="button"
-        aria-pressed={active}
-        className={cx(
-          'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-          active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-transparent bg-transparent text-zinc-400 hover:bg-white hover:text-zinc-700',
-        )}
-        onClick={() => onToggleLeaf(leaf.key, !active)}
-      >
-        <span aria-hidden className="text-[10px]" style={{ color: active ? leaf.color : '#d4d4d8' }}>●</span>
-        <span>{leaf.label}</span>
-      </button>;
-      })}
-    </div>
+    {activeGroup && <div className="flex flex-wrap items-center justify-center gap-1.5">
+      {activeGroup.leaves.map(leaf => renderPill(leaf.key, leaf.label, leaf.color, '●'))}
+    </div>}
   </div>;
 }
 
-function InlineKpi({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function InlineKpi({ label, value, tone, primary }: { label: string; value: string; tone?: string; primary?: boolean }) {
   const toneClass = tone === 'stabil' ? 'text-emerald-600' : tone === 'angespannt' ? 'text-amber-600' : tone === 'kritisch' ? 'text-red-700' : 'text-zinc-950';
   const isAlarm = tone === 'kritisch';
+  const valueSize = primary ? 'text-base' : 'text-sm';
   const containerClass = isAlarm
     ? 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-red-300 px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5'
-    : 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200 bg-white px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5';
+    : primary
+      ? 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-zinc-300 bg-white px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5'
+      : 'grid w-[7.2rem] shrink-0 gap-0.5 overflow-hidden rounded-md border border-zinc-200 bg-white px-2 py-1 leading-tight sm:w-auto sm:min-w-0 sm:px-2.5 sm:py-1.5';
   const alarmStyle = isAlarm
     ? { backgroundImage: 'repeating-linear-gradient(45deg, rgba(220,38,38,0.10) 0 6px, rgba(220,38,38,0.20) 6px 12px)' }
     : undefined;
   return <div className={containerClass} style={alarmStyle}>
     <span className={cx('truncate whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em]', isAlarm ? 'text-red-700' : 'text-zinc-500')} title={label}>{label}</span>
-    <span className={cx('whitespace-nowrap text-sm font-semibold tabular-nums', toneClass)}>{value}</span>
+    <span className={cx('whitespace-nowrap font-semibold tabular-nums', valueSize, toneClass)}>{value}</span>
   </div>;
 }
 
