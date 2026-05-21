@@ -5,6 +5,6 @@
   "allOf": [{ "$ref": "./_common.schema.json" }],
   "properties": {
     "kind": { "const": "composition" },
-    "domain": { "const": "presets" }
+    "domain": { "enum": ["last", "erzeugung"] }
   }
 }

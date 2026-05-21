@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/composition.schema.json",
   "id": "e100",
-  "domain": "presets",
+  "domain": "last",
   "kind": "composition",
   "method": {
     "title": "E100",
@@ -41,7 +41,7 @@
       "Importe von H2 oder strombasierten Brennstoffen (z. B. e-Kerosin aus MENA) sind im Default nicht abgebildet — bei Slider-Senken pro Sektor lassen sie sich rechnerisch berücksichtigen."
     ],
     "scripts": [
-      "presets/e100/model.rs"
+      "last/e100/model.rs"
     ]
   },
   "parameters": {}

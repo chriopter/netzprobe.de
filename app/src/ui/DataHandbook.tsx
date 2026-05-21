@@ -14,7 +14,6 @@ const domainLabels: Record<string, string> = {
   erzeugung: 'Erzeugung',
   speicher: 'Speicher',
   aussenhandel: 'Außenhandel',
-  presets: 'Presets',
   modell: 'Modell',
   templates: 'Vorlagen',
 };
@@ -24,17 +23,15 @@ const domainIcons: Record<string, typeof Zap> = {
   erzeugung: Zap,
   speicher: BatteryCharging,
   aussenhandel: ArrowRightLeft,
-  presets: Bookmark,
   modell: SlidersHorizontal,
   templates: Bookmark,
 };
 
 const domainBlurbs: Record<string, string> = {
-  last: 'Stromnachfrage: historische Last 2025/2017 und Sektor-Elektrifizierung (e100-*).',
-  erzeugung: 'Erzeuger-Bausteine, historische Erzeugungs-Reihen und Einspeisefaktoren.',
+  last: 'Stromnachfrage: historische Last 2025/2017, Sektor-Elektrifizierung (e100-*) und das e100-Preset.',
+  erzeugung: 'Erzeuger-Bausteine, historische Erzeugungs-Reihen, Einspeisefaktoren und Versorgungs-Presets.',
   speicher: 'Batterie, Pumpspeicher und H₂-Saison-Speicher mit Roundtrip-Daten.',
   aussenhandel: 'Strom- und H₂-Import/-Export, Emissionsfaktoren, Bounds für Slider.',
-  presets: 'Vorkonfigurierte Kombinationen für Last und Versorgung.',
   modell: 'Dispatch-Engine: stündliche Bilanz, Speicherlogik, CO₂.',
   templates: 'Arbeitsvorlagen für Datenpakete und Wiki-Einträge.',
 };
@@ -67,7 +64,6 @@ const wikiSections = [
   ['erzeugung', 'Erzeugung'],
   ['speicher', 'Speicher'],
   ['aussenhandel', 'Außenhandel'],
-  ['presets', 'Presets'],
   ['modell', 'Modell'],
   ['templates', 'Vorlagen'],
 ] as const;
@@ -328,7 +324,7 @@ function DataHandbookNav({
         const bausteine = inDomain.filter(doc => doc.kind !== 'composition' && doc.kind !== 'model');
         const presets = inDomain.filter(doc => doc.kind === 'composition');
         const models = inDomain.filter(doc => doc.kind === 'model');
-        const showGroups = presets.length > 0 || models.length > 0 || (domain === 'presets' && bausteine.length > 0);
+        const showGroups = presets.length > 0 || models.length > 0;
         const Icon = domainIcons[domain] ?? Zap;
         return <CollapsibleSection
           key={domain}
@@ -340,7 +336,7 @@ function DataHandbookNav({
           onToggle={() => toggle(domain)}
         >
           {!!bausteine.length && <>
-            {showGroups && <TreeSubheader>{domain === 'presets' ? 'Baustein-Presets' : 'Bausteine'}</TreeSubheader>}
+            {showGroups && <TreeSubheader>Bausteine</TreeSubheader>}
             <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
               {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
@@ -809,7 +805,6 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
     ['erzeugung', 'Erzeugung'],
     ['speicher', 'Speicher'],
     ['aussenhandel', 'Außenhandel'],
-    ['presets', 'Presets'],
     ['modell', 'Modell'],
     ['templates', 'Vorlagen'],
   ];

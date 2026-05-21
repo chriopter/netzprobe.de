@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/composition.schema.json",
-  "id": "versorgung-historisch-2025",
-  "domain": "presets",
+  "id": "historisch-2025",
+  "domain": "erzeugung",
   "kind": "composition",
   "method": {
     "title": "Versorgung: Historisch 2025",
@@ -35,14 +35,14 @@
     ],
     "reasoning": [
       "compute(demand, factors, erz, speicher) → SupplyOverride mit allen Default-Werten aus dem ErzeugungsPool und SpeicherPool.",
-      "Datei: model/presets/versorgung-historisch-2025/model.rs.",
+      "Datei: model/erzeugung/historisch-2025/model.rs.",
       "Demand-Parameter wird nicht genutzt — das Preset passt sich nicht an die Last an."
     ],
     "fields": [
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (versorgung-historisch-2025)."
+        "description": "Technische Kennung (historisch-2025)."
       }
     ],
     "caveats": [
@@ -51,7 +51,7 @@
       "H₂-Werte praktisch null entsprechen 2025-Realität, sind aber für Zukunftsszenarien unrealistisch."
     ],
     "scripts": [
-      "presets/versorgung-historisch-2025/model.rs"
+      "erzeugung/historisch-2025/model.rs"
     ]
   },
   "parameters": {}

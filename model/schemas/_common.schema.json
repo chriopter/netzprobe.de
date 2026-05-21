@@ -9,7 +9,7 @@
     "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
     "domain": {
       "type": "string",
-      "enum": ["aussenhandel", "erzeugung", "last", "modell", "presets", "speicher"]
+      "enum": ["aussenhandel", "erzeugung", "last", "modell", "speicher"]
     },
     "kind": {
       "type": "string",

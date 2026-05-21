@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/composition.schema.json",
-  "id": "versorgung-100ee-noimport",
-  "domain": "presets",
+  "id": "100ee-noimport",
+  "domain": "erzeugung",
   "kind": "composition",
   "method": {
     "title": "Versorgung: 100% EE ohne Import",
@@ -41,13 +41,13 @@
       "target = max(0, demandTWh × 1,4 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (45%), WindOff (15%).",
       "PV-GW = target × 0,30 / yieldPV. WindOn-GW = target × 0,45 / yieldWind. WindOff-GW = target × 0,15 / yieldWind.",
       "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt.",
-      "Datei: model/presets/versorgung-100ee-noimport/model.rs."
+      "Datei: model/erzeugung/100ee-noimport/model.rs."
     ],
     "fields": [
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (versorgung-100ee-noimport)."
+        "description": "Technische Kennung (100ee-noimport)."
       }
     ],
     "caveats": [
@@ -57,7 +57,7 @@
       "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore — siehe erz-windoff Caveats."
     ],
     "scripts": [
-      "presets/versorgung-100ee-noimport/model.rs"
+      "erzeugung/100ee-noimport/model.rs"
     ]
   },
   "parameters": {}

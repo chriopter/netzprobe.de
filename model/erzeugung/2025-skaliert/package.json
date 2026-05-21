@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/composition.schema.json",
-  "id": "versorgung-2025-skaliert",
-  "domain": "presets",
+  "id": "2025-skaliert",
+  "domain": "erzeugung",
   "kind": "composition",
   "method": {
     "title": "Versorgung: 2025 hochskaliert",
@@ -34,7 +34,7 @@
       "factor = demandTWh / SCALING_BASELINE_DEMAND_TWH (= 466 TWh).",
       "Für jede Quelle: snap(defaultInstalledGW × factor, minInstalledGW, maxInstalledGW, stepGW).",
       "Auch Import/Export-Caps und alle Speicher-Slider werden mitskaliert; Importemissionsfaktor bleibt auf dem 300 g/kWh aus aussenhandel/strom-handel.",
-      "Datei: model/presets/versorgung-2025-skaliert/model.rs."
+      "Datei: model/erzeugung/2025-skaliert/model.rs."
     ],
     "fields": [
       {
@@ -50,7 +50,7 @@
       "Importemissionsfaktor bleibt Default 300 g/kWh (Nachbarmix laut aussenhandel/strom-handel) — kein H₂-Import modelliert."
     ],
     "scripts": [
-      "presets/versorgung-2025-skaliert/model.rs"
+      "erzeugung/2025-skaliert/model.rs"
     ]
   },
   "parameters": {}

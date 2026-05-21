@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/composition.schema.json",
-  "id": "versorgung-historisch-2017",
-  "domain": "presets",
+  "id": "historisch-2017",
+  "domain": "erzeugung",
   "kind": "composition",
   "method": {
     "title": "Historisch 2017",
@@ -61,7 +61,7 @@
       "Speicher 2017 praktisch null — Batterien gab es kaum, Pumpspeicher unverändert."
     ],
     "scripts": [
-      "presets/versorgung-historisch-2017/model.rs"
+      "erzeugung/historisch-2017/model.rs"
     ]
   },
   "parameters": {}
