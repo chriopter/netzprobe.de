@@ -3,7 +3,7 @@ import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, Exte
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
-import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, getPackage, loadGeneratorSource, loadModuleSource, modulePathForId } from './dataCatalog';
+import { dataWikiHomeUrl, dataWikiUrl, generatorDataJsonPathForId, generatorPackageIds, generatorPathForId, getPackage, loadGeneratorSource, loadModuleSource, modulePathForId, packageJsonPathForId } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { MainTabs } from './MainTabs';
 import { cx, iconButton, iconTile, panelHeader, rowActive, rowHover, sectionBox, sidebarInset, sidebarWidthClass } from './ui';
@@ -375,9 +375,9 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
     <h1 className="mt-2 flex flex-wrap items-center gap-x-3 text-4xl font-semibold leading-tight">
       {selected.method.title}
       <KindTag kind={selected.kind}/>
+      <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-normal text-zinc-700">{selected.id}</code>
     </h1>
     {selected.method.short && <p className="mt-3 max-w-3xl text-lg leading-8 text-zinc-700">{selected.method.short}</p>}
-    <DatasetMeta selected={selected}/>
     <section id={tocAnchors.overview} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Übersicht</h2>
       <MarkdownBlock content={descriptionMarkdown} className="mt-4 max-w-3xl text-base leading-7 text-zinc-600"/>
@@ -424,25 +424,6 @@ function SourcesSection({ selected }: { selected: DatasetDoc }) {
         : null}
     </div>
   </section>;
-}
-
-function DatasetMeta({ selected }: { selected: DatasetDoc }) {
-  return <dl className="mt-6 grid max-w-3xl gap-x-6 gap-y-3 border-y border-zinc-100 py-4 text-sm leading-5 sm:grid-cols-2">
-    <div className="grid min-w-0 grid-cols-[88px_minmax(0,1fr)] gap-3">
-      <dt className="font-medium text-zinc-400">ID</dt>
-      <dd className="min-w-0"><code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-700">{selected.id}</code></dd>
-    </div>
-    <MetaLine label="Zeitraum" value={selected.method.period}/>
-    <MetaLine label="Auflösung" value={selected.method.resolution}/>
-    <MetaLine label="Einheit" value={selected.method.unit}/>
-  </dl>;
-}
-
-function MetaLine({ label, value }: { label: string; value: string }) {
-  return <div className="grid min-w-0 grid-cols-[88px_minmax(0,1fr)] gap-3">
-    <dt className="font-medium text-zinc-400">{label}</dt>
-    <dd className="min-w-0 text-zinc-700">{value}</dd>
-  </div>;
 }
 
 function MarkdownBlock({ content, className }: { content: string; className?: string }) {
@@ -546,7 +527,7 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
         ? <FieldsTabPanel selected={selected} reproductionItems={reproductionItems}/>
         : activeTab.kind === 'data-json'
           ? <DataJsonTabPanel path={activeTab.path}/>
-          : <SourceTabPanel path={activeTab.path} kind={activeTab.kind}/>}
+          : <SourceTabPanel path={activeTab.path} kind={activeTab.kind} parameters={(getPackage(selected.id)?.parameters ?? {}) as Record<string, unknown>}/>}
     </div>
   </div>;
 }
@@ -607,35 +588,95 @@ function formatFieldValue(value: unknown): string | null {
 }
 
 function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
-  const data = getPackage(selected.id) as Record<string, unknown> | null;
+  // Werte koennen am Root (id/domain/kind), in method.* oder in parameters.*
+  // liegen — der Felder-Tab gruppiert sie entsprechend der JSON-Struktur.
+  const pkg = getPackage(selected.id) as Record<string, unknown> | null;
+  const method = (pkg?.method ?? {}) as Record<string, unknown>;
+  const parameters = (pkg?.parameters ?? {}) as Record<string, unknown>;
   const fields = selected.method.fields ?? [];
+  const packagePath = packageJsonPathForId(selected.id);
+
+  const ROOT_KEYS = new Set(['id', 'domain', 'kind']);
+  const methodKeys = new Set(Object.keys(method));
+  const groups: Array<{ title: string; items: typeof fields; data: Record<string, unknown> }> = [
+    {
+      title: 'Identifikation',
+      items: fields.filter(f => ROOT_KEYS.has(f.name)),
+      data: { id: pkg?.id, domain: pkg?.domain, kind: pkg?.kind },
+    },
+    {
+      title: 'method',
+      items: fields.filter(f => !ROOT_KEYS.has(f.name) && methodKeys.has(f.name)),
+      data: method,
+    },
+    {
+      title: 'parameters',
+      items: fields.filter(f => !ROOT_KEYS.has(f.name) && !methodKeys.has(f.name)),
+      data: parameters,
+    },
+  ];
+
+  const renderRow = (field: typeof fields[number], data: Record<string, unknown>) => {
+    const rawValue = resolveFieldValue(data, field.name);
+    const formatted = rawValue === undefined ? null : formatFieldValue(rawValue);
+    return <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
+      <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
+      <dd className="min-w-0 leading-5 text-zinc-900">
+        {formatted !== null
+          ? <code className="break-words rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">{formatted}</code>
+          : <span className="text-zinc-400">–</span>}
+      </dd>
+      <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
+      <dd className="min-w-0 leading-5 text-zinc-700">{field.description}</dd>
+    </div>;
+  };
+
   return <div>
-    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      {fields.map(field => {
-        const rawValue = resolveFieldValue(data, field.name);
-        const formatted = rawValue === undefined ? null : formatFieldValue(rawValue);
-        return <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
-          <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
-          <dd className="min-w-0 leading-5 text-zinc-900">
-            {formatted !== null
-              ? <code className="break-words rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">{formatted}</code>
-              : <span className="text-zinc-400">–</span>}
-          </dd>
-          <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
-          <dd className="min-w-0 leading-5 text-zinc-700">{field.description}</dd>
-        </div>;
-      })}
-      {reproductionItems.map(item => <div key={item} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
-        <dt className="min-w-0"><code className="break-words">Reproduktion</code></dt>
-        <dd className="min-w-0"><span className="text-zinc-400">–</span></dd>
-        <dd className="min-w-0 text-zinc-500">Hinweis</dd>
-        <dd className="min-w-0 leading-5 text-zinc-700">{item.replace(/^Datei:\s*/, '')}</dd>
-      </div>)}
-    </dl>
+    {packagePath && <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+      <FilePathLine label="Modell" path={packagePath}/>
+    </dl>}
+    {groups.map(group => {
+      if (group.items.length === 0) return null;
+      const header = <div className="hidden gap-1 py-2 text-xs font-medium uppercase tracking-wider text-zinc-400 sm:grid sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
+        <span>Feld</span>
+        <span>Wert</span>
+        <span>Typ</span>
+        <span>Beschreibung</span>
+      </div>;
+      // method ist im Wiki-Hauptbereich schon ausfuehrlich dargestellt — hier
+      // standardmaessig eingeklappt.
+      if (group.title === 'method') {
+        return <details key={group.title} className={cx(packagePath && 'mt-6')}>
+          <summary className="mb-1 cursor-pointer list-none text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-950">▸ {group.title}</summary>
+          <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+            {header}
+            {group.items.map(field => renderRow(field, group.data))}
+          </dl>
+        </details>;
+      }
+      return <section key={group.title} className={cx(packagePath && 'mt-6')}>
+        <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500">{group.title}</h3>
+        <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+          {header}
+          {group.items.map(field => renderRow(field, group.data))}
+        </dl>
+      </section>;
+    })}
+    {reproductionItems.length > 0 && <section className="mt-6">
+      <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500">Reproduktion</h3>
+      <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+        {reproductionItems.map(item => <div key={item} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
+          <dt className="min-w-0"><code className="break-words">Reproduktion</code></dt>
+          <dd className="min-w-0"><span className="text-zinc-400">–</span></dd>
+          <dd className="min-w-0 text-zinc-500">Hinweis</dd>
+          <dd className="min-w-0 leading-5 text-zinc-700">{item.replace(/^Datei:\s*/, '')}</dd>
+        </div>)}
+      </dl>
+    </section>}
   </div>;
 }
 
-function SourceTabPanel({ path, kind }: { path: string; kind: 'module' | 'generator' }) {
+function SourceTabPanel({ path, kind, parameters }: { path: string; kind: 'module' | 'generator'; parameters?: Record<string, unknown> }) {
   const label = kind === 'generator' ? 'Generator' : 'Modul';
   const [source, setSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -657,8 +698,83 @@ function SourceTabPanel({ path, kind }: { path: string; kind: 'module' | 'genera
       ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Konnte Datei nicht laden: {error}</p>
       : source === null
         ? <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500">Lade Datei …</p>
-        : <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{source}</code></pre>}
+        : <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{highlightParameters(source, parameters)}</code></pre>}
   </div>;
+}
+
+// CamelCase -> snake_case (Rust-Konvention: TWh bleibt ein Wort = twh).
+function camelToSnake(s: string): string {
+  return s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+// Sammelt rekursiv alle Pfade in einem parameters-Objekt.
+type ParamHit = { path: string[]; value: unknown };
+function collectParamPaths(obj: unknown, prefix: string[] = [], out: ParamHit[] = []): ParamHit[] {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    const path = [...prefix, k];
+    out.push({ path, value: v });
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      collectParamPaths(v, path, out);
+    }
+  }
+  return out;
+}
+
+// Generiert plausible Identifier-Varianten fuer einen Pfad (camelCase + snake_case,
+// volle Konkatenation, plus Parent ohne Suffixe wie "Profile"/"Scales"/"Data").
+function identifierVariants(path: string[]): string[] {
+  const last = path[path.length - 1];
+  const out = new Set<string>();
+  out.add(last);
+  out.add(camelToSnake(last));
+  if (path.length > 1) {
+    out.add(path.map(camelToSnake).join('_'));
+    out.add([...path].map(camelToSnake).reduce((a, b) => `${a}_${b}`));
+    const parent = path[path.length - 2];
+    const stripped = parent.replace(/(Profile|Scales|Data|Config|Info|Settings)$/, '');
+    if (stripped && stripped !== parent) {
+      out.add(`${camelToSnake(stripped)}_${camelToSnake(last)}`);
+    }
+  }
+  return Array.from(out).filter(v => v.length > 0);
+}
+
+// Markiert in Source-Code alle Bezeichner, die zu einem Pfad im parameters-Tree
+// passen — rekursiv ueber alle Ebenen.
+function highlightParameters(source: string, parameters?: Record<string, unknown>): React.ReactNode {
+  if (!parameters || Object.keys(parameters).length === 0) return source;
+  const hits = collectParamPaths(parameters);
+  const lookup = new Map<string, ParamHit>();
+  for (const hit of hits) {
+    for (const variant of identifierVariants(hit.path)) {
+      if (!lookup.has(variant)) lookup.set(variant, hit);
+    }
+  }
+  const all = Array.from(lookup.keys()).sort((a, b) => b.length - a.length);
+  if (all.length === 0) return source;
+  const re = new RegExp(`\\b(${all.map(s => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')).join('|')})\\b`, 'g');
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source)) !== null) {
+    if (m.index > last) out.push(source.slice(last, m.index));
+    const hit = m[0];
+    const param = lookup.get(hit);
+    const value = param?.value;
+    const isScalar = value !== undefined && value !== null && typeof value !== 'object';
+    const valueStr = isScalar ? String(value) : null;
+    const pathStr = param ? param.path.join('.') : hit;
+    out.push(
+      <span key={`${m.index}-${hit}`} className="text-red-400" title={`${pathStr} aus model.json${valueStr ? ` = ${valueStr}` : ''}`}>
+        {hit}
+        {valueStr && <span className="text-amber-300">⟨{valueStr}⟩</span>}
+      </span>
+    );
+    last = m.index + hit.length;
+  }
+  if (last < source.length) out.push(source.slice(last));
+  return out;
 }
 
 function DataJsonTabPanel({ path }: { path: string }) {
@@ -786,7 +902,7 @@ function TreeNode({ href, label, selected, tag }: { href: string; label: string;
     href={href}
     className={cx(
       'block min-w-0 rounded-md px-2 py-1 text-[13px] leading-5 transition',
-      selected ? 'bg-zinc-950 font-medium text-white' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+      selected ? 'font-semibold text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
     )}
   >
     <span className="flex min-w-0 items-center gap-1">

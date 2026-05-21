@@ -105,6 +105,11 @@ export function modulePathForId(id: string): string | null {
   return folder ? `${folder}/model.rs` : null;
 }
 
+export function packageJsonPathForId(id: string): string | null {
+  const folder = folderPathById.get(id);
+  return folder ? `${folder}/package.json` : null;
+}
+
 export function generatorPathForId(id: string): string | null {
   const folder = folderPathById.get(id);
   if (!folder) return null;
