@@ -35,12 +35,16 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/windoff/package.json, Adapter in model/erzeugung/windoff/model.rs.",
       "Installierte Leistung Ende 2025 laut Energy-Charts.",
       "Einspeisefaktor wind100m wie Onshore — kein eigener Offshore-Faktor hinterlegt.",
       "Emissionsfaktor 13 g/kWh laut MTGermany."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -50,31 +54,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -114,11 +93,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 9.4,
-    "defaultInstalledGW": 9.4,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 400,
-    "stepGW": 2,
     "mode": "variable-re",
     "factorPackage": "einspeisefaktoren-2025",
     "factorField": "wind100m",
@@ -131,6 +105,11 @@
         "unit": "GW",
         "label": "Offshore-Turbinen (14 MW)"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 400,
+      "step": 2
     }
   }
 }

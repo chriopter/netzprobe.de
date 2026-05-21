@@ -35,13 +35,17 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/kohle/package.json, Adapter in model/erzeugung/kohle/model.rs.",
       "Verfügbarkeit 90 % als Jahresanteil.",
       "Min-Last 20 % als Floor — höher als Gas wegen Trägheit (Dampfkessel).",
       "Ramp-Up im Verhältnis 1 zu Gas (2) bei Unterdeckung.",
       "Emissionsfaktor 1170 g/kWh laut MTGermany — leicht erhöht gegenüber Steinkohle-Mittel wegen Braunkohle-Anteil im deutschen Mix."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -51,31 +55,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -114,11 +93,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 31,
-    "defaultInstalledGW": 31,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 310,
-    "stepGW": 5,
     "mode": "dispatchable",
     "availability": 0.9,
     "minLoadFraction": 0.2,
@@ -131,6 +105,11 @@
         "unit": "GW",
         "label": "Kohleblöcke (800 MW)"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 310,
+      "step": 5
     }
   }
 }

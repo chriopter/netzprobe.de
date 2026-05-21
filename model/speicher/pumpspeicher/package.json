@@ -36,12 +36,21 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/speicher/pumpspeicher/package.json, Adapter in model/speicher/pumpspeicher/model.rs.",
       "Roundtrip-Wirkungsgrad 80 % entspricht MTGermany; reale Pumpspeicher 70-78 % je nach Anlage.",
       "Initial-SoC: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), der Year-End-SoC dient als Anfangswert für Pass 2. Bei reinen Pumpspeicher-Szenarien ohne nennenswerte H₂-Kapazität wird der Warm-up übersprungen — der tägliche Pumpspeicher-Zyklus schwingt sich in wenigen Tagen ein.",
       "Dispatch-Priorität 2 — wird nach Batterie eingesetzt."
     ],
     "fields": [
+      {
+        "name": "powerGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer Leistung: min/max/step in GW."
+      },
+      {
+        "name": "energyGWh",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer Energie: min/max/step in GWh."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -51,56 +60,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "power2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Ende 2025."
-      },
-      {
-        "name": "defaultPowerGW",
-        "unit": "GW",
-        "description": "Slider-Default Leistung."
-      },
-      {
-        "name": "minPowerGW",
-        "unit": "GW",
-        "description": "Slider-Minimum Leistung."
-      },
-      {
-        "name": "maxPowerGW",
-        "unit": "GW",
-        "description": "Slider-Maximum Leistung."
-      },
-      {
-        "name": "stepPowerGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite Leistung."
-      },
-      {
-        "name": "energy2025GWh",
-        "unit": "GWh",
-        "description": "Installierter Energieinhalt Ende 2025."
-      },
-      {
-        "name": "defaultEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Default Energie."
-      },
-      {
-        "name": "minEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Minimum Energie."
-      },
-      {
-        "name": "maxEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Maximum Energie."
-      },
-      {
-        "name": "stepEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Schrittweite Energie."
       },
       {
         "name": "roundtripEfficiency",
@@ -134,16 +93,6 @@
     ]
   },
   "parameters": {
-    "power2025GW": 9.4,
-    "defaultPowerGW": 9.4,
-    "minPowerGW": 0,
-    "maxPowerGW": 15,
-    "stepPowerGW": 1,
-    "energy2025GWh": 45,
-    "defaultEnergyGWh": 45,
-    "minEnergyGWh": 0,
-    "maxEnergyGWh": 100,
-    "stepEnergyGWh": 10,
     "roundtripEfficiency": 0.8,
     "initialStateOfChargeFraction": 0,
     "dispatchPriority": 2,
@@ -153,6 +102,16 @@
         "unit": "GWh",
         "label": "Pumpspeicher Goldisthal (8,5 GWh)"
       }
+    },
+    "powerGW": {
+      "min": 0,
+      "max": 15,
+      "step": 1
+    },
+    "energyGWh": {
+      "min": 0,
+      "max": 100,
+      "step": 10
     }
   }
 }

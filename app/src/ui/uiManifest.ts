@@ -67,4 +67,6 @@ export const uiManifest = {
     h2: params('h2-handel'),
   },
   kern: params('kern'),
+  historisch2025: params('historisch-2025'),
+  historisch2017: params('historisch-2017'),
 } as const;

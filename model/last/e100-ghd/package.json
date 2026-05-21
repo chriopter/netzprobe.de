@@ -43,7 +43,6 @@
       }
     ],
     "reasoning": [
-      "Datei: erzeugt durch model/last/e100-ghd/generate.mjs. Skript ausfuehren mit `node model/last/e100-ghd/generate.mjs > model/last/e100-ghd/package.json`; Rechenlogik in model/last/e100-ghd/model.rs.",
       "Referenz-Waermebedarf referenceHeatDemandTWh: BDEW Statusreport Waerme 09/2025 weist GHD 2023 mit 153 TWh Raumwaerme und 10 TWh Warmwasser = 163 TWh Endenergie aus; AGEB Anwendungsbilanz GHD-Endenergie 2023 rund 314 TWh, Waermeanwendungen rund 59,9 %, kompatibel mit dem BDEW-Wert.",
       "Slider-Mindestwert alreadyElectricHeatTWh: rund 7 TWh aus Direktheizung, kleinen Bestands-Waermepumpen und elektrischen Boilern (Gastronomie, Pflege, Krankenhaus). Strom dafuer ist bereits in der historischen Last.",
       "Jahresarbeitszahl seasonalCop: 2,8 als gewichteter Bestandsmix Grossgebaeude. Fraunhofer-ISE-Feldtest weist fuer Bestandsgebaeude im Mittel JAZ 3,1 (Luft/Wasser 3,4, Sole 4,3) aus; GHD-Bestand mit hoeheren Vorlauftemperaturen, Multisplit-Anteil und nicht-modernisierter Gebaeudehuelle liegt konservativ darunter. Quellen: Fraunhofer ISE WP-Feldtest Bestand und BWP-Branchenstudie.",

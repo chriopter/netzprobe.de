@@ -1,14 +1,11 @@
-pub const CHARGE_POWER_2025_GW: f64 = 0.1;
 pub const DEFAULT_CHARGE_POWER_GW: f64 = 0.1;
 pub const MIN_CHARGE_POWER_GW: f64 = 0.0;
 pub const MAX_CHARGE_POWER_GW: f64 = 300.0;
 pub const STEP_CHARGE_POWER_GW: f64 = 5.0;
-pub const DISCHARGE_POWER_2025_GW: f64 = 0.0;
 pub const DEFAULT_DISCHARGE_POWER_GW: f64 = 0.0;
 pub const MIN_DISCHARGE_POWER_GW: f64 = 0.0;
 pub const MAX_DISCHARGE_POWER_GW: f64 = 300.0;
 pub const STEP_DISCHARGE_POWER_GW: f64 = 5.0;
-pub const ENERGY_2025_GWH: f64 = 0.1;
 pub const DEFAULT_ENERGY_GWH: f64 = 0.1;
 pub const MIN_ENERGY_GWH: f64 = 0.0;
 pub const MAX_ENERGY_GWH: f64 = 500_000.0;

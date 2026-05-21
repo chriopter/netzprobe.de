@@ -33,8 +33,7 @@
     "reasoning": [
       "factor = demandTWh / SCALING_BASELINE_DEMAND_TWH (= 466 TWh).",
       "Für jede Quelle: snap(defaultInstalledGW × factor, minInstalledGW, maxInstalledGW, stepGW).",
-      "Auch Import/Export-Caps und alle Speicher-Slider werden mitskaliert; Importemissionsfaktor bleibt auf dem 300 g/kWh aus aussenhandel/strom-handel.",
-      "Datei: model/erzeugung/2025-skaliert/model.rs."
+      "Auch Import/Export-Caps und alle Speicher-Slider werden mitskaliert; Importemissionsfaktor bleibt auf dem 300 g/kWh aus aussenhandel/strom-handel."
     ],
     "fields": [
       {

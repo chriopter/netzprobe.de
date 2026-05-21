@@ -37,13 +37,27 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/speicher/h2/package.json, Adapter in model/speicher/h2/model.rs.",
       "Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.",
       "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
       "Initial-SoC wird per 2-Pass-Lauf kalibriert: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), simuliert das Jahr und übergibt den Year-End-SoC als Anfangswert an Pass 2. Damit beginnt der ausgegebene Pass mit dem natürlichen saisonalen Anfangszustand — Sommer-Überschüsse füllen den Speicher, Winter-Defizite entladen ihn, ohne dass eine geratene Initial-Füllung das Ergebnis verfälscht.",
       "Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher."
     ],
     "fields": [
+      {
+        "name": "chargePowerGW",
+        "unit": "Objekt",
+        "description": "Slider-Range Elektrolyse-Leistung: min/max/step in GW."
+      },
+      {
+        "name": "dischargePowerGW",
+        "unit": "Objekt",
+        "description": "Slider-Range Rueckverstromungs-Leistung: min/max/step in GW."
+      },
+      {
+        "name": "energyGWh",
+        "unit": "Objekt",
+        "description": "Slider-Range Saisonspeicher-Energie: min/max/step in GWh."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -53,81 +67,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "chargePower2025GW",
-        "unit": "GW",
-        "description": "Elektrolyse-Leistung Ende 2025."
-      },
-      {
-        "name": "defaultChargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Default Elektrolyse."
-      },
-      {
-        "name": "minChargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Minimum Elektrolyse."
-      },
-      {
-        "name": "maxChargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Maximum Elektrolyse."
-      },
-      {
-        "name": "stepChargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite Elektrolyse."
-      },
-      {
-        "name": "dischargePower2025GW",
-        "unit": "GW",
-        "description": "Rückverstromungs-Leistung Ende 2025."
-      },
-      {
-        "name": "defaultDischargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Default Rückverstromung."
-      },
-      {
-        "name": "minDischargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Minimum Rückverstromung."
-      },
-      {
-        "name": "maxDischargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Maximum Rückverstromung."
-      },
-      {
-        "name": "stepDischargePowerGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite Rückverstromung."
-      },
-      {
-        "name": "energy2025GWh",
-        "unit": "GWh",
-        "description": "Speicherenergie Ende 2025."
-      },
-      {
-        "name": "defaultEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Default Energie."
-      },
-      {
-        "name": "minEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Minimum Energie."
-      },
-      {
-        "name": "maxEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Maximum Energie (500 TWh)."
-      },
-      {
-        "name": "stepEnergyGWh",
-        "unit": "GWh",
-        "description": "Slider-Schrittweite Energie."
       },
       {
         "name": "roundtripEfficiency",
@@ -163,21 +102,6 @@
     ]
   },
   "parameters": {
-    "chargePower2025GW": 0.1,
-    "defaultChargePowerGW": 0.1,
-    "minChargePowerGW": 0,
-    "maxChargePowerGW": 300,
-    "stepChargePowerGW": 5,
-    "dischargePower2025GW": 0,
-    "defaultDischargePowerGW": 0,
-    "minDischargePowerGW": 0,
-    "maxDischargePowerGW": 300,
-    "stepDischargePowerGW": 5,
-    "energy2025GWh": 0.1,
-    "defaultEnergyGWh": 0.1,
-    "minEnergyGWh": 0,
-    "maxEnergyGWh": 500000,
-    "stepEnergyGWh": 5000,
     "roundtripEfficiency": 0.34,
     "initialStateOfChargeFraction": 0,
     "dispatchPriority": 3,
@@ -187,6 +111,21 @@
         "unit": "GWh",
         "label": "Salzkavernen-Speicher (200 GWh)"
       }
+    },
+    "chargePowerGW": {
+      "min": 0,
+      "max": 300,
+      "step": 5
+    },
+    "dischargePowerGW": {
+      "min": 0,
+      "max": 300,
+      "step": 5
+    },
+    "energyGWh": {
+      "min": 0,
+      "max": 500000,
+      "step": 5000
     }
   }
 }

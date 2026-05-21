@@ -1,7 +1,5 @@
 pub const ID: &str = "kohle";
 pub const NAME: &str = "Kohle";
-pub const INSTALLED_2025_GW: f64 = 31.0;
-pub const DEFAULT_INSTALLED_GW: f64 = 31.0;
 pub const MIN_INSTALLED_GW: f64 = 0.0;
 pub const MAX_INSTALLED_GW: f64 = 310.0;
 pub const STEP_GW: f64 = 5.0;

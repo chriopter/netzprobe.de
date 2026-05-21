@@ -11,9 +11,8 @@ pub use fingerprint::{
     GOLDEN_HOUR_SAMPLES, HourFingerprint, ResultFingerprint, SecurityStatus, SummaryFingerprint,
 };
 use data::{
-    berlin_date_and_hour, data_error, gen_number, number, number_or, package_data, parse_json,
-    path_number, s_bool, s_number, snap_gen, snap_storage, snap_trade, storage_number,
-    trade_number, value_field,
+    berlin_date_and_hour, comp_number, data_error, number, number_or, package_data, parse_json,
+    path_number, s_bool, s_number, snap_gen, snap_storage, snap_trade, trade_number, value_field,
 };
 use dispatch::{charge_storage, discharge_storage, ramp_dispatchables, storage_get, storage_set};
 use serde::Deserialize;
@@ -507,70 +506,48 @@ impl StaticModel {
     }
 
     fn preset_historical_2025(&self) -> Result<(Value, Value, Value, Value), ModelError> {
-        Ok((
-            json!({
-                "pvInstalledGW": gen_number("pv", "defaultInstalledGW")?,
-                "windOnInstalledGW": gen_number("windon", "defaultInstalledGW")?,
-                "windOffInstalledGW": gen_number("windoff", "defaultInstalledGW")?,
-                "kernkraftInstalledGW": gen_number("kernkraft", "defaultInstalledGW")?,
-                "biomasseInstalledGW": gen_number("biomasse", "defaultInstalledGW")?,
-                "laufwasserInstalledGW": gen_number("laufwasser", "defaultInstalledGW")?,
-                "gasInstalledGW": gen_number("gas", "defaultInstalledGW")?,
-                "kohleInstalledGW": gen_number("kohle", "defaultInstalledGW")?,
-                "pvCapacityFactorMultiplier": 1.0,
-                "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.8,
-            }),
-            json!({
-                "batteriePowerGW": storage_number("batterie", "defaultPowerGW")?,
-                "batterieEnergyGWh": storage_number("batterie", "defaultEnergyGWh")?,
-                "pumpspeicherPowerGW": storage_number("pumpspeicher", "defaultPowerGW")?,
-                "pumpspeicherEnergyGWh": storage_number("pumpspeicher", "defaultEnergyGWh")?,
-                "h2ChargePowerGW": storage_number("h2", "defaultChargePowerGW")?,
-                "h2DischargePowerGW": storage_number("h2", "defaultDischargePowerGW")?,
-                "h2EnergyGWh": storage_number("h2", "defaultEnergyGWh")?,
-            }),
-            json!({
-                "stromGW": trade_number("strom-handel", &["import", "defaultMaxGW"])?,
-                "stromEmissionGperKWh": trade_number("strom-handel", &["import", "emissionGperKWh"])?,
-                "h2TWh": trade_number("h2-handel", &["import", "defaultTWh"])?,
-            }),
-            json!({
-                "stromGW": trade_number("strom-handel", &["export", "defaultMaxGW"])?,
-            }),
-        ))
+        self.composition_supply("historisch-2025")
     }
 
     fn preset_historical_2017(&self) -> Result<(Value, Value, Value, Value), ModelError> {
+        self.composition_supply("historisch-2017")
+    }
+
+    fn composition_supply(
+        &self,
+        composition_id: &str,
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
         Ok((
             json!({
-                "pvInstalledGW": 42.4,
-                "windOnInstalledGW": 50.2,
-                "windOffInstalledGW": 5.4,
-                "kernkraftInstalledGW": 10.8,
-                "biomasseInstalledGW": 7.6,
-                "laufwasserInstalledGW": 4.8,
-                "gasInstalledGW": 30.0,
-                "kohleInstalledGW": 46.0,
+                "pvInstalledGW": comp_number(composition_id, "pvInstalledGW")?,
+                "windOnInstalledGW": comp_number(composition_id, "windOnInstalledGW")?,
+                "windOffInstalledGW": comp_number(composition_id, "windOffInstalledGW")?,
+                "kernkraftInstalledGW": comp_number(composition_id, "kernkraftInstalledGW")?,
+                "biomasseInstalledGW": comp_number(composition_id, "biomasseInstalledGW")?,
+                "laufwasserInstalledGW": comp_number(composition_id, "laufwasserInstalledGW")?,
+                "gasInstalledGW": comp_number(composition_id, "gasInstalledGW")?,
+                "kohleInstalledGW": comp_number(composition_id, "kohleInstalledGW")?,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
                 "windOffCapacityFactorMultiplier": 1.8,
             }),
             json!({
-                "batteriePowerGW": 0.0,
-                "batterieEnergyGWh": 0.0,
-                "pumpspeicherPowerGW": 9.4,
-                "pumpspeicherEnergyGWh": 40.0,
-                "h2ChargePowerGW": 0.0,
-                "h2DischargePowerGW": 0.0,
-                "h2EnergyGWh": 0.0,
+                "batteriePowerGW": comp_number(composition_id, "batteriePowerGW")?,
+                "batterieEnergyGWh": comp_number(composition_id, "batterieEnergyGWh")?,
+                "pumpspeicherPowerGW": comp_number(composition_id, "pumpspeicherPowerGW")?,
+                "pumpspeicherEnergyGWh": comp_number(composition_id, "pumpspeicherEnergyGWh")?,
+                "h2ChargePowerGW": comp_number(composition_id, "h2ChargePowerGW")?,
+                "h2DischargePowerGW": comp_number(composition_id, "h2DischargePowerGW")?,
+                "h2EnergyGWh": comp_number(composition_id, "h2EnergyGWh")?,
             }),
             json!({
-                "stromGW": 14.0,
+                "stromGW": comp_number(composition_id, "importStromGW")?,
                 "stromEmissionGperKWh": trade_number("strom-handel", &["import", "emissionGperKWh"])?,
-                "h2TWh": 0.0,
+                "h2TWh": comp_number(composition_id, "importH2TWh")?,
             }),
-            json!({ "stromGW": 30.0 }),
+            json!({
+                "stromGW": comp_number(composition_id, "exportStromGW")?,
+            }),
         ))
     }
 
@@ -581,7 +558,7 @@ impl StaticModel {
         self.preset_100ee_with_demand(
             demand_twh,
             0.0,
-            trade_number("strom-handel", &["export", "defaultMaxGW"])?,
+            comp_number("historisch-2025", "exportStromGW")?,
         )
     }
 
@@ -592,7 +569,7 @@ impl StaticModel {
         let (generation, storage, _import, _export) = self.preset_100ee_with_demand(
             demand_twh / 3.0,
             0.0,
-            trade_number("strom-handel", &["export", "defaultMaxGW"])?,
+            comp_number("historisch-2025", "exportStromGW")?,
         )?;
         Ok((
             generation,
@@ -603,7 +580,7 @@ impl StaticModel {
                 "h2TWh": 0.0,
             }),
             json!({
-                "stromGW": trade_number("strom-handel", &["export", "defaultMaxGW"])?,
+                "stromGW": comp_number("historisch-2025", "exportStromGW")?,
             }),
         ))
     }
@@ -616,8 +593,10 @@ impl StaticModel {
     ) -> Result<(Value, Value, Value, Value), ModelError> {
         let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
         let yield_wind = self.annual_yield_twh_per_gw("wind").max(0.1);
-        let baseline_bio_twh = gen_number("biomasse", "defaultInstalledGW")? * 8.76;
-        let baseline_hydro_twh = gen_number("laufwasser", "defaultInstalledGW")? * 8.76;
+        let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
+        let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
+        let baseline_bio_twh = biomasse_baseline_gw * 8.76;
+        let baseline_hydro_twh = laufwasser_baseline_gw * 8.76;
         let target = (demand_twh * 1.4 - baseline_bio_twh - baseline_hydro_twh).max(0.0);
         let total_share = 0.30 + 0.45 + 0.15;
         let pv_gw = (target * 0.30 / total_share) / yield_pv;
@@ -629,8 +608,8 @@ impl StaticModel {
                 "windOnInstalledGW": snap_gen("windon", wind_on_gw)?,
                 "windOffInstalledGW": snap_gen("windoff", wind_off_gw)?,
                 "kernkraftInstalledGW": 0.0,
-                "biomasseInstalledGW": gen_number("biomasse", "defaultInstalledGW")?,
-                "laufwasserInstalledGW": gen_number("laufwasser", "defaultInstalledGW")?,
+                "biomasseInstalledGW": biomasse_baseline_gw,
+                "laufwasserInstalledGW": laufwasser_baseline_gw,
                 "gasInstalledGW": 0.0,
                 "kohleInstalledGW": 0.0,
                 "pvCapacityFactorMultiplier": 1.0,
@@ -638,13 +617,13 @@ impl StaticModel {
                 "windOffCapacityFactorMultiplier": 1.8,
             }),
             json!({
-                "batteriePowerGW": snap_storage("batterie", "PowerGW", demand_twh * 0.1)?,
-                "batterieEnergyGWh": snap_storage("batterie", "EnergyGWh", demand_twh * 0.5)?,
-                "pumpspeicherPowerGW": storage_number("pumpspeicher", "defaultPowerGW")?,
-                "pumpspeicherEnergyGWh": storage_number("pumpspeicher", "defaultEnergyGWh")?,
-                "h2ChargePowerGW": snap_storage("h2", "ChargePowerGW", demand_twh * 0.06)?,
-                "h2DischargePowerGW": snap_storage("h2", "DischargePowerGW", demand_twh * 0.12)?,
-                "h2EnergyGWh": snap_storage("h2", "EnergyGWh", demand_twh * 0.15 * 1000.0)?,
+                "batteriePowerGW": snap_storage("batterie", "powerGW", demand_twh * 0.1)?,
+                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", demand_twh * 0.5)?,
+                "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
+                "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
+                "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", demand_twh * 0.06)?,
+                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", demand_twh * 0.12)?,
+                "h2EnergyGWh": snap_storage("h2", "energyGWh", demand_twh * 0.15 * 1000.0)?,
             }),
             json!({
                 "stromGW": import_gw,
@@ -662,34 +641,34 @@ impl StaticModel {
         let factor = demand_twh / 466.0;
         Ok((
             json!({
-                "pvInstalledGW": snap_gen("pv", gen_number("pv", "defaultInstalledGW")? * factor)?,
-                "windOnInstalledGW": snap_gen("windon", gen_number("windon", "defaultInstalledGW")? * factor)?,
-                "windOffInstalledGW": snap_gen("windoff", gen_number("windoff", "defaultInstalledGW")? * factor)?,
-                "kernkraftInstalledGW": snap_gen("kernkraft", gen_number("kernkraft", "defaultInstalledGW")? * factor)?,
-                "biomasseInstalledGW": snap_gen("biomasse", gen_number("biomasse", "defaultInstalledGW")? * factor)?,
-                "laufwasserInstalledGW": snap_gen("laufwasser", gen_number("laufwasser", "defaultInstalledGW")? * factor)?,
-                "gasInstalledGW": snap_gen("gas", gen_number("gas", "defaultInstalledGW")? * factor)?,
-                "kohleInstalledGW": snap_gen("kohle", gen_number("kohle", "defaultInstalledGW")? * factor)?,
+                "pvInstalledGW": snap_gen("pv", comp_number("historisch-2025", "pvInstalledGW")? * factor)?,
+                "windOnInstalledGW": snap_gen("windon", comp_number("historisch-2025", "windOnInstalledGW")? * factor)?,
+                "windOffInstalledGW": snap_gen("windoff", comp_number("historisch-2025", "windOffInstalledGW")? * factor)?,
+                "kernkraftInstalledGW": snap_gen("kernkraft", comp_number("historisch-2025", "kernkraftInstalledGW")? * factor)?,
+                "biomasseInstalledGW": snap_gen("biomasse", comp_number("historisch-2025", "biomasseInstalledGW")? * factor)?,
+                "laufwasserInstalledGW": snap_gen("laufwasser", comp_number("historisch-2025", "laufwasserInstalledGW")? * factor)?,
+                "gasInstalledGW": snap_gen("gas", comp_number("historisch-2025", "gasInstalledGW")? * factor)?,
+                "kohleInstalledGW": snap_gen("kohle", comp_number("historisch-2025", "kohleInstalledGW")? * factor)?,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
                 "windOffCapacityFactorMultiplier": 1.8,
             }),
             json!({
-                "batteriePowerGW": snap_storage("batterie", "PowerGW", storage_number("batterie", "defaultPowerGW")? * factor)?,
-                "batterieEnergyGWh": snap_storage("batterie", "EnergyGWh", storage_number("batterie", "defaultEnergyGWh")? * factor)?,
-                "pumpspeicherPowerGW": snap_storage("pumpspeicher", "PowerGW", storage_number("pumpspeicher", "defaultPowerGW")? * factor)?,
-                "pumpspeicherEnergyGWh": snap_storage("pumpspeicher", "EnergyGWh", storage_number("pumpspeicher", "defaultEnergyGWh")? * factor)?,
-                "h2ChargePowerGW": snap_storage("h2", "ChargePowerGW", storage_number("h2", "defaultChargePowerGW")? * factor)?,
-                "h2DischargePowerGW": snap_storage("h2", "DischargePowerGW", storage_number("h2", "defaultDischargePowerGW")? * factor)?,
-                "h2EnergyGWh": snap_storage("h2", "EnergyGWh", storage_number("h2", "defaultEnergyGWh")? * factor)?,
+                "batteriePowerGW": snap_storage("batterie", "powerGW", comp_number("historisch-2025", "batteriePowerGW")? * factor)?,
+                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", comp_number("historisch-2025", "batterieEnergyGWh")? * factor)?,
+                "pumpspeicherPowerGW": snap_storage("pumpspeicher", "powerGW", comp_number("historisch-2025", "pumpspeicherPowerGW")? * factor)?,
+                "pumpspeicherEnergyGWh": snap_storage("pumpspeicher", "energyGWh", comp_number("historisch-2025", "pumpspeicherEnergyGWh")? * factor)?,
+                "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", comp_number("historisch-2025", "h2ChargePowerGW")? * factor)?,
+                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", comp_number("historisch-2025", "h2DischargePowerGW")? * factor)?,
+                "h2EnergyGWh": snap_storage("h2", "energyGWh", comp_number("historisch-2025", "h2EnergyGWh")? * factor)?,
             }),
             json!({
-                "stromGW": snap_trade("strom-handel", &["import"], trade_number("strom-handel", &["import", "defaultMaxGW"])? * factor)?,
+                "stromGW": snap_trade("strom-handel", &["import", "stromGW"], comp_number("historisch-2025", "importStromGW")? * factor)?,
                 "stromEmissionGperKWh": trade_number("strom-handel", &["import", "emissionGperKWh"])?,
-                "h2TWh": trade_number("h2-handel", &["import", "defaultTWh"])?,
+                "h2TWh": comp_number("historisch-2025", "importH2TWh")?,
             }),
             json!({
-                "stromGW": snap_trade("strom-handel", &["export"], trade_number("strom-handel", &["export", "defaultMaxGW"])? * factor)?,
+                "stromGW": snap_trade("strom-handel", &["export", "stromGW"], comp_number("historisch-2025", "exportStromGW")? * factor)?,
             }),
         ))
     }

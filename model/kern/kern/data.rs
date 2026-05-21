@@ -67,40 +67,20 @@ pub(super) fn number_or(value: &Value, key: &str, fallback: f64) -> f64 {
     value.get(key).and_then(Value::as_f64).unwrap_or(fallback)
 }
 
-pub(super) fn gen_number(package_id: &str, key: &str) -> Result<f64, ModelError> {
-    number(&generation_package(package_id)?, key)
-}
-
-pub(super) fn storage_number(package_id: &str, key: &str) -> Result<f64, ModelError> {
-    number(&storage_package(package_id)?, key)
-}
-
 pub(super) fn trade_number(package_id: &str, path: &[&str]) -> Result<f64, ModelError> {
     path_number(&trade_package(package_id)?, path)
 }
 
 pub(super) fn snap_gen(package_id: &str, value: f64) -> Result<f64, ModelError> {
-    let data = generation_package(package_id)?;
-    Ok(snap(
-        value,
-        number(&data, "minInstalledGW")?,
-        number(&data, "maxInstalledGW")?,
-        number(&data, "stepGW")?,
-    ))
+    snap_path(&generation_package(package_id)?, &["installedGW"], value)
 }
 
 pub(super) fn snap_storage(
     package_id: &str,
-    suffix: &str,
+    field: &str,
     value: f64,
 ) -> Result<f64, ModelError> {
-    let data = storage_package(package_id)?;
-    Ok(snap(
-        value,
-        number(&data, &format!("min{suffix}"))?,
-        number(&data, &format!("max{suffix}"))?,
-        number(&data, &format!("step{suffix}"))?,
-    ))
+    snap_path(&storage_package(package_id)?, &[field], value)
 }
 
 pub(super) fn snap_trade(
@@ -108,14 +88,17 @@ pub(super) fn snap_trade(
     path: &[&str],
     value: f64,
 ) -> Result<f64, ModelError> {
-    let data = trade_package(package_id)?;
-    let base = walk(&data, path)
-        .ok_or_else(|| data_error(format!("missing trade path {}", path.join("."))))?;
+    snap_path(&trade_package(package_id)?, path, value)
+}
+
+fn snap_path(data: &Value, path: &[&str], value: f64) -> Result<f64, ModelError> {
+    let base = walk(data, path)
+        .ok_or_else(|| data_error(format!("missing slider path {}", path.join("."))))?;
     Ok(snap(
         value,
-        number(base, "minGW")?,
-        number(base, "maxGW")?,
-        number(base, "stepGW")?,
+        number(base, "min")?,
+        number(base, "max")?,
+        number(base, "step")?,
     ))
 }
 
@@ -161,6 +144,22 @@ pub(super) fn trade_package(package_id: &str) -> Result<Value, ModelError> {
         "h2-handel" => include_str!("../../aussenhandel/h2-handel/package.json"),
         _ => return Err(data_error(format!("unknown trade package {package_id}"))),
     })
+}
+
+pub(super) fn composition_package(package_id: &str) -> Result<Value, ModelError> {
+    package_data(match package_id {
+        "historisch-2025" => include_str!("../../erzeugung/historisch-2025/package.json"),
+        "historisch-2017" => include_str!("../../erzeugung/historisch-2017/package.json"),
+        _ => {
+            return Err(data_error(format!(
+                "unknown composition package {package_id}"
+            )));
+        }
+    })
+}
+
+pub(super) fn comp_number(package_id: &str, key: &str) -> Result<f64, ModelError> {
+    number(&composition_package(package_id)?, key)
 }
 
 pub(super) fn walk<'a>(value: &'a Value, path: &[&str]) -> Option<&'a Value> {

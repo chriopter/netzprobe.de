@@ -41,7 +41,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-chemie/package.json; Rechenlogik in model/last/e100-chemie/model.rs.",
       "Prozesswärme-Substitution processHeatSubstitutionTWh ~75 TWh: fossile Niedrig- bis Hochtemperatur-Prozesswärme (Erdgas-Dampfkessel, Prozessgas) wird durch Hochtemperatur-Wärmepumpen (bis 200 °C) und elektrische Dampfkessel ersetzt.",
       "H2-Elektrolyse für Ammoniak hydrogenAmmoniaTWh ~35 TWh: rund 2,0 Mio. t NH3/a Inlandsproduktion (Statistisches Bundesamt 2023) über grünen Wasserstoff; im C4C-Update-2024-Pfad mit Produktionsrückgang −32 %. Elektrolyse-Pfad inkl. PEM-/Alkali-Stack-Verluste und Haber-Bosch-Hilfsenergie.",
       "H2-Elektrolyse für Methanol hydrogenMethanolTWh ~60 TWh: rund 1,3 Mio. t MeOH/a Direktbedarf plus zusätzliche MeOH-Vorstufe für die MTO-Olefin-Route; Stromaufwand inkl. CO2-Bereitstellung und Methanol-Synthese (C4C 2024 nach −40 % Produktionsrückgang).",

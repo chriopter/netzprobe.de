@@ -42,7 +42,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-schiff/package.json; Rechenlogik in model/last/e100-schiff/model.rs.",
       "Zusatzlast: `max(0, targetTWh - alreadyElectricTWh)`. Der Default `80 TWh` setzt sich aus `directElectrificationTWh = 1,2 TWh` und `eFuelSynthesisTWh = 78 TWh` zusammen.",
       "PtL-Herleitung: `39 TWh` thermische Bunkermenge geteilt durch `eFuelSystemEfficiency = 0,50` ergibt rund `78 TWh` Synthese-Strom.",
       "Stundenverteilung hourlyProfile.multipliers: glatter 24-h-Fahrplan um Tagesmittel 1,0 mit Summe 24; keine saisonale Komponente."

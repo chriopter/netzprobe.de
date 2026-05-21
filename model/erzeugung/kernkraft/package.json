@@ -36,11 +36,15 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/kernkraft/package.json, Adapter in model/erzeugung/kernkraft/model.rs.",
       "Verfügbarkeit 90 % als konstanter Jahresanteil — entspricht typischer Revisionsbilanz.",
       "Emissionsfaktor 12 g/kWh als Median IPCC AR6 / UBA-Vorkettenwert — beinhaltet Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -50,31 +54,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025 (= 0)."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -108,11 +87,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 0,
-    "defaultInstalledGW": 0,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 500,
-    "stepGW": 0.5,
     "mode": "baseload",
     "availability": 0.9,
     "emissions": {
@@ -124,6 +98,11 @@
         "unit": "GW",
         "label": "Isar-2-Blöcke"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 500,
+      "step": 0.5
     }
   }
 }

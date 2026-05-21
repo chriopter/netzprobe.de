@@ -44,7 +44,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-flug/package.json; Rechenlogik in model/last/e100-flug/model.rs.",
       "Kerosinmenge kerosineDemandMioT: BAFA Mineralölstatistik 2023 weist 9,47 Mio. t Flugturbinenkraftstoff schwer ab deutschen Flughäfen aus (Inland + international Bunker). 2024 ging der Absatz laut BAFA auf 9,02 Mio. t zurück. Vor-Corona 2019 lag bei rund 10 Mio. t; Slider-Maximum berücksichtigt Rückkehr und Wachstum.",
       "Energieinhalt kerosineEnergyTWh: Heizwert Jet A-1 (LHV) 43,1 MJ/kg = 11,97 kWh/kg ≈ 12 MWh/t (DIN, ASTM D1655, DLR Kerosene-Properties); 9,47 Mio. t × 12 MWh/t ≈ 114 TWh Endenergie thermisch.",
       "PtL-Wirkungsgrad ptlEfficiency: 0,38 als Mittelwert Power-to-Liquid-Konversion Strom → e-Kerosin (Elektrolyse → Fischer-Tropsch oder Methanol-to-Jet inkl. DAC-CO2). Quellen: Fraunhofer ISE PtL-Studie, DECHEMA E-Fuels-White-Paper, ICCT eFuel-Analysen, Öko-Institut RESCUE. Bandbreite Literatur 30–50 % je nach Pfad und DAC-Integration; FT-typisch 35–45 %. Wert wird vom Kernmodell für die H2-Import-Substitutionslogik gelesen: 1 TWh importierter H2 ersetzt (1/0,38)=2,63 TWh inländischen PtL-Strom — Flug ist damit der Pfad mit dem höchsten Strom-Einsparungs-Hebel pro TWh H2-Import.",
