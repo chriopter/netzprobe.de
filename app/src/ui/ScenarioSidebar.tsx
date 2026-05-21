@@ -24,11 +24,53 @@ import { getPackage } from './dataCatalog';
 const summaryFor = (id: string) => getPackage(id)?.method.summary ?? '';
 import { fmt, fmt0, twh, twh0 } from './format';
 import { MainTabs } from './MainTabs';
+import { defaultScenario } from './scenarioPresets';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
 import type { DataSet, ReferenceScale } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
+type LoadPresetState = Pick<Scenario, 'demand' | 'loadYear'>;
+type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
+
+const e100DemandFlags = Object.entries(defaultScenario.demand)
+  .filter(([key, value]) => key.startsWith('e100-') && typeof value === 'boolean')
+  .map(([key]) => key as keyof Scenario['demand']);
+
+const demandWithE100Flags = (enabled: boolean): Scenario['demand'] => ({
+  ...defaultScenario.demand,
+  'last-2025': true,
+  ...Object.fromEntries(e100DemandFlags.map(key => [key, enabled])),
+});
+
+const historicalLoadPreset = (loadYear: 2025 | 2017): LoadPresetState => ({
+  loadYear,
+  demand: demandWithE100Flags(false),
+});
+
+const loadPresetStates: Record<Exclude<LoadPillId, 'custom'>, LoadPresetState> = {
+  'nur-2025': historicalLoadPreset(2025),
+  'nur-2017': historicalLoadPreset(2017),
+  e100: {
+    loadYear: 2025,
+    demand: demandWithE100Flags(true),
+  },
+};
+
+function sameRecord<T extends Record<string, unknown>>(a: T, b: T) {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if (!Object.is(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+function matchingLoadPreset(scenario: Scenario): LoadPillId {
+  for (const [id, preset] of Object.entries(loadPresetStates) as Array<[Exclude<LoadPillId, 'custom'>, LoadPresetState]>) {
+    if (scenario.loadYear === preset.loadYear && sameRecord(scenario.demand, preset.demand)) return id;
+  }
+  return 'custom';
+}
 
 type ScenarioSidebarProps = {
   data: DataSet | null;
@@ -49,7 +91,7 @@ type ScenarioSidebarProps = {
   onEnd: (date: string) => void;
   onRange: (start: string, end: string) => void;
   onHistoricalLoadChange: (checked: boolean) => void;
-  onLoadYearChange: (year: 2025 | 2017) => void;
+  onLoadPresetChange: (preset: LoadPresetState) => void;
   onE100PkwChange: (checked: boolean) => void;
   onE100PkwMillionKmChange: (millionKm: number) => void;
   onE100HeizChange: (checked: boolean) => void;
@@ -121,7 +163,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   onEnd,
   onRange,
   onHistoricalLoadChange,
-  onLoadYearChange,
+  onLoadPresetChange,
   onE100PkwChange,
   onE100PkwMillionKmChange,
   onE100HeizChange,
@@ -225,7 +267,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           scenario={scenario}
           onSupplyPresetChange={onSupplyPresetChange}
           onHistoricalLoadChange={onHistoricalLoadChange}
-          onLoadYearChange={onLoadYearChange}
+          onLoadPresetChange={onLoadPresetChange}
           onE100PkwChange={onE100PkwChange}
           onE100PkwMillionKmChange={onE100PkwMillionKmChange}
           onE100HeizChange={onE100HeizChange}
@@ -941,7 +983,7 @@ type LoadConfigurationProps = {
   scenario: Scenario;
   onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
   onHistoricalLoadChange: (checked: boolean) => void;
-  onLoadYearChange: (year: 2025 | 2017) => void;
+  onLoadPresetChange: (preset: LoadPresetState) => void;
   onE100PkwChange: (checked: boolean) => void;
   onE100PkwMillionKmChange: (millionKm: number) => void;
   onE100HeizChange: (checked: boolean) => void;
@@ -969,14 +1011,10 @@ type LoadConfigurationProps = {
 };
 
 function LoadConfiguration(props: LoadConfigurationProps) {
-  const { data, scenario, onHistoricalLoadChange, onLoadYearChange, openSectors, expandedRow, onOpenSectorsChange, onExpandedRowChange } = props;
+  const { data, scenario, onHistoricalLoadChange, onLoadPresetChange, openSectors, expandedRow, onOpenSectorsChange, onExpandedRowChange } = props;
   const is2017 = scenario.loadYear === 2017;
   const loadSumTWh = is2017 ? data?.loadSum2017TWh : data?.loadSumTWh;
-  const sectorFlags: Array<keyof Scenario['demand']> = [
-    'e100-pkw', 'e100-heiz', 'e100-lkw', 'e100-bahn', 'e100-schiff', 'e100-flug',
-    'e100-ghd', 'e100-industrie-waerme', 'e100-stahl', 'e100-chemie',
-  ];
-  const electrificationSelected = sectorFlags.some(key => scenario.demand[key]);
+  const electrificationSelected = e100DemandFlags.some(key => scenario.demand[key]);
 
   const setAllSectors = (enabled: boolean) => {
     props.onE100PkwChange(enabled);
@@ -1044,34 +1082,18 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     + e100ChemieAdditionalTWh(scenario.demand['e100-chemie-target-twh'], data['e100-chemie'])
   ) : 0;
   const selectHistorical = () => {
-    onHistoricalLoadChange(true);
-    setAllSectors(false);
-    onLoadYearChange(2025);
+    onLoadPresetChange(loadPresetStates['nur-2025']);
   };
   const selectHistorical2017 = () => {
-    onHistoricalLoadChange(true);
-    setAllSectors(false);
-    onLoadYearChange(2017);
+    onLoadPresetChange(loadPresetStates['nur-2017']);
   };
   const selectElectrification = () => {
-    onHistoricalLoadChange(true);
-    setAllSectors(true);
+    onLoadPresetChange(loadPresetStates.e100);
     onOpenSectorsChange({ verkehr: false, waerme: false, industrie: false });
     onExpandedRowChange(null);
-    onLoadYearChange(2025);
   };
 
-  // Pill state: nur-2025/nur-2017 (alle e100-* off, last-2025 on, je nach loadYear), e100 (alle e100-* on, last-2025 on, loadYear=2025), oder custom.
-  const allE100Off = !electrificationSelected;
-  const allE100On = sectorFlags.every(key => scenario.demand[key]);
-  type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
-  const loadPillId: LoadPillId = scenario.demand['last-2025'] && allE100Off && is2017
-    ? 'nur-2017'
-    : scenario.demand['last-2025'] && allE100Off && !is2017
-      ? 'nur-2025'
-      : scenario.demand['last-2025'] && allE100On && !is2017
-        ? 'e100'
-        : 'custom';
+  const loadPillId = matchingLoadPreset(scenario);
   const loadPills: ReadonlyArray<{ id: LoadPillId; label: string; description: string }> = [
     { id: 'nur-2025', label: '2025', description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
     { id: 'e100', label: '100% Elektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },

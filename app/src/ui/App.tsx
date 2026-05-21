@@ -1213,8 +1213,8 @@ function Dashboard() {
         onStart={setQuickStart}
         onEnd={setQuickEnd}
         onRange={setQuickRange}
+        onLoadPresetChange={(preset) => setScenario(prev => ({ ...prev, loadYear: preset.loadYear, demand: preset.demand }))}
         onHistoricalLoadChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'last-2025': checked } }))}
-        onLoadYearChange={(year) => setScenario(prev => ({ ...prev, loadYear: year }))}
         onE100PkwChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw': checked } }))}
         onE100PkwMillionKmChange={(millionKm) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-pkw-million-km': millionKm } }))}
         onE100HeizChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-heiz': checked } }))}
