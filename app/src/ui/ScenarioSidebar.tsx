@@ -687,13 +687,25 @@ function SupplyGroupAccordions({
   const genGroups = generationGroups(data['erzeugungs-modell']);
   const stoGroups = storageGroups(data['speicher-modell']);
 
+  // Aktivierungs-Default fuer einen Slider, wenn ein vorheriger User-Wert
+  // gespeichert ist nutzen wir den; sonst die historische Baseline; sonst
+  // 2% des Max-Bereichs (snapped) als sichtbarer Start — sonst bleibt der
+  // Slider bei 0 stehen (z. B. Kernkraft Baseline 0 GW) und der Checkbox
+  // -Klick erzeugt keinen sichtbaren Effekt.
+  const activationDefault = (saved: number | undefined, baseline: number | undefined, max: number, step: number): number => {
+    if (typeof saved === 'number' && saved > 0) return saved;
+    if (typeof baseline === 'number' && baseline > 0) return baseline;
+    const target = max * 0.02;
+    const snapped = Math.round(target / step) * step;
+    return Math.max(step, snapped);
+  };
+
   const isGenEnabled = (group: GenerationGroup) => group.fields.some(f => scenario.generation[f.key] > 0);
   const setGenEnabled = (group: GenerationGroup, checked: boolean) => {
     if (checked) {
       const saved = savedGen[group.id];
       for (const f of group.fields) {
-        const value = saved?.[f.key] ?? f.baseline ?? f.max;
-        onGenerationChange(f.key, value);
+        onGenerationChange(f.key, activationDefault(saved?.[f.key], f.baseline, f.max, f.step));
       }
     } else {
       const snapshot: Record<string, number> = {};
@@ -710,8 +722,7 @@ function SupplyGroupAccordions({
     if (checked) {
       const saved = savedSto[group.id];
       for (const f of group.fields) {
-        const value = saved?.[f.key] ?? f.baseline ?? f.max;
-        onStorageChange(f.key, value);
+        onStorageChange(f.key, activationDefault(saved?.[f.key], f.baseline, f.max, f.step));
       }
     } else {
       const snapshot: Record<string, number> = {};

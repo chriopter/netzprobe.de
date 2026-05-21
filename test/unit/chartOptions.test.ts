@@ -58,9 +58,9 @@ describe('mix chart options', () => {
     const option = buildMixChartOption([hour(0)]);
     const series = option.series as Array<Record<string, unknown>>;
     expect(series.slice(0, 12).map((s) => s.name)).toEqual([
-      'Wasser',
-      'Bio',
-      'Geo',
+      'Laufwasser',
+      'Biomasse',
+      'Geothermie',
       'Kernkraft',
       'Kohle',
       'Öl',
@@ -69,7 +69,7 @@ describe('mix chart options', () => {
       'Gas',
       'Wind Offshore',
       'Wind Onshore',
-      'Solar',
+      'PV',
     ]);
   });
 
@@ -104,12 +104,12 @@ describe('mix chart options', () => {
     expect(radial.radiusAxis).toBeDefined();
     expect(radiusAxis.axisLabel.show).toBe(true);
     expect(radial.xAxis).toBeUndefined();
-    expect(radialSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBe('polar');
+    expect(radialSeries.find((s) => s.name === 'PV')?.coordinateSystem).toBe('polar');
     expect(radialSeries.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
     expect(linear.xAxis).toBeDefined();
     expect(linear.yAxis).toBeDefined();
     expect(linear.polar).toBeUndefined();
-    expect(linearSeries.find((s) => s.name === 'Solar')?.coordinateSystem).toBeUndefined();
+    expect(linearSeries.find((s) => s.name === 'PV')?.coordinateSystem).toBeUndefined();
   });
 
   it('keeps compact radial charts inset enough for mobile labels', () => {
