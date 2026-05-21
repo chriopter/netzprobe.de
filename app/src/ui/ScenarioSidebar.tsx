@@ -524,8 +524,11 @@ function ErzeugungSection({
   }));
   const activeId: SupplyPillId = supplyPreset;
   const activeWikiId = supplyPillWikiIds[activeId];
-  const visibleSupplyPillIds = new Set<SupplyPillId>(['historical-2025', '100ee-noimport', 'custom']);
-  const visibleSupplyPills = pillPresets.filter(p => visibleSupplyPillIds.has(p.id));
+  const visibleSupplyOrder: SupplyPillId[] = ['historical-2025', '100ee-noimport', 'custom'];
+  const visibleSupplyPillIds = new Set<SupplyPillId>(visibleSupplyOrder);
+  const visibleSupplyPills = visibleSupplyOrder
+    .map(id => pillPresets.find(p => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
   const supplyDropdownGroups: ReadonlyArray<PresetOptionGroup<SupplyPillId>> = [
     { title: 'Fix', presets: pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'historical-2017' || p.id === 'custom') },
     { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '50ee-50import' || p.id === '2025-skaliert') },
@@ -543,7 +546,6 @@ function ErzeugungSection({
     title="Erzeugung"
     icon={<Zap className="h-4 w-4"/>}
     docId={activeWikiId}
-    badge={supplyPillLabels[activeId]}
     meta={`${fmt0.format(generationTotalGW)} GW`}
     collapsible
     defaultOpen
@@ -1109,15 +1111,10 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     else if (id === 'nur-2017') selectHistorical2017();
     else if (id === 'e100') selectElectrification();
   };
-  const loadPillLabel = loadPills.find(pill => pill.id === loadPillId)?.label
-    ?? loadDropdownPills.find(pill => pill.id === loadPillId)?.label
-    ?? 'Manuell';
-
   return <SidebarCard
     title="Last"
     icon={<Activity className="h-4 w-4"/>}
     docId={datasetIds.loadHistorical2025}
-    badge={loadPillLabel}
     meta={data ? `${fmt0.format(electrificationTotal)}/${fmt0.format(electrificationPotentialTotal)} TWh` : undefined}
     collapsible
     defaultOpen
