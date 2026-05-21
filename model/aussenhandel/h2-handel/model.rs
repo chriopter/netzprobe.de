@@ -1,4 +1,3 @@
-pub const DEFAULT_2025_TWH: f64 = 0.0;
 pub const DEFAULT_TWH: f64 = 0.0;
 pub const MIN_TWH: f64 = 0.0;
 pub const MAX_TWH: f64 = 600.0;

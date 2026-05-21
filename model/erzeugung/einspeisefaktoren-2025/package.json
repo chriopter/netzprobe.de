@@ -20,7 +20,6 @@
       "**Tagesgang:** PV folgt strikt dem Sonnenstand mit Nullstunden über Nacht, breitem Mittagsplateau und ausgeprägter Saisonalität — Monatsmittel von `~1,8 %` im Dezember bis `~14,0 %` im Juni. Wind ist gegenläufig saisonal mit starken Wintermonaten (`Jan 28,3 %`, `Okt 29,1 %`) und schwachem Sommer (`Jul 13,3 %`, `Aug 13,2 %`); innerhalb des Tages weitgehend strukturlos. Wetterabregelung (Redispatch, Negativpreis-Stunden) ist nicht herausgerechnet, sodass die Faktoren das physikalische Potenzial leicht unterschätzen."
     ],
     "reasoning": [
-      "Datei: erzeugt durch model/erzeugung/einspeisefaktoren-2025/generate.mjs. Skript ohne Argument lädt installed_power aus der Energy-Charts-API; optional kann eine lokale installed_power.json übergeben werden. Adapter in model/erzeugung/einspeisefaktoren-2025/model.rs.",
       "PV-Faktor solarIrradiance: beobachtete pvMW je Stunde geteilt durch monatlich installierte PV-Leistung. Wert auf 0..1 begrenzt.",
       "Wind-Faktor wind100m: (beobachtete windOnMW + windOffMW) je Stunde geteilt durch monatlich installierte Wind-Leistung. Wert auf 0..1 begrenzt.",
       "Datenquellen: Energy-Charts public_power für Einspeisung und installed_power (time_step=monthly) für installierte Leistung."

@@ -35,11 +35,15 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/biomasse/package.json, Adapter in model/erzeugung/biomasse/model.rs.",
       "Verfügbarkeit availability 0,86 — Jahresmittel inklusive Wartungsfenster und Substrat-Limitierung; im Modell als Dauerlast supplyGW(t) = installedGW × 0,86 abgebildet.",
       "Emissionsfaktor 230 g/kWh laut MTGermany (electricitymaps DE) — enthält keine Lebenszyklus-Korrektur."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -49,31 +53,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -107,11 +86,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 4.8,
-    "defaultInstalledGW": 4.8,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 50,
-    "stepGW": 1,
     "mode": "baseload",
     "availability": 0.86,
     "emissions": {
@@ -123,6 +97,11 @@
         "unit": "GW",
         "label": "5-MW-Biomasse-HKW"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 50,
+      "step": 1
     }
   }
 }

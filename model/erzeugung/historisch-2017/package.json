@@ -40,19 +40,94 @@
     ],
     "fields": [
       {
-        "name": "id",
-        "unit": "Text",
-        "description": "Technische Kennung."
+        "name": "pvInstalledGW",
+        "unit": "GW",
+        "description": "PV-Bestand Ende 2017."
       },
       {
-        "name": "title",
-        "unit": "Text",
-        "description": "Anzeigename."
+        "name": "windOnInstalledGW",
+        "unit": "GW",
+        "description": "Wind Onshore Ende 2017."
       },
       {
-        "name": "source",
-        "unit": "Text",
-        "description": "Energy-Charts API 2017."
+        "name": "windOffInstalledGW",
+        "unit": "GW",
+        "description": "Wind Offshore Ende 2017."
+      },
+      {
+        "name": "kernkraftInstalledGW",
+        "unit": "GW",
+        "description": "Kernkraft Ende 2017 (vor Atomausstieg)."
+      },
+      {
+        "name": "biomasseInstalledGW",
+        "unit": "GW",
+        "description": "Biomasse 2017."
+      },
+      {
+        "name": "laufwasserInstalledGW",
+        "unit": "GW",
+        "description": "Laufwasser 2017."
+      },
+      {
+        "name": "gasInstalledGW",
+        "unit": "GW",
+        "description": "Gaskraftwerke 2017."
+      },
+      {
+        "name": "kohleInstalledGW",
+        "unit": "GW",
+        "description": "Kohlekraftwerke 2017."
+      },
+      {
+        "name": "batteriePowerGW",
+        "unit": "GW",
+        "description": "Batterie-Leistung 2017 (~0)."
+      },
+      {
+        "name": "batterieEnergyGWh",
+        "unit": "GWh",
+        "description": "Batterie-Energie 2017 (~0)."
+      },
+      {
+        "name": "pumpspeicherPowerGW",
+        "unit": "GW",
+        "description": "Pumpspeicher-Leistung 2017."
+      },
+      {
+        "name": "pumpspeicherEnergyGWh",
+        "unit": "GWh",
+        "description": "Pumpspeicher-Energie 2017."
+      },
+      {
+        "name": "h2ChargePowerGW",
+        "unit": "GW",
+        "description": "H₂-Elektrolyse 2017 (0)."
+      },
+      {
+        "name": "h2DischargePowerGW",
+        "unit": "GW",
+        "description": "H₂-Rückverstromung 2017 (0)."
+      },
+      {
+        "name": "h2EnergyGWh",
+        "unit": "GWh",
+        "description": "H₂-Saisonspeicher 2017 (0)."
+      },
+      {
+        "name": "importStromGW",
+        "unit": "GW",
+        "description": "Strom-Import-Cap 2017."
+      },
+      {
+        "name": "exportStromGW",
+        "unit": "GW",
+        "description": "Strom-Export-Cap 2017."
+      },
+      {
+        "name": "importH2TWh",
+        "unit": "TWh/a",
+        "description": "H₂-Import 2017 (0)."
       }
     ],
     "caveats": [
@@ -64,5 +139,24 @@
       "erzeugung/historisch-2017/model.rs"
     ]
   },
-  "parameters": {}
+  "parameters": {
+    "pvInstalledGW": 42.4,
+    "windOnInstalledGW": 50.2,
+    "windOffInstalledGW": 5.4,
+    "kernkraftInstalledGW": 10.8,
+    "biomasseInstalledGW": 7.6,
+    "laufwasserInstalledGW": 4.8,
+    "gasInstalledGW": 30,
+    "kohleInstalledGW": 46,
+    "batteriePowerGW": 0,
+    "batterieEnergyGWh": 0,
+    "pumpspeicherPowerGW": 9.4,
+    "pumpspeicherEnergyGWh": 40,
+    "h2ChargePowerGW": 0,
+    "h2DischargePowerGW": 0,
+    "h2EnergyGWh": 0,
+    "importStromGW": 14,
+    "exportStromGW": 30,
+    "importH2TWh": 0
+  }
 }

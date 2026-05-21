@@ -25,6 +25,7 @@ const summaryFor = (id: string) => getPackage(id)?.method.summary ?? '';
 import { fmt, fmt0, twh, twh0 } from './format';
 import { MainTabs } from './MainTabs';
 import { defaultScenario } from './scenarioPresets';
+import { uiManifest } from './uiManifest';
 import { cx, field, iconButton, iconTile, panelHeader, rowActive, rowHover, sidebarInset, sidebarWidthClass } from './ui';
 import type { DataSet, ReferenceScale } from '../types/data';
 import type { Scenario } from '../types/scenario';
@@ -338,20 +339,21 @@ type GenerationGroup = {
 };
 
 function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] {
+  const h = uiManifest.historisch2025;
   return [
     { id: 'erneuerbar', title: 'Erneuerbar', fields: [
-      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.minInstalledGW,         max: erz.sources.pv.maxInstalledGW,         step: erz.sources.pv.stepGW,         baseline: erz.sources.pv.installed2025GW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,  },
-      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.minInstalledGW,     max: erz.sources.windOn.maxInstalledGW,     step: erz.sources.windOn.stepGW,     baseline: erz.sources.windOn.installed2025GW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power,  },
-      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.minInstalledGW,    max: erz.sources.windOff.maxInstalledGW,    step: erz.sources.windOff.stepGW,    baseline: erz.sources.windOff.installed2025GW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
-      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.minInstalledGW,   max: erz.sources.biomasse.maxInstalledGW,   step: erz.sources.biomasse.stepGW,   baseline: erz.sources.biomasse.installed2025GW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
-      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.minInstalledGW, max: erz.sources.laufwasser.maxInstalledGW, step: erz.sources.laufwasser.stepGW, baseline: erz.sources.laufwasser.installed2025GW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
+      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.installedGW.min,         max: erz.sources.pv.installedGW.max,         step: erz.sources.pv.installedGW.step,         baseline: h.pvInstalledGW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,  },
+      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.installedGW.min,     max: erz.sources.windOn.installedGW.max,     step: erz.sources.windOn.installedGW.step,     baseline: h.windOnInstalledGW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power,  },
+      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.installedGW.min,    max: erz.sources.windOff.installedGW.max,    step: erz.sources.windOff.installedGW.step,    baseline: h.windOffInstalledGW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
+      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.installedGW.min,   max: erz.sources.biomasse.installedGW.max,   step: erz.sources.biomasse.installedGW.step,   baseline: h.biomasseInstalledGW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
+      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.installedGW.min, max: erz.sources.laufwasser.installedGW.max, step: erz.sources.laufwasser.installedGW.step, baseline: h.laufwasserInstalledGW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
     ], summary: (s) => `${fmt0.format(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW)} GW` },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
-      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.minInstalledGW, max: erz.sources.kernkraft.maxInstalledGW, step: erz.sources.kernkraft.stepGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
+      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.installedGW.min, max: erz.sources.kernkraft.installedGW.max, step: erz.sources.kernkraft.installedGW.step, baseline: h.kernkraftInstalledGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
     ], summary: (s) => `${fmt0.format(s.generation.kernkraftInstalledGW)} GW` },
     { id: 'konventionell', title: 'Konventionell', fields: [
-      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.minInstalledGW,   max: erz.sources.gas.maxInstalledGW,   step: erz.sources.gas.stepGW,   baseline: erz.sources.gas.installed2025GW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
-      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.minInstalledGW, max: erz.sources.kohle.maxInstalledGW, step: erz.sources.kohle.stepGW, baseline: erz.sources.kohle.installed2025GW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
+      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.installedGW.min,   max: erz.sources.gas.installedGW.max,   step: erz.sources.gas.installedGW.step,   baseline: h.gasInstalledGW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
+      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.installedGW.min, max: erz.sources.kohle.installedGW.max, step: erz.sources.kohle.installedGW.step, baseline: h.kohleInstalledGW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
     ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
   ];
 }
@@ -376,10 +378,10 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
       docId: datasetIds.aussenhandelStrom,
       summary: (s) => `${fmt0.format(s.import.stromGW)} / ${fmt0.format(s.export.stromGW)} GW`,
       importFields: [
-        { key: 'stromGW', label: 'Import-Cap', unit: 'GW', min: ah.strom.import.minGW, max: ah.strom.import.maxGW, step: ah.strom.import.stepGW, baseline: ah.strom.import.defaultMaxGW, referenceScale: ah.strom.referenceScales?.power },
+        { key: 'stromGW', label: 'Import-Cap', unit: 'GW', min: ah.strom.import.stromGW.min, max: ah.strom.import.stromGW.max, step: ah.strom.import.stromGW.step, baseline: uiManifest.historisch2025.importStromGW, referenceScale: ah.strom.referenceScales?.power },
       ],
       exportFields: [
-        { key: 'stromGW', label: 'Export-Cap', unit: 'GW', min: ah.strom.export.minGW, max: ah.strom.export.maxGW, step: ah.strom.export.stepGW, baseline: ah.strom.export.defaultMaxGW, referenceScale: ah.strom.referenceScales?.power },
+        { key: 'stromGW', label: 'Export-Cap', unit: 'GW', min: ah.strom.export.stromGW.min, max: ah.strom.export.stromGW.max, step: ah.strom.export.stromGW.step, baseline: uiManifest.historisch2025.exportStromGW, referenceScale: ah.strom.referenceScales?.power },
       ],
     },
     {
@@ -388,7 +390,7 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
       docId: datasetIds.aussenhandelH2,
       summary: (s) => `${fmt0.format(s.import.h2TWh)} TWh/a`,
       importFields: [
-        { key: 'h2TWh', label: 'H₂-Import', unit: 'TWh/a', min: ah.h2.import.minTWh, max: ah.h2.import.maxTWh, step: ah.h2.import.stepTWh, baseline: ah.h2.import.defaultTWh, referenceScale: ah.h2.referenceScales?.activity },
+        { key: 'h2TWh', label: 'H₂-Import', unit: 'TWh/a', min: ah.h2.import.h2TWh.min, max: ah.h2.import.h2TWh.max, step: ah.h2.import.h2TWh.step, baseline: uiManifest.historisch2025.importH2TWh, referenceScale: ah.h2.referenceScales?.activity },
       ],
       exportFields: [],
     },
@@ -409,17 +411,17 @@ type StorageGroup = {
 function storageGroups(sp: DataSet['speicher-modell']): StorageGroup[] {
   return [
     { id: 'batterie', title: 'Batterie', subtitle: 'kurzfristig', fields: [
-      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.minPowerGW,   max: sp.storages.batterie.maxPowerGW,   step: sp.storages.batterie.stepPowerGW,   baseline: sp.storages.batterie.power2025GW,   referenceScale: sp.storages.batterie.referenceScales?.power },
-      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.minEnergyGWh, max: sp.storages.batterie.maxEnergyGWh, step: sp.storages.batterie.stepEnergyGWh, baseline: sp.storages.batterie.energy2025GWh, referenceScale: sp.storages.batterie.referenceScales?.energy },
+      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.powerGW.min,   max: sp.storages.batterie.powerGW.max,   step: sp.storages.batterie.powerGW.step,   baseline: uiManifest.historisch2025.batteriePowerGW,   referenceScale: sp.storages.batterie.referenceScales?.power },
+      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.energyGWh.min, max: sp.storages.batterie.energyGWh.max, step: sp.storages.batterie.energyGWh.step, baseline: uiManifest.historisch2025.batterieEnergyGWh, referenceScale: sp.storages.batterie.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.batteriePowerGW)} GW · ${fmt0.format(s.storage.batterieEnergyGWh)} GWh` },
     { id: 'pumpspeicher', title: 'Pumpspeicher', subtitle: 'mittelfristig', fields: [
-      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.minPowerGW,   max: sp.storages.pumpspeicher.maxPowerGW,   step: sp.storages.pumpspeicher.stepPowerGW,   baseline: sp.storages.pumpspeicher.power2025GW,   referenceScale: sp.storages.pumpspeicher.referenceScales?.power },
-      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.minEnergyGWh, max: sp.storages.pumpspeicher.maxEnergyGWh, step: sp.storages.pumpspeicher.stepEnergyGWh, baseline: sp.storages.pumpspeicher.energy2025GWh, referenceScale: sp.storages.pumpspeicher.referenceScales?.energy },
+      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.powerGW.min,   max: sp.storages.pumpspeicher.powerGW.max,   step: sp.storages.pumpspeicher.powerGW.step,   baseline: uiManifest.historisch2025.pumpspeicherPowerGW,   referenceScale: sp.storages.pumpspeicher.referenceScales?.power },
+      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.energyGWh.min, max: sp.storages.pumpspeicher.energyGWh.max, step: sp.storages.pumpspeicher.energyGWh.step, baseline: uiManifest.historisch2025.pumpspeicherEnergyGWh, referenceScale: sp.storages.pumpspeicher.referenceScales?.energy },
     ], summary: (s) => `${s.storage.pumpspeicherPowerGW.toLocaleString('de-DE')} GW · ${fmt0.format(s.storage.pumpspeicherEnergyGWh)} GWh` },
     { id: 'h2', title: 'Wasserstoff', subtitle: 'saisonal', fields: [
-      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.minChargePowerGW,    max: sp.storages.h2.maxChargePowerGW,    step: sp.storages.h2.stepChargePowerGW,    baseline: sp.storages.h2.chargePower2025GW,    referenceScale: sp.storages.h2.referenceScales?.power },
-      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.minDischargePowerGW, max: sp.storages.h2.maxDischargePowerGW, step: sp.storages.h2.stepDischargePowerGW, baseline: sp.storages.h2.dischargePower2025GW, referenceScale: sp.storages.h2.referenceScales?.power },
-      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.minEnergyGWh,        max: sp.storages.h2.maxEnergyGWh,        step: sp.storages.h2.stepEnergyGWh,        baseline: sp.storages.h2.energy2025GWh,        referenceScale: sp.storages.h2.referenceScales?.energy },
+      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.chargePowerGW.min,    max: sp.storages.h2.chargePowerGW.max,    step: sp.storages.h2.chargePowerGW.step,    baseline: uiManifest.historisch2025.h2ChargePowerGW,    referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.dischargePowerGW.min, max: sp.storages.h2.dischargePowerGW.max, step: sp.storages.h2.dischargePowerGW.step, baseline: uiManifest.historisch2025.h2DischargePowerGW, referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.energyGWh.min,        max: sp.storages.h2.energyGWh.max,        step: sp.storages.h2.energyGWh.step,        baseline: uiManifest.historisch2025.h2EnergyGWh,        referenceScale: sp.storages.h2.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.h2ChargePowerGW)} / ${fmt0.format(s.storage.h2DischargePowerGW)} GW · ${fmt0.format(s.storage.h2EnergyGWh)} GWh` },
   ];
 }

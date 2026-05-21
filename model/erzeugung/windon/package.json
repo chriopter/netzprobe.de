@@ -35,12 +35,16 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/windon/package.json, Adapter in model/erzeugung/windon/model.rs.",
       "Installierte Leistung Ende 2025 laut Energy-Charts (Jahresmittel).",
       "Einspeisefaktor wind100m stündlich aus einspeisefaktoren-2025; Werte 0 bis etwa 0,95.",
       "Emissionsfaktor 13 g/kWh laut MTGermany (Quelle: electricitymaps DE)."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -50,31 +54,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -113,11 +92,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 62.8,
-    "defaultInstalledGW": 62.8,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 1200,
-    "stepGW": 5,
     "mode": "variable-re",
     "factorPackage": "einspeisefaktoren-2025",
     "factorField": "wind100m",
@@ -130,6 +104,11 @@
         "unit": "GW",
         "label": "Onshore-Turbinen (4 MW)"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 1200,
+      "step": 5
     }
   }
 }

@@ -35,14 +35,98 @@
     ],
     "reasoning": [
       "compute(demand, factors, erz, speicher) → SupplyOverride mit allen Default-Werten aus dem ErzeugungsPool und SpeicherPool.",
-      "Datei: model/erzeugung/historisch-2025/model.rs.",
       "Demand-Parameter wird nicht genutzt — das Preset passt sich nicht an die Last an."
     ],
     "fields": [
       {
-        "name": "id",
-        "unit": "Text",
-        "description": "Technische Kennung (historisch-2025)."
+        "name": "pvInstalledGW",
+        "unit": "GW",
+        "description": "PV-Bestand Deutschland 2025 (Energy-Charts Jahresmittel)."
+      },
+      {
+        "name": "windOnInstalledGW",
+        "unit": "GW",
+        "description": "Wind Onshore Bestand 2025."
+      },
+      {
+        "name": "windOffInstalledGW",
+        "unit": "GW",
+        "description": "Wind Offshore Bestand 2025."
+      },
+      {
+        "name": "kernkraftInstalledGW",
+        "unit": "GW",
+        "description": "Kernkraft-Bestand seit Ausstieg 15.04.2023."
+      },
+      {
+        "name": "biomasseInstalledGW",
+        "unit": "GW",
+        "description": "Biomasse-Bestand 2025."
+      },
+      {
+        "name": "laufwasserInstalledGW",
+        "unit": "GW",
+        "description": "Laufwasser-Bestand 2025."
+      },
+      {
+        "name": "gasInstalledGW",
+        "unit": "GW",
+        "description": "Gaskraftwerke 2025."
+      },
+      {
+        "name": "kohleInstalledGW",
+        "unit": "GW",
+        "description": "Kohlekraftwerke (Stein + Braun) 2025."
+      },
+      {
+        "name": "batteriePowerGW",
+        "unit": "GW",
+        "description": "Batterie-Leistung 2025 (Heim- + Großbatterie)."
+      },
+      {
+        "name": "batterieEnergyGWh",
+        "unit": "GWh",
+        "description": "Batterie-Energie 2025."
+      },
+      {
+        "name": "pumpspeicherPowerGW",
+        "unit": "GW",
+        "description": "Pumpspeicher-Leistung 2025."
+      },
+      {
+        "name": "pumpspeicherEnergyGWh",
+        "unit": "GWh",
+        "description": "Pumpspeicher-Energie 2025."
+      },
+      {
+        "name": "h2ChargePowerGW",
+        "unit": "GW",
+        "description": "H₂-Elektrolyse-Leistung 2025."
+      },
+      {
+        "name": "h2DischargePowerGW",
+        "unit": "GW",
+        "description": "H₂-Rückverstromung 2025."
+      },
+      {
+        "name": "h2EnergyGWh",
+        "unit": "GWh",
+        "description": "H₂-Saisonspeicher-Energie 2025."
+      },
+      {
+        "name": "importStromGW",
+        "unit": "GW",
+        "description": "Strom-Import-Cap 2025."
+      },
+      {
+        "name": "exportStromGW",
+        "unit": "GW",
+        "description": "Strom-Export-Cap 2025."
+      },
+      {
+        "name": "importH2TWh",
+        "unit": "TWh/a",
+        "description": "H₂-Import 2025 (~0)."
       }
     ],
     "caveats": [
@@ -54,5 +138,24 @@
       "erzeugung/historisch-2025/model.rs"
     ]
   },
-  "parameters": {}
+  "parameters": {
+    "pvInstalledGW": 102.5,
+    "windOnInstalledGW": 62.8,
+    "windOffInstalledGW": 9.4,
+    "kernkraftInstalledGW": 0,
+    "biomasseInstalledGW": 4.8,
+    "laufwasserInstalledGW": 4.8,
+    "gasInstalledGW": 35.5,
+    "kohleInstalledGW": 31,
+    "batteriePowerGW": 10,
+    "batterieEnergyGWh": 25,
+    "pumpspeicherPowerGW": 9.4,
+    "pumpspeicherEnergyGWh": 45,
+    "h2ChargePowerGW": 0.1,
+    "h2DischargePowerGW": 0,
+    "h2EnergyGWh": 0.1,
+    "importStromGW": 13,
+    "exportStromGW": 25,
+    "importH2TWh": 0
+  }
 }

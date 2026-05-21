@@ -39,7 +39,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-bahn/package.json; Rechenlogik in model/last/e100-bahn/model.rs.",
       "Diesel-Substitution dieselSubstitutionTWh: DB Energie meldet rund 450 Mio. l Diesel/a im Konzern; zusammen mit NE-Bahnen rund 500-600 Mio. l/a entsprechend rund 5-6 TWh thermisch (9,86 kWh/l). Umstellung auf Oberleitungsausbau, Batterie- und Wasserstofftriebzüge ergibt mit Wirkungsgradfaktor rund 3 (Antriebseffizienz plus Rekuperation E-Lok vs. Diesellok) rund 2 TWh elektrische Traktion.",
       "Modal Shift modalShiftTWh: BMWK Langfristszenarien T45-Strom: Verkehrsleistung Schiene steigt bis 2045 um 26-62 % gegenüber 2019, der Endenergiebedarf bleibt durch Effizienzgewinne nahezu konstant. Deutschlandtakt und Klimaschutzprogramm sind ambitionierter (Verdopplung Personenverkehr, +50 % Güter). Mittlerer Wert 8 TWh deckt diese Bandbreite ab.",
       "Default-Ziel defaultTargetTWh: 2 TWh Diesel-Substitution + 8 TWh Modal Shift = 10 TWh.",

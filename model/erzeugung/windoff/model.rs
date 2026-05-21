@@ -1,7 +1,5 @@
 pub const ID: &str = "windoff";
 pub const NAME: &str = "Wind Offshore";
-pub const INSTALLED_2025_GW: f64 = 9.4;
-pub const DEFAULT_INSTALLED_GW: f64 = 9.4;
 pub const MIN_INSTALLED_GW: f64 = 0.0;
 pub const MAX_INSTALLED_GW: f64 = 400.0;
 pub const STEP_GW: f64 = 2.0;

@@ -37,8 +37,7 @@
       "Ruft compute() aus 100ee-noimport mit demandTWh/3 — Cushion 1,4 × 1/3 ≈ 0,47, also rund 47 % der Last als Inlands-RE-Auslegung; im Dispatch ergibt sich zusammen mit H₂-Rückverstromung der angepeilte 50/50-Mix.",
       "Setzt import.stromGW = aussenhandel.strom.import.maxGW (200 GW).",
       "Setzt import.stromEmissionGperKWh = 100 g/kWh (grüner H₂-Mittelwert).",
-      "export.stromGW bleibt Default.",
-      "Datei: model/erzeugung/50ee-50import/model.rs."
+      "export.stromGW bleibt Default."
     ],
     "fields": [
       {

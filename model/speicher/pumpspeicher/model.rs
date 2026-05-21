@@ -1,9 +1,7 @@
-pub const POWER_2025_GW: f64 = 9.4;
 pub const DEFAULT_POWER_GW: f64 = 9.4;
 pub const MIN_POWER_GW: f64 = 0.0;
 pub const MAX_POWER_GW: f64 = 15.0;
 pub const STEP_POWER_GW: f64 = 1.0;
-pub const ENERGY_2025_GWH: f64 = 45.0;
 pub const DEFAULT_ENERGY_GWH: f64 = 45.0;
 pub const MIN_ENERGY_GWH: f64 = 0.0;
 pub const MAX_ENERGY_GWH: f64 = 100.0;

@@ -49,7 +49,6 @@
       }
     ],
     "reasoning": [
-      "Datei: erzeugt durch model/last/e100-heiz/generate.mjs. Skript ausführen mit `node model/last/e100-heiz/generate.mjs > model/last/e100-heiz/package.json`; Rechenlogik in model/last/e100-heiz/model.rs.",
       "Referenz-Wärmebedarf referenceHeatDemandTWh: UBA-Anwendungsbilanz private Haushalte 2023, Raumwärme 445 TWh + Warmwasser 85 TWh = 530 TWh.",
       "Slider-Mindestwert alreadyElectricHeatTWh: rund 22 TWh aus etwa 1,8 Mio. Wärmepumpen im Betrieb plus 13 TWh Direktheizungen (Nachtspeicher, Heizlüfter) plus 15 TWh elektrische Warmwasser-Erzeugung (Boiler, Durchlauferhitzer) = 50 TWh Wärme. Strom dafür ist bereits in der historischen Last.",
       "Jahresarbeitszahl seasonalCop: 3,3 als bewusste Mitte der empirischen Spannbreite. Realistischer Korridor für Luft-Wasser-WP im Bestand 2,8-3,4 — pessimistisches Ende: WPZ Buchs/OST Rapperswil (CH, seit 2015, herstellerunabhängig) 2,9; Lokale Agenda 21 Lahr (Phase 1+2, 2006-2013) 2,8. Optimistisches Ende: Fraunhofer ISE WP-QS im Bestand (2025, 77 Anlagen, 9 Hersteller beteiligt, mögliche Selektion) 3,4. Mittlere Quellen: UBA Climate Change 11/2024 3,1. Sole-Wasser deutlich höher (4,3-4,4), Anteil im Bestand etwa 25%. Mischwert berücksichtigt Bestandsanlagen mit höheren Vorlauftemperaturen und Neuanlagen (3,5-4,0).",

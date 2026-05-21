@@ -1,7 +1,5 @@
 pub const ID: &str = "gas";
 pub const NAME: &str = "Gas";
-pub const INSTALLED_2025_GW: f64 = 35.5;
-pub const DEFAULT_INSTALLED_GW: f64 = 35.5;
 pub const MIN_INSTALLED_GW: f64 = 0.0;
 pub const MAX_INSTALLED_GW: f64 = 360.0;
 pub const STEP_GW: f64 = 5.0;

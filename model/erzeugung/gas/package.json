@@ -35,13 +35,17 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt. Werte in model/erzeugung/gas/package.json, Adapter in model/erzeugung/gas/model.rs.",
       "Verfügbarkeit 90 % — Revisionsfenster und planbare Ausfälle.",
       "Min-Last minLoadFraction 0,05 als Floor auf die verfügbare Leistung: installedGW × 0,9 × 0,05 läuft immer mit, dispatcht nicht darunter.",
       "Ramp-Up bei Unterdeckung im Verhältnis 2:1 zu Kohle (höhere Ramp-Rate von Gas).",
       "Emissionsfaktor 494 g/kWh laut MTGermany (electricitymaps DE) — Mix aus GuD-Anlagen und Spitzenlast-Turbinen."
     ],
     "fields": [
+      {
+        "name": "installedGW",
+        "unit": "Objekt",
+        "description": "Slider-Range fuer installierte Leistung: min/max/step in GW."
+      },
       {
         "name": "id",
         "unit": "Text",
@@ -51,31 +55,6 @@
         "name": "name",
         "unit": "Text",
         "description": "Anzeigename."
-      },
-      {
-        "name": "installed2025GW",
-        "unit": "GW",
-        "description": "Installierte Leistung Stand Ende 2025."
-      },
-      {
-        "name": "defaultInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Default."
-      },
-      {
-        "name": "minInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Minimum."
-      },
-      {
-        "name": "maxInstalledGW",
-        "unit": "GW",
-        "description": "Slider-Maximum."
-      },
-      {
-        "name": "stepGW",
-        "unit": "GW",
-        "description": "Slider-Schrittweite."
       },
       {
         "name": "mode",
@@ -114,11 +93,6 @@
     ]
   },
   "parameters": {
-    "installed2025GW": 35.5,
-    "defaultInstalledGW": 35.5,
-    "minInstalledGW": 0,
-    "maxInstalledGW": 360,
-    "stepGW": 5,
     "mode": "dispatchable",
     "availability": 0.9,
     "minLoadFraction": 0.05,
@@ -131,6 +105,11 @@
         "unit": "GW",
         "label": "Gasturbinen-Blöcke (400 MW)"
       }
+    },
+    "installedGW": {
+      "min": 0,
+      "max": 360,
+      "step": 5
     }
   }
 }

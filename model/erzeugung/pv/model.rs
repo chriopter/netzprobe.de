@@ -1,7 +1,5 @@
 pub const ID: &str = "pv";
 pub const NAME: &str = "Photovoltaik";
-pub const INSTALLED_2025_GW: f64 = 102.5;
-pub const DEFAULT_INSTALLED_GW: f64 = 102.5;
 pub const MIN_INSTALLED_GW: f64 = 0.0;
 pub const MAX_INSTALLED_GW: f64 = 2000.0;
 pub const STEP_GW: f64 = 10.0;

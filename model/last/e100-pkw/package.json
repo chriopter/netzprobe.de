@@ -39,7 +39,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten und Rechenlogik liegen in model/last/e100-pkw/model.rs.",
       "Referenz-Fahrleistung referenceMillionKm: Destatis-Pkw-Fahrleistung privater Haushalte 2023, 472.200 Mio. km.",
       "Slider-Mindestwert alreadyElectricMillionKm: 1,4 Mio. BEV (KBA-Bestand Ende 2023) × rund 11.000 km/a plus 0,9 Mio. PHEV × rund 14.000 km/a × 40 % elektrischer Anteil ≈ 20.000 Mio. km. Strom für diese Kilometer ist bereits in der historischen Last enthalten; das Szenario modelliert nur die darüber hinausgehende Elektrifizierung.",
       "Flottenverbrauch kwhPer100Km: 20 kWh/100 km ab Netz, inklusive AC-Ladeverlusten. Reale BEV liegen zwischen 18 und 22 kWh/100 km; Saison- und Temperatureffekte (höherer Winterverbrauch durch Heizung) sind nicht modelliert.",

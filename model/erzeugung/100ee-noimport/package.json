@@ -40,8 +40,7 @@
       "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
       "target = max(0, demandTWh × 1,4 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (45%), WindOff (15%).",
       "PV-GW = target × 0,30 / yieldPV. WindOn-GW = target × 0,45 / yieldWind. WindOff-GW = target × 0,15 / yieldWind.",
-      "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt.",
-      "Datei: model/erzeugung/100ee-noimport/model.rs."
+      "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt."
     ],
     "fields": [
       {

@@ -1,10 +1,8 @@
-pub const DEFAULT_IMPORT_2025_GW: f64 = 13.0;
 pub const DEFAULT_IMPORT_MAX_GW: f64 = 13.0;
 pub const MIN_IMPORT_GW: f64 = 0.0;
 pub const MAX_IMPORT_GW: f64 = 200.0;
 pub const STEP_IMPORT_GW: f64 = 5.0;
 pub const IMPORT_EMISSION_G_PER_KWH: f64 = 300.0;
-pub const DEFAULT_EXPORT_2025_GW: f64 = 25.0;
 pub const DEFAULT_EXPORT_MAX_GW: f64 = 25.0;
 pub const MIN_EXPORT_GW: f64 = 0.0;
 pub const MAX_EXPORT_GW: f64 = 200.0;

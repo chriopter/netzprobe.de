@@ -75,12 +75,14 @@ export type WithReferenceScales = {
   referenceScales?: ReferenceScalesData;
 };
 
+export type SliderRange = {
+  min: number;
+  max: number;
+  step: number;
+};
+
 export type CapacityBounds = {
-  installed2025GW: number;
-  defaultInstalledGW: number;
-  minInstalledGW: number;
-  maxInstalledGW: number;
-  stepGW: number;
+  installedGW: SliderRange;
 };
 
 export type EmissionsData = {
@@ -270,20 +272,12 @@ export type ErzeugungsModellSource =
   | ErzeugungsModellDispatchableSource;
 
 export type ErzeugungsModellImport = {
-  default2025GW: number;
-  defaultMaxGW: number;
-  minGW: number;
-  maxGW: number;
-  stepGW: number;
+  stromGW: SliderRange;
   emissionGperKWh: number;
 };
 
 export type ErzeugungsModellExport = {
-  default2025GW: number;
-  defaultMaxGW: number;
-  minGW: number;
-  maxGW: number;
-  stepGW: number;
+  stromGW: SliderRange;
 };
 
 export type ErzeugungsModellDispatchOrder = {
@@ -307,11 +301,7 @@ export type AussenhandelStromData = {
 
 export type AussenhandelH2Data = {
   import: {
-    default2025TWh: number;
-    defaultTWh: number;
-    minTWh: number;
-    maxTWh: number;
-    stepTWh: number;
+    h2TWh: SliderRange;
   };
 } & WithReferenceScales;
 
@@ -323,10 +313,7 @@ export type AussenhandelPool = {
   };
   h2: {
     import: {
-      defaultTWh: number;
-      minTWh: number;
-      maxTWh: number;
-      stepTWh: number;
+      h2TWh: SliderRange;
     };
     referenceScales?: ReferenceScalesData;
   };
@@ -355,37 +342,17 @@ export type ErzPackageSource = ErzPackageVariableRe | ErzPackageBaseload | ErzPa
 export type SpeicherModellStorageId = 'batterie' | 'pumpspeicher' | 'h2';
 
 export type SpeicherModellSymmetricStorage = {
-  power2025GW: number;
-  defaultPowerGW: number;
-  minPowerGW: number;
-  maxPowerGW: number;
-  stepPowerGW: number;
-  energy2025GWh: number;
-  defaultEnergyGWh: number;
-  minEnergyGWh: number;
-  maxEnergyGWh: number;
-  stepEnergyGWh: number;
+  powerGW: SliderRange;
+  energyGWh: SliderRange;
   roundtripEfficiency: number;
   initialStateOfChargeFraction: number;
   dispatchPriority: number;
 } & WithReferenceScales;
 
 export type SpeicherModellAsymmetricStorage = {
-  chargePower2025GW: number;
-  defaultChargePowerGW: number;
-  minChargePowerGW: number;
-  maxChargePowerGW: number;
-  stepChargePowerGW: number;
-  dischargePower2025GW: number;
-  defaultDischargePowerGW: number;
-  minDischargePowerGW: number;
-  maxDischargePowerGW: number;
-  stepDischargePowerGW: number;
-  energy2025GWh: number;
-  defaultEnergyGWh: number;
-  minEnergyGWh: number;
-  maxEnergyGWh: number;
-  stepEnergyGWh: number;
+  chargePowerGW: SliderRange;
+  dischargePowerGW: SliderRange;
+  energyGWh: SliderRange;
   roundtripEfficiency: number;
   initialStateOfChargeFraction: number;
   dispatchPriority: number;

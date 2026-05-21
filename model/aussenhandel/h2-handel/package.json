@@ -74,11 +74,11 @@
   },
   "parameters": {
     "import": {
-      "default2025TWh": 0,
-      "defaultTWh": 0,
-      "minTWh": 0,
-      "maxTWh": 600,
-      "stepTWh": 10
+      "h2TWh": {
+        "min": 0,
+        "max": 600,
+        "step": 10
+      }
     },
     "referenceScales": {
       "activity": {

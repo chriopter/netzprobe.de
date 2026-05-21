@@ -42,7 +42,6 @@
       }
     ],
     "reasoning": [
-      "Datei: handgepflegt, kein Generator-Skript. Konstanten direkt in model/last/e100-stahl/package.json; Rechenlogik in model/last/e100-stahl/model.rs.",
       "Primärstahl-Referenz 2023: 25,6 Mio. t Oxygenstahl (Hochofen-Konverter-Route) aus WV Stahl Jahresbilanz 2023; Sekundärstahl 9,8 Mio. t Elektrostahl (Schrott-EAF).",
       "Wasserstoffbedarf hydrogenKgPerTonSteel: 60 kg H2 je Tonne Rohstahl aus Vogl/Åhman/Nilsson 2018 (52-58 kg/t, stöchiometrisch 51,5 kg/t plus Überschuss), worldsteel Fact Sheet H2-based ironmaking (rund 54 kg/t DRI) und IEA Iron & Steel Technology Roadmap; Großprojekte tkH2Steel, SALCOS, ArcelorMittal Bremen und Stegra rechnen in derselben Größenordnung (DECHEMA H2-Kompass bis 70 kg/t).",
       "Elektrolyseur electrolyzerKwhPerKgH2: 52 kWh Strom je kg H2 (PEM/Alkali, 2030er-Zielwert inkl. Hilfsaggregate und Kompression). IRENA Green Hydrogen Cost Reduction 2020 weist 51,2 kWh/kg LHV bei 65 % Wirkungsgrad heute und 43,8 kWh/kg (76 %) bis 2050 aus; 52 kWh/kg ist eine plausible 2030er-Mitte zwischen Stack-Bestwert und Balance-of-Plant.",

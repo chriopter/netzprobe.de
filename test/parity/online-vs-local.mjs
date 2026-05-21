@@ -108,6 +108,7 @@ function pkgParams(id) {
     laufwasser: 'erzeugung/laufwasser', gas: 'erzeugung/gas', kohle: 'erzeugung/kohle',
     batterie: 'speicher/batterie', pumpspeicher: 'speicher/pumpspeicher', h2: 'speicher/h2',
     'strom-handel': 'aussenhandel/strom-handel', 'h2-handel': 'aussenhandel/h2-handel',
+    'historisch-2025': 'erzeugung/historisch-2025',
     'e100-pkw': 'last/e100-pkw', 'e100-heiz': 'last/e100-heiz', 'e100-lkw': 'last/e100-lkw',
     'e100-bahn': 'last/e100-bahn', 'e100-schiff': 'last/e100-schiff', 'e100-flug': 'last/e100-flug',
     'e100-ghd': 'last/e100-ghd', 'e100-industrie-waerme': 'last/e100-industrie-waerme',
@@ -119,6 +120,7 @@ function pkgParams(id) {
 
 const stromHandel = pkgParams('strom-handel');
 const h2Handel = pkgParams('h2-handel');
+const h2025 = pkgParams('historisch-2025');
 
 const base = {
   supplyPreset: 'custom',
@@ -137,14 +139,14 @@ const base = {
     'e100-chemie': false, 'e100-chemie-target-twh': pkgParams('e100-chemie').defaultTargetTotalTWh,
   },
   generation: {
-    pvInstalledGW: pkgParams('pv').defaultInstalledGW,
-    windOnInstalledGW: pkgParams('windon').defaultInstalledGW,
-    windOffInstalledGW: pkgParams('windoff').defaultInstalledGW,
-    kernkraftInstalledGW: pkgParams('kernkraft').defaultInstalledGW,
-    biomasseInstalledGW: pkgParams('biomasse').defaultInstalledGW,
-    laufwasserInstalledGW: pkgParams('laufwasser').defaultInstalledGW,
-    gasInstalledGW: pkgParams('gas').defaultInstalledGW,
-    kohleInstalledGW: pkgParams('kohle').defaultInstalledGW,
+    pvInstalledGW: h2025.pvInstalledGW,
+    windOnInstalledGW: h2025.windOnInstalledGW,
+    windOffInstalledGW: h2025.windOffInstalledGW,
+    kernkraftInstalledGW: h2025.kernkraftInstalledGW,
+    biomasseInstalledGW: h2025.biomasseInstalledGW,
+    laufwasserInstalledGW: h2025.laufwasserInstalledGW,
+    gasInstalledGW: h2025.gasInstalledGW,
+    kohleInstalledGW: h2025.kohleInstalledGW,
     // Defaults der CapacityFactorMultiplier liegen in scenarioPresets.ts —
     // hardcoded weil nicht in package.json (Offshore-Korrektur fuer 4000+ VLH).
     pvCapacityFactorMultiplier: 1.0,
@@ -152,21 +154,21 @@ const base = {
     windOffCapacityFactorMultiplier: 1.8,
   },
   storage: {
-    batteriePowerGW: pkgParams('batterie').defaultPowerGW,
-    batterieEnergyGWh: pkgParams('batterie').defaultEnergyGWh,
-    pumpspeicherPowerGW: pkgParams('pumpspeicher').defaultPowerGW,
-    pumpspeicherEnergyGWh: pkgParams('pumpspeicher').defaultEnergyGWh,
-    h2ChargePowerGW: pkgParams('h2').defaultChargePowerGW,
-    h2DischargePowerGW: pkgParams('h2').defaultDischargePowerGW,
-    h2EnergyGWh: pkgParams('h2').defaultEnergyGWh,
+    batteriePowerGW: h2025.batteriePowerGW,
+    batterieEnergyGWh: h2025.batterieEnergyGWh,
+    pumpspeicherPowerGW: h2025.pumpspeicherPowerGW,
+    pumpspeicherEnergyGWh: h2025.pumpspeicherEnergyGWh,
+    h2ChargePowerGW: h2025.h2ChargePowerGW,
+    h2DischargePowerGW: h2025.h2DischargePowerGW,
+    h2EnergyGWh: h2025.h2EnergyGWh,
   },
   import: {
-    stromGW: stromHandel.import.defaultMaxGW,
+    stromGW: h2025.importStromGW,
     stromEmissionGperKWh: stromHandel.import.emissionGperKWh,
-    h2TWh: h2Handel.import.defaultTWh,
+    h2TWh: h2025.importH2TWh,
   },
   export: {
-    stromGW: stromHandel.export.defaultMaxGW,
+    stromGW: h2025.exportStromGW,
   },
 };
 

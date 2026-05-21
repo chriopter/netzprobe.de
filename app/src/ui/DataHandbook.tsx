@@ -76,11 +76,7 @@ function groupDocsForWiki(docs: DatasetDoc[]) {
 }
 
 function visibleMethodItems(selected: DatasetDoc) {
-  return selected.method.reasoning?.filter(item => !isTechnicalMethodItem(item)) ?? [];
-}
-
-function technicalMethodItems(selected: DatasetDoc) {
-  return selected.method.reasoning?.filter(isTechnicalMethodItem) ?? [];
+  return selected.method.reasoning ?? [];
 }
 
 function hasModelSection(selected: DatasetDoc) {
@@ -88,7 +84,7 @@ function hasModelSection(selected: DatasetDoc) {
 }
 
 function hasFileRows(selected: DatasetDoc) {
-  return !!modulePathForId(selected.id) || !!selected.method.fields?.length || !!technicalMethodItems(selected).length || generatorPackageIds.has(selected.id);
+  return !!modulePathForId(selected.id) || !!selected.method.fields?.length || generatorPackageIds.has(selected.id);
 }
 
 function sectionAnchor(title: string) {
@@ -363,7 +359,6 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
   const descriptionParas = Array.isArray(selected.method.description) ? selected.method.description : [selected.method.description];
   const descriptionMarkdown = descriptionParas.join('\n\n');
   const methodItems = visibleMethodItems(selected);
-  const fileMethodItems = technicalMethodItems(selected);
   const showFileRows = hasFileRows(selected);
   const showModelSection = hasModelSection(selected);
   return <div>
@@ -403,7 +398,7 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
     {selected.method.source && <SourcesSection selected={selected}/>}
     {showFileRows && <section id={tocAnchors.files} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Files</h2>
-      <FileContentTabs selected={selected} reproductionItems={fileMethodItems}/>
+      <FileContentTabs selected={selected}/>
     </section>}
   </div>;
 }
@@ -481,8 +476,8 @@ function ModelOverview({ items }: { items: Array<{ label: string; value: string 
   </dl>;
 }
 
-function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
-  const tabs = fileContentTabs(selected, reproductionItems);
+function FileContentTabs({ selected }: { selected: DatasetDoc }) {
+  const tabs = fileContentTabs(selected);
   const tabKey = tabs.map(tab => tab.id).join('|');
   const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? '');
   useEffect(() => {
@@ -520,7 +515,7 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
       className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4"
     >
       {activeTab.kind === 'fields'
-        ? <FieldsTabPanel selected={selected} reproductionItems={reproductionItems}/>
+        ? <FieldsTabPanel selected={selected}/>
         : activeTab.kind === 'data-json'
           ? <DataJsonTabPanel path={activeTab.path}/>
           : <SourceTabPanel path={activeTab.path} kind={activeTab.kind} parameters={(getPackage(selected.id)?.parameters ?? {}) as Record<string, unknown>}/>}
@@ -528,9 +523,9 @@ function FileContentTabs({ selected, reproductionItems }: { selected: DatasetDoc
   </div>;
 }
 
-function fileContentTabs(selected: DatasetDoc, reproductionItems: string[]): FileContentTab[] {
+function fileContentTabs(selected: DatasetDoc): FileContentTab[] {
   const tabs: FileContentTab[] = [];
-  if (selected.method.fields?.length || reproductionItems.length) {
+  if (selected.method.fields?.length) {
     tabs.push({ id: 'fields', label: 'Modell (model.json)', kind: 'fields' });
   }
   const modulePath = modulePathForId(selected.id);
@@ -561,6 +556,16 @@ function resolveFieldValue(data: Record<string, unknown> | null, path: string): 
   }, data);
 }
 
+function inferType(value: unknown): string {
+  if (value === undefined || value === null) return '–';
+  if (Array.isArray(value)) return 'Liste';
+  if (typeof value === 'object') return 'Objekt';
+  if (typeof value === 'string') return 'Text';
+  if (typeof value === 'number') return 'Zahl';
+  if (typeof value === 'boolean') return 'Bool';
+  return typeof value;
+}
+
 function formatFieldValue(value: unknown): string | null {
   if (value === undefined || value === null) return null;
   if (typeof value === 'number') return value.toLocaleString('de-DE', { maximumFractionDigits: 4 });
@@ -583,9 +588,18 @@ function formatFieldValue(value: unknown): string | null {
   return String(value);
 }
 
-function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc; reproductionItems: string[] }) {
+function FieldsTabPanel({ selected }: { selected: DatasetDoc }) {
   // Werte koennen am Root (id/domain/kind), in method.* oder in parameters.*
   // liegen — der Felder-Tab gruppiert sie entsprechend der JSON-Struktur.
+  // Deklarierte fields[] mit Beschreibung zuerst; alle uebrigen Top-Level-Keys
+  // werden automatisch angehaengt, damit der Tab immer das vollstaendige Paket
+  // spiegelt — auch wenn ein Feld nicht explizit dokumentiert ist.
+  const [expandedFlatRows, setExpandedFlatRows] = useState<Set<string>>(new Set());
+  const toggleFlatRow = (key: string) => setExpandedFlatRows(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
   const pkg = getPackage(selected.id) as Record<string, unknown> | null;
   const method = (pkg?.method ?? {}) as Record<string, unknown>;
   const parameters = (pkg?.parameters ?? {}) as Record<string, unknown>;
@@ -594,81 +608,179 @@ function FieldsTabPanel({ selected, reproductionItems }: { selected: DatasetDoc;
 
   const ROOT_KEYS = new Set(['id', 'domain', 'kind']);
   const methodKeys = new Set(Object.keys(method));
-  const groups: Array<{ title: string; items: typeof fields; data: Record<string, unknown> }> = [
+  const rootData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(pkg ?? {})) {
+    if (key === 'method' || key === 'parameters' || key === '$schema') continue;
+    rootData[key] = value;
+  }
+  const groups: Array<{ title: string; items: typeof fields; data: Record<string, unknown>; extraKeys: string[] }> = [
     {
       title: 'Identifikation',
       items: fields.filter(f => ROOT_KEYS.has(f.name)),
-      data: { id: pkg?.id, domain: pkg?.domain, kind: pkg?.kind },
-    },
-    {
-      title: 'method',
-      items: fields.filter(f => !ROOT_KEYS.has(f.name) && methodKeys.has(f.name)),
-      data: method,
+      data: rootData,
+      extraKeys: Object.keys(rootData).filter(k => !fields.some(f => f.name === k)),
     },
     {
       title: 'parameters',
       items: fields.filter(f => !ROOT_KEYS.has(f.name) && !methodKeys.has(f.name)),
       data: parameters,
+      extraKeys: Object.keys(parameters).filter(k => !fields.some(f => f.name === k)),
+    },
+    {
+      title: 'method',
+      items: fields.filter(f => !ROOT_KEYS.has(f.name) && methodKeys.has(f.name)),
+      data: method,
+      extraKeys: Object.keys(method).filter(k => k !== 'fields' && !fields.some(f => f.name === k)),
     },
   ];
 
-  const renderRow = (field: typeof fields[number], data: Record<string, unknown>) => {
-    const rawValue = resolveFieldValue(data, field.name);
-    const formatted = rawValue === undefined ? null : formatFieldValue(rawValue);
-    return <div key={field.name} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
-      <dt className="min-w-0"><code className="break-words">{field.name}</code></dt>
-      <dd className="min-w-0 leading-5 text-zinc-900">
+  const ROW_GRID = 'grid min-w-0 items-start gap-x-3 gap-y-0.5 py-1.5 text-xs sm:grid-cols-[14px_minmax(0,180px)_minmax(0,1fr)_60px_minmax(0,1.5fr)]';
+
+  function isExpandable(value: unknown): boolean {
+    if (value === null || value === undefined) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value as object).length > 0;
+    return false;
+  }
+
+  function renderValueRow(opts: { keyName: string; value: unknown; meta: { unit: string; description: string } | null; depth: number; reactKey: string }): ReactNode {
+    const { keyName, value, meta, depth, reactKey } = opts;
+    const expandable = isExpandable(value);
+    const isObj = value !== null && typeof value === 'object' && !Array.isArray(value);
+    const isArr = Array.isArray(value);
+
+    const formatted = value === undefined ? null : formatFieldValue(value);
+    const indent = depth > 0 ? { paddingLeft: `${depth * 1}rem` } : undefined;
+    const typeText = meta ? meta.unit : inferType(value);
+    const descText = meta ? meta.description : '–';
+    const isDeclared = meta !== null;
+
+    // Bei nicht-expandable Rows: pruefen ob Text potenziell gekuerzt wird.
+    // Wenn ja, machen wir die Zeile per Klick aufklappbar (truncate → wrap).
+    const flatOpen = expandedFlatRows.has(reactKey);
+    const couldTruncate = !expandable && (
+      keyName.length > 22
+      || descText.length > 42
+      || (formatted !== null && formatted.length > 32)
+    );
+    const wrapCls = flatOpen ? 'whitespace-normal break-words' : 'truncate';
+    const wrapNameCls = flatOpen ? 'whitespace-normal break-all' : 'truncate';
+
+    const cells = <>
+      <div className="flex h-3.5 items-center justify-center">
+        {expandable
+          ? <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open:rotate-90"/>
+          : couldTruncate && <ChevronRight className={cx('h-3 w-3 shrink-0 text-zinc-300 transition-transform', flatOpen && 'rotate-90')}/>}
+      </div>
+      <div className="min-w-0" style={indent}>
+        <code className={cx('block text-zinc-900', wrapNameCls)}>{keyName}</code>
+      </div>
+      <div className="min-w-0 text-zinc-900">
         {formatted !== null
-          ? <code className="break-words rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">{formatted}</code>
+          ? <code className={cx('block rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-800', wrapCls)}>{formatted}</code>
           : <span className="text-zinc-400">–</span>}
-      </dd>
-      <dd className="min-w-0 text-zinc-500">{field.unit}</dd>
-      <dd className="min-w-0 leading-5 text-zinc-700">{field.description}</dd>
-    </div>;
-  };
+      </div>
+      <div className={cx('min-w-0', wrapCls, isDeclared ? 'text-zinc-500' : 'text-zinc-400')}>{typeText}</div>
+      <div className={cx('min-w-0', wrapCls, isDeclared ? 'text-zinc-700' : 'text-zinc-400')}>{descText}</div>
+    </>;
+
+    if (!expandable) {
+      const interactive = couldTruncate;
+      return <div
+        key={reactKey}
+        className={cx(ROW_GRID, interactive && 'cursor-pointer hover:bg-zinc-50')}
+        onClick={interactive ? () => toggleFlatRow(reactKey) : undefined}
+      >{cells}</div>;
+    }
+
+    const children = isObj
+      ? Object.entries(value as Record<string, unknown>).map(([k, v]) =>
+          renderValueRow({ keyName: k, value: v, meta: null, depth: depth + 1, reactKey: `${reactKey}.${k}` }))
+      : (value as unknown[]).map((item, i) =>
+          renderValueRow({ keyName: `[${i}]`, value: item, meta: null, depth: depth + 1, reactKey: `${reactKey}.${i}` }));
+
+    const sortedChildren = isObj ? sortByExpandability(children, value as Record<string, unknown>) : children;
+
+    return <details key={reactKey} className="group">
+      <summary className={cx(ROW_GRID, 'cursor-pointer list-none hover:bg-zinc-50 [&::-webkit-details-marker]:hidden')}>{cells}</summary>
+      <div className="divide-y divide-zinc-100 border-t border-zinc-100 bg-zinc-50/30">{sortedChildren}</div>
+    </details>;
+  }
+
+  // Hilfen: Children im aufgeklappten Objekt sortieren — Primitives zuerst,
+  // expandables (Objekt/Array) ans Ende, damit die einfache Skim-Lesart erhalten bleibt.
+  function sortByExpandability(rendered: ReactNode[], source: Record<string, unknown>): ReactNode[] {
+    const keys = Object.keys(source);
+    const indexed = rendered.map((node, i) => ({ node, expandable: isExpandable(source[keys[i]]) }));
+    indexed.sort((a, b) => Number(a.expandable) - Number(b.expandable));
+    return indexed.map(item => item.node);
+  }
+
+  function sortItems<T extends { name: string }>(items: T[], data: Record<string, unknown>): T[] {
+    return [...items].sort((a, b) =>
+      Number(isExpandable(resolveFieldValue(data, a.name))) - Number(isExpandable(resolveFieldValue(data, b.name))),
+    );
+  }
+
+  function sortKeys(keys: string[], data: Record<string, unknown>): string[] {
+    return [...keys].sort((a, b) => Number(isExpandable(data[a])) - Number(isExpandable(data[b])));
+  }
+
+  const renderRow = (field: typeof fields[number], data: Record<string, unknown>) =>
+    renderValueRow({
+      keyName: field.name,
+      value: resolveFieldValue(data, field.name),
+      meta: { unit: field.unit, description: field.description },
+      depth: 0,
+      reactKey: `decl-${field.name}`,
+    });
+
+  const renderExtraRow = (key: string, data: Record<string, unknown>) =>
+    renderValueRow({
+      keyName: key,
+      value: data[key],
+      meta: null,
+      depth: 0,
+      reactKey: `extra-${key}`,
+    });
 
   return <div>
-    {packagePath && <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-      <FilePathLine label="Modell" path={packagePath}/>
-    </dl>}
-    {groups.map(group => {
-      if (group.items.length === 0) return null;
-      const header = <div className="hidden gap-1 py-2 text-xs font-medium uppercase tracking-wider text-zinc-400 sm:grid sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
+    {groups.map((group, groupIdx) => {
+      if (group.items.length === 0 && group.extraKeys.length === 0) return null;
+      const header = <div className="hidden gap-x-3 gap-y-0.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:grid sm:grid-cols-[14px_minmax(0,180px)_minmax(0,1fr)_60px_minmax(0,1.5fr)]">
+        <span/>
         <span>Feld</span>
         <span>Wert</span>
         <span>Typ</span>
         <span>Beschreibung</span>
       </div>;
+      const rows = <>
+        {header}
+        {sortItems(group.items, group.data).map(field => renderRow(field, group.data))}
+        {sortKeys(group.extraKeys, group.data).map(key => renderExtraRow(key, group.data))}
+      </>;
       // method ist im Wiki-Hauptbereich schon ausfuehrlich dargestellt — hier
-      // standardmaessig eingeklappt.
+      // standardmaessig eingeklappt, aber mit gleichem Section-Look wie die
+      // anderen Bloecke (Linie unter der Ueberschrift).
       if (group.title === 'method') {
-        return <details key={group.title} className={cx(packagePath && 'mt-6')}>
-          <summary className="mb-1 cursor-pointer list-none text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-950">▸ {group.title}</summary>
-          <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-            {header}
-            {group.items.map(field => renderRow(field, group.data))}
-          </dl>
+        return <details key={group.title} className={cx(groupIdx > 0 && 'mt-6')}>
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 border-b border-zinc-100 pb-1.5 text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-950 [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90 details-chevron"/>
+            <span>{group.title}</span>
+          </summary>
+          <div className="divide-y divide-zinc-100 border-b border-zinc-100">{rows}</div>
         </details>;
       }
-      return <section key={group.title} className={cx(packagePath && 'mt-6')}>
-        <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500">{group.title}</h3>
-        <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-          {header}
-          {group.items.map(field => renderRow(field, group.data))}
-        </dl>
+      return <section key={group.title} className={cx(groupIdx > 0 && 'mt-6')}>
+        <h3 className="mb-1 flex flex-wrap items-baseline gap-x-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+          <span>{group.title}</span>
+          {group.title === 'Identifikation' && packagePath && <span className="font-normal normal-case tracking-normal text-zinc-400">
+            (<a href={dataFileUrl(packagePath)} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-700 hover:text-zinc-700"><code className="text-[11px]">model/{packagePath}</code></a> <a href={dataFileUrl(packagePath)} target="_blank" rel="noreferrer" className="text-[10px] underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>)
+          </span>}
+        </h3>
+        <div className="divide-y divide-zinc-100 border-y border-zinc-100">{rows}</div>
       </section>;
     })}
-    {reproductionItems.length > 0 && <section className="mt-6">
-      <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500">Reproduktion</h3>
-      <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
-        {reproductionItems.map(item => <div key={item} className="grid min-w-0 gap-1 py-3 text-sm sm:grid-cols-[minmax(0,150px)_minmax(0,1fr)_70px_minmax(0,1.5fr)]">
-          <dt className="min-w-0"><code className="break-words">Reproduktion</code></dt>
-          <dd className="min-w-0"><span className="text-zinc-400">–</span></dd>
-          <dd className="min-w-0 text-zinc-500">Hinweis</dd>
-          <dd className="min-w-0 leading-5 text-zinc-700">{item.replace(/^Datei:\s*/, '')}</dd>
-        </div>)}
-      </dl>
-    </section>}
   </div>;
 }
 
@@ -792,10 +904,6 @@ function FilePathLine({ label, path, viewer = false }: { label: string; path: st
       <a href={dataFileUrl(path)} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>
     </dd>
   </div>;
-}
-
-function isTechnicalMethodItem(item: string) {
-  return /^Datei:/.test(item);
 }
 
 function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
