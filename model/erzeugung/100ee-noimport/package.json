@@ -4,7 +4,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Versorgung: 100% EE ohne Import",
+    "title": "100% EE ohne Import",
     "short": "PV/Wind/Speicher auf `1,4 × Last` dimensioniert; Fossil und Stromimport auf null.",
     "source": "Eigene Komposition; Mix-Anteile orientiert an BMWK-Langfristszenarien T45-Strom.",
     "sourceUrls": [

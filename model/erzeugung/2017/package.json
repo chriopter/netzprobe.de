@@ -4,7 +4,7 @@
   "domain": "erzeugung",
   "kind": "dataset",
   "method": {
-    "title": "Erzeugung 2017",
+    "title": "2017",
     "short": "Beobachtete öffentliche Stromerzeugung Deutschland 2017, stündlich, inklusive Kernkraft vor dem Ausstieg.",
     "source": "Energy-Charts public_power API: stündliche öffentliche Erzeugung, Kernkraft und Stromhandel für Deutschland 2017, aus 15-min Werten gemittelt.",
     "sourceUrls": [
