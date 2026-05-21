@@ -6,7 +6,7 @@ type PackageJson = DatasetDoc & { parameters: Record<string, unknown> };
 const modules = import.meta.glob('../../model/**/package.json', { eager: true, import: 'default' }) as Record<string, PackageJson>;
 
 const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model', 'template']);
-const validDomains = /^(last|erzeugung|speicher|aussenhandel|presets|modell)$/;
+const validDomains = /^(last|erzeugung|speicher|aussenhandel|modell)$/;
 
 type Entry = { path: string; stem: string; doc: DatasetDoc };
 
@@ -30,7 +30,7 @@ describe('model packages', () => {
   it('discovers at least one package per known domain', () => {
     expect(entries.length).toBeGreaterThan(0);
     const domains = new Set(entries.map(entry => entry.doc.domain));
-    for (const expected of ['last', 'erzeugung', 'speicher', 'aussenhandel', 'presets']) {
+    for (const expected of ['last', 'erzeugung', 'speicher', 'aussenhandel']) {
       expect(domains, expected).toContain(expected);
     }
   });

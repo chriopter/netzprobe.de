@@ -36,7 +36,7 @@
     ],
     "reasoning": [
       "Datei: handgepflegt. Werte in model/aussenhandel/strom-handel/package.json, Adapter in model/aussenhandel/strom-handel/model.rs.",
-      "Scenario-Mapping: `data.import.{minGW, maxGW, stepGW, defaultMaxGW, emissionGperKWh}` ↦ `scenario.import.stromGW` (Slider) und `scenario.import.stromEmissionGperKWh`; `data.export.*` ↦ `scenario.export.stromGW`. Presets können Defaults überschreiben (z.B. `versorgung-50ee-50import` setzt Emission auf 100 g/kWh).",
+      "Scenario-Mapping: `data.import.{minGW, maxGW, stepGW, defaultMaxGW, emissionGperKWh}` ↦ `scenario.import.stromGW` (Slider) und `scenario.import.stromEmissionGperKWh`; `data.export.*` ↦ `scenario.export.stromGW`. Presets können Defaults überschreiben (z.B. `50ee-50import` setzt Emission auf 100 g/kWh).",
       "Import- und Export-Cap getrennt: Default Import 13 GW (reproduziert 2025 Brutto-Import 76 TWh), Export 25 GW (NTC, real 2025 Export 54 TWh).",
       "Slider erlaubt bis 200 GW für Stresstests.",
       "Emissionsfaktor Import 300 g/kWh als gewichteter Nachbarmix 2024 (FR ~55, NL ~270, AT ~120, DK ~140, CH ~30, PL ~660, CZ ~390, BE ~140 — Electricity Maps DE-Imports 2024 etwa 250-280, leicht höher angesetzt wegen PL/CZ-Lastfluss-Anteil).",

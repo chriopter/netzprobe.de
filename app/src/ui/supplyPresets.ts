@@ -28,11 +28,11 @@ export const supplyPillDescriptions: Record<SupplyPillId, string> = {
 };
 
 export const supplyPillWikiIds: Record<SupplyPillId, string> = {
-  'historical-2025': 'versorgung-historisch-2025',
-  'historical-2017': 'versorgung-historisch-2017',
-  '100ee-noimport': 'versorgung-100ee-noimport',
-  '50ee-50import': 'versorgung-50ee-50import',
-  '2025-skaliert': 'versorgung-2025-skaliert',
+  'historical-2025': 'historisch-2025',
+  'historical-2017': 'historisch-2017',
+  '100ee-noimport': '100ee-noimport',
+  '50ee-50import': '50ee-50import',
+  '2025-skaliert': '2025-skaliert',
   'custom': 'kern',
 };
 
