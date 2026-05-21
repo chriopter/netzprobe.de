@@ -4,7 +4,7 @@
   "domain": "erzeugung",
   "kind": "dataset",
   "method": {
-    "title": "Historisch 2025",
+    "title": "2025",
     "short": "Beobachtete öffentliche Stromerzeugung Deutschland 2025, stündlich nach Energieträgern und Handelssaldo.",
     "source": "Energy-Charts API; Fraunhofer ISE Jahresauswertung 2025.",
     "sourceUrls": [

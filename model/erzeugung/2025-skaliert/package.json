@@ -4,7 +4,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Versorgung: 2025 hochskaliert",
+    "title": "2025 hochskaliert",
     "short": "Alle Versorgungs-Slider proportional zur Last: `Skalierungsfaktor = Demand / 466 TWh`.",
     "source": "Eigene Komposition: 2025-Mix proportional zur Last.",
     "sourceUrls": [],

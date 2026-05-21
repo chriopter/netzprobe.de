@@ -4,7 +4,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Versorgung: 50% EE + 50% H₂-Import",
+    "title": "50% EE + 50% H₂-Import",
     "short": "Inlands-RE für halbe Last, Rest aus H₂-Import bei `100 g/kWh`; Gas und Kohle auf null.",
     "source": "Eigene Komposition; H₂-Import-Emission heuristisch aus Pipelines/Schiff-Mittelwerten.",
     "sourceUrls": [
