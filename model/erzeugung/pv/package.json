@@ -79,6 +79,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Solarpark Witznitz (500 MW)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
       }
     ],
     "caveats": [
@@ -89,7 +94,16 @@
     "file": "erzeugung/pv/data.json",
     "scripts": [
       "erzeugung/pv/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "KNE / Fraunhofer ISE 2023: ~1 ha/MWp Parkfläche = 10 km²/GW (Brutto inkl. Reihenabstände, Wege, Trafostationen). UBA Texte 76/2022: Versiegelung 0,5-3 % der Parkfläche → `anlage` ~0,03 km²/GW (Punktfundamente). `wirkung` 10 km²/GW = übrige eingezäunte Parkfläche. Bifaziale Anlagen aktuell eher 1,2-1,5 ha/MW. Cross-Check OWID/Lovering 2022: 2000 ha/(TWh·a) ≈ 20 km²/GW DE-CF — KNE-Wert leicht effizienter (jüngere Modul-Generation). Van Zalk & Behrens 2018: Median 6,63 W/m² konsistent. Konsens 15 Experten.",
+      "sourceUrls": [
+        "https://www.naturschutz-energiewende.de/fragenundantworten/flaecheneffizienz-erneuerbarer-energien-zur-stromerzeugung/",
+        "https://www.umweltbundesamt.de/sites/default/files/medien/479/publikationen/texte_76-2022_anpassung_der_flaechenkulisse_fuer_pv-freiflaechenanlagen_im_eeg_vor_dem_hintergrund_erhoehter_zubauziele.pdf",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "variable-re",
@@ -109,6 +123,11 @@
       "min": 0,
       "max": 2000,
       "step": 10
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.03,
+      "wirkungKm2PerGW": 10,
+      "kategorie": "Freifläche"
     }
   }
 }

@@ -79,6 +79,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Onshore-Turbinen (4 MW)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
       }
     ],
     "caveats": [
@@ -89,7 +94,16 @@
     "file": "erzeugung/windon/data.json",
     "scripts": [
       "erzeugung/windon/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Anlagenfläche: Mastfuß + Kranstellfläche (~2500 m²/WEA, schotter-/teilversiegelt; Zuwegung oft auf bestehenden Wegen). Bei 200 WEA/GW (5-MW-Klasse) ergibt das ~0,5 km²/GW. KNE-Quelle nennt 0,5 ha/WEA inkl. Zuwegung (→ 1,0 km²/GW) als Obergrenze. Konsens 15 Experten: 0,5 km²/GW. WindBG §3 2 %-Flächenziel: 7150 km² Vorrangfläche / 145 GW Ausbauziel = 50 km²/GW planerisch ausgewiesene Wirkungsfläche (Mischnutzung mit Landwirtschaft auf ~90 % weiter zulässig). UBA Climate Change 32/2023 bestätigt 3-5 ha/MW Bruttofläche. Cross-Check OWID/Lovering 2022: 130 ha/(TWh·a) footprint-only ≈ 2,6 km²/GW (konsistent mit anlage); 12 000 ha/(TWh·a) inkl. Turbinen-Spacing ≈ 240 km²/GW — letzteres ist die theoretische Park-Maximalfläche inkl. Acker zwischen WEA; unser `wirkung`=50 entspricht der politisch ausgewiesenen Vorrangfläche, konservativer.",
+      "sourceUrls": [
+        "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/32_2023_cc_flaechenverfuegbarkeit_und_flaechenbedarfe_fuer_den_ausbau_der_windenergie_an_land_0.pdf",
+        "https://www.naturschutz-energiewende.de/wortmeldung/wortmeldung-zum-flaechenbedarf-der-windenergie/",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "variable-re",
@@ -109,6 +123,11 @@
       "min": 0,
       "max": 1200,
       "step": 5
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.5,
+      "wirkungKm2PerGW": 50,
+      "kategorie": "Vorrangfläche"
     }
   }
 }

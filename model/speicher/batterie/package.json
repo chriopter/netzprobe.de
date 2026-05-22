@@ -78,6 +78,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa Tesla Megapacks (4 MWh)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
       }
     ],
     "caveats": [
@@ -89,7 +94,14 @@
     "file": "speicher/batterie/data.json",
     "scripts": [
       "speicher/batterie/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Tesla Megablock-Datasheet (2025): 248 MWh AC/acre = 0,0163 km²/GWh — Best-in-class für 2030+. Linea Energy / NREL FAQ Referenzwerte für ältere Megapack-2-Großanlagen liegen bei 0,02-0,04 km²/GWh. Konsens 10 Experten: 0,015 km²/GWh als realistischer Mittel-/Zielwert; Power-Komponente 0,003 km²/GW (Container, PCS, Trafo). Footprint skaliert primär mit Energie.",
+      "sourceUrls": [
+        "https://www.ess-news.com/2025/09/09/tesla-unveils-new-generation-of-utility-scale-batteries-megapack-3-and-megablock/",
+        "https://www.lineaenergy.com/battery-energy-storage-systems-faq"
+      ]
+    }
   },
   "parameters": {
     "roundtripEfficiency": 0.8,
@@ -111,6 +123,12 @@
       "min": 0,
       "max": 5000,
       "step": 50
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.003,
+      "anlageKm2PerGWh": 0.015,
+      "wirkungKm2PerGW": 0.001,
+      "kategorie": "Industrie"
     }
   }
 }

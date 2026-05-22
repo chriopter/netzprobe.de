@@ -74,6 +74,16 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Isar-2-Blöcke."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+      },
+      {
+        "name": "vorFlaeche",
+        "unit": "Objekt",
+        "description": "Brennstoff-/Anbau-Vorfläche kumuliert über Lebensdauer; oft im Ausland."
       }
     ],
     "caveats": [
@@ -84,7 +94,24 @@
     "file": "erzeugung/kernkraft/data.json",
     "scripts": [
       "erzeugung/kernkraft/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Hinkley Point C 1,74 km² / 3,22 GW = 0,54 km²/GW; deutsche Standorte Brokdorf/Grohnde/Isar 2 jeweils ~1,0 km² für 1,4 GW = ~0,7 km²/GW (Reaktor + Maschinenhaus + Schaltanlage + Verwaltung). US-NRC-Median 1,3 sq mi/1000 MW = 3,4 km²/GW (großzügig inkl. Cooling Pond). Konsens 10 Experten: 1,0 km²/GW für deutschen Standardstandort inkl. umzäuntem Sicherheitsbereich. Zusätzlich `wirkung` ~1,5 km²/GW für äußere Sperrzone (innerer Schutzbereich ~500-1000 m Radius).",
+      "sourceUrls": [
+        "https://www.ageu-die-realisten.com/archives/1473/",
+        "https://docs.wind-watch.org/US-footprints-Strata-2017.pdf"
+      ]
+    },
+    "vorFlaeche": {
+      "source": "Freeing Energy 0,06 acres/GWh × 8000 GWh/GW/a × 40 a = 78 km²/GW (Worst-Case Open-pit + Tailings). World Nuclear Association: Weltmix 2023 ~52 % ISL (KZ, <0,5 km²/GW), 44 % Untertage+Open-pit (~15 km²/GW), 4 % Nebenprodukt. Gewichtet: 0,52·0,5 + 0,44·15 ≈ 6,9 km²/GW. DE-Importmix mit Kasachstan-ISL-Bias eher 3-5. Cross-Check OWID/Lovering 2022: 7,1 ha/(TWh·a) Nuclear-Footprint × ~7,5 TWh/(GW·a) ≈ 0,53 km²/GW — Lovering bezieht nur Anlage+ISL ein, ohne Tailings-Halden; unser Wert konservativer (inkl. Open-pit-Anteil). Van Zalk Nuclear Median 240,8 W/m². Konsens 20 Experten (Range 0,5-7).",
+      "sourceUrls": [
+        "https://www.freeingenergy.com/math/uranium-nuclear-mining-land-acres-m128/",
+        "https://de.wikipedia.org/wiki/Uranbergbau",
+        "https://world-nuclear.org/information-library/nuclear-fuel-cycle/mining-of-uranium/uranium-mining-overview",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "baseload",
@@ -103,6 +130,17 @@
       "min": 0,
       "max": 500,
       "step": 0.5
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.7,
+      "wirkungKm2PerGW": 1.5,
+      "kategorie": "Industrie"
+    },
+    "vorFlaeche": {
+      "km2PerGW": 5.0,
+      "typ": "Uran-Bergbau",
+      "land": "Ausland (KZ/CA/NE)",
+      "lebensdauerJahre": 40
     }
   }
 }

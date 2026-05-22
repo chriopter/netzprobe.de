@@ -87,6 +87,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa Salzkavernen-Speicher (200 GWh)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
       }
     ],
     "caveats": [
@@ -99,7 +104,14 @@
     "file": "speicher/h2/data.json",
     "scripts": [
       "speicher/h2/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Elektrolyseur 100–150 m²/MW + Verdichter/Trockner/Trafo ≈ 200–500 m²/MW gesamt. Kaverne unterirdisch (Epe 100 Kavernen auf 22 km² Salzstockfläche, Bohrkopf ~0,01 km²/Kaverne). Regional auf norddt. Salzstöcke beschränkt.",
+      "sourceUrls": [
+        "https://www.ieg.fraunhofer.de/de/presse/pressemitteilungen/salzlagerstaetten.html",
+        "https://www.solarserver.de/2020/11/19/norddeutsche-salzkavernen-ideal-fuer-wasserstoff/"
+      ]
+    }
   },
   "parameters": {
     "roundtripEfficiency": 0.34,
@@ -126,6 +138,13 @@
       "min": 0,
       "max": 500000,
       "step": 5000
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.03,
+      "anlageKm2PerGWh": 0.0001,
+      "wirkungKm2PerGW": 0.05,
+      "kategorie": "Industrie",
+      "wirkungKm2PerGWh": 0.001
     }
   }
 }

@@ -80,6 +80,16 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Gasturbinen-Blöcke (400 MW)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+      },
+      {
+        "name": "vorFlaeche",
+        "unit": "Objekt",
+        "description": "Brennstoff-/Anbau-Vorfläche kumuliert über Lebensdauer; oft im Ausland."
       }
     ],
     "caveats": [
@@ -90,7 +100,22 @@
     "file": "erzeugung/gas/data.json",
     "scripts": [
       "erzeugung/gas/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Irsching 5 (0,86 GW ~0,08 km²); Lingen (0,9 GW ~0,1 km²). GuD sehr kompakt, kein Brennstofflager nötig.",
+      "sourceUrls": [
+        "https://www.bundestag.de/resource/blob/886426/3aec6231f2bf9ea7f3ee0806737a496f/WD-5-007-22-pdf-data.pdf"
+      ]
+    },
+    "vorFlaeche": {
+      "source": "DE-Importmix: ~30 % NO-Pipeline (Offshore-Plattformen, <0,05 km²/GW), ~25 % LNG (Katar, US-Fracking ~1-3 km²/GW Stromäquivalent), Rest Pipeline NL/sonst. Nature Energy 2017 / Strata 2017 für US-Gas-Vollzyklus: 1,28 acres/MW ≈ 0,52 km²/GW (Pad + Midstream). Gewichteter Mittel 0,5 km²/GW (CF-Annahme 50 %). OWID/Lovering 2022 nennt 410 ha/(TWh·a) inkl. Pipeline-Korridore und globalen Förderfelder → bei DE-CF ~12 km²/GW; Differenz liegt darin, dass Pipelines im netzprobe-Modell separat im Netz-Modul abgebildet werden, nicht im Erzeuger-Vorfeld. Van Zalk & Behrens 2018: Gas-Median 482 W/m² konsistent für Anlage allein. Konsens 20 Experten.",
+      "sourceUrls": [
+        "https://www.bundestag.de/resource/blob/886426/3aec6231f2bf9ea7f3ee0806737a496f/WD-5-007-22-pdf-data.pdf",
+        "https://www.nature.com/articles/s41560-017-0004-0",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "dispatchable",
@@ -110,6 +135,17 @@
       "min": 0,
       "max": 360,
       "step": 5
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.1,
+      "wirkungKm2PerGW": 0.05,
+      "kategorie": "Industrie"
+    },
+    "vorFlaeche": {
+      "km2PerGW": 0.5,
+      "typ": "Gasförderung (Pads/LNG-Terminals)",
+      "land": "Ausland (NO/US/NL/QA)",
+      "lebensdauerJahre": 40
     }
   }
 }
