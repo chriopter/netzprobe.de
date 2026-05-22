@@ -137,6 +137,14 @@
       "typ": "Anbau Energiepflanzen (DE-Mix 64 % Biogas / 20 % feste Biomasse / 16 % Bioabfall+Klär-/Deponiegas)",
       "land": "DE",
       "lebensdauerJahre": 25
+    },
+    "referenceYield": {
+      "twhPerGWa": 4.8,
+      "source": "AGEE-Stat 2024: 43,4 TWh aus ~9 GW installiert = 4.820 VLh / CF 0,55. Reine Baseload-Biomasse (Holz-HKW, Abfall, Altanlagen Biogas) erreicht 6.500-8.000 VLh; flex-Biogas (EEG-Flexprämie seit 2012) nur 2.000-4.000 VLh. Gewichteter Flottenmedian DE. Hinweis: package.json availability=0,86 ist Bemessungsleistungs-Annahme, real-CF 0,55.",
+      "sourceUrls": [
+        "https://www.umweltbundesamt.de/service/newsletter/archiv/agee-stat-aktuell-nr-52024",
+        "https://www.energy-charts.info/downloads/Stromerzeugung_2024.pdf"
+      ]
     }
   }
 }

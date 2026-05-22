@@ -148,6 +148,14 @@
       "typ": "Tagebau Braunkohle",
       "land": "DE",
       "lebensdauerJahre": 40
+    },
+    "referenceYield": {
+      "twhPerGWa": 3.1,
+      "source": "Fraunhofer ISE/AGEB 2024: 95,3 TWh aus 31,1 GW Mix Braun+Stein = 3.060 VLh / CF 0,35. Braunkohle allein 4.700-5.200 VLh (CF 0,54-0,60), Steinkohle nur 1.500 VLh (CF 0,17) wegen Netzreserve + Marktverdrängung durch EE. 2015 noch CF 0,72 — kollabiert durch EE-Verdrängung und CO2-Preis. Wert 3,1 als DE-Mix 2024.",
+      "sourceUrls": [
+        "https://ag-energiebilanzen.de/wp-content/uploads/AGEB_Jahresbericht2024_20250616_dt.pdf",
+        "https://www.ise.fraunhofer.de/en/press-media/press-releases/2025/public-electricity-generation-2024-renewable-energies-cover-more-than-60-percent-of-german-electricity-consumption-for-the-first-time.html"
+      ]
     }
   }
 }

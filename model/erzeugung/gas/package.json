@@ -146,6 +146,14 @@
       "typ": "Gasförderung (Pads/LNG-Terminals)",
       "land": "Ausland (NO/US/NL/QA)",
       "lebensdauerJahre": 40
+    },
+    "referenceYield": {
+      "twhPerGWa": 2.3,
+      "source": "AGEB Jahresbericht 2024: 74 TWh (öffentlich + Industrie) aus ~32 GW = 2.310 VLh / CF 0,26. GuD typisch CF 0,30-0,40, OCGT/Spitzenlast CF 0,05-0,10. Wert 2,3 als DE-Mix-Mittel 2024.",
+      "sourceUrls": [
+        "https://ag-energiebilanzen.de/wp-content/uploads/AGEB_Jahresbericht2024_20250616_dt.pdf",
+        "https://www.bundesnetzagentur.de/DE/Beschlusskammern/BK06/BK6_27_Monitoring/Monitoring_node.html"
+      ]
     }
   }
 }

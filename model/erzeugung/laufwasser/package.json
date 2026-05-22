@@ -120,6 +120,13 @@
       "anlageKm2PerGW": 0.1,
       "wirkungKm2PerGW": 30,
       "kategorie": "Stausee"
+    },
+    "referenceYield": {
+      "twhPerGWa": 4.0,
+      "source": "BDEW Wasserkraft 2024: 20,7 TWh (höchster Wert seit 2013) aus ~5,6 GW Laufwasser = 3.700 VLh / CF 0,42. Trockenjahre (2022: 17,5 TWh) eher 3.100 VLh / CF 0,35. Planungswert Agora/BMWK 4.000-4.400 VLh. Wert 4,0 als robustes Langzeitmittel.",
+      "sourceUrls": [
+        "https://www.bdew.de/service/daten-und-grafiken/stromerzeugung-wasserkraft/"
+      ]
     }
   }
 }

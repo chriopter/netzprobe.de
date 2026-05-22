@@ -141,6 +141,14 @@
       "typ": "Uran-Bergbau",
       "land": "Ausland (KZ/CA/NE)",
       "lebensdauerJahre": 40
+    },
+    "referenceYield": {
+      "twhPerGWa": 7.6,
+      "source": "IAEA PRIS DE-Bestand Konvoi: Brokdorf Lifetime Load Factor 86,3 %, Isar 2 89,8 %, Grohnde ~90 %. Median DE-Bestand 2010-2022: 85-88 % CF = 7.450-7.700 VLh. Wert 7,6 als DE-Bestandsmedian (statt 7,9 = Top-Performer Isar 2).",
+      "sourceUrls": [
+        "https://pris.iaea.org/PRIS/CountryStatistics/CountryStatisticsLandingPage.aspx?country=DE",
+        "https://world-nuclear.org/nuclear-reactor-database/details/ISAR-2"
+      ]
     }
   }
 }
