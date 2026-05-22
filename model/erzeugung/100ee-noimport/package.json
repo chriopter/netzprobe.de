@@ -4,42 +4,47 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "100% EE ohne Import",
-    "short": "PV/Wind/Speicher auf `1,4 × Last` dimensioniert; Fossil und Stromimport auf null.",
-    "source": "Eigene Komposition; Mix-Anteile orientiert an BMWK-Langfristszenarien T45-Strom.",
+    "title": "100% EE lokal (autark)",
+    "short": "PV/Wind/Speicher auf `1,25 × Last` dimensioniert; Fossil und Import auf null. Stresstest für Autarkie.",
+    "source": "Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien: BMWK Langfristszenarien 3 (T45-Strom), Agora KN2045, Ariadne Szenarienreport, Fraunhofer ISE REMod, Heide et al. (saisonal-optimaler Mix), DVGW/EWI H2-Speicherbedarf.",
     "sourceUrls": [
-      "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php"
+      "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php",
+      "https://www.agora-energiewende.de/publikationen/klimaneutrales-deutschland-2045-1",
+      "https://ariadneprojekt.de/publikation/deutschland-auf-dem-weg-zur-klimaneutralitat-2045-szenarienreport/",
+      "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/Fraunhofer-ISE-Studie-Wege-zu-einem-klimaneutralen-Energiesystem-Update-Zielverschaerfung.pdf",
+      "https://www.ieg.fraunhofer.de/de/presse/pressemitteilungen/salzlagerstaetten.html"
     ],
     "period": "laufend",
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
     "description": [
-      "**Komposition:** das Preset setzt fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und den Import-Cap auf null, behält `Biomasse` und `Laufwasser` auf Baseline-Bestand und dimensioniert PV, Wind onshore, Wind offshore sowie Batterie und H₂-Saisonspeicher proportional zur Jahres-Last. Variable RE-Anteile werden im Verhältnis `PV 30 % / Wind on 45 % / Wind off 15 %` aufgeteilt, anschließend per `snap()` auf das Slider-Raster gerundet.",
-      "**Werte:** Auslegungsziel `Jahres-RE = 1,4 × Demand − Biomasse − Laufwasser`, dieser **Cushion-Faktor** deckt H₂-Roundtrip (`η ≈ 0,24` saisonal), Curtailment und Direkt-RE-Anteil ab. Speicher-Faustregeln: Batterie `0,1 GW/TWh` und `0,5 GWh/TWh` (z. B. `47 GW / 233 GWh` bei `466 TWh`, `120 GW / 605 GWh` bei `1.211 TWh`); H₂ `0,06 GW/TWh` Elektrolyse, `0,12 GW/TWh` Rückverstromung, Energie `0,15 × Demand` in TWh → `~130 TWh` Saisonspeicher bei `~750 TWh` Last (Fraunhofer-ISE-Benchmark). Pumpspeicher bleibt Default 2025.",
-      "**Anwendungsfall:** Autarkie-Stresstest. Zeigt, wie groß PV-, Wind- und Speicherflotte werden müssen, wenn weder fossile Backup-Kraftwerke noch Stromimport zur Verfügung stehen, und wie viel Curtailment das Modell akzeptiert, um auch lange Dunkelflauten ohne Lastabwurf zu überbrücken."
+      "**Komposition:** Autarkie-Preset. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und Import-Cap auf null. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. PV, Wind onshore, Wind offshore sowie Batterie und H₂-Saisonspeicher werden proportional zur Jahres-Last dimensioniert. Variable EE-Anteile im Verhältnis `PV 30 % / Wind on 40 % / Wind off 30 %` aufgeteilt (Wind 70 % / PV 30 % insgesamt, saisonal-optimal nach Heide et al.).",
+      "**Werte (Mai 2026 kalibriert):** Auslegungsziel `Jahres-RE = 1,25 × Demand − Biomasse − Laufwasser`. Der **Cushion-Faktor 1,25** entspricht dem Studien-Median (BMWK LFS3, Agora KN2045, Fraunhofer ISE) — er deckt 10–12 % Curtailment plus Speicher-Roundtrip-Verluste. Speicher-Sizing: Batterie `0,1 GW/TWh` Leistung und `0,5 GWh/TWh` Energie (kurzfristige Glättung); H₂ Elektrolyse `0,04 GW/TWh`, Rückverstromung `0,08 GW/TWh`, Saisonspeicher-Energie `0,06 × Demand` in TWh. Bei e100-Demand 1830 TWh ergibt das ~**110 TWh H₂-Speicher** — mittig im Studienkorridor (BMWK 70–100, Agora 70–80, ISE 130, DVGW 94). Pumpspeicher bleibt Default 2025.",
+      "**Anwendungsfall:** Autarkie-Stresstest. Zeigt, wie groß PV-, Wind- und Speicherflotte werden müssen, wenn weder fossile Backup-Kraftwerke noch Strom-/H₂-Import zur Verfügung stehen. **WICHTIG:** Kein veröffentlichter Studienpfad modelliert echtes Stand-alone DE ohne H₂-Import; Import-Anteile von 50–80 % am H₂ sind durchgängig gesetzt (Agora 270 TWh, dena 458 TWh, Ariadne 60–250 TWh). Bei Demand 1830 TWh ohne Sektorkopplung/WP-JAZ liegen die GW-Werte 50–60 % über vergleichbaren Studien-Szenarien — siehe Caveat zur Demand-Skalierung."
     ],
     "overview": [
       {
         "label": "Mix-Anteile",
-        "value": "**RE-Verteilung:** `PV 30 %`, `Wind onshore 45 %`, `Wind offshore 15 %` vom zusätzlichen RE-Bedarf. `Biomasse` und `Laufwasser` decken den Restanteil und bleiben auf Default-Bestand 2025."
+        "value": "**EE-Verteilung:** `PV 30 %`, `Wind onshore 40 %`, `Wind offshore 30 %` vom zusätzlichen RE-Bedarf. Wind 70 % / PV 30 % insgesamt — saisonal-optimal nach Heide et al. (Wind dominiert Winter, PV Sommer). `Biomasse` und `Laufwasser` decken den Restanteil und bleiben auf Default-Bestand 2025."
       },
       {
         "label": "Cushion-Faktor",
-        "value": "**Auslegung:** `Jahres-RE ≥ 1,4 × Demand`. Der `40 %`-Aufschlag deckt H₂-Roundtrip-Verluste (`η ≈ 0,24` saisonal), Curtailment-Buffer und nicht-zeitlich passenden Direkt-RE-Anteil."
+        "value": "**Auslegung:** `Jahres-RE ≥ 1,25 × Demand`. Studien-Median 1,20–1,30 (BMWK LFS3 1,40, Agora 1,15–1,20). Deckt 10–12 % Curtailment plus Round-trip-Verluste H₂-Speicher (η ≈ 0,50)."
       },
       {
         "label": "Speicher-Sizing",
-        "value": "**Batterie:** `0,1 GW/TWh × Demand` Leistung, `0,5 GWh/TWh × Demand` Energie. **H₂:** Elektrolyse `0,06 GW/TWh`, Rückverstromung `0,12 GW/TWh`, Energie `0,15 × Demand × 1.000 GWh` (Fraunhofer-ISE-„Wege\"-Benchmark). **Pumpspeicher:** Default 2025."
+        "value": "**Batterie:** `0,1 GW/TWh × Demand` Leistung, `0,5 GWh/TWh × Demand` Energie (kurzfristig Tag/Nacht). **H₂:** Elektrolyse `0,04 GW/TWh`, Rückverstromung `0,08 GW/TWh`, Saisonspeicher-Energie `0,06 × Demand × 1.000 GWh`. Vergleich bei 1830 TWh Demand: 110 TWh (mittig im Studienkorridor 70–130)."
       },
       {
         "label": "Handel",
-        "value": "**Import-Cap:** `0 GW` (autark). **Export-Cap:** Default — Überschuss kann exportiert werden."
+        "value": "**Import-Cap:** `0 GW` (autark, ohne H₂-Import). **Export-Cap:** Default — Überschuss kann exportiert werden. Hinweis: Studien gehen durchgängig von H₂-Import 60–450 TWh aus; echtes Stand-alone DE wird nirgendwo modelliert."
       }
     ],
     "reasoning": [
       "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
-      "target = max(0, demandTWh × 1,4 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (45%), WindOff (15%).",
-      "PV-GW = target × 0,30 / yieldPV. WindOn-GW = target × 0,45 / yieldWind. WindOff-GW = target × 0,15 / yieldWind.",
+      "target = max(0, demandTWh × 1,25 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (40%), WindOff (30%).",
+      "PV-GW = target × 0,30 / yieldPV. WindOn-GW = target × 0,40 / yieldWind. WindOff-GW = target × 0,30 / (yieldWind × 1,8) — Multiplier 1,8 korrigiert Onshore-Wind-Profil auf Offshore-CF.",
+      "H₂-Saisonspeicher = 0,06 × Demand × 1000 GWh (Studien-Median Salzkavernen).",
       "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt."
     ],
     "fields": [
@@ -50,10 +55,12 @@
       }
     ],
     "caveats": [
-      "Mix-Anteile (30/45/15) sind heuristisch; reale Langfristszenarien (T45) streuen je nach Annahme zur Volllast-Verteilung.",
-      "Cushion 1,4 deckt Speicherverluste und Curtailment grob ab; reale Anforderung hängt von Speichergröße und Saisonalität ab.",
-      "Speicher-Sizing nach Daumenregel (Batterie 0,5 GWh/TWh Last; H₂-Saisonspeicher 15 % Demand) — keine optimierte Dimensionierung.",
-      "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore — siehe erz-windoff Caveats."
+      "Mix-Anteile (30/40/30) basieren auf Heide et al. (saisonal-optimal 55–60 % Wind / 40–45 % PV); reale Langfristszenarien streuen je nach Yield-Annahme.",
+      "Cushion 1,25 deckt Curtailment 10–12 % plus H₂-Roundtrip; reale Anforderung hängt von Speichergröße und Saisonalität ab.",
+      "Speicher-Sizing (Batterie 0,5 GWh/TWh, H₂-Saison 0,06 × Demand) ist Daumenregel — keine kostenoptimierte Dimensionierung.",
+      "Wind Offshore nutzt Onshore-Einspeisefaktor mit Multiplier 1,8 zur Annäherung der Offshore-CF.",
+      "Bei e100-Demand 1830 TWh (ohne Sektorkopplung/WP-JAZ/Smart Charging) liegen Erzeugungs-GW 35–45 % über Studien-Szenarien — siehe e100-Caveat zu Effizienz-Annahmen.",
+      "Echtes Stand-alone DE wird in keiner publizierten Studie modelliert; Import-Anteile am H₂-Bedarf 50–80 % sind durchgängig gesetzt. Dieses Preset zeigt den extremen Stresstest, nicht die wahrscheinliche Lösung."
     ],
     "scripts": [
       "erzeugung/100ee-noimport/model.rs"
