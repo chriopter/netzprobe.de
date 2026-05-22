@@ -83,6 +83,11 @@
         "name": "vorFlaeche",
         "unit": "Objekt",
         "description": "Brennstoff-/Anbau-Vorfläche kumuliert über Lebensdauer; oft im Ausland."
+      },
+      {
+        "name": "referenceYield",
+        "unit": "Objekt",
+        "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
       }
     ],
     "caveats": [
