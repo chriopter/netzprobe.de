@@ -577,8 +577,9 @@ impl StaticModel {
         use preset_100ee_import::{
             EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
             EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
-            STROM_IMPORT_EMISSION_G_PER_KWH, STROM_IMPORT_GW_CAP,
+            STROM_IMPORT_EMISSION_G_PER_KWH,
             target_variable_re_twh, variable_re_gw, wind_offshore_gw,
+            h2_import_compensation_twh, strom_import_gw_cap,
             battery_power_gw, battery_energy_gwh,
             h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh, h2_import_twh,
         };
@@ -591,6 +592,11 @@ impl StaticModel {
         let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
         let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind);
         let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind);
+        // Wenn Wind off gecappt: zusätzlicher H2-Import deckt den Energie-Shortfall.
+        let h2_import_shortfall = h2_import_compensation_twh(
+            target, EE_WIND_OFF_SHARE, total_share, yield_wind,
+        );
+        let h2_import_total = h2_import_twh(demand_twh) + h2_import_shortfall;
         Ok((
             json!({
                 "pvInstalledGW": snap_gen("pv", pv_gw)?,
@@ -615,9 +621,9 @@ impl StaticModel {
                 "h2EnergyGWh": snap_storage("h2", "energyGWh", h2_energy_gwh(demand_twh))?,
             }),
             json!({
-                "stromGW": STROM_IMPORT_GW_CAP,
+                "stromGW": strom_import_gw_cap(demand_twh),
                 "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
-                "h2TWh": h2_import_twh(demand_twh),
+                "h2TWh": h2_import_total,
             }),
             json!({
                 "stromGW": comp_number("historisch-2025", "exportStromGW")?,
@@ -637,6 +643,7 @@ impl StaticModel {
             EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
             EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
             target_variable_re_twh, variable_re_gw, wind_offshore_gw,
+            pv_compensation_for_wind_offshore_cap,
             battery_power_gw, battery_energy_gwh,
             h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh,
         };
@@ -646,7 +653,11 @@ impl StaticModel {
         let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
         let target = target_variable_re_twh(demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
-        let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
+        let pv_base_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
+        let pv_compensation = pv_compensation_for_wind_offshore_cap(
+            target, EE_WIND_OFF_SHARE, total_share, yield_wind, yield_pv,
+        );
+        let pv_gw = pv_base_gw + pv_compensation;
         let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind);
         let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind);
         Ok((

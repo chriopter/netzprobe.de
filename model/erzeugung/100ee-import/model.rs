@@ -18,17 +18,35 @@
 pub const EE_PV_SHARE: f64 = 0.35;
 pub const EE_WIND_ON_SHARE: f64 = 0.40;
 pub const EE_WIND_OFF_SHARE: f64 = 0.25;
-pub const EE_CUSHION: f64 = 1.10;
-pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.08;
-pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 0.4;
-pub const EE_H2_CHARGE_PER_TWH: f64 = 0.03;
-pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.06;
-pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.04;
+// Cushion 1.20: Reserve für Wetterjahr-Schwankungen + Round-trip-Verluste.
+pub const EE_CUSHION: f64 = 1.20;
+// Batterie: 0.15 GW/TWh + 0.8 GWh/TWh. Weniger als lokal (0.3/1.5), weil H2- und Strom-Import
+// als Flex-Puffer verfügbar. Bei e100 ergibt das ~275 GW / 1465 GWh — ausreichend für Peak.
+pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.15;
+pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 0.8;
+// H2 Charge/Discharge — Iteration 2 nach Lasttest:
+// Charge 0.12 GW/TWh (Sommer-Überschuss-Aufnahme), Discharge 0.08 GW/TWh (Winter-Peak).
+// Niedriger als lokal weil H2-Import zusätzliche Pufferung bietet.
+pub const EE_H2_CHARGE_PER_TWH: f64 = 0.12;
+pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.08;
+// H2-Saisonspeicher: 0.10 × Demand. Bei e100 ~183 TWh, bei 2025 ~47 TWh.
+// Über Agora-Konsens 70-80 TWh, weil bei e100-Demand mehr Saisonpufferung nötig.
+pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.10;
 pub const EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER: f64 = 1.8;
+// Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
+pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 70.0;
 
 pub const H2_IMPORT_TWH_FRACTION_OF_DEMAND: f64 = 0.15;
-pub const STROM_IMPORT_GW_CAP: f64 = 20.0;
-pub const STROM_IMPORT_EMISSION_G_PER_KWH: f64 = 100.0;
+// Strom-Import-Cap proportional zur Demand (statt absolut 20 GW): typisch ~1.1 % der Last
+// als Cap-Leistung; bei 466 TWh → 5 GW (~22 TWh/a bei 50 % Auslastung; konsistent mit
+// Ariadne 94 TWh bei 1100 TWh Demand), bei 1830 TWh → 20 GW (~88 TWh/a).
+// Hintergrund: EU-NTC-Ausbau-Ziel 2030 ~25-30 GW, aber Nachbarländer haben in 2045 selten
+// strukturelle Überschüsse — Import primär als Flex-Puffer, nicht als Säule.
+pub const STROM_IMPORT_GW_PER_TWH: f64 = 0.011;
+// Emissionsfaktor 25 g/kWh: grüner H2-Import (Elektrolyse mit RE in MENA/Skandinavien/AUS),
+// inkl. Transport-Verluste 5-10 g (Liquefaktion oder Ammoniak-Carrier). Konsistent mit
+// "100ee"-Label. Blauer H2 (CCS, ~100 g/kWh) wäre Inkonsistenz zum Preset-Namen.
+pub const STROM_IMPORT_EMISSION_G_PER_KWH: f64 = 25.0;
 
 pub fn clamp(value: f64, min: f64, max: f64) -> f64 {
     value.max(min).min(max)
@@ -59,7 +77,26 @@ pub fn variable_re_gw(target_twh: f64, share: f64, total_share: f64, yield_twh_p
 
 pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_onshore: f64) -> f64 {
     let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    (target_twh * share / total_share) / yield_offshore.max(0.1)
+    let raw_gw = (target_twh * share / total_share) / yield_offshore.max(0.1);
+    raw_gw.min(EE_WIND_OFFSHORE_MAX_GW)
+}
+
+// Wenn Wind off gecappt: H2-Import deckt den Energie-Shortfall ab (statt mehr PV wie lokal).
+// Begründung: Import-Pfad rechtfertigt sich gerade durch Limits in inländischer Erzeugung.
+pub fn h2_import_compensation_twh(
+    target_twh: f64,
+    share_wind_off: f64,
+    total_share: f64,
+    yield_wind_onshore: f64,
+) -> f64 {
+    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
+    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_offshore.max(0.1);
+    let wind_off_shortfall_gw = (wind_off_raw_gw - EE_WIND_OFFSHORE_MAX_GW).max(0.0);
+    wind_off_shortfall_gw * yield_offshore
+}
+
+pub fn strom_import_gw_cap(demand_twh: f64) -> f64 {
+    demand_twh * STROM_IMPORT_GW_PER_TWH
 }
 
 pub fn battery_power_gw(demand_twh: f64) -> f64 {
@@ -101,8 +138,33 @@ mod tests {
         // e100-Demand 1830 TWh: H2-Import ~275 TWh (Agora 270 TWh × 1.02 Skalierung)
         let h2_imp = h2_import_twh(1830.0);
         assert!((h2_imp - 274.5).abs() < 1e-6);
-        // H2-Saisonspeicher ~73 TWh (Agora 70-80, Studien-Median)
+        // H2-Saisonspeicher 0.10 × 1830 = 183 TWh (über Agora 70-80, weil hohe e100-Demand)
         let h2_energy = h2_energy_gwh(1830.0);
-        assert!((h2_energy - 73_200.0).abs() < 1e-6);
+        assert!((h2_energy - 183_000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn charge_higher_than_discharge() {
+        assert!(EE_H2_CHARGE_PER_TWH > EE_H2_DISCHARGE_PER_TWH);
+    }
+
+    #[test]
+    fn wind_offshore_capped_at_70_gw() {
+        let result = wind_offshore_gw(10_000.0, 0.25, 1.0, 2.0);
+        assert!((result - EE_WIND_OFFSHORE_MAX_GW).abs() < 1e-6);
+    }
+
+    #[test]
+    fn strom_import_cap_scales_with_demand() {
+        // 466 TWh → ~5 GW; 1830 TWh → ~20 GW
+        assert!((strom_import_gw_cap(466.0) - 5.126).abs() < 0.01);
+        assert!((strom_import_gw_cap(1830.0) - 20.13).abs() < 0.01);
+    }
+
+    #[test]
+    fn import_emission_is_green_h2() {
+        // 25 g/kWh = grüner H2 inkl. Transport (Elektrolyse-RE-betrieben, MENA/Skandinavien).
+        // Blauer H2 mit CCS wäre ~100 g/kWh und würde "100ee"-Label widersprechen.
+        assert!(STROM_IMPORT_EMISSION_G_PER_KWH < 50.0);
     }
 }

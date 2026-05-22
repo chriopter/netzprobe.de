@@ -30,7 +30,7 @@ export const dataPackageIds = {
   versorgungHistorisch2025: 'historisch-2025',
   versorgungHistorisch2017: 'historisch-2017',
   versorgung100EeNoImport: '100ee-noimport',
-  versorgung50Ee50Import: '50ee-50import',
+  versorgung100EeImport: '100ee-import',
   versorgung2025Skaliert: '2025-skaliert',
   coreModel: 'kern',
   feedInFactors2025: 'einspeisefaktoren-2025',
