@@ -78,7 +78,7 @@
       {
         "name": "anlagenFlaeche",
         "unit": "Objekt",
-        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+        "description": "Flächenbedarf in DE: anlage (direkt versiegelt) + wirkung (faktisch blockiert; keine andere Nutzung mehr möglich) in km²/GW. NICHT enthalten: politisch ausgewiesene Vorrangflächen (z. B. WindBG 2 %-Ziel), die faktisch weiter doppelgenutzt werden."
       },
       {
         "name": "vorFlaeche",
