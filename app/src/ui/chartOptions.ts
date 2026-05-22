@@ -212,6 +212,28 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
 };
 
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
+const tooltipMaxWidth = (viewport?: ChartViewport) => {
+  const width = viewport?.width ?? 0;
+  if (width > 0 && width < 420) return Math.max(244, width - 28);
+  if (width > 0 && width < 640) return Math.min(320, width - 32);
+  return 360;
+};
+
+const tooltipPosition = (viewport?: ChartViewport) => (
+  point: [number, number],
+  _params: unknown,
+  _dom: unknown,
+  _rect: unknown,
+  size: { contentSize: [number, number]; viewSize: [number, number] },
+) => {
+  const margin = isCompactChart(viewport) ? 8 : 12;
+  const [contentWidth, contentHeight] = size.contentSize;
+  const [viewWidth, viewHeight] = size.viewSize;
+  const x = Math.min(Math.max(point[0] + margin, margin), Math.max(margin, viewWidth - contentWidth - margin));
+  const y = Math.min(Math.max(point[1] + margin, margin), Math.max(margin, viewHeight - contentHeight - margin));
+  return [x, y];
+};
+
 const areaSeries = (name: string, color: string, data: number[], mode: ChartMode) => ({
   name,
   type: 'line' as const,
@@ -238,30 +260,47 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
   // farbige Punkte / Bold / Muted-Zeilen.
+  const compactTooltip = isCompactChart(viewport);
+  const maxTooltipWidth = tooltipMaxWidth(viewport);
   const dot = (color: string) => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle"></span>`;
   const square = (color: string) => `<span style="display:inline-block;width:8px;height:8px;background:${color};margin-right:4px;vertical-align:middle"></span>`;
   const bold = (text: string) => `<b style="color:#111827">${text}</b>`;
   const muted = (text: string) => `<span style="color:#71717a">${text}</span>`;
+  const row = (content: string) => `<div style="margin-top:4px">${content}</div>`;
+  const detailLine = (content: string) => compactTooltip ? '' : `<div style="margin-left:12px;margin-top:2px;color:#71717a">${content}</div>`;
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: {
       trigger: 'axis',
+      triggerOn: 'mousemove|click',
+      confine: true,
+      appendToBody: false,
+      enterable: false,
+      position: tooltipPosition(viewport),
       backgroundColor: 'rgba(255,255,255,.96)',
       borderColor: '#e5e7eb',
+      padding: compactTooltip ? [8, 9] : [10, 12],
       textStyle: { color: '#111827', fontSize: 12 },
+      extraCssText: [
+        `max-width:${maxTooltipWidth}px`,
+        'white-space:normal',
+        'overflow-wrap:anywhere',
+        'line-height:1.35',
+        'box-shadow:0 12px 30px rgba(24,24,27,.12)',
+      ].join(';'),
       formatter: (raw: unknown) => {
         const params = Array.isArray(raw) ? raw as Array<{ dataIndex: number }> : [];
         const index = params[0]?.dataIndex ?? 0;
         const hour = chartHours[index];
         if (!hour) return '';
-        const lines = [bold(shortDateLabel(hour))];
+        const lines = [`<div>${bold(shortDateLabel(hour))}</div>`];
         for (const group of MIX_GROUPS) {
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
           const total = active.reduce((sum, leaf) => sum + valueOf(hour, leaf.key), 0);
-          const detail = active.map(leaf => `${dot(leaf.color)}${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
-          lines.push(`${dot(group.color)}${group.label}: ${bold(`${fmt.format(total)} GW`)}<br><span style="margin-left:12px">${muted(detail)}</span>`);
+          const leafDetails = active.map(leaf => `${dot(leaf.color)}${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
+          lines.push(row(`${dot(group.color)}${group.label}: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(leafDetails))}`));
         }
         {
           const parts: string[] = [];
@@ -272,15 +311,15 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
             const total = (visibility.batterieDischargeGW ? hour.batterieDischargeGW : 0)
               + (visibility.pumpspeicherDischargeGW ? hour.pumpspeicherDischargeGW : 0)
               + (visibility.h2DischargeGW ? hour.h2DischargeGW : 0);
-            lines.push(`${dot('#0d9488')}Speicher: ${bold(`${fmt.format(total)} GW`)}<br><span style="margin-left:12px">${muted(parts.join(' · '))}</span>`);
+            lines.push(row(`${dot('#0d9488')}Speicher: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(parts.join(' · ')))}`));
           }
         }
-        if (visibility.importGW) lines.push(`${dot('#dc2626')}Import: ${bold(`${fmt.format(hour.importGW)} GW`)}`);
-        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`);
-        if (hour.exportGW > 0) lines.push(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`);
-        if (hour.dataBoundaryResidualGW !== 0) lines.push(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`);
-        if (visibility.loadGW) lines.push(`${dot('#111827')}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`);
-        return lines.join('<br>');
+        if (visibility.importGW) lines.push(row(`${dot('#dc2626')}Import: ${bold(`${fmt.format(hour.importGW)} GW`)}`));
+        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
+        if (hour.exportGW > 0) lines.push(row(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`));
+        if (hour.dataBoundaryResidualGW !== 0) lines.push(row(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`));
+        if (visibility.loadGW) lines.push(row(`${dot('#111827')}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`));
+        return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
       },
     },
     legend: { show: false },

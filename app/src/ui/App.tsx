@@ -1513,17 +1513,21 @@ type FlaecheRow = {
   wirkungKm2: number;
   spezifischKm2PerGW: number;
   spezifischKm2PerGWh?: number;
+  spezifischKm2PerTWh?: number;
+  twhPerGWa?: number;
   vorFlaecheKm2?: number;
+  vorFlaecheAuslandKm2?: number;
   vorFlaecheLand?: string;
   vorFlaecheTyp?: string;
   kategorie?: string;
 };
 
 function flaecheRows(scenario: Scenario): FlaecheRow[] {
-  // Holt jeweils anlagenFlaeche + vorFlaeche aus dem Paket und multipliziert
-  // mit dem aktuellen Slider-Wert. Speicher kombinieren GW- und GWh-Term.
+  // Holt jeweils anlagenFlaeche + vorFlaeche + referenceYield aus dem Paket und
+  // multipliziert mit dem aktuellen Slider-Wert. Speicher kombinieren GW/GWh-Term.
   const getF = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.anlagenFlaeche ?? {};
   const getV = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.vorFlaeche;
+  const getY = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.referenceYield;
   const getS = (id: string) => (uiManifest.storage as Record<string, any>)[id]?.anlagenFlaeche ?? {};
 
   const erz: Array<[string, string, number, string]> = [
@@ -1540,14 +1544,27 @@ function flaecheRows(scenario: Scenario): FlaecheRow[] {
   const erzRows: FlaecheRow[] = erz.map(([id, label, gw, key]) => {
     const f = getF(key);
     const v = getV(key);
+    const y = getY(key);
+    const twhPerGWa = y?.twhPerGWa;
+    const km2PerGW = (f.anlageKm2PerGW ?? 0) + (f.wirkungKm2PerGW ?? 0);
+    // Nur DE-Inland-Vorfläche zählt für Bilanz und km²/TWh (methodische Konsistenz:
+    // PV-Modulherstellung China zählt auch nicht). Auslands-Vorfläche bleibt im
+    // Detail sichtbar, aber nicht in Summe.
+    const vorKm2PerGW = v?.km2PerGW ?? 0;
+    const isInland = v?.land === 'DE';
+    const inlandVorKm2PerGW = isInland ? vorKm2PerGW : 0;
+    const km2PerTWh = twhPerGWa && twhPerGWa > 0 ? (km2PerGW + inlandVorKm2PerGW) / twhPerGWa : undefined;
     return {
       id, label, gw,
       anlageKm2: gw * (f.anlageKm2PerGW ?? 0),
       wirkungKm2: gw * (f.wirkungKm2PerGW ?? 0),
-      spezifischKm2PerGW: (f.anlageKm2PerGW ?? 0) + (f.wirkungKm2PerGW ?? 0),
-      vorFlaecheKm2: v ? gw * (v.km2PerGW ?? 0) : undefined,
+      spezifischKm2PerGW: km2PerGW,
+      spezifischKm2PerTWh: km2PerTWh,
+      twhPerGWa,
+      vorFlaecheKm2: v && isInland ? gw * vorKm2PerGW : undefined,
       vorFlaecheLand: v?.land,
       vorFlaecheTyp: v?.typ,
+      vorFlaecheAuslandKm2: v && !isInland ? gw * vorKm2PerGW : undefined,
       kategorie: f.kategorie,
     };
   });
@@ -1577,34 +1594,28 @@ function flaecheRows(scenario: Scenario): FlaecheRow[] {
 
 const DEUTSCHLAND_KM2 = 357580;
 const SAARLAND_KM2 = 2570;
-const saarlandTiles = Array.from({ length: Math.ceil(DEUTSCHLAND_KM2 / SAARLAND_KM2) }, (_, index) => index);
+const saarlandComparisonColumns = 12;
 
 function FlaechePanel({ scenario }: { scenario: Scenario }) {
   const rows = flaecheRows(scenario);
   const rows2025 = flaecheRows(scenarioBase);
   const sumAnlage = rows.reduce((s, r) => s + r.anlageKm2, 0);
   const sumWirkung = rows.reduce((s, r) => s + r.wirkungKm2, 0);
-  const sumGesamt = sumAnlage + sumWirkung;
-  const sum2025 = rows2025.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2, 0);
   const sumVor = rows.reduce((s, r) => s + (r.vorFlaecheKm2 ?? 0), 0);
+  const sumGesamt = sumAnlage + sumWirkung + sumVor;
+  const sum2025 = rows2025.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2 + (r.vorFlaecheKm2 ?? 0), 0);
 
   const fmtKm2 = (v: number) => v < 1 ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : v < 100 ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : Math.round(v).toLocaleString('de-DE');
 
   return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <FlaecheKpi label="Anlagenfläche" value={`${fmtKm2(sumAnlage)} km²`} color="#dc2626"/>
-      <FlaecheKpi label="Wirkfläche" value={`${fmtKm2(sumWirkung)} km²`} color="#16a34a"/>
       <FlaecheKpi label="Summe" value={`${fmtKm2(sumGesamt)} km²`} color="#18181b"/>
-      <FlaecheKpi label="gegen 2025" value={`${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×`} color="#71717a"/>
+      <FlaecheKpi label="DE-Anteil" value={`${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %`} color="#525252"/>
+      <FlaecheKpi label="Saarlands" value={`${(sumGesamt / SAARLAND_KM2).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×`} color="#525252"/>
+      <FlaecheKpi label="gegen 2025" value={sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–'} color="#71717a"/>
     </div>
 
-    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkung} rows={rows} fmtKm2={fmtKm2}/>
-
-    {sumVor > 0 && <div className="mt-6 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-600">
-      <p><span className="font-semibold text-zinc-900">Vorfläche:</span> {Math.round(sumVor).toLocaleString('de-DE')} km². {rows.filter(r => r.vorFlaecheKm2 && r.vorFlaecheKm2 > 0).map(r => `${r.label} ${Math.round(r.vorFlaecheKm2!).toLocaleString('de-DE')} km²`).join('; ')}.</p>
-    </div>}
-
-    <p className="mt-7 text-[10px] text-zinc-400">Quellen je Technologie in der Wiki (model/erzeugung/*/package.json → anlagenFlaeche.source). Werte sind realistische DE-Mittelwerte, keine Best-Case-Packung.</p>
+    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2}/>
   </div>;
 }
 
@@ -1620,7 +1631,7 @@ function FlaecheKpi({ label, value, color }: { label: string; value: string; col
 
 function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const sumGesamt = rows.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2, 0);
+  const sumGesamt = rows.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2 + (r.vorFlaecheKm2 ?? 0), 0);
   const toggle = (id: string) => setExpanded(prev => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id);
@@ -1639,10 +1650,13 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
       </thead>
       <tbody className="text-zinc-700">
         {rows.map(row => {
-          const summe = row.anlageKm2 + row.wirkungKm2;
+          const summe = row.anlageKm2 + row.wirkungKm2 + (row.vorFlaecheKm2 ?? 0);
           const dim = row.gw === 0;
           const specGwhFmt = row.spezifischKm2PerGWh && row.spezifischKm2PerGWh > 0
             ? ` + ${row.spezifischKm2PerGWh.toLocaleString('de-DE', { maximumFractionDigits: 4 })} /GWh`
+            : '';
+          const km2PerTWhFmt = row.spezifischKm2PerTWh && row.twhPerGWa
+            ? ` · ${row.spezifischKm2PerTWh.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km²/TWh (Yield ${row.twhPerGWa.toLocaleString('de-DE', { maximumFractionDigits: 1 })} TWh/GW·a)`
             : '';
           const isOpen = expanded.has(row.id);
           return <Fragment key={row.id}>
@@ -1662,9 +1676,11 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
               <td className="py-3"/>
               <td colSpan={3} className="py-3">
                 <dl className="grid gap-2">
-                  <FlaecheDetailTerm label="Spezifisch" value={`${row.spezifischKm2PerGW.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km²/GW${specGwhFmt}`}/>
+                  <FlaecheDetailTerm label="Spezifisch" value={`${row.spezifischKm2PerGW.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km²/GW${specGwhFmt}${km2PerTWhFmt}`}/>
                   <FlaecheDetailTerm label="Anlagenfläche" value={`${fmtKm2(row.anlageKm2)} km²`}/>
                   <FlaecheDetailTerm label="Wirkfläche" value={`${fmtKm2(row.wirkungKm2)} km²`}/>
+                  {row.vorFlaecheKm2 !== undefined && row.vorFlaecheKm2 > 0 && <FlaecheDetailTerm label="Vorfläche" value={`${fmtKm2(row.vorFlaecheKm2)} km² (DE)${row.vorFlaecheTyp ? ` · ${row.vorFlaecheTyp}` : ''}`}/>}
+                  {row.vorFlaecheAuslandKm2 !== undefined && row.vorFlaecheAuslandKm2 > 0 && <FlaecheDetailTerm label="Vorfläche Ausland" value={`${fmtKm2(row.vorFlaecheAuslandKm2)} km² (${row.vorFlaecheLand ?? 'extern'})${row.vorFlaecheTyp ? ` · ${row.vorFlaecheTyp}` : ''} — nicht in Summe (methodische Konsistenz: PV-Modulfertigung China zählt auch nicht)`}/>}
                   <FlaecheDetailTerm label="Kategorie" value={row.kategorie ?? '–'}/>
                 </dl>
               </td>
@@ -1691,36 +1707,52 @@ function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
   </div>;
 }
 
-function FlaecheMap({ anlageKm2, wirkungKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
-  const totalKm2 = anlageKm2 + wirkungKm2;
+function FlaecheMap({ anlageKm2, wirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
   return <section className="mt-7 grid gap-5">
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
       <div className="min-w-0">
-        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} fmtKm2={fmtKm2}/>
-        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} fmtKm2={fmtKm2}/>
+        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
       </div>
       <div className="flex min-w-0 flex-col gap-5">
+        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2}/>
         <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
       </div>
     </div>
   </section>;
 }
 
-function FlaecheMapCard({ anlageKm2, wirkungKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; fmtKm2: (value: number) => string }) {
+function FlaecheMapCard({ anlageKm2, wirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
   useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, fmtKm2);
   const anlagePct = anlageKm2 / DEUTSCHLAND_KM2 * 100;
   const wirkungPct = wirkungKm2 / DEUTSCHLAND_KM2 * 100;
+  const vorPct = vorFlaecheKm2 / DEUTSCHLAND_KM2 * 100;
+  // vorFlaeche-Länder gruppieren für Label-Anzeige
+  const vorByLand: Record<string, number> = {};
+  for (const r of rows) {
+    if (r.vorFlaecheKm2 && r.vorFlaecheKm2 > 0) {
+      const land = r.vorFlaecheLand ?? '–';
+      vorByLand[land] = (vorByLand[land] ?? 0) + r.vorFlaecheKm2;
+    }
+  }
+  const vorLandLabel = Object.entries(vorByLand)
+    .sort((a, b) => b[1] - a[1])
+    .map(([land, km2]) => `${land} ${fmtKm2(km2)}`)
+    .join(' · ');
   return <div>
     <div className="flex items-baseline justify-between gap-4">
       <h2 className="text-lg font-semibold text-zinc-950">Flächenbedarf in Deutschland</h2>
-      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2)} km² gesamt</span>
+      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
     </div>
     <div className="mt-4 bg-white">
       <div id="flaeche-map" className="h-[360px] w-full"/>
       <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={`${anlagePct.toLocaleString('de-DE', { maximumFractionDigits: anlagePct < 1 ? 2 : 1 })} %`} meta="DE"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={`${wirkungPct.toLocaleString('de-DE', { maximumFractionDigits: wirkungPct < 1 ? 2 : 1 })} %`} meta="DE"/>
+        {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={`${vorPct.toLocaleString('de-DE', { maximumFractionDigits: vorPct < 1 ? 2 : 1 })} %`} meta={vorLandLabel || 'Brennstoff/Anbau'}/>}
       </div>
+      <p className="mt-3 text-xs leading-5 text-zinc-500">
+        Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
+      </p>
     </div>
   </div>;
 }
@@ -1734,26 +1766,34 @@ function LegendMetric({ color, label, value, meta }: { color: string; label: str
   </div>;
 }
 
-function SaarlandComparison({ anlageKm2, wirkungKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; fmtKm2: (value: number) => string }) {
-  const totalKm2 = anlageKm2 + wirkungKm2;
+function SaarlandComparison({ anlageKm2, wirkungKm2, vorFlaecheKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string }) {
+  const totalKm2 = anlageKm2 + wirkungKm2 + vorFlaecheKm2;
   const saarlands = totalKm2 / SAARLAND_KM2;
   const anlageTiles = anlageKm2 / SAARLAND_KM2;
   const wirkungTiles = wirkungKm2 / SAARLAND_KM2;
-  return <div className="group relative mt-7 border-t border-zinc-100 bg-white pt-5">
+  const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
+  const visibleTileCount = Math.max(saarlandComparisonColumns, Math.ceil(saarlands / saarlandComparisonColumns) * saarlandComparisonColumns);
+  const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
+  return <div className="group relative border-b border-zinc-100 bg-white pb-5">
     <div className="flex items-baseline justify-between gap-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Saarland-Vergleich</h4>
-      <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands gesamt</span>
+      <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands</span>
     </div>
-    <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] gap-1.5" aria-label={`Entspricht ${saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands`}>
+    <div
+      className="mt-4 grid grid-cols-12 gap-1.5"
+      aria-label={`Entspricht ${saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands`}
+    >
       {saarlandTiles.map(index => {
         const totalFill = Math.max(0, Math.min(1, saarlands - index));
         const anlageFill = Math.max(0, Math.min(totalFill, anlageTiles - index));
+        const wirkungFill = Math.max(0, Math.min(totalFill - anlageFill, wirkungTiles - Math.max(0, index - anlageTiles)));
         const redPct = anlageFill > 0 ? Math.max(8, Math.round(anlageFill * 100)) : 0;
-        const greenPct = Math.round(totalFill * 100);
+        const greenEnd = redPct + (wirkungFill > 0 ? Math.max(8, Math.round(wirkungFill * 100)) : 0);
+        const totalPct = Math.round(totalFill * 100);
         return <span
           key={index}
           className="h-3.5 rounded-[3px] border border-zinc-200 bg-zinc-100"
-          style={greenPct > 0 ? { background: `linear-gradient(90deg, #dc2626 0 ${redPct}%, #16a34a ${redPct}% ${greenPct}%, #f4f4f5 ${greenPct}% 100%)` } : undefined}
+          style={totalPct > 0 ? { background: `linear-gradient(90deg, #dc2626 0 ${redPct}%, #16a34a ${redPct}% ${greenEnd}%, #f59e0b ${greenEnd}% ${totalPct}%, #f4f4f5 ${totalPct}% 100%)` } : undefined}
         />;
       })}
     </div>
@@ -1761,6 +1801,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, fmtKm2 }: { anlageKm2: numb
       <div className="grid gap-2">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={anlageTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={wirkungTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
+        {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={vorTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>}
       </div>
       <div className="mt-3 border-t border-zinc-100 pt-2 text-zinc-500">
         <span className="font-medium tabular-nums text-zinc-900">{fmtKm2(totalKm2)} km²</span> gesamt. Eine Kachel entspricht <span className="font-medium tabular-nums text-zinc-900">2.570 km²</span>.
