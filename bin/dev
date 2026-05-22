@@ -1,14 +1,53 @@
 #!/usr/bin/env bash
-# Startet API und Vite-Dev-Server.
+# Startet API (auto-restart bei Rust/JSON-Änderungen) und Vite-Dev-Server.
+# Watcht server/ und model/ — bei Änderung an *.rs, *.toml oder *.json
+# wird der API-Server (cargo run) neu gestartet.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-bin/api &
-api_pid="$!"
+api_pid=""
+
+start_api() {
+  echo "[bin/dev] Starte API (cargo run)..."
+  cargo run --manifest-path server/Cargo.toml &
+  api_pid="$!"
+}
+
+stop_api() {
+  if [[ -n "$api_pid" ]] && kill -0 "$api_pid" 2>/dev/null; then
+    kill "$api_pid" 2>/dev/null || true
+    wait "$api_pid" 2>/dev/null || true
+  fi
+  api_pid=""
+}
+
+watch_loop() {
+  if ! command -v inotifywait >/dev/null 2>&1; then
+    echo "[bin/dev] inotifywait nicht gefunden — auto-restart deaktiviert."
+    echo "[bin/dev] Installation: pacman -S inotify-tools (Arch) bzw. apt install inotify-tools (Debian/Ubuntu)."
+    return 0
+  fi
+  while true; do
+    if ! inotifywait -qq -e modify,create,delete,move -r \
+        --exclude '(target|node_modules|dist|\.git|tsbuildinfo)' \
+        server model Cargo.toml Cargo.lock 2>/dev/null; then
+      sleep 0.5
+      continue
+    fi
+    echo ""
+    echo "[bin/dev] Änderung erkannt — restarte API..."
+    stop_api
+    sleep 0.3
+    start_api
+  done
+}
 
 cleanup() {
-  kill "$api_pid" 2>/dev/null || true
+  stop_api
+  jobs -p | xargs -r kill 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
+start_api
+watch_loop &
 npm run vite
