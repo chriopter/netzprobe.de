@@ -116,12 +116,12 @@
     },
     "powerGW": {
       "min": 0,
-      "max": 500,
+      "max": 1000,
       "step": 10
     },
     "energyGWh": {
       "min": 0,
-      "max": 5000,
+      "max": 8000,
       "step": 50
     },
     "anlagenFlaeche": {

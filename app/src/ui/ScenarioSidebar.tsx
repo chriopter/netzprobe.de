@@ -524,14 +524,14 @@ function ErzeugungSection({
   }));
   const activeId: SupplyPillId = supplyPreset;
   const activeWikiId = supplyPillWikiIds[activeId];
-  const visibleSupplyOrder: SupplyPillId[] = ['historical-2025', '100ee-noimport', 'custom'];
+  const visibleSupplyOrder: SupplyPillId[] = ['historical-2025', '100ee-noimport', '100ee-import', 'custom'];
   const visibleSupplyPillIds = new Set<SupplyPillId>(visibleSupplyOrder);
   const visibleSupplyPills = visibleSupplyOrder
     .map(id => pillPresets.find(p => p.id === id))
     .filter((p): p is NonNullable<typeof p> => !!p);
   const supplyDropdownGroups: ReadonlyArray<PresetOptionGroup<SupplyPillId>> = [
     { title: 'Fix', presets: pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'historical-2017' || p.id === 'custom') },
-    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '50ee-50import' || p.id === '2025-skaliert') },
+    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '100ee-import' || p.id === '2025-skaliert') },
   ];
 
   const generationTotalGW = scenario.generation.pvInstalledGW

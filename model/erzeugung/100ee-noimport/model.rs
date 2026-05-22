@@ -18,13 +18,28 @@
 pub const EE_PV_SHARE: f64 = 0.30;
 pub const EE_WIND_ON_SHARE: f64 = 0.40;
 pub const EE_WIND_OFF_SHARE: f64 = 0.30;
-pub const EE_CUSHION: f64 = 1.25;
-pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.1;
-pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 0.5;
-pub const EE_H2_CHARGE_PER_TWH: f64 = 0.04;
-pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.08;
-pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.06;
+// Cushion 1.15 (Iteration 3 — kostenoptimal-näher): Studien-Konsens (Agora 1.15-1.20).
+// Vorher 1.25 führte zu 184 % EE-Anteil — zuviel Curtailment (Verschwendung). Mit 1.15
+// landen wir bei ~130 % EE-Anteil, was näher am Optimum ist. Die Speicher-Aufrüstung
+// (mehr Charge, größerer H2-Speicher) kompensiert den geringeren Überbau.
+pub const EE_CUSHION: f64 = 1.15;
+// Batterie: 0.4 GW/TWh + 2.0 GWh/TWh (C-Rate 5h). Aggressiv für Peak-Last-Deckung +
+// Tag/Nacht-Glättung in vollelektrifiziertem Szenario.
+pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.4;
+pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 2.0;
+// H2 Charge 0.30 GW/TWh: muss Sommer-PV-Spitzen aggressiv aufnehmen, weil Cushion geringer
+//   ist und damit Curtailment-Toleranz kleiner — Charge-Power kompensiert.
+// H2 Discharge 0.15 GW/TWh: deckt Peak-Last gemeinsam mit Batterie.
+pub const EE_H2_CHARGE_PER_TWH: f64 = 0.30;
+pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.15;
+// H2-Saisonspeicher 0.50 × Demand: bei 1830 TWh ~915 TWh. Größer als Iteration 2 (732),
+// weil bei niedrigerem Cushion (1.15 statt 1.25) der saisonale Mismatch stärker durch
+// Speicher gepuffert werden muss. Salzkavernen-Potenzial DE 9400 TWh (Fraunhofer IEG) → 10 %.
+pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.50;
 pub const EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER: f64 = 1.8;
+// Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
+// Floating-Offshore könnte +20-30 GW, aber kommerziell erst nach 2040 — daher Hard-Cap.
+pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 70.0;
 
 pub fn clamp(value: f64, min: f64, max: f64) -> f64 {
     value.max(min).min(max)
@@ -59,7 +74,25 @@ pub fn variable_re_gw(target_twh: f64, share: f64, total_share: f64, yield_twh_p
 
 pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_onshore: f64) -> f64 {
     let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    (target_twh * share / total_share) / yield_offshore.max(0.1)
+    let raw_gw = (target_twh * share / total_share) / yield_offshore.max(0.1);
+    raw_gw.min(EE_WIND_OFFSHORE_MAX_GW)
+}
+
+// Falls Wind offshore gecappt wird (>70 GW Anforderung), kompensiert PV den Energieausfall.
+// PV ist mengenmäßig elastischer (Dachflächen, Agri-PV, Konversionsflächen) als Wind onshore
+// (2 %-Vorrangflächen-Limit). Rückgabe: zusätzliche PV-GW, die den Wind-off-Shortfall ersetzen.
+pub fn pv_compensation_for_wind_offshore_cap(
+    target_twh: f64,
+    share_wind_off: f64,
+    total_share: f64,
+    yield_wind_onshore: f64,
+    yield_pv: f64,
+) -> f64 {
+    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
+    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_offshore.max(0.1);
+    let wind_off_shortfall_gw = (wind_off_raw_gw - EE_WIND_OFFSHORE_MAX_GW).max(0.0);
+    let shortfall_twh = wind_off_shortfall_gw * yield_offshore;
+    shortfall_twh / yield_pv.max(0.1)
 }
 
 pub fn battery_power_gw(demand_twh: f64) -> f64 {
@@ -88,15 +121,33 @@ mod tests {
 
     #[test]
     fn computes_storage_rules_for_466_twh() {
-        assert!((battery_power_gw(466.0) - 46.6).abs() < 1e-9);
-        assert!((battery_energy_gwh(466.0) - 233.0).abs() < 1e-9);
-        // H2-Energie 0.06 × 466 × 1000 = 27_960 GWh (statt vorher 69_900)
-        assert!((h2_energy_gwh(466.0) - 27_960.0).abs() < 1e-9);
+        // Batterie 0.4 × 466 = 186.4 GW, 2.0 × 466 = 932 GWh
+        assert!((battery_power_gw(466.0) - 186.4).abs() < 1e-9);
+        assert!((battery_energy_gwh(466.0) - 932.0).abs() < 1e-9);
+        // H2-Energie 0.50 × 466 × 1000 = 233_000 GWh = 233 TWh
+        assert!((h2_energy_gwh(466.0) - 233_000.0).abs() < 1e-9);
     }
 
     #[test]
     fn mix_shares_sum_to_one() {
         let total = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
         assert!((total - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn charge_higher_than_discharge() {
+        // Elektrolyse > Rückverstromung: Sommer-Überschuss füllt Speicher über viele Stunden,
+        // Rückverstromung deckt nur Winter-Spitzen.
+        assert!(EE_H2_CHARGE_PER_TWH > EE_H2_DISCHARGE_PER_TWH);
+    }
+
+    #[test]
+    fn wind_offshore_capped_at_70_gw() {
+        // Bei sehr hohem Target sollte Wind off bei 70 GW kappen.
+        let huge_target = 10_000.0;
+        let yield_wind = 2.0;
+        let total_share = 1.0;
+        let result = wind_offshore_gw(huge_target, 0.30, total_share, yield_wind);
+        assert!((result - EE_WIND_OFFSHORE_MAX_GW).abs() < 1e-6);
     }
 }

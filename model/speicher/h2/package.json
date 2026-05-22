@@ -126,17 +126,17 @@
     },
     "chargePowerGW": {
       "min": 0,
-      "max": 300,
+      "max": 600,
       "step": 5
     },
     "dischargePowerGW": {
       "min": 0,
-      "max": 300,
+      "max": 500,
       "step": 5
     },
     "energyGWh": {
       "min": 0,
-      "max": 500000,
+      "max": 1500000,
       "step": 5000
     },
     "anlagenFlaeche": {

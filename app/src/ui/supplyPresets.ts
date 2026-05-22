@@ -1,19 +1,19 @@
-export type SupplyPresetId = 'historical-2025' | 'historical-2017' | '100ee-noimport' | '50ee-50import' | '2025-skaliert';
+export type SupplyPresetId = 'historical-2025' | 'historical-2017' | '100ee-noimport' | '100ee-import' | '2025-skaliert';
 export type SupplyPillId = SupplyPresetId | 'custom';
 
 export const supplyPresetIds: SupplyPresetId[] = [
-  'historical-2025', 'historical-2017', '100ee-noimport', '50ee-50import', '2025-skaliert',
+  'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '2025-skaliert',
 ];
 
 export const supplyPillIds: SupplyPillId[] = [
-  'historical-2025', 'historical-2017', 'custom', '100ee-noimport', '50ee-50import', '2025-skaliert',
+  'historical-2025', 'historical-2017', 'custom', '100ee-noimport', '100ee-import', '2025-skaliert',
 ];
 
 export const supplyPillLabels: Record<SupplyPillId, string> = {
   'historical-2025': '2025',
   'historical-2017': '2017',
-  '100ee-noimport': '100% EE',
-  '50ee-50import': '50% EE + 50% H₂-Import',
+  '100ee-noimport': '100% EE lokal',
+  '100ee-import': '100% EE + Import',
   '2025-skaliert': '2025 hochskaliert',
   'custom': 'Manuell',
 };
@@ -21,8 +21,8 @@ export const supplyPillLabels: Record<SupplyPillId, string> = {
 export const supplyPillDescriptions: Record<SupplyPillId, string> = {
   'historical-2025': 'Beobachtete Erzeugung und Last 2025 (Pass-Through)',
   'historical-2017': 'Beobachtete Erzeugung und Last 2017 — Kernkraft on, mehr Kohle, ~36% EE',
-  '100ee-noimport': 'Erneuerbar mit Speicher; Fossil und Import auf 0',
-  '50ee-50import': 'Halber RE-Mix, Rest über H₂-Import (~100 g/kWh)',
+  '100ee-noimport': 'Autark: 100% lokale EE-Erzeugung, kein Import — fordert großen Überbau und Saisonalspeicher',
+  '100ee-import': 'EE-Mix nach Studien-Konsens (Agora KN2045 / BMWK LFS3 / Ariadne) plus H₂- und Strom-Import',
   '2025-skaliert': 'Aktueller 2025-Mix proportional zur Last hochskaliert',
   'custom': 'Slider frei konfigurierbar; Dispatch läuft mit deinen Werten',
 };
@@ -31,7 +31,7 @@ export const supplyPillWikiIds: Record<SupplyPillId, string> = {
   'historical-2025': 'historisch-2025',
   'historical-2017': 'historisch-2017',
   '100ee-noimport': '100ee-noimport',
-  '50ee-50import': '50ee-50import',
+  '100ee-import': '100ee-import',
   '2025-skaliert': '2025-skaliert',
   'custom': 'kern',
 };
