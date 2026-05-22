@@ -338,8 +338,25 @@ type GenerationGroup = {
   summary: (scenario: Scenario) => string;
 };
 
+function formatCapacitySummary(value: number, baseline: number): string {
+  const multiplier = formatSummaryMultiplier(value, baseline);
+  return multiplier ? `${fmt0.format(value)} GW · ${multiplier}` : `${fmt0.format(value)} GW`;
+}
+
+function formatSummaryMultiplier(value: number, baseline: number | undefined): string | null {
+  if (!baseline || baseline <= 0) return null;
+  const ratio = value / baseline;
+  if (!Number.isFinite(ratio) || Math.abs(ratio - 1) < 0.005) return null;
+  if (ratio < 0.05) return '0×';
+  if (ratio < 0.995) return `${ratio.toFixed(2)}×`;
+  if (ratio < 9.95) return `${ratio.toFixed(1)}×`;
+  return `${Math.round(ratio)}×`;
+}
+
 function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] {
   const h = uiManifest.historisch2025;
+  const renewableBaseline = h.pvInstalledGW + h.windOnInstalledGW + h.windOffInstalledGW + h.biomasseInstalledGW + h.laufwasserInstalledGW;
+  const conventionalBaseline = h.gasInstalledGW + h.kohleInstalledGW;
   return [
     { id: 'erneuerbar', title: 'Erneuerbar', fields: [
       { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.installedGW.min,         max: erz.sources.pv.installedGW.max,         step: erz.sources.pv.installedGW.step,         baseline: h.pvInstalledGW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,  },
@@ -347,14 +364,14 @@ function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] 
       { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.installedGW.min,    max: erz.sources.windOff.installedGW.max,    step: erz.sources.windOff.installedGW.step,    baseline: h.windOffInstalledGW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
       { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.installedGW.min,   max: erz.sources.biomasse.installedGW.max,   step: erz.sources.biomasse.installedGW.step,   baseline: h.biomasseInstalledGW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
       { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.installedGW.min, max: erz.sources.laufwasser.installedGW.max, step: erz.sources.laufwasser.installedGW.step, baseline: h.laufwasserInstalledGW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
-    ], summary: (s) => `${fmt0.format(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW)} GW` },
+    ], summary: (s) => formatCapacitySummary(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW, renewableBaseline) },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
       { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.installedGW.min, max: erz.sources.kernkraft.installedGW.max, step: erz.sources.kernkraft.installedGW.step, baseline: h.kernkraftInstalledGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
-    ], summary: (s) => `${fmt0.format(s.generation.kernkraftInstalledGW)} GW` },
+    ], summary: (s) => formatCapacitySummary(s.generation.kernkraftInstalledGW, h.kernkraftInstalledGW) },
     { id: 'konventionell', title: 'Konventionell', fields: [
       { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.installedGW.min,   max: erz.sources.gas.installedGW.max,   step: erz.sources.gas.installedGW.step,   baseline: h.gasInstalledGW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
       { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.installedGW.min, max: erz.sources.kohle.installedGW.max, step: erz.sources.kohle.installedGW.step, baseline: h.kohleInstalledGW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
-    ], summary: (s) => `${fmt0.format(s.generation.gasInstalledGW + s.generation.kohleInstalledGW)} GW` },
+    ], summary: (s) => formatCapacitySummary(s.generation.gasInstalledGW + s.generation.kohleInstalledGW, conventionalBaseline) },
   ];
 }
 
