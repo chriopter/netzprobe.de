@@ -1,0 +1,70 @@
+{
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "100ee-import",
+  "domain": "erzeugung",
+  "kind": "composition",
+  "method": {
+    "title": "100% EE + Import",
+    "short": "EE-Mix nach Studien-Konsens (Agora KN2045 / BMWK LFS3 / Ariadne) plus H₂- und Strom-Import.",
+    "source": "Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien: Agora KN2045 (Demand 1270 TWh, PV 470 GW, H2-Import 270 TWh), BMWK Langfristszenarien 3 T45-H2 (H2-Import 100-150 TWh), dena Aufbruch Klimaneutralität (H2-Gesamt 458 TWh, Großteil Import), Ariadne Modellvergleich (H2-Import 60-250 TWh, Strom-Import 94 TWh).",
+    "sourceUrls": [
+      "https://www.agora-energiewende.de/publikationen/klimaneutrales-deutschland-2045-1",
+      "https://www.agora-verkehrswende.de/fileadmin/Projekte/2021/KNDE_2045_Langfassung/Klimaneutrales_Deutschland_2045_Langfassung.pdf",
+      "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php",
+      "https://www.dena.de/infocenter/dena-leitstudie-aufbruch-klimaneutralitaet/",
+      "https://ariadneprojekt.de/publikation/deutschland-auf-dem-weg-zur-klimaneutralitat-2045-szenarienreport/"
+    ],
+    "period": "laufend",
+    "resolution": "stündlich",
+    "unit": "GW, GWh, TWh",
+    "description": [
+      "**Komposition:** Realistischer 100%-EE-Pfad mit Import-Bilanzierung. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`), aber Strom- und H₂-Import sind gesetzt. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. PV, Wind onshore, Wind offshore und Speicher dimensioniert nach Studien-Konsens (Agora KN2045, BMWK LFS3, Ariadne). Variable EE-Anteile im Verhältnis `PV 35 % / Wind on 40 % / Wind off 25 %` (PV-lastiger als lokales Preset, weil Import den saisonalen Mismatch puffert).",
+      "**Werte:** Auslegungsziel `Jahres-RE = 1,10 × Demand − Biomasse − Laufwasser`. **Cushion 1,10** (statt 1,25 wie autark) ist niedriger, weil H₂-Import den Winter-Engpass abdeckt und weniger Überbau plus saisonaler Eigenerzeugung nötig ist. Speicher: Batterie `0,08 GW/TWh` und `0,4 GWh/TWh`; H₂-Saisonspeicher `0,04 × Demand` (~73 TWh bei 1830 TWh Demand — Agora-Konsens 70–80 TWh). **H₂-Import** `0,15 × Demand` = ~275 TWh bei e100 (Agora 270 TWh). **Strom-Import-Cap** 20 GW (entspricht ~94 TWh bei 50 % Auslastung, Ariadne-Wert).",
+      "**Anwendungsfall:** Realistischer Klimaneutralitäts-Pfad nach Studien-Konsens. Zeigt was passiert, wenn Deutschland Studien-typische Annahmen übernimmt: PV-Schwerpunkt im Inland, H₂ überwiegend importiert (MENA, Skandinavien, Kanada), Strom-Verbund mit EU für Spitzenausgleich. Im Vergleich zum lokal-Preset (`100ee-noimport`) sind installierte EE-Leistungen kleiner, dafür entsteht eine Import-Abhängigkeit (geopolitisches Risiko)."
+    ],
+    "overview": [
+      {
+        "label": "Mix-Anteile",
+        "value": "**EE-Verteilung:** `PV 35 %`, `Wind onshore 40 %`, `Wind offshore 25 %`. PV-lastiger als autark-Preset, weil H₂-Import den Winter-Mismatch abdeckt."
+      },
+      {
+        "label": "Cushion-Faktor",
+        "value": "**Auslegung:** `Jahres-RE ≥ 1,10 × Demand`. Niedriger als autark (1,25), weil Import den saisonalen Engpass puffert."
+      },
+      {
+        "label": "Speicher-Sizing",
+        "value": "**Batterie:** `0,08 GW/TWh` Leistung, `0,4 GWh/TWh` Energie. **H₂:** Elektrolyse `0,03 GW/TWh`, Rückverstromung `0,06 GW/TWh`, Saisonspeicher `0,04 × Demand × 1000 GWh`. Bei 1830 TWh: ~73 TWh — Agora-Konsens 70–80."
+      },
+      {
+        "label": "Handel",
+        "value": "**Strom-Import-Cap:** 20 GW (Emissionsfaktor 100 g/kWh). **H₂-Import:** `0,15 × Demand` TWh/Jahr (~275 TWh bei e100; Agora 270 TWh). **Export-Cap:** Default — Überschuss kann exportiert werden."
+      }
+    ],
+    "reasoning": [
+      "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
+      "target = max(0, demandTWh × 1,10 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (35%), WindOn (40%), WindOff (25%).",
+      "PV-GW = target × 0,35 / yieldPV. WindOn-GW = target × 0,40 / yieldWind. WindOff-GW = target × 0,25 / (yieldWind × 1,8).",
+      "H₂-Saisonspeicher = 0,04 × Demand × 1000 GWh.",
+      "H₂-Import = 0,15 × Demand TWh/Jahr.",
+      "Strom-Import-Cap = 20 GW kontinuierlich.",
+      "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung (100ee-import)."
+      }
+    ],
+    "caveats": [
+      "Mix-Anteile (35/40/25) orientiert an Agora KN2045 (470 PV + 180 Wind on + 73 Wind off = 38/29/12 % Wind-/PV-Erzeugung). Hier PV-lastiger weil Import den saisonalen Mismatch puffert.",
+      "H₂-Import-Annahme 0,15 × Demand entspricht Agora KN2045 (270 TWh bei 1270 TWh Demand). Studien-Range: BMWK LFS3 100-150 TWh, dena 250+ TWh, Ariadne 60-250 TWh.",
+      "Strom-Import-Cap 20 GW = ~94 TWh/a bei 50 % Auslastung (Ariadne-konform). Realistisch nur bei EU-Verbund-Solidarität.",
+      "Geopolitisches Risiko durch H₂-Import-Abhängigkeit (MENA, NA, KZ) ist im Modell nicht abgebildet — Import-Cap kann manuell auf 0 gesetzt werden um Stand-alone zu simulieren."
+    ],
+    "scripts": [
+      "erzeugung/100ee-import/model.rs"
+    ]
+  },
+  "parameters": {}
+}
