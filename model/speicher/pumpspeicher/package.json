@@ -80,6 +80,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 Einheit entspricht etwa Pumpspeicher Goldisthal (8,5 GWh)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
       }
     ],
     "caveats": [
@@ -90,7 +95,14 @@
     "file": "speicher/pumpspeicher/data.json",
     "scripts": [
       "speicher/pumpspeicher/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Goldisthal: Oberbecken 55 ha / 8,5 GWh ≈ 0,065 km²/GWh (`anlage`). Unterbecken Staudamm Schwarza 67 m / 18,9 Mio m³ ≈ 55 ha zusätzlicher Talverlust ≈ 0,05-0,06 km²/GW (`wirkung`). Markersbach 43,6 ha / ~4 GWh = 0,11 km²/GWh (flacher gestaut). DE-Mix nutzt teils bestehende Talsperren → wirkung 0,06 als konservativer Mittelwert. Standortgebunden auf Mittelgebirge mit ≥300 m Fallhöhe. Konsens 10 Experten.",
+      "sourceUrls": [
+        "https://de.wikipedia.org/wiki/Pumpspeicherwerk_Goldisthal",
+        "https://powerplants.vattenfall.com/de/goldisthal/"
+      ]
+    }
   },
   "parameters": {
     "roundtripEfficiency": 0.8,
@@ -112,6 +124,12 @@
       "min": 0,
       "max": 100,
       "step": 10
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.01,
+      "anlageKm2PerGWh": 0.06,
+      "wirkungKm2PerGW": 0.06,
+      "kategorie": "Stausee"
     }
   }
 }

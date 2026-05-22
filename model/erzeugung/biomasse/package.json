@@ -73,6 +73,16 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa 5-MW-Biomasse-HKW."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+      },
+      {
+        "name": "vorFlaeche",
+        "unit": "Objekt",
+        "description": "Brennstoff-/Anbau-Vorfläche kumuliert über Lebensdauer; oft im Ausland."
       }
     ],
     "caveats": [
@@ -83,7 +93,21 @@
     "file": "erzeugung/biomasse/data.json",
     "scripts": [
       "erzeugung/biomasse/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Biomasse-BHKW Anlagenkomplex inkl. Lagerung und Zufahrt. Werte aus typischen DE-Biogasanlagen 1-5 MW.",
+      "sourceUrls": []
+    },
+    "vorFlaeche": {
+      "source": "Sanity-Check via AGEE-Stat 2023: Biomasse-Strom 49,2 TWh ≈ 5,6 GW Dauerleistung. FNR-Pressemitteilung 2023: 2,48 Mio ha NawaRo gesamt, davon 1,37 Mio ha = 13.700 km² nur für Biogas. Biogas-Anteil am Biomasse-Strommix 64 %; Festbiomasse/Reststoffe ~0 km²/GW allokierbar (Koppelprodukt Forst). FNR Silomais 18.731 kWh/(ha·a) → ~4670 km²/GW Dauerleistung Silomais-Pfad. Gewichteter DE-Mittel: 3500 km²/GW stehende Anbaufläche. Cross-Check OWID/Lovering 2022: 58 000 ha/(TWh·a) × ~6 TWh/(GW·a) ≈ 3480 km²/GW dedicated crops — **exakter Treffer**. Van Zalk & Behrens 2018: Median 0,08 W/m² konsistent. Konsens 20 Experten (Range 2500-4500).",
+      "sourceUrls": [
+        "https://www.fnr.de/fileadmin/Projekte/2023/Mediathek/Broschuere_Basisdaten_Bioenergie_2023_web.pdf",
+        "https://www.fnr.de/presse/pressemitteilungen/aktuelle-mitteilungen/aktuelle-nachricht/anbau-nachwachsender-rohstoffe-2023-auf-knapp-25-mio-hektar-oder-rund-15-prozent-der-landwirtschaftlich-genutzten-flaeche",
+        "https://www.naturschutz-energiewende.de/fragenundantworten/flaecheneffizienz-erneuerbarer-energien-zur-stromerzeugung/",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "baseload",
@@ -102,6 +126,17 @@
       "min": 0,
       "max": 50,
       "step": 1
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.05,
+      "wirkungKm2PerGW": 0.1,
+      "kategorie": "Industrie"
+    },
+    "vorFlaeche": {
+      "km2PerGW": 3500,
+      "typ": "Anbau Energiepflanzen (DE-Mix 64 % Biogas / 20 % feste Biomasse / 16 % Bioabfall+Klär-/Deponiegas)",
+      "land": "DE",
+      "lebensdauerJahre": 25
     }
   }
 }

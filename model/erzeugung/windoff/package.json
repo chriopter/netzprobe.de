@@ -79,6 +79,11 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Offshore-Turbinen (14 MW)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
       }
     ],
     "caveats": [
@@ -90,7 +95,14 @@
     "file": "erzeugung/windoff/data.json",
     "scripts": [
       "erzeugung/windoff/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "BSH Flächenentwicklungsplan Offshore (N-9.1 158 km²/2 GW; N-9.3 106 km²/1,5 GW). Monopile-Fundamente und Konverterstation vernachlässigbar. Cross-Check Van Zalk & Behrens 2018: μ 4,2 W/m² offshore → bei DE-Offshore-CF 4200 Vlh ≈ 75 km²/GW Parkfläche (exakter Treffer).",
+      "sourceUrls": [
+        "https://www.bsh.de/DE/THEMEN/Offshore/Meeresfachplanung/Flaechenentwicklungsplan/flaechenentwicklungsplan_node.html",
+        "https://docs.wind-watch.org/Spatial-extents-power-generation.pdf"
+      ]
+    }
   },
   "parameters": {
     "mode": "variable-re",
@@ -110,6 +122,11 @@
       "min": 0,
       "max": 400,
       "step": 2
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.01,
+      "wirkungKm2PerGW": 75,
+      "kategorie": "See"
     }
   }
 }

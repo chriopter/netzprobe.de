@@ -80,6 +80,16 @@
         "name": "referenceScales",
         "unit": "Objekt",
         "description": "Größenanker zur Einordnung: 1 GW entspricht etwa Kohleblöcke (800 MW)."
+      },
+      {
+        "name": "anlagenFlaeche",
+        "unit": "Objekt",
+        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+      },
+      {
+        "name": "vorFlaeche",
+        "unit": "Objekt",
+        "description": "Brennstoff-/Anbau-Vorfläche kumuliert über Lebensdauer; oft im Ausland."
       }
     ],
     "caveats": [
@@ -90,7 +100,24 @@
     "file": "erzeugung/kohle/data.json",
     "scripts": [
       "erzeugung/kohle/model.rs"
-    ]
+    ],
+    "flaeche": {
+      "source": "Niederaußem 2,2 GW auf ~1 km²; Neurath 4,2 GW auf ~1,8 km² inkl. Kühltürme und REA.",
+      "sourceUrls": [
+        "https://de.wikipedia.org/wiki/Kraftwerk_Neurath",
+        "https://de.wikipedia.org/wiki/Kraftwerk_Niederau%C3%9Fem"
+      ]
+    },
+    "vorFlaeche": {
+      "source": "UBA-Energiedichte 76 GWh/ha über 65 a → 7,6 TWh/km². Bei 6000 Vlh × 40 a = 240 TWh/GW → ~32 km²/GW Tagebau-Energiebezugsfläche. Realprojekte: Hambach 43,8 km² Betrieb / ~6 GW historisch ≈ 7; Garzweiler I+II 114 km² / ~4 GW ≈ 28; Welzow-Süd / Schwarze Pumpe 1,6 GW deutlich höher. Gewichteter DE-Mittel mit Außen-/Innenkippen, Sperrzonen, Co-Produkt-Allokation ~10 % (Briketts/Staub): 22 km²/GW. Cross-Check OWID/Lovering 2022: 1000 ha/(TWh·a) Coal-Median → ~60 km²/GW DE-CF (US-Weltmix inkl. Steinkohle-Tiefbau); DE-Braunkohle effizienter wegen hoher Energiedichte am Standort. Van Zalk Coal-Median 135 W/m² konsistent. Konsens 20 Experten (Range 15–32).",
+      "sourceUrls": [
+        "https://de.wikipedia.org/wiki/Tagebau_Hambach",
+        "https://de.wikipedia.org/wiki/Tagebau_Garzweiler",
+        "https://www.umweltbundesamt.de/daten/flaeche-boden-land-oekosysteme/flaeche/flaechenverbrauch-fuer-rohstoffabbau",
+        "https://ourworldindata.org/land-use-per-energy-source",
+        "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    }
   },
   "parameters": {
     "mode": "dispatchable",
@@ -110,6 +137,17 @@
       "min": 0,
       "max": 310,
       "step": 5
+    },
+    "anlagenFlaeche": {
+      "anlageKm2PerGW": 0.4,
+      "wirkungKm2PerGW": 0.2,
+      "kategorie": "Industrie"
+    },
+    "vorFlaeche": {
+      "km2PerGW": 22,
+      "typ": "Tagebau Braunkohle",
+      "land": "DE",
+      "lebensdauerJahre": 40
     }
   }
 }
