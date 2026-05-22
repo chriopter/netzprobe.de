@@ -133,8 +133,8 @@
       "kategorie": "Industrie"
     },
     "vorFlaeche": {
-      "km2PerGW": 3500,
-      "typ": "Anbau Energiepflanzen (DE-Mix 64 % Biogas / 20 % feste Biomasse / 16 % Bioabfall+Klär-/Deponiegas)",
+      "km2PerGW": 1200,
+      "typ": "Anbau Energiepflanzen (DE-Mix: nur Biogas-Substrat-Anteil aus Energiepflanzen, ohne Holz/Abfall/Gülle)",
       "land": "DE",
       "lebensdauerJahre": 25
     },
