@@ -127,6 +127,14 @@
       "anlageKm2PerGW": 0.01,
       "wirkungKm2PerGW": 75,
       "kategorie": "See"
+    },
+    "referenceYield": {
+      "twhPerGWa": 3.8,
+      "source": "Langjähriges DE-AWZ-Mittel 3.800 VLh (BDEW-Richtwert 3.500-4.500). 2024 war schwach: 25,3 TWh aus 8,9 GW = 2.840 VLh (Wartungsausfälle, niedrige Windverhältnisse). Nordsee 3.800-4.200, Ostsee 3.200-3.500.",
+      "sourceUrls": [
+        "https://www.wind-energie.de/fileadmin/redaktion/dokumente/publikationen-oeffentlich/themen/06-zahlen-und-fakten/20250204_Status_des_Offshore_Windenergieausbaus_Jahr_2024.pdf",
+        "https://www.bdew.de/energie/erneuerbare-energien/windenergie-offshore/"
+      ]
     }
   }
 }

@@ -128,6 +128,13 @@
       "anlageKm2PerGW": 0.5,
       "wirkungKm2PerGW": 1,
       "kategorie": "Vorrangfläche"
+    },
+    "referenceYield": {
+      "twhPerGWa": 2.0,
+      "source": "Fraunhofer ISE langjähriger DE-Schnitt seit 2015: 1770 VLh. 2024: 113 TWh aus ~63 GW = 1800 VLh real. BWE-Bandbreite: 1500 (Süd, schwacher Standort) bis 3000 (Küste/Repowering). Wert 2,0 als DE-Flottenmittel.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/presseinformationen/2025/Stromerzeugung_2024.pdf"
+      ]
     }
   }
 }
