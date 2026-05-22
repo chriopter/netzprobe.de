@@ -11,6 +11,8 @@ mod result;
 mod preset_100ee_lokal;
 #[path = "../../erzeugung/100ee-import/model.rs"]
 mod preset_100ee_import;
+#[path = "../../erzeugung/100kern-lastfolgend/model.rs"]
+mod preset_100kern;
 
 pub use api::ApiView;
 pub use error::ModelError;
@@ -505,6 +507,7 @@ impl StaticModel {
             "historical-2017" => self.preset_historical_2017(),
             "100ee-noimport" => self.preset_100ee_noimport(demand_twh),
             "100ee-import" => self.preset_100ee_import(demand_twh),
+            "100kern-lastfolgend" => preset_100kern::apply(self, demand_twh),
             "2025-skaliert" => self.preset_2025_scaled(demand_twh),
             _ => Err(ModelError::Unsupported {
                 message: format!("Unbekanntes supplyPreset: {preset}"),

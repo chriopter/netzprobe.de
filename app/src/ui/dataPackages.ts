@@ -31,6 +31,7 @@ export const dataPackageIds = {
   versorgungHistorisch2017: 'historisch-2017',
   versorgung100EeNoImport: '100ee-noimport',
   versorgung100EeImport: '100ee-import',
+  versorgung100KernLastfolgend: '100kern-lastfolgend',
   versorgung2025Skaliert: '2025-skaliert',
   coreModel: 'kern',
   feedInFactors2025: 'einspeisefaktoren-2025',

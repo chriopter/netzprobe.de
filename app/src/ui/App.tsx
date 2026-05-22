@@ -180,7 +180,7 @@ function splitUrlList(value: string) {
   return value.split(/[,.]/).filter(Boolean);
 }
 
-const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '2025-skaliert'];
+const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '100kern-lastfolgend', '2025-skaliert'];
 
 function scenarioFromQueryParams(): Scenario {
   const params = queryParams();
@@ -370,15 +370,19 @@ function useStorageChart(containerId: string, hours: SimHour[] | undefined): boo
   return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours));
 }
 
-function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: number, fmtKm2: (value: number) => string): boolean {
-  const data = useMemo(() => ({ anlageKm2, wirkungKm2, fmtKm2 }), [anlageKm2, wirkungKm2, fmtKm2]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.fmtKm2, viewport));
+function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string): boolean {
+  const data = useMemo(() => ({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2 }), [anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.offshoreWirkungKm2, d.vorFlaecheKm2, d.fmtKm2, viewport));
 }
 
-function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport): echarts.EChartsCoreOption {
+function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport): echarts.EChartsCoreOption {
   const totalKm2 = anlageKm2 + wirkungKm2;
+  const mapTotalKm2 = totalKm2 + offshoreWirkungKm2 + vorFlaecheKm2;
   const maxSymbol = Math.max(32, Math.min(viewport.width || 260, viewport.height || 260) * 0.36);
-  const totalSymbolSize = totalKm2 <= 0 ? 0 : Math.min(maxSymbol, Math.sqrt(totalKm2 / DEUTSCHLAND_KM2) * maxSymbol);
+  const symbolSizeOf = (km2: number) => km2 <= 0 ? 0 : Math.min(maxSymbol, Math.sqrt(km2 / DEUTSCHLAND_KM2) * maxSymbol);
+  const totalSymbolSize = symbolSizeOf(totalKm2);
+  const offshoreSymbolSize = symbolSizeOf(offshoreWirkungKm2);
+  const vorSymbolSize = symbolSizeOf(vorFlaecheKm2);
   const wirkungShare = totalKm2 > 0 ? wirkungKm2 / totalKm2 : 0;
   const hoverFill = {
     type: 'linear',
@@ -399,12 +403,14 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, fmtKm2: (v
     tooltip: {
       trigger: 'item',
       formatter: () => {
-        const totalPct = totalKm2 / DEUTSCHLAND_KM2 * 100;
+        const totalPct = mapTotalKm2 / DEUTSCHLAND_KM2 * 100;
         return [
           `Flächenbedarf`,
           `Anlagenfläche: ${fmtKm2(anlageKm2)} km²`,
           `Wirkfläche: ${fmtKm2(wirkungKm2)} km²`,
-          `Summe: ${fmtKm2(totalKm2)} km²`,
+          `Wirkfläche Offshore: ${fmtKm2(offshoreWirkungKm2)} km²`,
+          `Vorfläche: ${fmtKm2(vorFlaecheKm2)} km²`,
+          `Summe: ${fmtKm2(mapTotalKm2)} km²`,
           `${totalPct.toLocaleString('de-DE', { maximumFractionDigits: totalPct < 1 ? 2 : 1 })} % von Deutschland`,
         ].join('<br/>');
       },
@@ -455,6 +461,62 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, fmtKm2: (v
           },
         },
       },
+      ...(offshoreWirkungKm2 > 0 ? [{
+        name: 'Wirkfläche Offshore',
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        symbol: 'circle',
+        symbolSize: offshoreSymbolSize,
+        clip: false,
+        data: [{ name: 'Wirkfläche Offshore', value: [7.6, 54.15, offshoreWirkungKm2] }],
+        label: {
+          show: true,
+          formatter: 'Offshore',
+          position: 'top',
+          color: '#0369a1',
+          fontSize: 11,
+          fontWeight: 600,
+        },
+        itemStyle: {
+          color: '#0284c7',
+          opacity: 0.78,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+        emphasis: {
+          scale: false,
+          itemStyle: {
+            color: '#0284c7',
+            opacity: 0.92,
+            borderColor: '#ffffff',
+            borderWidth: 2,
+          },
+        },
+      }] : []),
+      ...(vorFlaecheKm2 > 0 ? [{
+        name: 'Vorfläche',
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        symbol: 'circle',
+        symbolSize: vorSymbolSize,
+        clip: false,
+        data: [{ name: 'Vorfläche', value: [12.15, 51.15, vorFlaecheKm2] }],
+        itemStyle: {
+          color: '#f59e0b',
+          opacity: 0.78,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+        emphasis: {
+          scale: false,
+          itemStyle: {
+            color: '#f59e0b',
+            opacity: 0.92,
+            borderColor: '#ffffff',
+            borderWidth: 2,
+          },
+        },
+      }] : []),
     ],
   };
 }
@@ -1599,8 +1661,10 @@ const saarlandComparisonColumns = 12;
 function FlaechePanel({ scenario }: { scenario: Scenario }) {
   const rows = flaecheRows(scenario);
   const rows2025 = flaecheRows(scenarioBase);
+  const offshoreWirkung = rows.find(r => r.id === 'windoff')?.wirkungKm2 ?? 0;
   const sumAnlage = rows.reduce((s, r) => s + r.anlageKm2, 0);
   const sumWirkung = rows.reduce((s, r) => s + r.wirkungKm2, 0);
+  const sumWirkungInland = Math.max(0, sumWirkung - offshoreWirkung);
   const sumVor = rows.reduce((s, r) => s + (r.vorFlaecheKm2 ?? 0), 0);
   const sumGesamt = sumAnlage + sumWirkung + sumVor;
   const sum2025 = rows2025.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2 + (r.vorFlaecheKm2 ?? 0), 0);
@@ -1615,7 +1679,7 @@ function FlaechePanel({ scenario }: { scenario: Scenario }) {
       <FlaecheKpi label="gegen 2025" value={sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–'} color="#71717a"/>
     </div>
 
-    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2}/>
+    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkungInland} offshoreWirkungKm2={offshoreWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2}/>
   </div>;
 }
 
@@ -1707,24 +1771,25 @@ function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
   </div>;
 }
 
-function FlaecheMap({ anlageKm2, wirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
   return <section className="mt-7 grid gap-5">
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
       <div className="min-w-0">
-        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
+        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
       </div>
       <div className="flex min-w-0 flex-col gap-5">
-        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2}/>
+        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2 + offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2}/>
         <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
       </div>
     </div>
   </section>;
 }
 
-function FlaecheMapCard({ anlageKm2, wirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
-  useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, fmtKm2);
+function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+  useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2);
   const anlagePct = anlageKm2 / DEUTSCHLAND_KM2 * 100;
   const wirkungPct = wirkungKm2 / DEUTSCHLAND_KM2 * 100;
+  const offshorePct = offshoreWirkungKm2 / DEUTSCHLAND_KM2 * 100;
   const vorPct = vorFlaecheKm2 / DEUTSCHLAND_KM2 * 100;
   // vorFlaeche-Länder gruppieren für Label-Anzeige
   const vorByLand: Record<string, number> = {};
@@ -1741,17 +1806,18 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: 
   return <div>
     <div className="flex items-baseline justify-between gap-4">
       <h2 className="text-lg font-semibold text-zinc-950">Flächenbedarf in Deutschland</h2>
-      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
+      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
     </div>
     <div className="mt-4 bg-white">
       <div id="flaeche-map" className="h-[360px] w-full"/>
       <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={`${anlagePct.toLocaleString('de-DE', { maximumFractionDigits: anlagePct < 1 ? 2 : 1 })} %`} meta="DE"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={`${wirkungPct.toLocaleString('de-DE', { maximumFractionDigits: wirkungPct < 1 ? 2 : 1 })} %`} meta="DE"/>
+        {offshoreWirkungKm2 > 0 && <LegendMetric color="#0284c7" label="Wirkfläche Offshore" value={`${offshorePct.toLocaleString('de-DE', { maximumFractionDigits: offshorePct < 1 ? 2 : 1 })} %`} meta="Nordsee/Ostsee"/>}
         {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={`${vorPct.toLocaleString('de-DE', { maximumFractionDigits: vorPct < 1 ? 2 : 1 })} %`} meta={vorLandLabel || 'Brennstoff/Anbau'}/>}
       </div>
       <p className="mt-3 text-xs leading-5 text-zinc-500">
-        Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
+        Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
       </p>
     </div>
   </div>;
