@@ -83,7 +83,7 @@
       {
         "name": "anlagenFlaeche",
         "unit": "Objekt",
-        "description": "Flächenbedarf in DE: anlage (versiegelt) + wirkung (blockiert) in km²/GW."
+        "description": "Flächenbedarf in DE: anlage (direkt versiegelt) + wirkung (faktisch blockiert; keine andere Nutzung mehr möglich) in km²/GW. NICHT enthalten: politisch ausgewiesene Vorrangflächen (z. B. WindBG 2 %-Ziel), die faktisch weiter doppelgenutzt werden."
       }
     ],
     "caveats": [
@@ -96,7 +96,7 @@
       "erzeugung/windon/model.rs"
     ],
     "flaeche": {
-      "source": "Anlagenfläche: Mastfuß + Kranstellfläche (~2500 m²/WEA, schotter-/teilversiegelt; Zuwegung oft auf bestehenden Wegen). Bei 200 WEA/GW (5-MW-Klasse) ergibt das ~0,5 km²/GW. KNE-Quelle nennt 0,5 ha/WEA inkl. Zuwegung (→ 1,0 km²/GW) als Obergrenze. Konsens 15 Experten: 0,5 km²/GW. WindBG §3 2 %-Flächenziel: 7150 km² Vorrangfläche / 145 GW Ausbauziel = 50 km²/GW planerisch ausgewiesene Wirkungsfläche (Mischnutzung mit Landwirtschaft auf ~90 % weiter zulässig). UBA Climate Change 32/2023 bestätigt 3-5 ha/MW Bruttofläche. Cross-Check OWID/Lovering 2022: 130 ha/(TWh·a) footprint-only ≈ 2,6 km²/GW (konsistent mit anlage); 12 000 ha/(TWh·a) inkl. Turbinen-Spacing ≈ 240 km²/GW — letzteres ist die theoretische Park-Maximalfläche inkl. Acker zwischen WEA; unser `wirkung`=50 entspricht der politisch ausgewiesenen Vorrangfläche, konservativer.",
+      "source": "Anlagenfläche: Mastfuß + Kranstellfläche (~2500 m²/WEA, schotter-/teilversiegelt; Zuwegung oft auf bestehenden Wegen). Bei 200 WEA/GW (5-MW-Klasse) ergibt das ~0,5 km²/GW. Wirkfläche (tatsächlich blockiert, keine andere Nutzung mehr möglich) ~1 km²/GW = Mastfuß-Umfeld + Brandschutzring + nicht-acker-fähige Schotterzonen direkt am Turm. **Hinweis zur Vorrangfläche:** Das WindBG §3 2 %-Flächenziel weist 7150 km² als politische Vorrangfläche aus (= 50 km²/GW bei 145 GW Ausbauziel) — diese Fläche wird zu ~98 % weiter landwirtschaftlich genutzt und ist NICHT mit der `wirkung`-Definition vergleichbar (PV-Park ist eingezäunt, Stauraum ist Wasser, Tagebau ist Krater — Wind-Vorrangfläche ist faktisch Doppelnutzung). Für stack-bar-Vergleiche zwischen Tech wäre die Vorrangfläche-Aufnahme unfair zugunsten Wind. KNE-Quelle: 0,5 ha/WEA inkl. Zuwegung (→ 1,0 km²/GW) als Obergrenze. UBA Climate Change 32/2023 bestätigt 3-5 ha/MW Bruttofläche. Cross-Check OWID/Lovering 2022: 130 ha/(TWh·a) footprint-only ≈ 2,6 km²/GW (konsistent); 12 000 ha/(TWh·a) inkl. Turbinen-Spacing ≈ 240 km²/GW (theoretisches Spacing-Maximum, ebenfalls Doppelnutzungs-Acker). Konsens 20 Experten.",
       "sourceUrls": [
         "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/32_2023_cc_flaechenverfuegbarkeit_und_flaechenbedarfe_fuer_den_ausbau_der_windenergie_an_land_0.pdf",
         "https://www.naturschutz-energiewende.de/wortmeldung/wortmeldung-zum-flaechenbedarf-der-windenergie/",
@@ -126,7 +126,7 @@
     },
     "anlagenFlaeche": {
       "anlageKm2PerGW": 0.5,
-      "wirkungKm2PerGW": 50,
+      "wirkungKm2PerGW": 1,
       "kategorie": "Vorrangfläche"
     }
   }
