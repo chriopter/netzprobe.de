@@ -1,14 +1,15 @@
-import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { Fragment, lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { ChangelogPage } from './ChangelogPage';
 import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
 import { Camera, ChevronRight, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
 import * as echarts from 'echarts/core';
-import { LineChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
+import { LineChart, MapChart, ScatterChart } from 'echarts/charts';
+import { GeoComponent, GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { buildMixChartOption, buildStorageChartOption, mixReferenceScaleMaxGW, mixScalePeakGW, type ChartViewport } from './chartOptions';
 import { dataFileUrl } from './dataPackages';
 import { loadDefaultData, loadHistorical2017, loadJson, type Historical2017Data } from './defaultData';
+import germanyGeoJson from './germanyGeoJson.json';
 import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
@@ -23,6 +24,7 @@ import { DisclaimerFooter } from './DisclaimerFooter';
 import { fmt, fmt0, pct, twh } from './format';
 import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
+import { uiManifest } from './uiManifest';
 import { cx, iconButton, muted, panelHeader, shell, sidebarOffsetClass } from './ui';
 
 type ChartRoamState = { scale: number; x: number; y: number };
@@ -95,6 +97,23 @@ function queryParams() {
   }
 }
 
+function appPath(url: URL) {
+  const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
+  const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
+  return path.replace(/^\/+/, '');
+}
+
+function mainViewFromPath(path: string): MainViewId | null {
+  const clean = path.replace(/\/+$/, '');
+  if (clean === '') return 'mix';
+  return clean === 'flaeche' || clean === 'ressourcen' || clean === 'netz' || clean === 'kosten' ? clean : null;
+}
+
+function pathForMainView(view: MainViewId) {
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname;
+  return `${basePath}${view === 'mix' ? '' : `${view}/`}`;
+}
+
 function periodPresetFromUrl(): PeriodPreset {
   const value = queryParams().get('p');
   return value === '21d' || value === '90d' || value === 'custom' || value === 'year' ? value : defaultPeriodPreset;
@@ -138,6 +157,18 @@ function mixVisibilityFromUrl(): MixVisibility {
   return Object.fromEntries([...supply, ...extras]) as MixVisibility;
 }
 
+function mainViewFromUrl(): MainViewId {
+  try {
+    const url = new URL(window.location.href);
+    const pathView = mainViewFromPath(appPath(url));
+    if (pathView) return pathView;
+    const value = url.searchParams.get('view');
+    return value === 'flaeche' || value === 'ressourcen' || value === 'netz' || value === 'kosten' ? value : 'mix';
+  } catch {
+    return 'mix';
+  }
+}
+
 function openSectionsParam(openSectors: SidebarOpenSectors) {
   return (Object.entries(openSectors) as Array<[keyof SidebarOpenSectors, boolean]>)
     .filter(([, open]) => open)
@@ -149,7 +180,7 @@ function splitUrlList(value: string) {
   return value.split(/[,.]/).filter(Boolean);
 }
 
-const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '50ee-50import', '2025-skaliert'];
+const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '2025-skaliert'];
 
 function scenarioFromQueryParams(): Scenario {
   const params = queryParams();
@@ -243,7 +274,8 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
 // Canvas. Slider-Drag wird über useDeferredValue + 80ms-Throttle (siehe
 // chartResult-Effect) coalesced, sodass schneller Drag den Re-Render nicht
 // auf den kritischen Pfad zwingt.
-echarts.use([LineChart, GridComponent, LegendComponent, PolarComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([LineChart, MapChart, ScatterChart, GeoComponent, GridComponent, LegendComponent, PolarComponent, TooltipComponent, CanvasRenderer]);
+echarts.registerMap('deutschland', germanyGeoJson as Parameters<typeof echarts.registerMap>[1]);
 
 function useMainThreadChart<TData>(
   containerId: string,
@@ -336,6 +368,95 @@ function useMixChart(containerId: string, hours: SimHour[] | undefined, visibili
 function useStorageChart(containerId: string, hours: SimHour[] | undefined): boolean {
   const data = useMemo(() => hours && hours.length ? { hours } : null, [hours]);
   return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours));
+}
+
+function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: number, fmtKm2: (value: number) => string): boolean {
+  const data = useMemo(() => ({ anlageKm2, wirkungKm2, fmtKm2 }), [anlageKm2, wirkungKm2, fmtKm2]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.fmtKm2, viewport));
+}
+
+function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport): echarts.EChartsCoreOption {
+  const totalKm2 = anlageKm2 + wirkungKm2;
+  const maxSymbol = Math.max(32, Math.min(viewport.width || 260, viewport.height || 260) * 0.36);
+  const totalSymbolSize = totalKm2 <= 0 ? 0 : Math.min(maxSymbol, Math.sqrt(totalKm2 / DEUTSCHLAND_KM2) * maxSymbol);
+  const wirkungShare = totalKm2 > 0 ? wirkungKm2 / totalKm2 : 0;
+  const hoverFill = {
+    type: 'linear',
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: '#16a34a' },
+      { offset: wirkungShare, color: '#16a34a' },
+      { offset: wirkungShare, color: '#dc2626' },
+      { offset: 1, color: '#dc2626' },
+    ],
+  };
+  return {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: () => {
+        const totalPct = totalKm2 / DEUTSCHLAND_KM2 * 100;
+        return [
+          `Flächenbedarf`,
+          `Anlagenfläche: ${fmtKm2(anlageKm2)} km²`,
+          `Wirkfläche: ${fmtKm2(wirkungKm2)} km²`,
+          `Summe: ${fmtKm2(totalKm2)} km²`,
+          `${totalPct.toLocaleString('de-DE', { maximumFractionDigits: totalPct < 1 ? 2 : 1 })} % von Deutschland`,
+        ].join('<br/>');
+      },
+    },
+    geo: {
+      map: 'deutschland',
+      roam: false,
+      aspectScale: 0.75,
+      layoutCenter: ['50%', '50%'],
+      layoutSize: '92%',
+      itemStyle: {
+        areaColor: '#f4f4f5',
+        borderColor: '#d4d4d8',
+        borderWidth: 1.2,
+      },
+      emphasis: {
+        disabled: true,
+      },
+    },
+    series: [
+      {
+        type: 'map',
+        map: 'deutschland',
+        geoIndex: 0,
+        silent: true,
+        data: [{ name: 'Deutschland', value: DEUTSCHLAND_KM2 }],
+      },
+      {
+        name: 'Flächenbedarf',
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        symbol: 'circle',
+        symbolSize: totalSymbolSize,
+        data: [{ name: 'Flächenbedarf', value: [10.45, 51.15, totalKm2] }],
+        itemStyle: {
+          color: '#16a34a',
+          opacity: 0.76,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+        emphasis: {
+          scale: false,
+          itemStyle: {
+            color: hoverFill,
+            opacity: 0.9,
+            borderColor: '#ffffff',
+            borderWidth: 2,
+          },
+        },
+      },
+    ],
+  };
 }
 
 function chartViewportRoot(chart: echarts.ECharts): HTMLElement | null {
@@ -606,8 +727,7 @@ function urlView() {
   try {
     const url = new URL(window.location.href);
     const params = url.searchParams;
-    const basePath = new URL(import.meta.env.BASE_URL, url.origin).pathname;
-    const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : url.pathname.slice(1);
+    const path = appPath(url);
     if (path === 'changelog' || path === 'changelog/') return { view: 'changelog' as const, path: null };
     if (path === 'wiki' || path.startsWith('wiki/')) return { view: 'daten' as const, path: null };
     return { view: params.get('view'), path: params.get('path') };
@@ -814,7 +934,7 @@ function Dashboard() {
   const [manualRunToken, setManualRunToken] = useState(0);
   const [sliderActive, setSliderActive] = useState(false);
   const [referenceScaleMaxGW, setReferenceScaleMaxGW] = useState<number | undefined>(undefined);
-  const [mainView, setMainView] = useState<MainViewId>('mix');
+  const [mainView, setMainView] = useState<MainViewId>(mainViewFromUrl);
   // Wenn der Energiemix-Tab nach einem Wechsel wieder sichtbar wird,
   // wurde der Chart-Container per CSS hidden/unhidden — ECharts merkt das
   // Re-Layout nicht von selbst, also Resize-Event nachtreten.
@@ -882,6 +1002,9 @@ function Dashboard() {
     if (chartMode === defaultChartMode) url.searchParams.delete('chart');
     else url.searchParams.set('chart', chartMode);
 
+    url.searchParams.delete('view');
+    if (mainViewFromPath(appPath(url))) url.pathname = pathForMainView(mainView);
+
     const defaultSidebarCollapsed = window.matchMedia('(max-width: 1023px)').matches;
     if (sidebarCollapsed === defaultSidebarCollapsed) url.searchParams.delete('sidebar');
     else url.searchParams.set('sidebar', sidebarCollapsed ? 'closed' : 'open');
@@ -903,7 +1026,7 @@ function Dashboard() {
     if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
-  }, [scenario, periodPreset, customStart, customEnd, chartMode, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenario, periodPreset, customStart, customEnd, chartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1075,25 +1198,26 @@ function Dashboard() {
   };
   const runSimulationNow = () => setManualRunToken(token => token + 1);
 
-  return <main className={shell}>
+  return <main className={cx(shell, 'flex flex-col')}>
     <div className={cx(
-      'mx-auto w-full max-w-[1760px]',
+      'mx-auto flex w-full max-w-[1760px] flex-1 flex-col',
       sidebarCollapsed ? '' : sidebarOffsetClass,
     )}>
-      <section className="flex min-w-0 flex-col gap-3">
+      <section className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-1 flex-col gap-3">
         {!result ? <div className="relative grid min-h-[calc(100vh-1.5rem)] place-items-center text-zinc-500">
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
           <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
-          {mainView !== 'mix' && <ComingSoonPanel label={MAIN_VIEW_LABELS[mainView]}/>}
+          {mainView === 'flaeche' && <FlaechePanel scenario={resolvedScenario}/>}
+          {mainView !== 'mix' && mainView !== 'flaeche' && <ComingSoonPanel label={MAIN_VIEW_LABELS[mainView]}/>}
           <div className={cx('contents', mainView !== 'mix' && 'hidden')}>
           <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
             <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3">
               <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-visible">
                 <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)} primary/>
                 <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-                <InlineKpi label="Import" value={twh(result.summary.importTWh)}/>
+                <InlineKpi label="Import" value={resolvedScenario.import.h2TWh > 0 ? `${fmt.format(result.summary.importTWh)} / ${fmt0.format(resolvedScenario.import.h2TWh)} TWh H₂` : twh(result.summary.importTWh)}/>
                 <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'} primary/>
                 <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
                 <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`} primary/>
@@ -1375,11 +1499,275 @@ const MAIN_VIEW_LABELS: Record<MainViewId, string> = {
 
 const MAIN_VIEW_IMPLEMENTED: Record<MainViewId, boolean> = {
   mix: true,
-  flaeche: false,
+  flaeche: true,
   ressourcen: false,
   netz: false,
   kosten: false,
 };
+
+type FlaecheRow = {
+  id: string;
+  label: string;
+  gw: number;
+  anlageKm2: number;
+  wirkungKm2: number;
+  spezifischKm2PerGW: number;
+  spezifischKm2PerGWh?: number;
+  vorFlaecheKm2?: number;
+  vorFlaecheLand?: string;
+  vorFlaecheTyp?: string;
+  kategorie?: string;
+};
+
+function flaecheRows(scenario: Scenario): FlaecheRow[] {
+  // Holt jeweils anlagenFlaeche + vorFlaeche aus dem Paket und multipliziert
+  // mit dem aktuellen Slider-Wert. Speicher kombinieren GW- und GWh-Term.
+  const getF = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.anlagenFlaeche ?? {};
+  const getV = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.vorFlaeche;
+  const getS = (id: string) => (uiManifest.storage as Record<string, any>)[id]?.anlagenFlaeche ?? {};
+
+  const erz: Array<[string, string, number, string]> = [
+    ['pv', 'PV', scenario.generation.pvInstalledGW, 'pv'],
+    ['windon', 'Wind Onshore', scenario.generation.windOnInstalledGW, 'windon'],
+    ['windoff', 'Wind Offshore', scenario.generation.windOffInstalledGW, 'windoff'],
+    ['biomasse', 'Biomasse', scenario.generation.biomasseInstalledGW, 'biomasse'],
+    ['laufwasser', 'Laufwasser', scenario.generation.laufwasserInstalledGW, 'laufwasser'],
+    ['kernkraft', 'Kernkraft', scenario.generation.kernkraftInstalledGW, 'kernkraft'],
+    ['gas', 'Gas', scenario.generation.gasInstalledGW, 'gas'],
+    ['kohle', 'Kohle', scenario.generation.kohleInstalledGW, 'kohle'],
+  ];
+
+  const erzRows: FlaecheRow[] = erz.map(([id, label, gw, key]) => {
+    const f = getF(key);
+    const v = getV(key);
+    return {
+      id, label, gw,
+      anlageKm2: gw * (f.anlageKm2PerGW ?? 0),
+      wirkungKm2: gw * (f.wirkungKm2PerGW ?? 0),
+      spezifischKm2PerGW: (f.anlageKm2PerGW ?? 0) + (f.wirkungKm2PerGW ?? 0),
+      vorFlaecheKm2: v ? gw * (v.km2PerGW ?? 0) : undefined,
+      vorFlaecheLand: v?.land,
+      vorFlaecheTyp: v?.typ,
+      kategorie: f.kategorie,
+    };
+  });
+
+  const speicher: Array<[string, string, number, number]> = [
+    ['batterie', 'Batterie', scenario.storage.batteriePowerGW, scenario.storage.batterieEnergyGWh],
+    ['pumpspeicher', 'Pumpspeicher', scenario.storage.pumpspeicherPowerGW, scenario.storage.pumpspeicherEnergyGWh],
+    ['h2', 'Wasserstoff', Math.max(scenario.storage.h2ChargePowerGW, scenario.storage.h2DischargePowerGW), scenario.storage.h2EnergyGWh],
+  ];
+
+  const speRows: FlaecheRow[] = speicher.map(([id, label, gw, gwh]) => {
+    const f = getS(id);
+    const anlage = gw * (f.anlageKm2PerGW ?? 0) + gwh * (f.anlageKm2PerGWh ?? 0);
+    const wirkung = gw * (f.wirkungKm2PerGW ?? 0) + gwh * (f.wirkungKm2PerGWh ?? 0);
+    return {
+      id, label, gw,
+      anlageKm2: anlage,
+      wirkungKm2: wirkung,
+      spezifischKm2PerGW: (f.anlageKm2PerGW ?? 0) + (f.wirkungKm2PerGW ?? 0),
+      spezifischKm2PerGWh: (f.anlageKm2PerGWh ?? 0) + (f.wirkungKm2PerGWh ?? 0),
+      kategorie: f.kategorie,
+    };
+  });
+
+  return [...erzRows, ...speRows];
+}
+
+const DEUTSCHLAND_KM2 = 357580;
+const SAARLAND_KM2 = 2570;
+const saarlandTiles = Array.from({ length: Math.ceil(DEUTSCHLAND_KM2 / SAARLAND_KM2) }, (_, index) => index);
+
+function FlaechePanel({ scenario }: { scenario: Scenario }) {
+  const rows = flaecheRows(scenario);
+  const rows2025 = flaecheRows(scenarioBase);
+  const sumAnlage = rows.reduce((s, r) => s + r.anlageKm2, 0);
+  const sumWirkung = rows.reduce((s, r) => s + r.wirkungKm2, 0);
+  const sumGesamt = sumAnlage + sumWirkung;
+  const sum2025 = rows2025.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2, 0);
+  const sumVor = rows.reduce((s, r) => s + (r.vorFlaecheKm2 ?? 0), 0);
+
+  const fmtKm2 = (v: number) => v < 1 ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : v < 100 ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : Math.round(v).toLocaleString('de-DE');
+
+  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <FlaecheKpi label="Anlagenfläche" value={`${fmtKm2(sumAnlage)} km²`} color="#dc2626"/>
+      <FlaecheKpi label="Wirkfläche" value={`${fmtKm2(sumWirkung)} km²`} color="#16a34a"/>
+      <FlaecheKpi label="Summe" value={`${fmtKm2(sumGesamt)} km²`} color="#18181b"/>
+      <FlaecheKpi label="gegen 2025" value={`${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×`} color="#71717a"/>
+    </div>
+
+    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkung} rows={rows} fmtKm2={fmtKm2}/>
+
+    {sumVor > 0 && <div className="mt-6 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-600">
+      <p><span className="font-semibold text-zinc-900">Vorfläche:</span> {Math.round(sumVor).toLocaleString('de-DE')} km². {rows.filter(r => r.vorFlaecheKm2 && r.vorFlaecheKm2 > 0).map(r => `${r.label} ${Math.round(r.vorFlaecheKm2!).toLocaleString('de-DE')} km²`).join('; ')}.</p>
+    </div>}
+
+    <p className="mt-7 text-[10px] text-zinc-400">Quellen je Technologie in der Wiki (model/erzeugung/*/package.json → anlagenFlaeche.source). Werte sind realistische DE-Mittelwerte, keine Best-Case-Packung.</p>
+  </div>;
+}
+
+function FlaecheKpi({ label, value, color }: { label: string; value: string; color: string }) {
+  return <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3">
+    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }}/>
+      <span>{label}</span>
+    </div>
+    <div className="mt-1.5 text-base font-semibold tabular-nums text-zinc-950">{value}</div>
+  </div>;
+}
+
+function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const sumGesamt = rows.reduce((s, r) => s + r.anlageKm2 + r.wirkungKm2, 0);
+  const toggle = (id: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+  return <div className="min-w-0 overflow-x-auto bg-white">
+    <table className="w-full min-w-[360px] text-sm">
+      <thead className="text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+        <tr className="border-b border-zinc-200">
+          <th className="w-7 py-3 font-medium"/>
+          <th className="py-3 font-medium">Technologie</th>
+          <th className="py-3 text-right font-medium">Bestand</th>
+          <th className="py-3 text-right font-medium">Summe</th>
+        </tr>
+      </thead>
+      <tbody className="text-zinc-700">
+        {rows.map(row => {
+          const summe = row.anlageKm2 + row.wirkungKm2;
+          const dim = row.gw === 0;
+          const specGwhFmt = row.spezifischKm2PerGWh && row.spezifischKm2PerGWh > 0
+            ? ` + ${row.spezifischKm2PerGWh.toLocaleString('de-DE', { maximumFractionDigits: 4 })} /GWh`
+            : '';
+          const isOpen = expanded.has(row.id);
+          return <Fragment key={row.id}>
+            <tr
+              className={cx('cursor-pointer border-b border-zinc-100 hover:bg-zinc-50', dim && 'text-zinc-300')}
+              aria-expanded={isOpen}
+              onClick={() => toggle(row.id)}
+            >
+              <td className="py-2.5 align-middle">
+                <ChevronRight className={cx('h-3.5 w-3.5 text-zinc-400 transition-transform', isOpen && 'rotate-90')}/>
+              </td>
+              <td className="py-2.5 pr-3">{row.label}</td>
+              <td className="py-2.5 text-right tabular-nums">{row.gw.toLocaleString('de-DE', { maximumFractionDigits: 1 })} GW</td>
+              <td className="py-2.5 text-right font-medium tabular-nums">{fmtKm2(summe)} km²</td>
+            </tr>
+            {isOpen && <tr className={cx('border-b border-zinc-100 bg-zinc-50/60 text-xs', dim && 'text-zinc-300')}>
+              <td className="py-3"/>
+              <td colSpan={3} className="py-3">
+                <dl className="grid gap-2">
+                  <FlaecheDetailTerm label="Spezifisch" value={`${row.spezifischKm2PerGW.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km²/GW${specGwhFmt}`}/>
+                  <FlaecheDetailTerm label="Anlagenfläche" value={`${fmtKm2(row.anlageKm2)} km²`}/>
+                  <FlaecheDetailTerm label="Wirkfläche" value={`${fmtKm2(row.wirkungKm2)} km²`}/>
+                  <FlaecheDetailTerm label="Kategorie" value={row.kategorie ?? '–'}/>
+                </dl>
+              </td>
+            </tr>}
+          </Fragment>;
+        })}
+      </tbody>
+      <tfoot className="font-semibold text-zinc-950">
+        <tr>
+          <td className="py-3"/>
+          <td className="py-3">Summe</td>
+          <td className="py-3"/>
+          <td className="py-3 text-right tabular-nums">{fmtKm2(sumGesamt)} km²</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>;
+}
+
+function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
+  return <div className="grid grid-cols-[92px_1fr] gap-3">
+    <dt className="text-zinc-400">{label}</dt>
+    <dd className="break-words font-medium tabular-nums text-zinc-700">{value}</dd>
+  </div>;
+}
+
+function FlaecheMap({ anlageKm2, wirkungKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+  const totalKm2 = anlageKm2 + wirkungKm2;
+  return <section className="mt-7 grid gap-5">
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
+      <div className="min-w-0">
+        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} fmtKm2={fmtKm2}/>
+        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} fmtKm2={fmtKm2}/>
+      </div>
+      <div className="flex min-w-0 flex-col gap-5">
+        <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
+      </div>
+    </div>
+  </section>;
+}
+
+function FlaecheMapCard({ anlageKm2, wirkungKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; fmtKm2: (value: number) => string }) {
+  useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, fmtKm2);
+  const anlagePct = anlageKm2 / DEUTSCHLAND_KM2 * 100;
+  const wirkungPct = wirkungKm2 / DEUTSCHLAND_KM2 * 100;
+  return <div>
+    <div className="flex items-baseline justify-between gap-4">
+      <h2 className="text-lg font-semibold text-zinc-950">Flächenbedarf in Deutschland</h2>
+      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2)} km² gesamt</span>
+    </div>
+    <div className="mt-4 bg-white">
+      <div id="flaeche-map" className="h-[360px] w-full"/>
+      <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs">
+        <LegendMetric color="#dc2626" label="Anlagenfläche" value={`${anlagePct.toLocaleString('de-DE', { maximumFractionDigits: anlagePct < 1 ? 2 : 1 })} %`} meta="DE"/>
+        <LegendMetric color="#16a34a" label="Wirkfläche" value={`${wirkungPct.toLocaleString('de-DE', { maximumFractionDigits: wirkungPct < 1 ? 2 : 1 })} %`} meta="DE"/>
+      </div>
+    </div>
+  </div>;
+}
+
+function LegendMetric({ color, label, value, meta }: { color: string; label: string; value: string; meta: string }) {
+  return <div className="flex items-baseline gap-2">
+    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }}/>
+    <span className="text-zinc-600">{label}</span>
+    <span className="ml-auto font-medium tabular-nums text-zinc-950">{value}</span>
+    <span className="tabular-nums text-zinc-400">{meta}</span>
+  </div>;
+}
+
+function SaarlandComparison({ anlageKm2, wirkungKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; fmtKm2: (value: number) => string }) {
+  const totalKm2 = anlageKm2 + wirkungKm2;
+  const saarlands = totalKm2 / SAARLAND_KM2;
+  const anlageTiles = anlageKm2 / SAARLAND_KM2;
+  const wirkungTiles = wirkungKm2 / SAARLAND_KM2;
+  return <div className="group relative mt-7 border-t border-zinc-100 bg-white pt-5">
+    <div className="flex items-baseline justify-between gap-4">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Saarland-Vergleich</h4>
+      <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands gesamt</span>
+    </div>
+    <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] gap-1.5" aria-label={`Entspricht ${saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands`}>
+      {saarlandTiles.map(index => {
+        const totalFill = Math.max(0, Math.min(1, saarlands - index));
+        const anlageFill = Math.max(0, Math.min(totalFill, anlageTiles - index));
+        const redPct = anlageFill > 0 ? Math.max(8, Math.round(anlageFill * 100)) : 0;
+        const greenPct = Math.round(totalFill * 100);
+        return <span
+          key={index}
+          className="h-3.5 rounded-[3px] border border-zinc-200 bg-zinc-100"
+          style={greenPct > 0 ? { background: `linear-gradient(90deg, #dc2626 0 ${redPct}%, #16a34a ${redPct}% ${greenPct}%, #f4f4f5 ${greenPct}% 100%)` } : undefined}
+        />;
+      })}
+    </div>
+    <div className="pointer-events-none absolute left-4 top-full z-30 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg ring-1 ring-zinc-950/5 transition group-hover:opacity-100">
+      <div className="grid gap-2">
+        <LegendMetric color="#dc2626" label="Anlagenfläche" value={anlageTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
+        <LegendMetric color="#16a34a" label="Wirkfläche" value={wirkungTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
+      </div>
+      <div className="mt-3 border-t border-zinc-100 pt-2 text-zinc-500">
+        <span className="font-medium tabular-nums text-zinc-900">{fmtKm2(totalKm2)} km²</span> gesamt. Eine Kachel entspricht <span className="font-medium tabular-nums text-zinc-900">2.570 km²</span>.
+      </div>
+    </div>
+  </div>;
+}
 
 function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
