@@ -547,6 +547,9 @@ function attachChartRoam(el: HTMLElement, chart: echarts.ECharts, stateRef: Muta
   const pointers = new Map<number, { x: number; y: number }>();
   let lastPinchDistance = 0;
   let lastTap = 0;
+  // Wheel-Zoom erst nach Klick in den Chart aktivieren, sonst frisst der
+  // Chart das Page-Scroll. Beim Verlassen mit dem Cursor wieder freigeben.
+  let wheelActive = false;
   const clampScale = (scale: number) => Math.min(4, Math.max(1, scale));
   const setState = (next: ChartRoamState) => {
     stateRef.current = { ...next, scale: clampScale(next.scale) };
@@ -567,16 +570,21 @@ function attachChartRoam(el: HTMLElement, chart: echarts.ECharts, stateRef: Muta
     });
   };
   const onWheel = (event: WheelEvent) => {
+    if (!wheelActive) return;
     event.preventDefault();
     zoomAt(event.clientX, event.clientY, Math.exp(-event.deltaY * 0.0015));
   };
   const onPointerDown = (event: PointerEvent) => {
     el.setPointerCapture(event.pointerId);
+    wheelActive = true;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       lastPinchDistance = Math.hypot(a.x - b.x, a.y - b.y);
     }
+  };
+  const onPointerLeave = () => {
+    wheelActive = false;
   };
   const onPointerMove = (event: PointerEvent) => {
     const prevPoint = pointers.get(event.pointerId);
@@ -606,12 +614,13 @@ function attachChartRoam(el: HTMLElement, chart: echarts.ECharts, stateRef: Muta
     if (now - lastTap < 280) setState({ scale: 1, x: 0, y: 0 });
     lastTap = now;
   };
-  el.style.touchAction = 'none';
+  el.style.touchAction = 'pan-y';
   el.addEventListener('wheel', onWheel, { passive: false });
   el.addEventListener('pointerdown', onPointerDown);
   el.addEventListener('pointermove', onPointerMove);
   el.addEventListener('pointerup', onPointerUp);
   el.addEventListener('pointercancel', onPointerUp);
+  el.addEventListener('pointerleave', onPointerLeave);
   applyChartRoam(chart, stateRef.current);
   return () => {
     el.style.touchAction = '';
@@ -620,6 +629,7 @@ function attachChartRoam(el: HTMLElement, chart: echarts.ECharts, stateRef: Muta
     el.removeEventListener('pointermove', onPointerMove);
     el.removeEventListener('pointerup', onPointerUp);
     el.removeEventListener('pointercancel', onPointerUp);
+    el.removeEventListener('pointerleave', onPointerLeave);
   };
 }
 
@@ -997,17 +1007,17 @@ function Dashboard() {
   const [sliderActive, setSliderActive] = useState(false);
   const [referenceScaleMaxGW, setReferenceScaleMaxGW] = useState<number | undefined>(undefined);
   const [mainView, setMainView] = useState<MainViewId>(mainViewFromUrl);
-  // Wenn der Energiemix-Tab nach einem Wechsel wieder sichtbar wird,
-  // wurde der Chart-Container per CSS hidden/unhidden — ECharts merkt das
-  // Re-Layout nicht von selbst, also Resize-Event nachtreten.
+  useActiveSection(setMainView);
+  // Beim Initial-Load auf die Sektion aus der URL scrollen (sofern nicht mix).
   useEffect(() => {
-    if (mainView !== 'mix') return;
-    const id1 = window.requestAnimationFrame(() => {
-      const id2 = window.requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-      return () => window.cancelAnimationFrame(id2);
-    });
-    return () => window.cancelAnimationFrame(id1);
-  }, [mainView]);
+    if (typeof window === 'undefined') return;
+    const initial = mainViewFromUrl();
+    if (initial === 'mix') return;
+    const el = document.getElementById(`section-${initial}`);
+    if (el) el.scrollIntoView({ block: 'start' });
+    // Nur einmal beim Mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadDefaultData().then(setRawData).catch(console.error);
@@ -1260,7 +1270,7 @@ function Dashboard() {
   };
   const runSimulationNow = () => setManualRunToken(token => token + 1);
 
-  return <main className={cx(shell, 'flex flex-col')}>
+  return <main className={cx(shell, 'flex flex-col bg-zinc-100')}>
     <div className={cx(
       'mx-auto flex w-full max-w-[1760px] flex-1 flex-col',
       sidebarCollapsed ? '' : sidebarOffsetClass,
@@ -1271,9 +1281,8 @@ function Dashboard() {
           Lade Daten …
         </div> : <>
           <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
-          {mainView === 'flaeche' && <FlaechePanel scenario={resolvedScenario}/>}
-          {mainView !== 'mix' && mainView !== 'flaeche' && <ComingSoonPanel label={MAIN_VIEW_LABELS[mainView]}/>}
-          <div className={cx('contents', mainView !== 'mix' && 'hidden')}>
+          <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+          <SectionHeading id="mix"/>
           <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
             <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3">
               <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-visible">
@@ -1380,7 +1389,23 @@ function Dashboard() {
           <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
             <div id="storage-chart" className="h-[240px] w-full px-3 py-3"/>
           </ChartPanel>
-          </div>
+          </section>
+          <section id="section-flaeche" className="flex flex-col gap-3 scroll-mt-14 rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+            <SectionHeading id="flaeche"/>
+            <FlaechePanel scenario={resolvedScenario}/>
+          </section>
+          <section id="section-ressourcen" className="flex flex-col gap-3 scroll-mt-14 rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+            <SectionHeading id="ressourcen"/>
+            <ComingSoonPanel/>
+          </section>
+          <section id="section-netz" className="flex flex-col gap-3 scroll-mt-14 rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+            <SectionHeading id="netz"/>
+            <ComingSoonPanel/>
+          </section>
+          <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 rounded-lg border border-zinc-200 bg-white p-3 sm:p-4">
+            <SectionHeading id="kosten"/>
+            <ComingSoonPanel/>
+          </section>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
@@ -1876,9 +1901,52 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, vorFlaecheKm2, fmtKm2 }: { 
   </div>;
 }
 
+function useActiveSection(setMainView: (v: MainViewId) => void) {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const ids: MainViewId[] = ['mix', 'flaeche', 'ressourcen', 'netz', 'kosten'];
+    // Trigger-Linie bei 20 % der Viewport-Höhe. Aktive Sektion = letzte,
+    // deren Top oberhalb dieser Linie liegt — also sobald die Überschrift
+    // einer neuen Sektion ins oberste Fünftel scrollt, springt das Menü.
+    const compute = () => {
+      const triggerY = window.innerHeight * 0.2;
+      let active: MainViewId = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(`section-${id}`);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= triggerY) active = id;
+        else break;
+      }
+      setMainView(active);
+    };
+    compute();
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        compute();
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [setMainView]);
+}
+
+function scrollToSection(id: MainViewId) {
+  if (typeof window === 'undefined') return;
+  const el = document.getElementById(`section-${id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
-  return <div className="flex items-center gap-2">
+  return <div className="sticky top-0 z-30 -mx-2 flex items-center gap-2 bg-white/85 px-2 py-2 backdrop-blur sm:-mx-3 sm:-mt-3 sm:px-3">
     {sidebarCollapsed && <SidebarOpenButton onClick={onOpenSidebar}/>}
     <nav aria-label="Hauptansicht" className="inline-flex shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none">
       {tabs.map(tab => {
@@ -1887,7 +1955,7 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
           key={tab.id}
           type="button"
           aria-current={isActive ? 'page' : undefined}
-          onClick={() => onChange(tab.id)}
+          onClick={() => { onChange(tab.id); scrollToSection(tab.id); }}
           title={tab.ready ? undefined : `${tab.label} – Coming soon`}
           className={cx(
             'rounded-full px-3 py-1.5 transition',
@@ -1903,12 +1971,13 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
   </div>;
 }
 
-function ComingSoonPanel({ label }: { label: string }) {
-  return <div className="grid min-h-[calc(100vh-6rem)] place-items-center rounded-lg border border-dashed border-zinc-200 bg-white text-center">
-    <div className="px-6 py-12">
-      <h2 className="text-lg font-semibold text-zinc-950">{label}</h2>
-      <p className="mt-2 text-sm text-zinc-500">Coming soon.</p>
-    </div>
+function SectionHeading({ id }: { id: MainViewId }) {
+  return <h2 className="text-xl font-semibold tracking-tight text-zinc-950">{MAIN_VIEW_LABELS[id]}</h2>;
+}
+
+function ComingSoonPanel() {
+  return <div className="grid min-h-[40vh] place-items-center rounded-lg border border-dashed border-zinc-200 bg-white text-center">
+    <p className="px-6 py-12 text-sm text-zinc-500">Coming soon.</p>
   </div>;
 }
 

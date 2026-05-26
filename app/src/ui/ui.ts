@@ -1,4 +1,4 @@
-export const shell = 'min-h-screen overflow-x-hidden bg-white px-0 py-0 text-zinc-950 sm:px-4 sm:py-3 lg:px-6';
+export const shell = 'min-h-screen overflow-x-clip bg-white px-0 py-0 text-zinc-950 sm:px-4 sm:py-3 lg:px-6';
 export const panel = 'rounded-lg border border-zinc-200 bg-white';
 export const sectionBox = 'rounded-lg border border-zinc-200 bg-white';
 export const panelHeader = 'border-b border-zinc-200 bg-zinc-50/60';
