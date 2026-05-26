@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
 import { useMainThreadChart } from '../chartHooks';
 import type { ChartViewport } from '../chartOptions';
+import germanyGeoJson from '../germanyGeoJson.json';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
 import { uiManifest } from '../uiManifest';
 import { cx } from '../ui';
@@ -102,21 +103,68 @@ const DEUTSCHLAND_KM2 = 357580;
 const SAARLAND_KM2 = 2570;
 const saarlandComparisonColumns = 12;
 
-// Fläche der gerenderten Deutschland-Kontur in Pixel². Bbox-Aspect leitet
-// sich aus Lon-Spanne (5,87–15,04 = 9,17°) und Lat-Spanne (47,27–55,06 =
-// 7,79°) mit `aspectScale: 0.75` ab: 9,17 / (7,79 × 0,75) ≈ 1,57. ECharts
-// `layoutSize: '92%'` cappt die längere Bbox-Kante auf 92 % der kleineren
-// Chart-Dimension. Deutschland füllt rund 64 % seiner Bounding-Box (geometr.).
+type GeoRing = number[][];
+type GeoPolygon = GeoRing[];
+type GeoMultiPolygon = GeoPolygon[];
+
+const mapAspectScale = 0.75;
+const mapLayoutFrac = 0.92;
+
+function ringArea(ring: GeoRing): number {
+  let area = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    area += x1 * y2 - x2 * y1;
+  }
+  return area / 2;
+}
+
+function projectedPolygonArea(polygon: GeoPolygon): number {
+  const [outer, ...holes] = polygon;
+  return Math.abs(ringArea(outer)) - holes.reduce((sum, ring) => sum + Math.abs(ringArea(ring)), 0);
+}
+
+function projectedGermanyMetrics() {
+  const features = (germanyGeoJson as { features: Array<{ geometry: { type: string; coordinates: unknown } }> }).features;
+  const points: Array<[number, number]> = [];
+  let area = 0;
+  for (const feature of features) {
+    const geometry = feature.geometry;
+    const polygons: GeoMultiPolygon = geometry.type === 'Polygon'
+      ? [geometry.coordinates as GeoPolygon]
+      : geometry.coordinates as GeoMultiPolygon;
+    for (const polygon of polygons) {
+      const projected = polygon.map(ring => ring.map(([lon, lat]) => [lon, lat * mapAspectScale]));
+      area += projectedPolygonArea(projected);
+      for (const ring of projected) points.push(...ring as Array<[number, number]>);
+    }
+  }
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  return {
+    bboxWidth: Math.max(...xs) - Math.min(...xs),
+    bboxHeight: Math.max(...ys) - Math.min(...ys),
+    fillRatio: area / ((Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))),
+  };
+}
+
+const germanyMetrics = projectedGermanyMetrics();
+
+// Fläche der gerenderten Deutschland-Kontur in Pixel². Die Karten-Bounding-Box
+// folgt ECharts' `layoutSize: '92%'`; der Füllgrad kommt aus der echten
+// GeoJSON-Geometrie statt aus einer optischen Schätzung.
 function germanyAreaPx(viewport: ChartViewport): number {
   const w = viewport.width || 0;
   const h = viewport.height || 0;
   if (w <= 0 || h <= 0) return 0;
-  const BBOX_ASPECT = 1.57;
-  const FILL_RATIO = 0.64;
-  const LAYOUT_FRAC = 0.92;
-  const bboxLong = Math.min(w, h) * LAYOUT_FRAC;
-  const bboxShort = bboxLong / BBOX_ASPECT;
-  return bboxLong * bboxShort * FILL_RATIO;
+  const bboxAspect = germanyMetrics.bboxWidth / germanyMetrics.bboxHeight;
+  const maxWidth = w * mapLayoutFrac;
+  const maxHeight = h * mapLayoutFrac;
+  const widthByHeight = maxHeight * bboxAspect;
+  const bboxWidth = widthByHeight <= maxWidth ? widthByHeight : maxWidth;
+  const bboxHeight = widthByHeight <= maxWidth ? maxHeight : maxWidth / bboxAspect;
+  return bboxWidth * bboxHeight * germanyMetrics.fillRatio;
 }
 
 function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport): echarts.EChartsCoreOption {
