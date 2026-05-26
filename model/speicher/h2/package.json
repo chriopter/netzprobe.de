@@ -18,14 +18,14 @@
     "resolution": "stündlich",
     "unit": "GW, GWh",
     "description": [
-      "**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–300 GW`, Default `0,1 GW`, η = `0,34` roundtrip) und H₂-Import (siehe `aussenhandel/h2-handel`, verlustfrei). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–300 GW`, Default `0 GW`). Kavernen-Energie `0–500 TWh` (Default `0,1 GWh`). Das `500 TWh`-Maximum schöpft das norddeutsche Kavernen-Volumen (DEEP.KBB) aus.",
+      "**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–600 GW`, Default `0,1 GW`, η = `0,34` roundtrip) und H₂-Import (siehe `aussenhandel/h2-handel`, verlustfrei). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–500 GW`, Default `0 GW`). Kavernen-Energie `0–1.500 TWh` (Default `0,1 GWh`). Realistischer Anker `~500 TWh` (norddeutsches Kavernen-Potenzial DEEP.KBB); darüber hinaus als Stresstest-Reserve.",
       "**Wirkungsgradkette:** die `34 %` Roundtrip gelten für den Power-to-Power-Pfad und ergeben sich aus Elektrolyse `~65 %` × Kavernen-Speicher `~95 %` × Rückverstromung `~55 %`; Quellen-Korridor `30–42 %` (Fraunhofer IKTS/ISE, IEA). Im Pool-Modell schreibt die Bilanz `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung` die Lade-Verluste nur dem Stromüberschuss-Pfad zu — importierter und für Industrie genutzter H₂ ist verlustfrei (kein Power-to-Power-Pfad).",
       "**Modellgrenze:** **Dispatch-Priorität** `3` ordnet die Rückverstromung hinter Batterie/Pumpspeicher ein — H₂ übernimmt damit den **saisonalen Ausgleich**. Sektor-H₂-Bedarf wird im Pool-Schritt vor der Strom-Bilanz gedeckt: ungedeckter Bedarf bei leerem Pool fällt auf inländische Direkt-Elektrolyse als Stromlast zurück (entspricht der heutigen Sektor-Last). Eine Mindest-SoC-Restriktion und Temperatur-/Druckverluste der Kaverne bleiben außen vor."
     ],
     "overview": [
       {
         "label": "Verwendung",
-        "value": "**Drei Slider:** Elektrolyse `0`–`300 GW` (Default `0,1 GW`, Schritt `5 GW`), Rückverstromung `0`–`300 GW` (Default `0 GW`, Schritt `5 GW`), Kavernen-Energie `0`–`500.000 GWh` ≈ `500 TWh` (Default `0,1 GWh`, Schritt `5.000 GWh`). Defaults spiegeln den effektiv leeren Bestand Ende `2025`."
+        "value": "**Drei Slider:** Elektrolyse `0`–`600 GW` (Default `0,1 GW`, Schritt `5 GW`), Rückverstromung `0`–`500 GW` (Default `0 GW`, Schritt `5 GW`), Kavernen-Energie `0`–`1.500.000 GWh` ≈ `1.500 TWh` (Default `0,1 GWh`, Schritt `5.000 GWh`). Defaults spiegeln den effektiv leeren Bestand Ende `2025`; realistischer Anker `~500 TWh` Kavernen-Potenzial."
       },
       {
         "label": "Verteilung",
@@ -98,7 +98,7 @@
       "Roundtrip-Wirkungsgrad 34 % gilt für Power-to-Power-Pfad; bei stofflicher Nutzung von H₂ (Stahl, Chemie) ist der Pfad-Wirkungsgrad höher.",
       "Plausibler Korridor 30-42 %: Worst-Case 30 % (alte Elektrolyse + 50 % BHKW) bis Best-Case 42 % (PEM-Hochtemperatur + 65 % Brennstoffzelle/H2-GuD); aktuelle Großanlagen liegen bei 33-36 %.",
       "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
-      "Maximum 500 TWh Speicherenergie entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
+      "Slider-Maximum 1.500 TWh deckt Stresstests ab; realistischer Anker `~500 TWh` entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
       "Modell trennt Lade-/Entlade-Leistung, nicht aber Elektrolyseur-Effizienz vs. Rückverstromung — Verluste vollständig beim Laden."
     ],
     "file": "speicher/h2/data.json",
