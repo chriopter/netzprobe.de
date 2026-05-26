@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   Database,
+  Edit3,
   Factory,
   Flame,
   Info,
@@ -1002,11 +1003,13 @@ function EditableNumber({ value, min, max, step, onChange, title }: {
 
   return <button
     type="button"
-    title={title ?? 'Klicken zum Bearbeiten'}
-    className="cursor-text rounded-sm px-0.5 tabular-nums hover:bg-zinc-100 hover:text-zinc-950"
+    title={title ?? 'Wert direkt eingeben'}
+    aria-label={title ?? 'Wert direkt eingeben'}
+    className="group/number inline-flex cursor-text items-center gap-0.5 rounded-sm px-0.5 tabular-nums text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10"
     onClick={() => { setDraft(String(value)); setEditing(true); }}
   >
-    {value.toLocaleString('de-DE')}
+    <span>{value.toLocaleString('de-DE')}</span>
+    <Edit3 aria-hidden="true" className="h-2.5 w-2.5 text-zinc-300 transition group-hover/number:text-zinc-500"/>
   </button>;
 }
 
