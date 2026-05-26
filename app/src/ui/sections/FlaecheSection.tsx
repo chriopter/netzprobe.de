@@ -159,11 +159,9 @@ function germanyAreaPx(viewport: ChartViewport): number {
   const h = viewport.height || 0;
   if (w <= 0 || h <= 0) return 0;
   const bboxAspect = germanyMetrics.bboxWidth / germanyMetrics.bboxHeight;
-  const maxWidth = w * mapLayoutFrac;
-  const maxHeight = h * mapLayoutFrac;
-  const widthByHeight = maxHeight * bboxAspect;
-  const bboxWidth = widthByHeight <= maxWidth ? widthByHeight : maxWidth;
-  const bboxHeight = widthByHeight <= maxWidth ? maxHeight : maxWidth / bboxAspect;
+  const viewRect = Math.min(w, h) * mapLayoutFrac;
+  const bboxWidth = bboxAspect >= 1 ? viewRect : viewRect * bboxAspect;
+  const bboxHeight = bboxAspect >= 1 ? viewRect / bboxAspect : viewRect;
   return bboxWidth * bboxHeight * germanyMetrics.fillRatio;
 }
 
