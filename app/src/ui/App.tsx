@@ -1203,9 +1203,15 @@ function scrollToSection(id: MainViewId) {
 function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, theme, onToggleTheme }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; theme: ThemeMode; onToggleTheme: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
   const themeLabel = theme === 'dark' ? 'Helles Design' : 'Dunkles Design';
+  const activeIndex = tabs.findIndex(tab => tab.id === active);
   return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3">
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
-    <nav aria-label="Hauptansicht" className="pointer-events-auto inline-flex shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid shrink-0 grid-cols-5 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <span
+        aria-hidden="true"
+        className="absolute bottom-0.5 left-0.5 top-0.5 w-[calc((100%_-_4px)/5)] rounded-full bg-zinc-950 transition-transform duration-200 ease-out dark:bg-zinc-50"
+        style={{ transform: `translateX(${Math.max(0, activeIndex) * 100}%)` }}
+      />
       {tabs.map(tab => {
         const isActive = active === tab.id;
         return <button
@@ -1215,11 +1221,11 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, theme
           onClick={() => { onChange(tab.id); scrollToSection(tab.id); }}
           title={tab.ready ? undefined : `${tab.label} – Coming soon`}
           className={cx(
-            'rounded-full px-3 py-1.5 transition',
+            'relative z-10 rounded-full px-3 py-1.5 transition-colors duration-200',
             isActive
-              ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950'
+              ? 'text-white dark:text-zinc-950'
               : tab.ready
-                ? 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50'
+                ? 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50'
                 : 'text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400',
           )}
         >{tab.label}</button>;

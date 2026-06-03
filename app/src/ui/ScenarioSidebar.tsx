@@ -573,7 +573,7 @@ function ErzeugungSection({
       <PresetDropdownPill label="Mehr" groups={supplyDropdownGroups} activeId={activeId} active={!visibleSupplyPillIds.has(activeId)} onSelect={onSupplyPresetChange}/>
     </div>
 
-    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3 dark:border-zinc-800">
+    <div className="mt-2 grid gap-2">
       <SupplyGroupAccordions
         data={data}
         scenario={scenario}
@@ -1155,7 +1155,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         <PresetDropdownPill label="Mehr" presets={loadDropdownPills} activeId={loadPillId} active={loadPillId === 'nur-2017'} docId={datasetIds.loadHistorical2017} onSelect={selectLoadPill}/>
       </div>
 
-    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3 dark:border-zinc-800">
+    <div className="mt-2 grid gap-2">
         <BasisSubSection
           checked={scenario.demand['last-2025']}
           meta={data?.loadSumTWh ? twh0(data.loadSumTWh) : 'Basislast'}
