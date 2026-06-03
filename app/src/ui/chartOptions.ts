@@ -12,6 +12,7 @@ export const EXTRA_LEAVES: ExtraLeaf[] = [
 ];
 export type ChartMode = 'sunburst' | 'linie';
 export type ChartViewport = { width: number; height: number };
+export type ChartTheme = 'light' | 'dark';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
 
 // Stack-Reihenfolge im Chart (Energy-Charts-Konvention: firme Layer unten, Solar oben).
@@ -111,25 +112,59 @@ const angleAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
   return chartHours.map((_, index) => slots.get(index) ?? '');
 };
 
-const xAxis = (hours: SimHour[], chartHours: SimHour[]) => ({
+const chartTheme = (theme: ChartTheme = 'light') => theme === 'dark'
+  ? {
+      axisText: '#a1a1aa',
+      axisLine: '#3f3f46',
+      splitLine: 'rgba(244,244,245,.10)',
+      tooltipBg: 'rgba(24,24,27,.97)',
+      tooltipBorder: '#3f3f46',
+      tooltipText: '#f4f4f5',
+      tooltipMuted: '#a1a1aa',
+      tooltipBold: '#fafafa',
+      tooltipShadow: '0 12px 30px rgba(0,0,0,.38)',
+      loadColor: '#fafafa',
+      loadDot: '#e4e4e7',
+    }
+  : {
+      axisText: '#71717a',
+      axisLine: '#e4e4e7',
+      splitLine: 'rgba(24,24,27,.08)',
+      tooltipBg: 'rgba(255,255,255,.96)',
+      tooltipBorder: '#e5e7eb',
+      tooltipText: '#111827',
+      tooltipMuted: '#71717a',
+      tooltipBold: '#111827',
+      tooltipShadow: '0 12px 30px rgba(24,24,27,.12)',
+      loadColor: '#111827',
+      loadDot: '#111827',
+    };
+
+const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'light') => {
+  const colors = chartTheme(theme);
+  return {
   type: 'category' as const,
   data: xAxisLabels(hours, chartHours),
   axisTick: { show: false },
-  axisLabel: { color: '#71717a', interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
-  axisLine: { lineStyle: { color: '#e4e4e7' } },
-});
+  axisLabel: { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
+  axisLine: { lineStyle: { color: colors.axisLine } },
+  };
+};
 
-const angleAxis = (hours: SimHour[], chartHours: SimHour[], compact = false) => ({
+const angleAxis = (hours: SimHour[], chartHours: SimHour[], compact = false, theme: ChartTheme = 'light') => {
+  const colors = chartTheme(theme);
+  return {
   type: 'category' as const,
   data: angleAxisLabels(hours, chartHours),
   boundaryGap: false,
   startAngle: 90,
   clockwise: true,
   axisTick: { show: false },
-  axisLabel: { color: '#71717a', interval: 0, hideOverlap: true, fontSize: compact ? 8 : 10, margin: compact ? 3 : 18 },
-  axisLine: { lineStyle: { color: '#e4e4e7' } },
-  splitLine: { show: true, lineStyle: { color: 'rgba(24,24,27,.06)' } },
-});
+  axisLabel: { color: colors.axisText, interval: 0, hideOverlap: true, fontSize: compact ? 8 : 10, margin: compact ? 3 : 18 },
+  axisLine: { lineStyle: { color: colors.axisLine } },
+  splitLine: { show: true, lineStyle: { color: colors.splitLine } },
+  };
+};
 
 const roundedAxisMax = (value: number) => {
   if (!Number.isFinite(value) || value <= 0) return undefined;
@@ -166,21 +201,27 @@ export function mixScaleMaxGW(hours: SimHour[], visibility: MixVisibility = DEFA
   return roundedAxisMax(mixScalePeakGW(hours, visibility));
 }
 
-const radiusAxis = (unit = 'GW', max?: number) => ({
+const radiusAxis = (unit = 'GW', max?: number, theme: ChartTheme = 'light') => {
+  const colors = chartTheme(theme);
+  return {
   type: 'value' as const,
   ...(max ? { max } : {}),
-  axisLabel: { show: true, color: '#71717a', fontSize: 9, formatter: `{value} ${unit}` },
+  axisLabel: { show: true, color: colors.axisText, fontSize: 9, formatter: `{value} ${unit}` },
   axisLine: { show: false },
   axisTick: { show: false },
-  splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
-});
+  splitLine: { lineStyle: { color: colors.splitLine } },
+  };
+};
 
-const yAxis = (unit = 'GW', max?: number) => ({
+const yAxis = (unit = 'GW', max?: number, theme: ChartTheme = 'light') => {
+  const colors = chartTheme(theme);
+  return {
   type: 'value' as const,
   ...(max ? { max } : {}),
-  axisLabel: { color: '#71717a', formatter: `{value} ${unit}` },
-  splitLine: { lineStyle: { color: 'rgba(24,24,27,.08)' } },
-});
+  axisLabel: { color: colors.axisText, formatter: `{value} ${unit}` },
+  splitLine: { lineStyle: { color: colors.splitLine } },
+  };
+};
 
 const isCompactChart = (viewport?: ChartViewport) => (viewport?.width ?? 9999) < 640;
 const compactPolarOuterRadius = (viewport?: ChartViewport) => {
@@ -189,7 +230,7 @@ const compactPolarOuterRadius = (viewport?: ChartViewport) => {
   if (width > 0 && width < 430) return '88%';
   return '90%';
 };
-const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport, scaleMaxGW?: number) => {
+const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[], viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light') => {
   if (mode === 'sunburst') {
     const compact = isCompactChart(viewport);
     return {
@@ -197,8 +238,8 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
         center: ['50%', compact ? '50%' : '52%'],
         radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '96%'],
       },
-      angleAxis: angleAxis(hours, chartHours, compact),
-      radiusAxis: radiusAxis('GW', scaleMaxGW),
+      angleAxis: angleAxis(hours, chartHours, compact, theme),
+      radiusAxis: radiusAxis('GW', scaleMaxGW, theme),
     };
   }
   const compact = isCompactChart(viewport);
@@ -206,8 +247,8 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
     grid: compact
       ? { left: 4, right: 4, top: 6, bottom: 24, containLabel: true }
       : { left: 44, right: 20, top: 10, bottom: 48 },
-    xAxis: xAxis(hours, chartHours),
-    yAxis: yAxis('GW', scaleMaxGW),
+    xAxis: xAxis(hours, chartHours, theme),
+    yAxis: yAxis('GW', scaleMaxGW, theme),
   };
 };
 
@@ -247,8 +288,9 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light'): EChartsOption {
   const chartHours = compressHours(hours);
+  const colors = chartTheme(theme);
   const leafMeta = new Map(MIX_GROUPS.flatMap(group => group.leaves).map(leaf => [leaf.key, leaf]));
   const supplySeries = STACK_ORDER
     .filter(key => visibility[key] && leafMeta.has(key))
@@ -256,7 +298,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       const leaf = leafMeta.get(key)!;
       return areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, key)), mode);
     });
-  const coordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW);
+  const coordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW, theme);
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
   // farbige Punkte / Bold / Muted-Zeilen.
@@ -264,10 +306,10 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   const maxTooltipWidth = tooltipMaxWidth(viewport);
   const dot = (color: string) => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle"></span>`;
   const square = (color: string) => `<span style="display:inline-block;width:8px;height:8px;background:${color};margin-right:4px;vertical-align:middle"></span>`;
-  const bold = (text: string) => `<b style="color:#111827">${text}</b>`;
-  const muted = (text: string) => `<span style="color:#71717a">${text}</span>`;
+  const bold = (text: string) => `<b style="color:${colors.tooltipBold}">${text}</b>`;
+  const muted = (text: string) => `<span style="color:${colors.tooltipMuted}">${text}</span>`;
   const row = (content: string) => `<div style="margin-top:4px">${content}</div>`;
-  const detailLine = (content: string) => compactTooltip ? '' : `<div style="margin-left:12px;margin-top:2px;color:#71717a">${content}</div>`;
+  const detailLine = (content: string) => compactTooltip ? '' : `<div style="margin-left:12px;margin-top:2px;color:${colors.tooltipMuted}">${content}</div>`;
   return {
     backgroundColor: 'transparent',
     animation: false,
@@ -278,16 +320,16 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       appendToBody: false,
       enterable: false,
       position: tooltipPosition(viewport),
-      backgroundColor: 'rgba(255,255,255,.96)',
-      borderColor: '#e5e7eb',
+      backgroundColor: colors.tooltipBg,
+      borderColor: colors.tooltipBorder,
       padding: compactTooltip ? [8, 9] : [10, 12],
-      textStyle: { color: '#111827', fontSize: 12 },
+      textStyle: { color: colors.tooltipText, fontSize: 12 },
       extraCssText: [
         `max-width:${maxTooltipWidth}px`,
         'white-space:normal',
         'overflow-wrap:anywhere',
         'line-height:1.35',
-        'box-shadow:0 12px 30px rgba(24,24,27,.12)',
+        `box-shadow:${colors.tooltipShadow}`,
       ].join(';'),
       formatter: (raw: unknown) => {
         const params = Array.isArray(raw) ? raw as Array<{ dataIndex: number }> : [];
@@ -318,7 +360,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
         if (hour.exportGW > 0) lines.push(row(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`));
         if (hour.dataBoundaryResidualGW !== 0) lines.push(row(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`));
-        if (visibility.loadGW) lines.push(row(`${dot('#111827')}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`));
+        if (visibility.loadGW) lines.push(row(`${dot(colors.loadDot)}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`));
         return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
       },
     },
@@ -348,16 +390,17 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
         showSymbol: false,
         smooth: false,
-        lineStyle: { width: 2.2 },
-        itemStyle: { color: '#111827' },
+        itemStyle: { color: colors.loadColor },
+        lineStyle: { width: 2.2, color: colors.loadColor },
         data: chartHours.map((h) => h.loadGW),
       }] : []),
     ],
   };
 }
 
-export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
+export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'light'): EChartsOption {
   const chartHours = compressHours(hours);
+  const colors = chartTheme(theme);
   const line = (name: string, color: string, data: number[]) => ({
     name,
     type: 'line' as const,
@@ -369,10 +412,10 @@ export function buildStorageChartOption(hours: SimHour[]): EChartsOption {
   return {
     backgroundColor: 'transparent',
     animation: false,
-    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.96)', borderColor: '#e5e7eb', textStyle: { color: '#111827' } },
+    tooltip: { trigger: 'axis', backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, textStyle: { color: colors.tooltipText } },
     grid: { left: 46, right: 20, top: 18, bottom: 48 },
-    xAxis: xAxis(hours, chartHours),
-    yAxis: yAxis('GWh'),
+    xAxis: xAxis(hours, chartHours, theme),
+    yAxis: yAxis('GWh', undefined, theme),
     series: [
       line('Batterie', '#10b981', chartHours.map(h => h.batteryGWh)),
       line('H₂', '#0891b2', chartHours.map(h => h.h2GWh)),

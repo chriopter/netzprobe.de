@@ -220,11 +220,11 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
     aria-modal="true"
     aria-label="Szenario-Sidebar"
     className={cx(
-      'fixed inset-0 z-50 w-screen max-w-none overflow-hidden bg-white lg:bottom-0 lg:left-0 lg:top-0 lg:z-20 lg:bg-transparent',
+      'fixed inset-0 z-50 w-screen max-w-none overflow-hidden bg-white dark:bg-zinc-950 lg:bottom-0 lg:left-0 lg:top-0 lg:z-20 lg:bg-transparent',
       sidebarWidthClass,
     )}
   >
-    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] lg:border-r lg:border-zinc-200">
+    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] dark:bg-zinc-950 dark:[scrollbar-color:#3f3f46_transparent] lg:border-r lg:border-zinc-200 lg:dark:border-zinc-800">
       <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
@@ -239,13 +239,13 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
               <Menu className="h-4 w-4" aria-hidden="true"/>
             </button>
             <div className="flex min-w-0 items-center gap-3">
-              <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950">netzprobe.de</h1>
+              <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950 dark:text-zinc-50">netzprobe.de</h1>
               <ApiStatusDot/>
             </div>
           </div>
           <MainTabs active="simulation"/>
         </div>
-        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px]">
+        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px] dark:border-zinc-800">
           {actionBar}
         </div>
       </section>
@@ -459,7 +459,7 @@ function PresetPillRow<TId extends string>({
         onClick={() => onSelect(p.id)}
         className={cx(
           'rounded-full px-3 py-1 text-xs font-medium transition',
-          p.id === activeId ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
+          p.id === activeId ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50',
         )}
       >{p.label}</button>
       {p.docId && <span className="absolute -right-4 top-1/2 -translate-y-1/2"><InfoLink id={p.docId} label={`${p.label} im Wiki öffnen`}/></span>}
@@ -488,21 +488,21 @@ function PresetDropdownPill<TId extends string>({
     <details className="relative inline-block">
       <summary className={cx(
         'flex h-[26px] w-fit cursor-pointer list-none items-center rounded-full border px-3 text-xs font-medium transition marker:hidden [&::-webkit-details-marker]:hidden',
-        activeState ? 'border-zinc-950 bg-zinc-950 text-white' : 'border-transparent bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
+        activeState ? 'border-zinc-950 bg-zinc-950 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950' : 'border-transparent bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50',
       )}>
         <span>{label}</span>
         <ChevronDown className="ml-1 h-3 w-3" aria-hidden="true"/>
       </summary>
-      <div className="absolute left-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg">
+      <div className="absolute left-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
         {optionGroups.map(group => <div key={group.title || 'options'}>
           {group.title && <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400 first:pt-0.5">{group.title}</div>}
-          {group.presets.map(p => <div key={p.id} className={cx('rounded-md', p.id === activeId && 'bg-zinc-50')}>
+          {group.presets.map(p => <div key={p.id} className={cx('rounded-md', p.id === activeId && 'bg-zinc-50 dark:bg-zinc-800')}>
             <button
               type="button"
               title={p.description}
               className={cx(
                 'w-full min-w-0 rounded-md px-2 py-1.5 text-left text-xs font-medium transition',
-                p.id === activeId ? 'text-zinc-950' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
+                p.id === activeId ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
               )}
               onClick={event => {
                 onSelect(p.id);
@@ -573,7 +573,7 @@ function ErzeugungSection({
       <PresetDropdownPill label="Mehr" groups={supplyDropdownGroups} activeId={activeId} active={!visibleSupplyPillIds.has(activeId)} onSelect={onSupplyPresetChange}/>
     </div>
 
-    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3">
+    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3 dark:border-zinc-800">
       <SupplyGroupAccordions
         data={data}
         scenario={scenario}
@@ -831,7 +831,7 @@ function GroupAccordion({
   const hasCheckbox = onChecked !== undefined;
   return <section className={cx(
     'overflow-hidden rounded-md transition',
-    open ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
+    open ? 'border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/70' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70',
   )}>
     <div
       className={cx(
@@ -841,7 +841,7 @@ function GroupAccordion({
       onClick={onToggle}
     >
       {hasCheckbox && <input
-        className="h-4 w-4 accent-zinc-950"
+        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
         checked={!!checked}
         onClick={event => event.stopPropagation()}
@@ -852,7 +852,7 @@ function GroupAccordion({
       <div className="flex min-w-0 items-center gap-1">
         <button
           type="button"
-          className="text-left text-sm font-semibold text-zinc-950"
+          className="text-left text-sm font-semibold text-zinc-950 dark:text-zinc-50"
           aria-expanded={open}
           aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
         >{title}</button>
@@ -869,7 +869,7 @@ function GroupAccordion({
         <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
       </button>
     </div>
-    {open && <div className="border-t border-zinc-100 px-2 py-1">
+    {open && <div className="border-t border-zinc-100 px-2 py-1 dark:border-zinc-700">
       {subtitle && <div className="px-1 pb-1 pt-0.5 text-[11px] leading-4 text-zinc-400">{subtitle}</div>}
       {children}
     </div>}
@@ -925,7 +925,7 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   };
   return <div className="grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
-      <span className="text-xs font-medium text-zinc-950">{label}</span>
+      <span className="text-xs font-medium text-zinc-950 dark:text-zinc-50">{label}</span>
       <span className="flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500">
         <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
         <span>{unit}</span>
@@ -987,7 +987,7 @@ function EditableNumber({ value, min, max, step, onChange, title }: {
     return <input
       ref={inputRef}
       type="number"
-      className="w-16 rounded border border-zinc-300 bg-white px-1 text-right tabular-nums focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
+      className="w-16 rounded border border-zinc-300 bg-white px-1 text-right tabular-nums focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:border-zinc-400 dark:focus:ring-zinc-50/10"
       value={draft}
       min={min}
       max={max}
@@ -1005,7 +1005,7 @@ function EditableNumber({ value, min, max, step, onChange, title }: {
     type="button"
     title={title ?? 'Wert direkt eingeben'}
     aria-label={title ?? 'Wert direkt eingeben'}
-    className="group/number inline-flex cursor-text items-center gap-0.5 rounded-sm px-0.5 tabular-nums text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10"
+    className="group/number inline-flex cursor-text items-center gap-0.5 rounded-sm px-0.5 tabular-nums text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:bg-zinc-900 dark:focus-visible:ring-zinc-50/10"
     onClick={() => { setDraft(String(value)); setEditing(true); }}
   >
     <span>{value.toLocaleString('de-DE')}</span>
@@ -1155,7 +1155,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         <PresetDropdownPill label="Mehr" presets={loadDropdownPills} activeId={loadPillId} active={loadPillId === 'nur-2017'} docId={datasetIds.loadHistorical2017} onSelect={selectLoadPill}/>
       </div>
 
-      <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3">
+    <div className="mt-2 grid gap-2 border-l border-zinc-200 pl-3 dark:border-zinc-800">
         <BasisSubSection
           checked={scenario.demand['last-2025']}
           meta={data?.loadSumTWh ? twh0(data.loadSumTWh) : 'Basislast'}
@@ -1172,7 +1172,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
           onChecked={setTransport}
           onToggle={() => toggleSector('verkehr')}
         >
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             <E100PkwControl
               data={data}
               scenario={scenario}
@@ -1226,7 +1226,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
           onChecked={setHeat}
           onToggle={() => toggleSector('waerme')}
         >
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             <E100HeizControl
               data={data}
               scenario={scenario}
@@ -1256,7 +1256,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
           onChecked={setIndustry}
           onToggle={() => toggleSector('industrie')}
         >
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             <E100IndustrieWaermeControl
               data={data}
               scenario={scenario}
@@ -1397,12 +1397,12 @@ function ModelSection() {
 
 function ReadonlyItem({ label, meta, docId }: { label: string; meta: string; docId: string }) {
   return <div className="group flex items-start gap-3 rounded-lg px-2.5 py-2">
-    <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-zinc-950">
-      <span className="h-2.5 w-2.5 rounded-full bg-zinc-950"/>
+    <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-zinc-950 dark:border-zinc-50">
+      <span className="h-2.5 w-2.5 rounded-full bg-zinc-950 dark:bg-zinc-50"/>
     </span>
     <span className="grid min-w-0 flex-1 gap-0.5">
       <span className="flex min-w-0 items-center gap-1">
-        <span className="truncate text-sm font-medium text-zinc-950">{label}</span>
+        <span className="truncate text-sm font-medium text-zinc-950 dark:text-zinc-50">{label}</span>
         <InfoLink id={docId} label={`${label} im Wiki öffnen`}/>
       </span>
       <span className="truncate text-xs text-zinc-500">{meta}</span>
@@ -1418,20 +1418,20 @@ function SidebarCard({ title, icon, docId, badge, meta, collapsible = false, def
     event.preventDefault();
     toggle();
   };
-  return <section className="rounded-lg border border-zinc-200 bg-white p-3 last:mb-0">
+  return <section className="rounded-lg border border-zinc-200 bg-white p-3 last:mb-0 dark:border-zinc-800 dark:bg-zinc-900">
     {collapsible
       ? <div
           role="button"
           tabIndex={0}
-          className="group flex w-full cursor-pointer items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10"
+          className="group flex w-full cursor-pointer items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/10 dark:focus-visible:ring-zinc-50/10"
           aria-expanded={open}
           onClick={toggle}
           onKeyDown={onHeaderKeyDown}
         >
           <span className={cx(iconTile, 'h-7 w-7')}>{icon}</span>
-          <h2 className="text-[15px] font-bold text-zinc-950">{title}</h2>
+          <h2 className="text-[15px] font-bold text-zinc-950 dark:text-zinc-50">{title}</h2>
           {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
-          {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700">{badge}</span>}
+          {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{badge}</span>}
           {meta && <span className={cx('shrink-0 text-xs tabular-nums text-zinc-500', !badge && 'ml-auto')}>{meta}</span>}
           <ChevronDown aria-hidden="true" className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform', open && 'rotate-180')}/>
         </div>
@@ -1444,29 +1444,29 @@ function SidebarCard({ title, icon, docId, badge, meta, collapsible = false, def
 function SectionHeader({ title, icon, docId, badge, meta }: { title: string; icon: ReactNode; docId?: string; badge?: string; meta?: string }) {
   return <div className="group flex items-center gap-2">
     <span className={cx(iconTile, 'h-7 w-7')}>{icon}</span>
-    <h2 className="text-[15px] font-bold text-zinc-950">{title}</h2>
+    <h2 className="text-[15px] font-bold text-zinc-950 dark:text-zinc-50">{title}</h2>
     {docId && <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>}
-    {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700">{badge}</span>}
+    {badge && <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{badge}</span>}
     {meta && <span className={cx('shrink-0 text-xs tabular-nums text-zinc-500', !badge && 'ml-auto')}>{meta}</span>}
   </div>;
 }
 
 function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean; meta: string; docId: string; onChange: (checked: boolean) => void }) {
-  return <section className="overflow-hidden rounded-md border border-zinc-200/70 bg-zinc-50/70 transition hover:bg-zinc-100/70">
+  return <section className="overflow-hidden rounded-md border border-zinc-200/70 bg-zinc-50/70 transition hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70">
     <label className="group grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5">
       <input
-        className="h-4 w-4 accent-zinc-950"
+        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
         checked={checked}
         onChange={event => onChange(event.target.checked)}
         aria-label="Basis aktivieren"
       />
       <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}><Database className="h-4 w-4"/></span>
-      <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-zinc-950">
-        <span className={cx('truncate', checked ? 'text-zinc-950' : 'text-zinc-500')}>Basis</span>
+      <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+        <span className={cx('truncate', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400')}>Basis</span>
         <InfoLink id={docId} label="Basis im Wiki öffnen"/>
       </span>
-      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950' : 'text-zinc-400')}>{meta}</span>
+      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-500')}>{meta}</span>
       <span aria-hidden="true" className="h-4 w-4"/>
     </label>
   </section>;
@@ -1496,11 +1496,11 @@ function AccordionSection({
   const Chevron = open ? ChevronUp : ChevronDown;
   return <section className={cx(
     'overflow-hidden rounded-md transition',
-    open ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
+    open ? 'border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/70' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70',
   )}>
     <div className="grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5" onClick={onToggle}>
       <input
-        className="h-4 w-4 accent-zinc-950"
+        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
         checked={checked}
         onClick={event => event.stopPropagation()}
@@ -1514,13 +1514,13 @@ function AccordionSection({
         aria-expanded={open}
         aria-label={open ? `${title} einklappen` : `${title} ausklappen`}
       >
-        <span className={cx('text-sm font-semibold', checked ? 'text-zinc-950' : 'text-zinc-500')}>{title}</span>
+        <span className={cx('text-sm font-semibold', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400')}>{title}</span>
         <InfoLink id={docId} label={`${title} im Wiki öffnen`}/>
       </button>
-      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950' : 'text-zinc-400')}>{value}</span>
+      <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-500')}>{value}</span>
       <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
     </div>
-    {open && <div className="border-t border-zinc-100 px-2 py-1">{children}</div>}
+    {open && <div className="border-t border-zinc-100 px-2 py-1 dark:border-zinc-700">{children}</div>}
   </section>;
 }
 
@@ -1531,7 +1531,7 @@ function InfoLink({ id, label, alwaysVisible = false }: { id: string; label: str
     rel="noreferrer"
     aria-label={label}
     className={cx(
-      'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-950 focus:opacity-100',
+      'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-950 focus:opacity-100 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
       alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
     )}
     onClick={event => event.stopPropagation()}
@@ -1546,14 +1546,14 @@ function ScenarioRadioItem({ name, label, meta, checked, onSelect }: { name: str
     checked ? rowActive : rowHover,
   )}>
     <input
-      className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-950"
+      className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-950 dark:accent-zinc-50"
       type="radio"
       name={name}
       checked={checked}
       onChange={onSelect}
     />
     <span className="grid min-w-0 flex-1 gap-0.5">
-      <span className="truncate text-sm font-medium text-zinc-950">{label}</span>
+      <span className="truncate text-sm font-medium text-zinc-950 dark:text-zinc-50">{label}</span>
       <span className="truncate text-xs text-zinc-500">{meta}</span>
     </span>
   </label>;
@@ -1634,11 +1634,11 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
   };
   return <div className={cx(
     'group transition',
-    expanded && enabled ? 'border border-zinc-200 bg-zinc-50' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70',
+    expanded && enabled ? 'border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/70' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70',
   )}>
     <div className={cx('grid grid-cols-[18px_minmax(0,1fr)_64px_16px] items-center gap-1.5 px-2 py-2.5', enabled && 'cursor-pointer')} onClick={() => { if (enabled) onToggleExpand(); }}>
       <input
-        className="h-4 w-4 accent-zinc-950"
+        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
         checked={enabled}
         onClick={event => event.stopPropagation()}
@@ -1647,7 +1647,7 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
       />
       <button
         type="button"
-        className="flex min-w-0 items-center gap-1 text-left text-xs font-medium leading-4 text-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400"
+        className="flex min-w-0 items-center gap-1 text-left text-xs font-medium leading-4 text-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400 dark:text-zinc-50 dark:disabled:text-zinc-500"
         aria-expanded={expanded && enabled}
         aria-label={expanded && enabled ? `${label} einklappen` : `${label} ausklappen`}
         disabled={!enabled}
@@ -1655,7 +1655,7 @@ function SectorRow({ label, enabled, value, min, max, step, valueLabel, valueUni
         <span className="min-w-0 truncate">{label}</span>
         <InfoLink id={docId} label={`${label} im Wiki öffnen`}/>
       </button>
-      <span className={cx('whitespace-nowrap text-right text-xs tabular-nums', enabled ? 'font-semibold text-zinc-950' : 'text-zinc-400')}>{twh(electricTWh)}</span>
+      <span className={cx('whitespace-nowrap text-right text-xs tabular-nums', enabled ? 'font-semibold text-zinc-950 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-500')}>{twh(electricTWh)}</span>
       <Chevron aria-hidden="true" className={cx('h-3.5 w-3.5', enabled ? 'text-zinc-400' : 'text-zinc-300')}/>
     </div>
     {expanded && enabled && <div className="grid gap-1.5 px-2 pb-3 pl-7">

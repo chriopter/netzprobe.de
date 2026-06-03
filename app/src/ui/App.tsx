@@ -1,7 +1,7 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChangelogPage } from './ChangelogPage';
 import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
-import { Camera, Link, Menu, Pause, Play, RotateCcw } from 'lucide-react';
+import { Camera, Link, Menu, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart, MapChart, ScatterChart } from 'echarts/charts';
 import { GeoComponent, GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -41,6 +41,7 @@ const defaultChartMode: ChartMode = 'sunburst';
 const defaultPeriodPreset: PeriodPreset = 'year';
 const defaultOpenSections = '';
 const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false };
+const themeStorageKey = 'theme';
 const listSeparator = '.';
 const scenarioBase = normalizeScenario(defaultScenario);
 const electrificationFlags: Array<keyof Scenario['demand']> = [
@@ -171,6 +172,55 @@ function mainViewFromUrl(): MainViewId {
   } catch {
     return 'mix';
   }
+}
+
+type ThemeMode = 'light' | 'dark';
+
+function systemTheme(): ThemeMode {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  return 'light';
+}
+
+function storedTheme(): ThemeMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage.getItem(themeStorageKey);
+    return value === 'light' || value === 'dark' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyTheme(theme: ThemeMode) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.documentElement.style.colorScheme = theme;
+}
+
+function useThemeMode() {
+  const [theme, setTheme] = useState<ThemeMode>(() => storedTheme() ?? systemTheme());
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      if (!storedTheme()) setTheme(media.matches ? 'dark' : 'light');
+    };
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+  const toggleTheme = () => setTheme(value => {
+    const next = value === 'dark' ? 'light' : 'dark';
+    try {
+      window.localStorage.setItem(themeStorageKey, next);
+    } catch {
+      // Theme bleibt für diese Sitzung trotzdem aktiv.
+    }
+    return next;
+  });
+  return { theme, toggleTheme };
 }
 
 function openSectionsParam(openSectors: SidebarOpenSectors) {
@@ -483,6 +533,7 @@ function clientRouteUrlFromClick(event: MouseEvent) {
 const RouteFallback = () => <div className="flex h-screen items-center justify-center text-sm text-zinc-400">Lade …</div>;
 
 export function App() {
+  const { theme, toggleTheme } = useThemeMode();
   const [route, setRoute] = useState(urlView);
   const routeIsDashboard = route.view !== 'datei' && route.view !== 'daten' && route.view !== 'changelog';
   const [dashboardMounted, setDashboardMounted] = useState(routeIsDashboard);
@@ -524,7 +575,7 @@ export function App() {
         : null;
 
   return <>
-    {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard/></div>}
+    {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard theme={theme} onToggleTheme={toggleTheme}/></div>}
     {!routeIsDashboard && routeContent}
   </>;
 }
@@ -634,7 +685,7 @@ function ChangelogRoute() {
   </main>;
 }
 
-function Dashboard() {
+function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: () => void }) {
   const [rawData, setRawData] = useState<DataSet | null>(null);
   const [historical2017, setHistorical2017] = useState<Historical2017Data | null>(null);
   const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
@@ -928,7 +979,7 @@ function Dashboard() {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
+          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} theme={theme} onToggleTheme={onToggleTheme}/>
           <MixSection
             result={result}
             resolvedScenario={resolvedScenario}
@@ -945,6 +996,7 @@ function Dashboard() {
             referenceScaleMaxGW={referenceScaleMaxGW}
             resetMixScale={resetMixScale}
             runSimulationNow={runSimulationNow}
+            theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario}/>
           <RessourcenSection/>
@@ -1098,7 +1150,7 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
     aria-label="Sidebar öffnen"
     aria-expanded={false}
     title="Sidebar öffnen"
-    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
     onClick={onClick}
   >
     <Menu className="h-4 w-4" aria-hidden="true"/>
@@ -1148,11 +1200,12 @@ function scrollToSection(id: MainViewId) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
+function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, theme, onToggleTheme }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; theme: ThemeMode; onToggleTheme: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
+  const themeLabel = theme === 'dark' ? 'Helles Design' : 'Dunkles Design';
   return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3">
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
-    <nav aria-label="Hauptansicht" className="pointer-events-auto inline-flex shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm">
+    <nav aria-label="Hauptansicht" className="pointer-events-auto inline-flex shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       {tabs.map(tab => {
         const isActive = active === tab.id;
         return <button
@@ -1164,14 +1217,23 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
           className={cx(
             'rounded-full px-3 py-1.5 transition',
             isActive
-              ? 'bg-zinc-950 text-white'
+              ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950'
               : tab.ready
-                ? 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950'
-                : 'text-zinc-300 hover:text-zinc-500',
+                ? 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50'
+                : 'text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400',
           )}
         >{tab.label}</button>;
       })}
     </nav>
+    <button
+      type="button"
+      aria-label={themeLabel}
+      title={themeLabel}
+      className="pointer-events-auto ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
+      onClick={onToggleTheme}
+    >
+      {theme === 'dark' ? <Sun className="h-4 w-4" aria-hidden="true"/> : <Moon className="h-4 w-4" aria-hidden="true"/>}
+    </button>
   </div>;
 }
 

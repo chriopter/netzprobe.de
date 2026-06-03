@@ -7,6 +7,7 @@ import {
   EXTRA_LEAVES,
   MIX_GROUPS,
   type ChartMode,
+  type ChartTheme,
   type MixLeafKey,
   type MixVisibility,
 } from '../chartOptions';
@@ -16,14 +17,14 @@ import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
 import { ChartModeToggle, ChartPanel, InlineKpi, SectionHeading } from '../sectionUi';
 
-function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, scaleMaxGW?: number): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, scaleMaxGW } : null, [hours, visibility, mode, scaleMaxGW]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW), mode === 'sunburst');
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, scaleMaxGW?: number): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW } : null, [hours, visibility, mode, theme, scaleMaxGW]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme), mode === 'sunburst');
 }
 
-function useStorageChart(containerId: string, hours: SimHour[] | undefined): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours } : null, [hours]);
-  return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours));
+function useStorageChart(containerId: string, hours: SimHour[] | undefined, theme: ChartTheme): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, theme } : null, [hours, theme]);
+  return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours, d.theme));
 }
 
 function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleGroup: (groupId: string, checked: boolean) => void }) {
@@ -36,7 +37,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
       aria-pressed={active}
       className={cx(
         'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-        active ? 'border-zinc-300 bg-white text-zinc-800' : 'border-zinc-100 bg-white text-zinc-400 hover:text-zinc-700',
+        active ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300',
       )}
       onClick={() => onToggleLeaf(key, !active)}
     >
@@ -45,7 +46,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
     </button>;
   };
   const activeGroup = openGroup ? MIX_GROUPS.find(g => g.id === openGroup) : null;
-  return <div className="grid gap-1.5 bg-white px-2 pb-3 pt-6 text-xs sm:px-3 sm:pb-3.5 sm:pt-8">
+  return <div className="grid gap-1.5 bg-white px-2 pb-3 pt-6 text-xs dark:bg-zinc-900 sm:px-3 sm:pb-3.5 sm:pt-8">
     <div className="flex flex-wrap items-center justify-center gap-1.5">
       {EXTRA_LEAVES.map(item => renderPill(item.key, item.label, item.color, item.glyph))}
       {MIX_GROUPS.map(group => {
@@ -56,13 +57,13 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
         const isOpen = openGroup === group.id;
         return <div key={group.id} className={cx(
           'inline-flex shrink-0 items-stretch overflow-hidden rounded-md border transition',
-          someActive ? 'border-zinc-300 bg-white text-zinc-800' : 'border-zinc-100 bg-white text-zinc-400',
+          someActive ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500',
         )}>
           <button
             type="button"
             aria-pressed={someActive}
             title={allActive ? 'Alle abwählen' : 'Alle aktivieren'}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 transition hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
             onClick={() => onToggleGroup(group.id, !allActive)}
           >
             <span aria-hidden className="text-[10px]" style={{ color: someActive ? group.color : '#d4d4d8' }}>●</span>
@@ -73,7 +74,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
             type="button"
             aria-expanded={isOpen}
             aria-label={isOpen ? `${group.label} einklappen` : `${group.label} aufklappen`}
-            className="inline-flex items-center border-l border-zinc-200 px-1.5 transition hover:bg-zinc-50"
+            className="inline-flex items-center border-l border-zinc-200 px-1.5 transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
             onClick={() => setOpenGroup(isOpen ? null : group.id)}
           >
             <ChevronRight aria-hidden className={cx('h-3 w-3 text-zinc-400 transition-transform', isOpen && 'rotate-90')}/>
@@ -103,6 +104,7 @@ export type MixSectionProps = {
   referenceScaleMaxGW: number | undefined;
   resetMixScale: () => void;
   runSimulationNow: () => void;
+  theme: ChartTheme;
 };
 
 export default function MixSection(props: MixSectionProps) {
@@ -122,16 +124,17 @@ export default function MixSection(props: MixSectionProps) {
     referenceScaleMaxGW,
     resetMixScale,
     runSimulationNow,
+    theme,
   } = props;
 
-  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, referenceScaleMaxGW);
-  const storagePending = useStorageChart('storage-chart', sliced);
+  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, referenceScaleMaxGW);
+  const storagePending = useStorageChart('storage-chart', sliced, theme);
   const isPending = parentPending || mixPending || storagePending;
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14">
     <SectionHeading id="mix"/>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
-      <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 sm:px-3 sm:py-3">
+      <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 dark:border-zinc-800 sm:px-3 sm:py-3">
         <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-visible">
           <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)} primary/>
           <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
@@ -145,14 +148,14 @@ export default function MixSection(props: MixSectionProps) {
           <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
         </div>
       </div>
-      <div className="relative aspect-square min-h-0 w-full bg-white sm:aspect-auto sm:flex-1">
+      <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-900 sm:aspect-auto sm:flex-1">
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
           <div className="pointer-events-auto">
             <button
               type="button"
               aria-label="Skala zurücksetzen"
               title="Skala auf aktuelles Szenario zurücksetzen"
-              className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-500 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+              className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-500 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
               onClick={resetMixScale}
               disabled={!deferredChartSource}
             >
@@ -173,20 +176,20 @@ export default function MixSection(props: MixSectionProps) {
         <div
           aria-hidden={!isPending}
           className={cx(
-            'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150',
+            'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150 dark:bg-zinc-800/60',
             isPending ? 'opacity-100' : 'opacity-0',
           )}
         >
-          <div className="h-full w-1/3 animate-[indeterminate_1.1s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-zinc-950 to-transparent"/>
+          <div className="h-full w-1/3 animate-[indeterminate_1.1s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-zinc-950 to-transparent dark:via-zinc-50"/>
         </div>
         <div
           aria-hidden={!isOutdated || isPending}
           className={cx(
-            'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150',
+            'pointer-events-none absolute inset-x-0 top-0 h-1 overflow-hidden bg-zinc-100/60 transition-opacity duration-150 dark:bg-zinc-800/60',
             isOutdated && !isPending ? 'opacity-100' : 'opacity-0',
           )}
         >
-          <div className="h-full w-full bg-zinc-950/30"/>
+          <div className="h-full w-full bg-zinc-950/30 dark:bg-zinc-50/30"/>
         </div>
         <div
           aria-hidden={!isPending}
@@ -195,7 +198,7 @@ export default function MixSection(props: MixSectionProps) {
             isPending ? 'opacity-100' : 'opacity-0',
           )}
         >
-          <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white">
+          <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white dark:bg-zinc-50/90 dark:text-zinc-950">
             Aktualisiere …
           </div>
         </div>
@@ -208,12 +211,12 @@ export default function MixSection(props: MixSectionProps) {
           )}
         >
           {liveSimulation
-            ? <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white">
+            ? <div className="rounded-full bg-zinc-950/85 px-3 py-1 text-[11px] font-medium text-white dark:bg-zinc-50/90 dark:text-zinc-950">
                 {sliderActive ? 'Eingabe läuft …' : 'Warte auf Berechnung …'}
               </div>
             : <button
                 type="button"
-                className="rounded-full bg-zinc-950/90 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/25"
+                className="rounded-full bg-zinc-950/90 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/25 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white dark:focus-visible:ring-zinc-50/25"
                 onClick={runSimulationNow}
               >
                 Berechnen
