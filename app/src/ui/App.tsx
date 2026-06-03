@@ -18,7 +18,6 @@ import { MAIN_VIEW_IMPLEMENTED, MAIN_VIEW_LABELS, type MainViewId } from './sect
 import MixSection from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
-import NetzSection from './sections/NetzSection';
 import KostenSection from './sections/KostenSection';
 // DataFileViewer bleibt lazy — Spezial-Route, selten genutzt. Wiki und
 // Changelog werden statisch importiert, damit der Tab-Wechsel kein
@@ -28,7 +27,7 @@ const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.D
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { pct, twh } from './format';
-import { ScenarioSidebar, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
+import { ScenarioSidebar, electrifiedFraction, type BuildoutYear, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
@@ -39,6 +38,7 @@ const defaultCustomStart = '2025-01-01';
 const defaultCustomEnd = '2025-12-31';
 const defaultChartMode: ChartMode = 'sunburst';
 const defaultPeriodPreset: PeriodPreset = 'year';
+const defaultBuildoutYear: BuildoutYear = '2045';
 const defaultOpenSections = '';
 const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false };
 const themeStorageKey = 'theme';
@@ -111,7 +111,7 @@ function appPath(url: URL) {
 function mainViewFromPath(path: string): MainViewId | null {
   const clean = path.replace(/\/+$/, '');
   if (clean === '') return 'mix';
-  return clean === 'flaeche' || clean === 'ressourcen' || clean === 'netz' || clean === 'kosten' ? clean : null;
+  return clean === 'flaeche' || clean === 'ressourcen' || clean === 'kosten' ? clean : null;
 }
 
 function pathForMainView(view: MainViewId) {
@@ -122,6 +122,11 @@ function pathForMainView(view: MainViewId) {
 function periodPresetFromUrl(): PeriodPreset {
   const value = queryParams().get('p');
   return value === '21d' || value === '90d' || value === 'custom' || value === 'year' ? value : defaultPeriodPreset;
+}
+
+function buildoutYearFromUrl(): BuildoutYear {
+  const value = queryParams().get('aufbau');
+  return value === '2035' || value === '2040' || value === '2045' || value === '2050' || value === '2060' ? value : defaultBuildoutYear;
 }
 
 function dateFromUrl(name: string, fallback: string) {
@@ -168,7 +173,7 @@ function mainViewFromUrl(): MainViewId {
     const pathView = mainViewFromPath(appPath(url));
     if (pathView) return pathView;
     const value = url.searchParams.get('view');
-    return value === 'flaeche' || value === 'ressourcen' || value === 'netz' || value === 'kosten' ? value : 'mix';
+    return value === 'flaeche' || value === 'ressourcen' || value === 'kosten' ? value : 'mix';
   } catch {
     return 'mix';
   }
@@ -575,7 +580,8 @@ export function App() {
         : null;
 
   return <>
-    {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard theme={theme} onToggleTheme={toggleTheme}/></div>}
+    <ThemeToggle theme={theme} onToggleTheme={toggleTheme}/>
+    {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard theme={theme}/></div>}
     {!routeIsDashboard && routeContent}
   </>;
 }
@@ -669,15 +675,15 @@ function ChangelogRoute() {
           aria-label="Sidebar öffnen"
           aria-expanded={false}
           title="Sidebar öffnen"
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
           onClick={() => setSidebarCollapsed(false)}
         >
           <Menu className="h-4 w-4" aria-hidden="true"/>
         </button></div>}
-        <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white">
+        <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white dark:border-transparent dark:bg-zinc-950">
           <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
             <ChangelogPage/>
-            <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
+            <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"/>
           </article>
         </div>
       </section>
@@ -685,13 +691,14 @@ function ChangelogRoute() {
   </main>;
 }
 
-function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: () => void }) {
+function Dashboard({ theme }: { theme: ThemeMode }) {
   const [rawData, setRawData] = useState<DataSet | null>(null);
   const [historical2017, setHistorical2017] = useState<Historical2017Data | null>(null);
   const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
   const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
+  const [buildoutYear, setBuildoutYear] = useState<BuildoutYear>(buildoutYearFromUrl);
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   // Build-Time pre-computed default als sofortiger Erst-Render. Wird beim ersten
   // Worker-Ergebnis (Slider-Drag) durch live-Rechnung ersetzt.
@@ -774,6 +781,9 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
     if (chartMode === defaultChartMode) url.searchParams.delete('chart');
     else url.searchParams.set('chart', chartMode);
 
+    if (buildoutYear === defaultBuildoutYear) url.searchParams.delete('aufbau');
+    else url.searchParams.set('aufbau', buildoutYear);
+
     url.searchParams.delete('view');
     if (mainViewFromPath(appPath(url))) url.pathname = pathForMainView(mainView);
 
@@ -798,7 +808,7 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
     if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
-  }, [scenario, periodPreset, customStart, customEnd, chartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -979,10 +989,11 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} theme={theme} onToggleTheme={onToggleTheme}/>
+          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
           <MixSection
             result={result}
             resolvedScenario={resolvedScenario}
+            electrifiedPct={electrifiedFraction(resolvedScenario, data)}
             chartMode={chartMode}
             setChartMode={setChartMode}
             mixVisibility={mixVisibility}
@@ -999,8 +1010,7 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <RessourcenSection/>
-          <NetzSection/>
+          <RessourcenSection buildoutYear={buildoutYear}/>
           <KostenSection/>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
@@ -1018,6 +1028,7 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
         periodPreset={periodPreset}
         customStart={customStart}
         customEnd={customEnd}
+        buildoutYear={buildoutYear}
         collapsed={sidebarCollapsed}
         openSectors={openSectors}
         expandedRow={expandedRow}
@@ -1032,6 +1043,7 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
         onCollapsedChange={setSidebarCollapsed}
         onOpenSectorsChange={setOpenSectors}
         onExpandedRowChange={setExpandedRow}
+        onBuildoutYear={setBuildoutYear}
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}
@@ -1160,7 +1172,7 @@ function SidebarOpenButton({ onClick }: { onClick: () => void }) {
 function useActiveSection(setMainView: (v: MainViewId) => void) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const ids: MainViewId[] = ['mix', 'flaeche', 'ressourcen', 'netz', 'kosten'];
+    const ids: MainViewId[] = ['mix', 'flaeche', 'ressourcen', 'kosten'];
     // Trigger-Linie bei 20 % der Viewport-Höhe. Aktive Sektion = letzte,
     // deren Top oberhalb dieser Linie liegt — also sobald die Überschrift
     // einer neuen Sektion ins oberste Fünftel scrollt, springt das Menü.
@@ -1200,17 +1212,16 @@ function scrollToSection(id: MainViewId) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, theme, onToggleTheme }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; theme: ThemeMode; onToggleTheme: () => void }) {
+function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
-  const themeLabel = theme === 'dark' ? 'Helles Design' : 'Dunkles Design';
   const activeIndex = tabs.findIndex(tab => tab.id === active);
   return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3">
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
-    <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid shrink-0 grid-cols-5 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid shrink-0 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
       <span
         aria-hidden="true"
-        className="absolute bottom-0.5 left-0.5 top-0.5 w-[calc((100%_-_4px)/5)] rounded-full bg-zinc-950 transition-transform duration-200 ease-out dark:bg-zinc-50"
-        style={{ transform: `translateX(${Math.max(0, activeIndex) * 100}%)` }}
+        className="absolute bottom-0.5 left-0.5 top-0.5 rounded-full bg-zinc-950 transition-transform duration-200 ease-out dark:bg-zinc-50"
+        style={{ width: `calc((100% - 4px) / ${tabs.length})`, transform: `translateX(${Math.max(0, activeIndex) * 100}%)` }}
       />
       {tabs.map(tab => {
         const isActive = active === tab.id;
@@ -1231,16 +1242,20 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, theme
         >{tab.label}</button>;
       })}
     </nav>
-    <button
-      type="button"
-      aria-label={themeLabel}
-      title={themeLabel}
-      className="pointer-events-auto ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
-      onClick={onToggleTheme}
-    >
-      {theme === 'dark' ? <Sun className="h-4 w-4" aria-hidden="true"/> : <Moon className="h-4 w-4" aria-hidden="true"/>}
-    </button>
   </div>;
+}
+
+function ThemeToggle({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: () => void }) {
+  const themeLabel = theme === 'dark' ? 'Helles Design' : 'Dunkles Design';
+  return <button
+    type="button"
+    aria-label={themeLabel}
+    title={themeLabel}
+    className="fixed right-3 top-3 z-[60] inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20 sm:right-4"
+    onClick={onToggleTheme}
+  >
+    {theme === 'dark' ? <Sun className="h-4 w-4" aria-hidden="true"/> : <Moon className="h-4 w-4" aria-hidden="true"/>}
+  </button>;
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
