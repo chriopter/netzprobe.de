@@ -998,7 +998,7 @@ function Dashboard({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: 
             runSimulationNow={runSimulationNow}
             theme={theme}
           />
-          <FlaecheSection scenario={resolvedScenario}/>
+          <FlaecheSection scenario={resolvedScenario} theme={theme}/>
           <RessourcenSection/>
           <NetzSection/>
           <KostenSection/>
