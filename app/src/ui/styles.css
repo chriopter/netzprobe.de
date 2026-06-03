@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face{font-family:Inter;font-style:normal;font-weight:300;font-display:swap;src:url('/fonts/inter-300.ttf') format('truetype')}
 @font-face{font-family:Inter;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/inter-400.ttf') format('truetype')}
 @font-face{font-family:Inter;font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/inter-500.ttf') format('truetype')}
@@ -17,6 +19,8 @@
 @layer base{
   html{background:#ffffff;color:#18181b;font-feature-settings:'cv01','ss03'}
   body{min-width:320px;background:#ffffff}
+  html.dark{background:#09090b;color:#f4f4f5}
+  html.dark body{background:#09090b}
   button,a,input,select{font:inherit}
 
   input[type='range']{
@@ -32,15 +36,24 @@
     border-radius:999px;
     background:linear-gradient(to right, #18181b 0 var(--range-pct,0%), #e4e4e7 var(--range-pct,0%) 100%);
   }
+  html.dark input[type='range']::-webkit-slider-runnable-track{
+    background:linear-gradient(to right, #fafafa 0 var(--range-pct,0%), #3f3f46 var(--range-pct,0%) 100%);
+  }
   input[type='range']::-moz-range-track{
     height:4px;
     border-radius:999px;
     background:#e4e4e7;
   }
+  html.dark input[type='range']::-moz-range-track{
+    background:#3f3f46;
+  }
   input[type='range']::-moz-range-progress{
     height:4px;
     border-radius:999px;
     background:#18181b;
+  }
+  html.dark input[type='range']::-moz-range-progress{
+    background:#fafafa;
   }
   input[type='range']::-webkit-slider-thumb{
     -webkit-appearance:none;
@@ -54,6 +67,11 @@
     margin-top:-5px;
     transition:box-shadow .12s ease;
   }
+  html.dark input[type='range']::-webkit-slider-thumb{
+    background:#fafafa;
+    border-color:#18181b;
+    box-shadow:0 0 0 1px #52525b, 0 1px 2px rgba(0,0,0,.32);
+  }
   input[type='range']::-webkit-slider-thumb:hover{
     box-shadow:0 0 0 4px rgba(24,24,27,.12), 0 1px 2px rgba(0,0,0,.08);
   }
@@ -65,6 +83,11 @@
     border:2px solid #ffffff;
     box-shadow:0 0 0 1px #d4d4d8, 0 1px 2px rgba(0,0,0,.08);
     transition:box-shadow .12s ease;
+  }
+  html.dark input[type='range']::-moz-range-thumb{
+    background:#fafafa;
+    border-color:#18181b;
+    box-shadow:0 0 0 1px #52525b, 0 1px 2px rgba(0,0,0,.32);
   }
   input[type='range']::-moz-range-thumb:hover{
     box-shadow:0 0 0 4px rgba(24,24,27,.12), 0 1px 2px rgba(0,0,0,.08);
