@@ -50,8 +50,8 @@ function CommitRow({ commit }: { commit: Commit }) {
         }
       }) : undefined}
       className={cx(
-        '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5 transition',
-        hasBody && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/70',
+        '-mx-2 flex items-center gap-2 rounded-md px-2 py-1 transition-colors',
+        hasBody && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900',
       )}
     >
       <a
@@ -59,15 +59,15 @@ function CommitRow({ commit }: { commit: Commit }) {
         target="_blank"
         rel="noreferrer"
         onClick={event => event.stopPropagation()}
-        className="shrink-0 font-mono text-xs text-zinc-400 underline decoration-transparent underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-300 dark:hover:text-zinc-200"
+        className="shrink-0 font-mono text-xs text-zinc-400 underline decoration-transparent underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-300 dark:text-zinc-500 dark:hover:text-zinc-200 dark:hover:decoration-zinc-600"
       >{commit.short}</a>
-      <span className="min-w-0 flex-1">{commit.subject}</span>
+      <span className="min-w-0 flex-1 text-zinc-700 dark:text-zinc-300">{commit.subject}</span>
       {hasBody && <ChevronRight
         aria-hidden
         className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150', open && 'rotate-90')}
       />}
     </div>
-    {hasBody && open && <pre className="ml-[60px] mt-1.5 max-w-3xl whitespace-pre-wrap break-words rounded-md bg-zinc-50 px-3 py-2 text-[13px] leading-5 text-zinc-700 [font-family:inherit] dark:bg-zinc-800/70 dark:text-zinc-300">{commit.body}</pre>}
+    {hasBody && open && <pre className="ml-[60px] mt-1.5 max-w-3xl whitespace-pre-wrap break-words rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] leading-5 text-zinc-700 [font-family:inherit] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">{commit.body}</pre>}
   </li>;
 }
 
@@ -110,8 +110,8 @@ function OlderDaySection({
   return <section id={`day-${meta.key}`} className="mt-9 scroll-mt-8">
     <DayHeader label={meta.label} count={meta.count} open={isOpen} onToggle={onToggle}/>
     {isOpen && <div className="mt-4 max-w-3xl">
-      {state.status === 'loading' && <p className="text-sm text-zinc-500">Lade Commits …</p>}
-      {state.status === 'error' && <p className="text-sm text-red-600">Konnte Commits nicht laden: {state.message}</p>}
+      {state.status === 'loading' && <p className="text-sm text-zinc-500 dark:text-zinc-400">Lade Commits …</p>}
+      {state.status === 'error' && <p className="text-sm text-red-600 dark:text-red-400">Konnte Commits nicht laden: {state.message}</p>}
       {state.status === 'ready' && <ul className="grid gap-1.5">
         {(state.byDay.get(meta.key) ?? []).map(commit => <CommitRow key={commit.sha} commit={commit}/>)}
       </ul>}
@@ -161,13 +161,13 @@ export function ChangelogPage() {
     ensureOlderLoaded();
   };
 
-  return <div>
-    <p className="text-xs font-medium uppercase text-zinc-400">Allgemein</p>
-    <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-4xl font-semibold leading-tight">
+  return <div className="text-zinc-950 dark:text-zinc-50">
+    <p className="text-xs font-medium uppercase text-zinc-400 dark:text-zinc-500">Allgemein</p>
+    <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-4xl font-semibold leading-tight text-zinc-950 dark:text-zinc-50">
       <span>Changelog</span>
       <a href={`${REPO_URL}/commits/main/`} target="_blank" rel="noreferrer" className="text-sm font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 hover:decoration-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:decoration-zinc-200">chriopter/netzprobe</a>
     </h1>
-    {recentGroups.length === 0 && olderDays.length === 0 && <p className="mt-8 text-sm text-zinc-500">Keine Commit-Historie verfügbar.</p>}
+    {recentGroups.length === 0 && olderDays.length === 0 && <p className="mt-8 text-sm text-zinc-500 dark:text-zinc-400">Keine Commit-Historie verfügbar.</p>}
     {recentGroups.map((group, index) => <RecentDayGroup key={group.key} group={group} defaultOpen={index < 2}/>)}
     {olderDays.map(meta => <OlderDaySection
       key={meta.key}

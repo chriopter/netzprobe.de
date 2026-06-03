@@ -43,7 +43,7 @@ export function DataFileViewer({ path }: { path: string }) {
         <a href={rawUrl} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50">raw</a>
       </div>
       <div className="mt-4 font-mono text-xs">
-        {error ? <p className="text-red-600">Konnte nicht laden: {error}</p>
+        {error ? <p className="text-red-600 dark:text-red-400">Konnte nicht laden: {error}</p>
           : json
             ? (data === null ? <p className="text-zinc-500">Lade …</p> : <JsonTree value={data} defaultOpen depth={0}/>)
             : (text === null ? <p className="text-zinc-500">Lade …</p>
