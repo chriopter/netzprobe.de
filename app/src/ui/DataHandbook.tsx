@@ -129,9 +129,9 @@ function isChangelogRoute() {
 }
 
 function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
-  if (kind === 'template') return <span className="ml-2 inline-flex items-center rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-800">Vorlage</span>;
+  if (kind === 'template') return <span className="ml-2 inline-flex items-center rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-800 dark:bg-sky-950 dark:text-sky-300">Vorlage</span>;
   if (kind !== 'composition') return null;
-  return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800">Preset</span>;
+  return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">Preset</span>;
 }
 
 export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedChange }: { docs: DatasetDoc[]; collapsed: boolean; actionBar?: ReactNode; onCollapsedChange: (collapsed: boolean) => void }) {
@@ -218,7 +218,7 @@ export function DataHandbookContent({ docs, sidebarCollapsed, onOpenSidebar }: {
     >
       <Menu className="h-4 w-4" aria-hidden="true"/>
     </button></div>}
-    <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white dark:border-transparent dark:bg-zinc-950">
       <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
         {!docs.length ? <p className="p-5 text-zinc-500">Lade Wiki …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
         <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"/>
@@ -502,7 +502,7 @@ function FileContentTabs({ selected }: { selected: DatasetDoc }) {
           tabIndex={active ? 0 : -1}
           className={cx(
             '-mb-px rounded-t-md border border-transparent px-3 py-2 text-sm leading-5 transition',
-            active ? 'border-zinc-200 border-b-white bg-white font-medium text-zinc-950 dark:border-zinc-700 dark:border-b-zinc-900 dark:bg-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50',
+            active ? 'border-zinc-200 border-b-white bg-white font-medium text-zinc-950 dark:border-zinc-700 dark:border-b-zinc-950 dark:bg-zinc-950 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50',
           )}
           onClick={() => setActiveTabId(tab.id)}
         >{tab.label}</button>;
@@ -512,7 +512,7 @@ function FileContentTabs({ selected }: { selected: DatasetDoc }) {
       id={`file-panel-${activeTab.id}`}
       role="tabpanel"
       aria-labelledby={`file-tab-${activeTab.id}`}
-      className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+      className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-950"
     >
       {activeTab.kind === 'fields'
         ? <FieldsTabPanel selected={selected}/>
@@ -803,7 +803,7 @@ function SourceTabPanel({ path, kind, parameters }: { path: string; kind: 'modul
       <FilePathLine label={label} path={path}/>
     </dl>
     {error
-      ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Konnte Datei nicht laden: {error}</p>
+      ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">Konnte Datei nicht laden: {error}</p>
       : source === null
         ? <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">Lade Datei …</p>
         : <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{highlightParameters(source, parameters)}</code></pre>}
@@ -1018,7 +1018,7 @@ function TreeNode({ href, label, selected, tag }: { href: string; label: string;
 function TreeSubheader({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'preset' }) {
   return <div className={cx(
     'px-2 pt-2 pb-0.5 text-[10px] font-medium uppercase tracking-wider',
-    variant === 'preset' ? 'text-amber-700' : 'text-zinc-400',
+    variant === 'preset' ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500',
   )}>{children}</div>;
 }
 
