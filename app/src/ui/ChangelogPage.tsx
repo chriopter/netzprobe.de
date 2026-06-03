@@ -36,7 +36,7 @@ function CommitRow({ commit }: { commit: Commit }) {
   const [open, setOpen] = useState(false);
   const hasBody = commit.body.length > 0;
   const toggle = () => setOpen(value => !value);
-  return <li className="text-sm leading-6 text-zinc-700">
+  return <li className="text-sm leading-6 text-zinc-700 dark:text-zinc-300">
     <div
       role={hasBody ? 'button' : undefined}
       tabIndex={hasBody ? 0 : undefined}
@@ -51,7 +51,7 @@ function CommitRow({ commit }: { commit: Commit }) {
       }) : undefined}
       className={cx(
         '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5 transition',
-        hasBody && 'cursor-pointer hover:bg-zinc-50',
+        hasBody && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/70',
       )}
     >
       <a
@@ -59,7 +59,7 @@ function CommitRow({ commit }: { commit: Commit }) {
         target="_blank"
         rel="noreferrer"
         onClick={event => event.stopPropagation()}
-        className="shrink-0 font-mono text-xs text-zinc-400 underline decoration-transparent underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-300"
+        className="shrink-0 font-mono text-xs text-zinc-400 underline decoration-transparent underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-300 dark:hover:text-zinc-200"
       >{commit.short}</a>
       <span className="min-w-0 flex-1">{commit.subject}</span>
       {hasBody && <ChevronRight
@@ -67,7 +67,7 @@ function CommitRow({ commit }: { commit: Commit }) {
         className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150', open && 'rotate-90')}
       />}
     </div>
-    {hasBody && open && <pre className="ml-[60px] mt-1.5 max-w-3xl whitespace-pre-wrap break-words rounded-md bg-zinc-50 px-3 py-2 text-[13px] leading-5 text-zinc-700 [font-family:inherit]">{commit.body}</pre>}
+    {hasBody && open && <pre className="ml-[60px] mt-1.5 max-w-3xl whitespace-pre-wrap break-words rounded-md bg-zinc-50 px-3 py-2 text-[13px] leading-5 text-zinc-700 [font-family:inherit] dark:bg-zinc-800/70 dark:text-zinc-300">{commit.body}</pre>}
   </li>;
 }
 
@@ -76,10 +76,10 @@ function DayHeader({ label, count, open, onToggle }: { label: string; count: num
     type="button"
     aria-expanded={open}
     onClick={onToggle}
-    className="group flex w-full items-center gap-2 border-b border-zinc-200 pb-2 text-left"
+    className="group flex w-full items-center gap-2 border-b border-zinc-200 pb-2 text-left dark:border-zinc-800"
   >
-    <ChevronRight className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:text-zinc-700', open && 'rotate-90')} aria-hidden/>
-    <h2 className="text-lg font-semibold tabular-nums text-zinc-950">{label}</h2>
+    <ChevronRight className={cx('h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:text-zinc-700 dark:group-hover:text-zinc-200', open && 'rotate-90')} aria-hidden/>
+    <h2 className="text-lg font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{label}</h2>
     <span className="ml-auto text-xs tabular-nums text-zinc-400">{count}</span>
   </button>;
 }
@@ -165,7 +165,7 @@ export function ChangelogPage() {
     <p className="text-xs font-medium uppercase text-zinc-400">Allgemein</p>
     <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-4xl font-semibold leading-tight">
       <span>Changelog</span>
-      <a href={`${REPO_URL}/commits/main/`} target="_blank" rel="noreferrer" className="text-sm font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 hover:decoration-zinc-700">chriopter/netzprobe</a>
+      <a href={`${REPO_URL}/commits/main/`} target="_blank" rel="noreferrer" className="text-sm font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 hover:decoration-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:decoration-zinc-200">chriopter/netzprobe</a>
     </h1>
     {recentGroups.length === 0 && olderDays.length === 0 && <p className="mt-8 text-sm text-zinc-500">Keine Commit-Historie verfügbar.</p>}
     {recentGroups.map((group, index) => <RecentDayGroup key={group.key} group={group} defaultOpen={index < 2}/>)}

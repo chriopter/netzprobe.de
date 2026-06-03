@@ -142,11 +142,11 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
   return <aside
     aria-label="Wiki-Navigation"
     className={cx(
-      'min-w-0 overflow-hidden bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:border-r lg:border-zinc-200',
+      'min-w-0 overflow-hidden bg-white dark:bg-zinc-950 lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:border-r lg:border-zinc-200 lg:dark:border-zinc-800',
       sidebarWidthClass,
     )}
   >
-    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin]">
+    <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] dark:bg-zinc-950 dark:[scrollbar-color:#3f3f46_transparent]">
       <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
@@ -161,32 +161,32 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
               <Menu className="h-4 w-4" aria-hidden="true"/>
             </button>
             <div className="flex min-w-0 items-center gap-3">
-              <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950">netzprobe.de</h1>
+              <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950 dark:text-zinc-50">netzprobe.de</h1>
               <ApiStatusDot/>
             </div>
           </div>
           <MainTabs active="wiki"/>
         </div>
-        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px]">
+        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px] dark:border-zinc-800">
           {actionBar}
         </div>
       </section>
       <div className={cx('py-5', sidebarInset)}>
-        <div className="mb-3 border-b border-zinc-200 pb-3">
-          <h2 className="mb-0.5 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950">Allgemein</h2>
+        <div className="mb-3 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+          <h2 className="mb-0.5 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950 dark:text-zinc-50">Allgemein</h2>
           <div className="mb-1 grid min-w-0 gap-0.5 pl-8">
             <a
               href={`${import.meta.env.BASE_URL}changelog`}
               className={cx(
                 'block min-w-0 rounded-md px-2 py-1.5 text-sm leading-5 transition',
-                onChangelog ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+                onChangelog ? 'font-medium text-zinc-950 dark:text-zinc-50' : `text-zinc-600 dark:text-zinc-300 ${rowHover} hover:text-zinc-950 dark:hover:text-zinc-50`,
               )}
             >Changelog</a>
             <a
               href="https://github.com/chriopter/netzprobe"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm leading-5 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800/70 dark:hover:text-zinc-50"
             >
               GitHub
               <ExternalLink className="h-3 w-3 text-zinc-400" aria-hidden="true"/>
@@ -213,15 +213,15 @@ export function DataHandbookContent({ docs, sidebarCollapsed, onOpenSidebar }: {
       aria-label="Sidebar öffnen"
       aria-expanded={false}
       title="Sidebar öffnen"
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
       onClick={onOpenSidebar}
     >
       <Menu className="h-4 w-4" aria-hidden="true"/>
     </button></div>}
-    <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white">
+    <div className="flex min-w-0 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <article className="min-w-0 flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10 lg:py-8">
         {!docs.length ? <p className="p-5 text-zinc-500">Lade Wiki …</p> : selectedId && !selectedDataset ? <p className="p-5 text-zinc-500">Eintrag nicht gefunden.</p> : !selectedDataset ? <DataHandbookHome docs={docs}/> : <DatasetArticle selected={selectedDataset}/>}
-        <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500"/>
+        <DisclaimerFooter className="mt-12 border-t border-zinc-200 pt-4 text-xs leading-5 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"/>
       </article>
       <ArticleToc items={tocItems}/>
     </div>
@@ -263,7 +263,7 @@ function ArticleToc({ items }: { items: TocItem[] }) {
 
   if (!items.length) return null;
   return <aside className="hidden w-[220px] shrink-0 self-start px-6 py-8 xl:sticky xl:top-0 xl:block xl:h-screen xl:overflow-y-auto">
-    <nav className="border-l border-zinc-200 pl-4" aria-label="Inhalt">
+    <nav className="border-l border-zinc-200 pl-4 dark:border-zinc-800" aria-label="Inhalt">
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Inhalt</p>
       <div className="mt-3 grid gap-1">
         {items.map(item => {
@@ -275,7 +275,7 @@ function ArticleToc({ items }: { items: TocItem[] }) {
             className={cx(
               'block rounded-md px-2 py-1 text-sm leading-5 transition',
               item.level === 2 ? 'ml-2' : 'font-medium',
-              active ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-500 hover:text-zinc-950',
+              active ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50',
             )}
           >{item.label}</a>;
         })}
@@ -311,7 +311,7 @@ function DataHandbookNav({
         href={dataWikiHomeUrl()}
         className={cx(
           'mb-2 block rounded-md px-2 py-1.5 text-sm leading-5 transition',
-          !selectedId ? 'font-medium text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+          !selectedId ? 'font-medium text-zinc-950 dark:text-zinc-50' : `text-zinc-600 dark:text-zinc-300 ${rowHover} hover:text-zinc-950 dark:hover:text-zinc-50`,
         )}
       >Modelle & Daten</a>
       {sections.map(([domain, label]) => {
@@ -333,7 +333,7 @@ function DataHandbookNav({
         >
           {!!bausteine.length && <>
             {showGroups && <TreeSubheader>Bausteine</TreeSubheader>}
-            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
+            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800' : 'grid gap-0.5'}>
               {bausteine.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
@@ -345,7 +345,7 @@ function DataHandbookNav({
           </>}
           {!!models.length && <>
             {showGroups && <TreeSubheader>Engine</TreeSubheader>}
-            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2' : 'grid gap-0.5'}>
+            <div className={showGroups ? 'ml-1.5 grid gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800' : 'grid gap-0.5'}>
               {models.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
@@ -366,38 +366,38 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
     <h1 className="mt-2 flex flex-wrap items-center gap-x-3 text-4xl font-semibold leading-tight">
       {selected.method.title}
       <KindTag kind={selected.kind}/>
-      <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-normal text-zinc-700">{selected.id}</code>
+      <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-normal text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{selected.id}</code>
     </h1>
-    {selected.method.short && <p className="mt-3 max-w-3xl text-lg leading-8 text-zinc-700">{selected.method.short}</p>}
+    {selected.method.short && <p className="mt-3 max-w-3xl text-lg leading-8 text-zinc-700 dark:text-zinc-300">{selected.method.short}</p>}
     <section id={tocAnchors.overview} className="mt-9 scroll-mt-8">
-      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Übersicht</h2>
-      <MarkdownBlock content={descriptionMarkdown} className="mt-4 max-w-3xl text-base leading-7 text-zinc-600"/>
+      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Übersicht</h2>
+      <MarkdownBlock content={descriptionMarkdown} className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300"/>
     </section>
     {showModelSection && <section id={tocAnchors.model} className="mt-9 scroll-mt-8">
-      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Modellansatz</h2>
+      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Modellansatz</h2>
       {!!selected.method.overview?.length && <ModelOverview items={selected.method.overview}/>}
       {!!methodItems.length && <section id={tocAnchors.derivation} className="mt-7 max-w-3xl scroll-mt-8">
-        <h3 className="text-base font-semibold text-zinc-900">Herleitung</h3>
-        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Herleitung</h3>
+        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
           {methodItems.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>}
       {selected.method.sections?.map(section => <section key={section.title} id={sectionAnchor(section.title)} className="mt-7 max-w-3xl scroll-mt-8">
-        <h3 className="text-base font-semibold text-zinc-900">{section.title}</h3>
-        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{section.title}</h3>
+        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
           {section.items.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>)}
       {!!selected.method.caveats?.length && <section id={tocAnchors.caveats} className="mt-7 max-w-3xl scroll-mt-8">
-        <h3 className="text-base font-semibold text-zinc-900">Grenzen</h3>
-        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700">
+        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Grenzen</h3>
+        <ul className="mt-3 grid gap-1 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
           {selected.method.caveats.map(item => <li key={item}>• {item}</li>)}
         </ul>
       </section>}
     </section>}
     {selected.method.source && <SourcesSection selected={selected}/>}
     {showFileRows && <section id={tocAnchors.files} className="mt-9 scroll-mt-8">
-      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Files</h2>
+      <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Files</h2>
       <FileContentTabs selected={selected}/>
     </section>}
   </div>;
@@ -405,11 +405,11 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
 
 function SourcesSection({ selected }: { selected: DatasetDoc }) {
   return <section id={tocAnchors.sources} className="mt-9 scroll-mt-8">
-    <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold">Quellen</h2>
+    <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Quellen</h2>
     <div className="mt-4 max-w-3xl text-sm leading-6">
-      <p className="text-zinc-700">{selected.method.source}</p>
+      <p className="text-zinc-700 dark:text-zinc-300">{selected.method.source}</p>
       {selected.method.sourceUrls?.length
-        ? <ul className="mt-3 grid gap-1 text-zinc-700">
+        ? <ul className="mt-3 grid gap-1 text-zinc-700 dark:text-zinc-300">
             {selected.method.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
           </ul>
         : null}
@@ -450,9 +450,9 @@ function markdownInline(text: string): ReactNode[] {
     if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
     const token = match[0];
     if (token.startsWith('**')) {
-      nodes.push(<strong key={nodes.length} className="font-semibold text-zinc-800">{token.slice(2, -2)}</strong>);
+      nodes.push(<strong key={nodes.length} className="font-semibold text-zinc-800 dark:text-zinc-100">{token.slice(2, -2)}</strong>);
     } else if (token.startsWith('`')) {
-      nodes.push(<code key={nodes.length} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[0.9em] text-zinc-800">{token.slice(1, -1)}</code>);
+      nodes.push(<code key={nodes.length} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[0.9em] text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">{token.slice(1, -1)}</code>);
     } else if (token.startsWith('[')) {
       const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
       nodes.push(link
@@ -468,10 +468,10 @@ function markdownInline(text: string): ReactNode[] {
 }
 
 function ModelOverview({ items }: { items: Array<{ label: string; value: string }> }) {
-  return <dl className="mt-4 max-w-3xl divide-y divide-zinc-100 border-y border-zinc-100 text-sm leading-6">
+  return <dl className="mt-4 max-w-3xl divide-y divide-zinc-100 border-y border-zinc-100 text-sm leading-6 dark:divide-zinc-800 dark:border-zinc-800">
     {items.map(item => <div key={item.label} className="grid gap-1 py-3 sm:grid-cols-[124px_1fr]">
       <dt className="font-medium text-zinc-500">{item.label}</dt>
-      <dd className="text-zinc-700">{markdownInline(item.value)}</dd>
+      <dd className="text-zinc-700 dark:text-zinc-300">{markdownInline(item.value)}</dd>
     </div>)}
   </dl>;
 }
@@ -487,7 +487,7 @@ function FileContentTabs({ selected }: { selected: DatasetDoc }) {
   if (!activeTab) return null;
 
   return <div className="mt-4 max-w-3xl">
-    <div role="tablist" aria-label="Dateien" className="flex flex-wrap gap-1 border-b border-zinc-200">
+    <div role="tablist" aria-label="Dateien" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
       {tabs.map(tab => {
         const active = tab.id === activeTab.id;
         const tabId = `file-tab-${tab.id}`;
@@ -502,7 +502,7 @@ function FileContentTabs({ selected }: { selected: DatasetDoc }) {
           tabIndex={active ? 0 : -1}
           className={cx(
             '-mb-px rounded-t-md border border-transparent px-3 py-2 text-sm leading-5 transition',
-            active ? 'border-zinc-200 border-b-white bg-white font-medium text-zinc-950' : 'text-zinc-500 hover:text-zinc-950',
+            active ? 'border-zinc-200 border-b-white bg-white font-medium text-zinc-950 dark:border-zinc-700 dark:border-b-zinc-900 dark:bg-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50',
           )}
           onClick={() => setActiveTabId(tab.id)}
         >{tab.label}</button>;
@@ -512,7 +512,7 @@ function FileContentTabs({ selected }: { selected: DatasetDoc }) {
       id={`file-panel-${activeTab.id}`}
       role="tabpanel"
       aria-labelledby={`file-tab-${activeTab.id}`}
-      className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4"
+      className="rounded-b-lg border border-t-0 border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
     >
       {activeTab.kind === 'fields'
         ? <FieldsTabPanel selected={selected}/>
@@ -673,22 +673,22 @@ function FieldsTabPanel({ selected }: { selected: DatasetDoc }) {
           : couldTruncate && <ChevronRight className={cx('h-3 w-3 shrink-0 text-zinc-300 transition-transform', flatOpen && 'rotate-90')}/>}
       </div>
       <div className="min-w-0" style={indent}>
-        <code className={cx('block text-zinc-900', wrapNameCls)}>{keyName}</code>
+        <code className={cx('block text-zinc-900 dark:text-zinc-100', wrapNameCls)}>{keyName}</code>
       </div>
-      <div className="min-w-0 text-zinc-900">
+      <div className="min-w-0 text-zinc-900 dark:text-zinc-100">
         {formatted !== null
-          ? <code className={cx('block rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-800', wrapCls)}>{formatted}</code>
+          ? <code className={cx('block rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100', wrapCls)}>{formatted}</code>
           : <span className="text-zinc-400">–</span>}
       </div>
       <div className={cx('min-w-0', wrapCls, isDeclared ? 'text-zinc-500' : 'text-zinc-400')}>{typeText}</div>
-      <div className={cx('min-w-0', wrapCls, isDeclared ? 'text-zinc-700' : 'text-zinc-400')}>{descText}</div>
+      <div className={cx('min-w-0', wrapCls, isDeclared ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-500')}>{descText}</div>
     </>;
 
     if (!expandable) {
       const interactive = couldTruncate;
       return <div
         key={reactKey}
-        className={cx(ROW_GRID, interactive && 'cursor-pointer hover:bg-zinc-50')}
+        className={cx(ROW_GRID, interactive && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/70')}
         onClick={interactive ? () => toggleFlatRow(reactKey) : undefined}
       >{cells}</div>;
     }
@@ -702,8 +702,8 @@ function FieldsTabPanel({ selected }: { selected: DatasetDoc }) {
     const sortedChildren = isObj ? sortByExpandability(children, value as Record<string, unknown>) : children;
 
     return <details key={reactKey} className="group">
-      <summary className={cx(ROW_GRID, 'cursor-pointer list-none hover:bg-zinc-50 [&::-webkit-details-marker]:hidden')}>{cells}</summary>
-      <div className="divide-y divide-zinc-100 border-t border-zinc-100 bg-zinc-50/30">{sortedChildren}</div>
+      <summary className={cx(ROW_GRID, 'cursor-pointer list-none hover:bg-zinc-50 dark:hover:bg-zinc-800/70 [&::-webkit-details-marker]:hidden')}>{cells}</summary>
+      <div className="divide-y divide-zinc-100 border-t border-zinc-100 bg-zinc-50/30 dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950/40">{sortedChildren}</div>
     </details>;
   }
 
@@ -764,11 +764,11 @@ function FieldsTabPanel({ selected }: { selected: DatasetDoc }) {
       // anderen Bloecke (Linie unter der Ueberschrift).
       if (group.title === 'method') {
         return <details key={group.title} className={cx(groupIdx > 0 && 'mt-6')}>
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 border-b border-zinc-100 pb-1.5 text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-950 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 border-b border-zinc-100 pb-1.5 text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-950 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-50 [&::-webkit-details-marker]:hidden">
             <ChevronRight className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90 details-chevron"/>
             <span>{group.title}</span>
           </summary>
-          <div className="divide-y divide-zinc-100 border-b border-zinc-100">{rows}</div>
+          <div className="divide-y divide-zinc-100 border-b border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">{rows}</div>
         </details>;
       }
       return <section key={group.title} className={cx(groupIdx > 0 && 'mt-6')}>
@@ -778,7 +778,7 @@ function FieldsTabPanel({ selected }: { selected: DatasetDoc }) {
             (<a href={dataFileUrl(packagePath)} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-700 hover:text-zinc-700"><code className="text-[11px]">model/{packagePath}</code></a> <a href={dataFileUrl(packagePath)} target="_blank" rel="noreferrer" className="text-[10px] underline decoration-zinc-200 underline-offset-2 hover:text-zinc-700">raw</a>)
           </span>}
         </h3>
-        <div className="divide-y divide-zinc-100 border-y border-zinc-100">{rows}</div>
+        <div className="divide-y divide-zinc-100 border-y border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">{rows}</div>
       </section>;
     })}
   </div>;
@@ -799,13 +799,13 @@ function SourceTabPanel({ path, kind, parameters }: { path: string; kind: 'modul
     return () => { cancelled = true; };
   }, [path, kind]);
   return <div>
-    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
       <FilePathLine label={label} path={path}/>
     </dl>
     {error
       ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Konnte Datei nicht laden: {error}</p>
       : source === null
-        ? <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500">Lade Datei …</p>
+        ? <p className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">Lade Datei …</p>
         : <pre className="mt-4 max-h-[70vh] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-lg bg-zinc-950 p-4 text-[11px] leading-5 text-zinc-100 [scrollbar-color:#71717a_transparent] [scrollbar-width:thin]"><code>{highlightParameters(source, parameters)}</code></pre>}
   </div>;
 }
@@ -887,7 +887,7 @@ function highlightParameters(source: string, parameters?: Record<string, unknown
 
 function DataJsonTabPanel({ path }: { path: string }) {
   return <div>
-    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100">
+    <dl className="grid divide-y divide-zinc-100 border-y border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
       <FilePathLine label="Generator-Output" path={path} viewer/>
     </dl>
   </div>;
@@ -919,8 +919,8 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
   return <div>
     <div>
       <p className="text-xs font-medium uppercase text-zinc-400">model/</p>
-      <h1 className="mt-2 text-4xl font-semibold leading-tight">netzprobe.de Wiki</h1>
-      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">Dokumentation der Modellpakete, die UI und Rust-API aus dem statischen <code>model/</code>-Ordner laden. Sechs Domänen, eine Engine.</p>
+      <h1 className="mt-2 text-4xl font-semibold leading-tight dark:text-zinc-50">netzprobe.de Wiki</h1>
+      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">Dokumentation der Modellpakete, die UI und Rust-API aus dem statischen <code>model/</code>-Ordner laden. Sechs Domänen, eine Engine.</p>
     </div>
     <section id={tocAnchors.homeDomains} className="mt-10 scroll-mt-8">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -931,19 +931,19 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
           return <a
             key={domain}
             href={dataWikiUrl(items[0].id)}
-            className={cx(sectionBox, 'group block p-5 transition hover:border-zinc-300')}
+            className={cx(sectionBox, 'group block p-5 transition hover:border-zinc-300 dark:hover:border-zinc-600')}
           >
             <div className="flex items-center gap-3">
-              <span className={cx(iconTile, 'h-9 w-9 text-zinc-700 transition group-hover:bg-zinc-900 group-hover:text-white')}>
+              <span className={cx(iconTile, 'h-9 w-9 text-zinc-700 transition group-hover:bg-zinc-900 group-hover:text-white dark:text-zinc-300 dark:group-hover:bg-zinc-50 dark:group-hover:text-zinc-950')}>
                 <Icon className="h-5 w-5"/>
               </span>
-              <h2 className="text-base font-semibold text-zinc-950">{label}</h2>
+              <h2 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">{label}</h2>
               <span className="ml-auto text-xs tabular-nums text-zinc-400">{items.length} {items.length === 1 ? 'Eintrag' : 'Einträge'}</span>
             </div>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">{domainBlurbs[domain] ?? ''}</p>
+            <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{domainBlurbs[domain] ?? ''}</p>
             <ul className="mt-3 flex flex-wrap gap-1.5">
               {items.slice(0, 6).map(item => <li key={item.id}>
-                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] leading-5 text-zinc-700">{item.method.title}</span>
+                <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] leading-5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{item.method.title}</span>
               </li>)}
               {items.length > 6 && <li>
                 <span className="inline-block rounded-full px-2 py-0.5 text-[11px] leading-5 text-zinc-400">+{items.length - 6}</span>
@@ -974,24 +974,24 @@ function CollapsibleSection({
       aria-expanded={open}
       className={cx(
         'group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[15px] font-semibold leading-5 transition',
-        active ? `text-zinc-950 ${rowActive}` : `text-zinc-800 ${rowHover}`,
+        active ? `text-zinc-950 dark:text-zinc-50 ${rowActive}` : `text-zinc-800 dark:text-zinc-300 ${rowHover}`,
       )}
     >
       <ChevronRight
         className={cx(
-          'h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:text-zinc-700',
+          'h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:text-zinc-700 dark:group-hover:text-zinc-200',
           open && 'rotate-90',
         )}
         aria-hidden
       />
       <span className={cx(
         'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition',
-        active ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200',
+        active ? 'bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:group-hover:bg-zinc-700',
       )}>{icon}</span>
       <span className="flex-1 truncate">{title}</span>
       <span className={cx(
         'text-xs font-normal tabular-nums transition',
-        active ? 'text-zinc-700' : 'text-zinc-400',
+        active ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400',
       )}>{count}</span>
     </button>
     {open && <div className="mt-0.5 mb-1 grid min-w-0 gap-0.5 pl-8">
@@ -1005,7 +1005,7 @@ function TreeNode({ href, label, selected, tag }: { href: string; label: string;
     href={href}
     className={cx(
       'block min-w-0 rounded-md px-2 py-1 text-[13px] leading-5 transition',
-      selected ? 'font-semibold text-zinc-950' : `text-zinc-600 ${rowHover} hover:text-zinc-950`,
+      selected ? 'font-semibold text-zinc-950 dark:text-zinc-50' : `text-zinc-600 dark:text-zinc-300 ${rowHover} hover:text-zinc-950 dark:hover:text-zinc-50`,
     )}
   >
     <span className="flex min-w-0 items-center gap-1">
@@ -1026,7 +1026,7 @@ function InfoLine({ label, value }: { label: string; value: string }) {
   const urlMatch = value.match(/https?:\/\/\S+/);
   return <div className="grid gap-1 py-3 sm:grid-cols-[124px_1fr]">
     <dt className="font-medium text-zinc-500">{label}</dt>
-    <dd className="text-zinc-700">
+    <dd className="text-zinc-700 dark:text-zinc-300">
       {urlMatch ? <>
         {value.slice(0, urlMatch.index).trim()}
         {value.slice(0, urlMatch.index).trim() ? ' ' : ''}

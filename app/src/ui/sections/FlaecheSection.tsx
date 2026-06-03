@@ -3,7 +3,7 @@ import * as echarts from 'echarts/core';
 import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
 import { useMainThreadChart } from '../chartHooks';
-import type { ChartViewport } from '../chartOptions';
+import type { ChartTheme, ChartViewport } from '../chartOptions';
 import germanyGeoJson from '../germanyGeoJson.json';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
 import { uiManifest } from '../uiManifest';
@@ -165,7 +165,8 @@ function germanyAreaPx(viewport: ChartViewport): number {
   return bboxWidth * bboxHeight * germanyMetrics.fillRatio;
 }
 
-function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport): echarts.EChartsCoreOption {
+function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string, viewport: ChartViewport, theme: ChartTheme): echarts.EChartsCoreOption {
+  const dark = theme === 'dark';
   const totalKm2 = anlageKm2 + wirkungKm2;
   const mapTotalKm2 = totalKm2 + offshoreWirkungKm2 + vorFlaecheKm2;
   // Symbol-Durchmesser so wählen, dass Kreisfläche in Pixel² proportional zur
@@ -199,6 +200,9 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
+      backgroundColor: dark ? 'rgba(24,24,27,.97)' : 'rgba(255,255,255,.96)',
+      borderColor: dark ? '#3f3f46' : '#e5e7eb',
+      textStyle: { color: dark ? '#f4f4f5' : '#111827', fontSize: 12 },
       formatter: () => {
         const totalPct = mapTotalKm2 / DEUTSCHLAND_KM2 * 100;
         return [
@@ -219,8 +223,8 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
       layoutCenter: ['50%', '50%'],
       layoutSize: '92%',
       itemStyle: {
-        areaColor: '#f4f4f5',
-        borderColor: '#d4d4d8',
+        areaColor: dark ? '#27272a' : '#f4f4f5',
+        borderColor: dark ? '#52525b' : '#d4d4d8',
         borderWidth: 1.2,
       },
       emphasis: {
@@ -245,7 +249,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         itemStyle: {
           color: '#16a34a',
           opacity: 0.76,
-          borderColor: '#ffffff',
+          borderColor: dark ? '#18181b' : '#ffffff',
           borderWidth: 2,
         },
         emphasis: {
@@ -253,7 +257,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
           itemStyle: {
             color: hoverFill,
             opacity: 0.9,
-            borderColor: '#ffffff',
+            borderColor: dark ? '#18181b' : '#ffffff',
             borderWidth: 2,
           },
         },
@@ -270,14 +274,14 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
           show: true,
           formatter: 'Offshore',
           position: 'top',
-          color: '#0369a1',
+          color: dark ? '#7dd3fc' : '#0369a1',
           fontSize: 11,
           fontWeight: 600,
         },
         itemStyle: {
           color: '#0284c7',
           opacity: 0.78,
-          borderColor: '#ffffff',
+          borderColor: dark ? '#18181b' : '#ffffff',
           borderWidth: 2,
         },
         emphasis: {
@@ -285,7 +289,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
           itemStyle: {
             color: '#0284c7',
             opacity: 0.92,
-            borderColor: '#ffffff',
+            borderColor: dark ? '#18181b' : '#ffffff',
             borderWidth: 2,
           },
         },
@@ -301,7 +305,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         itemStyle: {
           color: '#f59e0b',
           opacity: 0.78,
-          borderColor: '#ffffff',
+          borderColor: dark ? '#18181b' : '#ffffff',
           borderWidth: 2,
         },
         emphasis: {
@@ -309,7 +313,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
           itemStyle: {
             color: '#f59e0b',
             opacity: 0.92,
-            borderColor: '#ffffff',
+            borderColor: dark ? '#18181b' : '#ffffff',
             borderWidth: 2,
           },
         },
@@ -318,12 +322,12 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
   };
 }
 
-function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string): boolean {
-  const data = useMemo(() => ({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2 }), [anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.offshoreWirkungKm2, d.vorFlaecheKm2, d.fmtKm2, viewport));
+function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: number, offshoreWirkungKm2: number, vorFlaecheKm2: number, fmtKm2: (value: number) => string, theme: ChartTheme): boolean {
+  const data = useMemo(() => ({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme }), [anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.offshoreWirkungKm2, d.vorFlaecheKm2, d.fmtKm2, viewport, d.theme));
 }
 
-function FlaechePanel({ scenario }: { scenario: Scenario }) {
+function FlaechePanel({ scenario, theme }: { scenario: Scenario; theme: ChartTheme }) {
   const rows = flaecheRows(scenario);
   const rows2025 = flaecheRows(scenarioBase);
   const offshoreWirkung = rows.find(r => r.id === 'windoff')?.wirkungKm2 ?? 0;
@@ -336,7 +340,7 @@ function FlaechePanel({ scenario }: { scenario: Scenario }) {
 
   const fmtKm2 = (v: number) => v < 1 ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : v < 100 ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : Math.round(v).toLocaleString('de-DE');
 
-  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
+  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-5 sm:py-5 lg:px-6">
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <FlaecheKpi label="Summe" value={`${fmtKm2(sumGesamt)} km²`} color="#18181b"/>
       <FlaecheKpi label="DE-Anteil" value={`${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %`} color="#525252"/>
@@ -344,17 +348,17 @@ function FlaechePanel({ scenario }: { scenario: Scenario }) {
       <FlaecheKpi label="gegen 2025" value={sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–'} color="#71717a"/>
     </div>
 
-    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkungInland} offshoreWirkungKm2={offshoreWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2}/>
+    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkungInland} offshoreWirkungKm2={offshoreWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2} theme={theme}/>
   </div>;
 }
 
 function FlaecheKpi({ label, value, color }: { label: string; value: string; color: string }) {
-  return <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3">
+  return <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/70">
     <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }}/>
       <span>{label}</span>
     </div>
-    <div className="mt-1.5 text-base font-semibold tabular-nums text-zinc-950">{value}</div>
+    <div className="mt-1.5 text-base font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{value}</div>
   </div>;
 }
 
@@ -367,17 +371,17 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
     else next.add(id);
     return next;
   });
-  return <div className="min-w-0 overflow-x-auto bg-white">
+  return <div className="min-w-0 overflow-x-auto bg-white dark:bg-zinc-900">
     <table className="w-full min-w-[360px] text-sm">
       <thead className="text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-        <tr className="border-b border-zinc-200">
+        <tr className="border-b border-zinc-200 dark:border-zinc-800">
           <th className="w-7 py-3 font-medium"/>
           <th className="py-3 font-medium">Technologie</th>
           <th className="py-3 text-right font-medium">Bestand</th>
           <th className="py-3 text-right font-medium">Summe</th>
         </tr>
       </thead>
-      <tbody className="text-zinc-700">
+      <tbody className="text-zinc-700 dark:text-zinc-300">
         {rows.map(row => {
           const summe = row.anlageKm2 + row.wirkungKm2 + (row.vorFlaecheKm2 ?? 0);
           const dim = row.gw === 0;
@@ -390,7 +394,7 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
           const isOpen = expanded.has(row.id);
           return <Fragment key={row.id}>
             <tr
-              className={cx('cursor-pointer border-b border-zinc-100 hover:bg-zinc-50', dim && 'text-zinc-300')}
+              className={cx('cursor-pointer border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/70', dim && 'text-zinc-300 dark:text-zinc-600')}
               aria-expanded={isOpen}
               onClick={() => toggle(row.id)}
             >
@@ -401,7 +405,7 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
               <td className="py-2.5 text-right tabular-nums">{row.gw.toLocaleString('de-DE', { maximumFractionDigits: 1 })} GW</td>
               <td className="py-2.5 text-right font-medium tabular-nums">{fmtKm2(summe)} km²</td>
             </tr>
-            {isOpen && <tr className={cx('border-b border-zinc-100 bg-zinc-50/60 text-xs', dim && 'text-zinc-300')}>
+            {isOpen && <tr className={cx('border-b border-zinc-100 bg-zinc-50/60 text-xs dark:border-zinc-800 dark:bg-zinc-950/40', dim && 'text-zinc-300 dark:text-zinc-600')}>
               <td className="py-3"/>
               <td colSpan={3} className="py-3">
                 <dl className="grid gap-2">
@@ -417,7 +421,7 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
           </Fragment>;
         })}
       </tbody>
-      <tfoot className="font-semibold text-zinc-950">
+      <tfoot className="font-semibold text-zinc-950 dark:text-zinc-50">
         <tr>
           <td className="py-3"/>
           <td className="py-3">Summe</td>
@@ -432,26 +436,26 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
 function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
   return <div className="grid grid-cols-[92px_1fr] gap-3">
     <dt className="text-zinc-400">{label}</dt>
-    <dd className="break-words font-medium tabular-nums text-zinc-700">{value}</dd>
+    <dd className="break-words font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{value}</dd>
   </div>;
 }
 
-function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme }) {
   return <section className="mt-7 grid gap-5">
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
       <div className="min-w-0">
-        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
+        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2} theme={theme}/>
       </div>
       <div className="flex min-w-0 flex-col gap-5">
-        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2}/>
+        <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
         <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
       </div>
     </div>
   </section>;
 }
 
-function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
-  useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2);
+function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme }) {
+  useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme);
   const anlagePct = anlageKm2 / DEUTSCHLAND_KM2 * 100;
   const wirkungPct = wirkungKm2 / DEUTSCHLAND_KM2 * 100;
   const offshorePct = offshoreWirkungKm2 / DEUTSCHLAND_KM2 * 100;
@@ -470,12 +474,12 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
     .join(' · ');
   return <div>
     <div className="flex items-baseline justify-between gap-4">
-      <h2 className="text-lg font-semibold text-zinc-950">Flächenbedarf in Deutschland</h2>
+      <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Flächenbedarf in Deutschland</h2>
       <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
     </div>
-    <div className="mt-4 bg-white">
+    <div className="mt-4 bg-white dark:bg-zinc-900">
       <div id="flaeche-map" className="h-[360px] w-full"/>
-      <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs">
+      <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs dark:border-zinc-800">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={`${anlagePct.toLocaleString('de-DE', { maximumFractionDigits: anlagePct < 1 ? 2 : 1 })} %`} meta="DE"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={`${wirkungPct.toLocaleString('de-DE', { maximumFractionDigits: wirkungPct < 1 ? 2 : 1 })} %`} meta="DE"/>
         {offshoreWirkungKm2 > 0 && <LegendMetric color="#0284c7" label="Wirkfläche Offshore" value={`${offshorePct.toLocaleString('de-DE', { maximumFractionDigits: offshorePct < 1 ? 2 : 1 })} %`} meta="Nordsee/Ostsee"/>}
@@ -491,13 +495,13 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
 function LegendMetric({ color, label, value, meta }: { color: string; label: string; value: string; meta: string }) {
   return <div className="flex items-baseline gap-2">
     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }}/>
-    <span className="text-zinc-600">{label}</span>
-    <span className="ml-auto font-medium tabular-nums text-zinc-950">{value}</span>
+    <span className="text-zinc-600 dark:text-zinc-300">{label}</span>
+    <span className="ml-auto font-medium tabular-nums text-zinc-950 dark:text-zinc-50">{value}</span>
     <span className="tabular-nums text-zinc-400">{meta}</span>
   </div>;
 }
 
-function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string }) {
+function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string; theme: ChartTheme }) {
   const totalKm2 = anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2;
   const saarlands = totalKm2 / SAARLAND_KM2;
   const anlageTiles = anlageKm2 / SAARLAND_KM2;
@@ -506,7 +510,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
   const visibleTileCount = Math.max(saarlandComparisonColumns, Math.ceil(saarlands / saarlandComparisonColumns) * saarlandComparisonColumns);
   const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
-  return <div className="group relative border-b border-zinc-100 bg-white pb-5">
+  return <div className="group relative border-b border-zinc-100 bg-white pb-5 dark:border-zinc-800 dark:bg-zinc-900">
     <div className="flex items-baseline justify-between gap-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Saarland-Vergleich</h4>
       <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands</span>
@@ -528,28 +532,28 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
         const totalPct = Math.round(totalFill * 100);
         return <span
           key={index}
-          className="h-3.5 rounded-[3px] border border-zinc-200 bg-zinc-100"
-          style={totalPct > 0 ? { background: `linear-gradient(90deg, #dc2626 0 ${redPct}%, #16a34a ${redPct}% ${greenEnd}%, #0284c7 ${greenEnd}% ${blueEnd}%, #f59e0b ${blueEnd}% ${totalPct}%, #f4f4f5 ${totalPct}% 100%)` } : undefined}
+          className="h-3.5 rounded-[3px] border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+          style={totalPct > 0 ? { background: `linear-gradient(90deg, #dc2626 0 ${redPct}%, #16a34a ${redPct}% ${greenEnd}%, #0284c7 ${greenEnd}% ${blueEnd}%, #f59e0b ${blueEnd}% ${totalPct}%, ${theme === 'dark' ? '#27272a' : '#f4f4f5'} ${totalPct}% 100%)` } : undefined}
         />;
       })}
     </div>
-    <div className="pointer-events-none absolute left-4 top-full z-30 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg ring-1 ring-zinc-950/5 transition group-hover:opacity-100">
+    <div className="pointer-events-none absolute left-4 top-full z-30 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg ring-1 ring-zinc-950/5 transition group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-900 dark:ring-zinc-50/10">
       <div className="grid gap-2">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={anlageTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={wirkungTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
         {offshoreWirkungKm2 > 0 && <LegendMetric color="#0284c7" label="Wirkfläche Offshore" value={offshoreTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>}
         {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={vorTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>}
       </div>
-      <div className="mt-3 border-t border-zinc-100 pt-2 text-zinc-500">
-        <span className="font-medium tabular-nums text-zinc-900">{fmtKm2(totalKm2)} km²</span> gesamt. Eine Kachel entspricht <span className="font-medium tabular-nums text-zinc-900">2.570 km²</span>.
+      <div className="mt-3 border-t border-zinc-100 pt-2 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <span className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">{fmtKm2(totalKm2)} km²</span> gesamt. Eine Kachel entspricht <span className="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">2.570 km²</span>.
       </div>
     </div>
   </div>;
 }
 
-export default function FlaecheSection({ scenario }: { scenario: Scenario }) {
-  return <section id="section-flaeche" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-6">
+export default function FlaecheSection({ scenario, theme }: { scenario: Scenario; theme: ChartTheme }) {
+  return <section id="section-flaeche" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-6 dark:border-zinc-800">
     <SectionHeading id="flaeche"/>
-    <FlaechePanel scenario={scenario}/>
+    <FlaechePanel scenario={scenario} theme={theme}/>
   </section>;
 }
