@@ -15,7 +15,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, InlineKpi, SectionHeading } from '../sectionUi';
+import { ChartModeToggle, ChartPanel, StatCard, type Stat } from '../sectionUi';
 
 function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, scaleMaxGW?: number): boolean {
   const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW } : null, [hours, visibility, mode, theme, scaleMaxGW]);
@@ -37,7 +37,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
       aria-pressed={active}
       className={cx(
         'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 transition',
-        active ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300',
+        active ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-300',
       )}
       onClick={() => onToggleLeaf(key, !active)}
     >
@@ -46,7 +46,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
     </button>;
   };
   const activeGroup = openGroup ? MIX_GROUPS.find(g => g.id === openGroup) : null;
-  return <div className="grid gap-1.5 bg-white px-2 pb-3 pt-6 text-xs dark:bg-zinc-900 sm:px-3 sm:pb-3.5 sm:pt-8">
+  return <div className="grid gap-1.5 bg-white px-2 pb-3 pt-6 text-xs dark:bg-zinc-950 sm:px-3 sm:pb-3.5 sm:pt-8">
     <div className="flex flex-wrap items-center justify-center gap-1.5">
       {EXTRA_LEAVES.map(item => renderPill(item.key, item.label, item.color, item.glyph))}
       {MIX_GROUPS.map(group => {
@@ -57,7 +57,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
         const isOpen = openGroup === group.id;
         return <div key={group.id} className={cx(
           'inline-flex shrink-0 items-stretch overflow-hidden rounded-md border transition',
-          someActive ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500',
+          someActive ? 'border-zinc-300 bg-white text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100' : 'border-zinc-100 bg-white text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-500',
         )}>
           <button
             type="button"
@@ -91,6 +91,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
 export type MixSectionProps = {
   result: SimulationResult;
   resolvedScenario: Scenario;
+  electrifiedPct: number | null;
   chartMode: ChartMode;
   setChartMode: (mode: ChartMode) => void;
   mixVisibility: MixVisibility;
@@ -111,6 +112,7 @@ export default function MixSection(props: MixSectionProps) {
   const {
     result,
     resolvedScenario,
+    electrifiedPct,
     chartMode,
     setChartMode,
     mixVisibility,
@@ -130,25 +132,45 @@ export default function MixSection(props: MixSectionProps) {
   const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, referenceScaleMaxGW);
   const storagePending = useStorageChart('storage-chart', sliced, theme);
   const isPending = parentPending || mixPending || storagePending;
+  const blackout = result.summary.hoursWithLoadShedding;
+  // Hero-Werte ampelfarbig nach Ergebnis: grün gut, amber mittel, rot schlecht.
+  const good = 'text-emerald-600 dark:text-emerald-400';
+  const warn = 'text-amber-600 dark:text-amber-400';
+  const bad = 'text-red-600 dark:text-red-400';
+  const neutral = 'text-zinc-950 dark:text-white';
+  const elecTone = electrifiedPct == null ? neutral : electrifiedPct >= 0.8 ? good : electrifiedPct >= 0.4 ? warn : bad;
+  const blackoutTone = blackout === 0 ? good : blackout <= 100 ? warn : bad;
 
-  return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14">
-    <SectionHeading id="mix"/>
+  const s = result.summary;
+  const statGroups: Array<{ title: string; stats: Stat[] }> = [
+    { title: 'Last', stats: [
+      { label: 'Jahreslast', value: twh(s.totalDemandTWh) },
+      { label: 'Peak-Last', value: `${fmt0.format(s.peakLoadGW)} GW` },
+    ] },
+    { title: 'Versorgung', stats: [
+      { label: 'Fehlend', value: twh(s.loadSheddingTWh), tone: s.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil' },
+      { label: 'Stunden Fehlend', value: `${fmt0.format(s.hoursWithLoadShedding)} h`, tone: s.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil' },
+    ] },
+    { title: 'Handel', stats: [
+      { label: 'Import', value: resolvedScenario.import.h2TWh > 0 ? `${fmt.format(s.importTWh)} / ${fmt0.format(resolvedScenario.import.h2TWh)} TWh H₂` : twh(s.importTWh) },
+      { label: 'Export', value: twh(s.exportTWh) },
+    ] },
+    { title: 'Erzeugung', stats: [
+      { label: 'EE-Anteil', value: pct(s.renewableSharePct) },
+      { label: 'Abregelung', value: twh(s.curtailmentTWh) },
+    ] },
+    { title: 'Emissionen', stats: [
+      { label: 'CO₂-Intensität', value: `${fmt0.format(s.co2GperKWh)} g/kWh` },
+      { label: 'CO₂ Jahr', value: `${fmt.format(s.co2MtPerYear)} Mt` },
+    ] },
+  ];
+
+  return <section id="section-mix" className="flex flex-col gap-4 scroll-mt-14 pt-3">
+    <p className="text-balance text-2xl font-bold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
+      <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">X €</span>.
+    </p>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
-      <div className="shrink-0 border-b border-zinc-200/70 px-2 py-2 dark:border-zinc-800 sm:px-3 sm:py-3">
-        <div className="flex min-w-0 gap-1.5 overflow-x-auto sm:grid sm:grid-cols-5 sm:overflow-visible">
-          <InlineKpi label="EE-Anteil" value={pct(result.summary.renewableSharePct)} primary/>
-          <InlineKpi label="Jahreslast" value={twh(result.summary.totalDemandTWh)}/>
-          <InlineKpi label="Import" value={resolvedScenario.import.h2TWh > 0 ? `${fmt.format(result.summary.importTWh)} / ${fmt0.format(resolvedScenario.import.h2TWh)} TWh H₂` : twh(result.summary.importTWh)}/>
-          <InlineKpi label="Fehlend" value={twh(result.summary.loadSheddingTWh)} tone={result.summary.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil'} primary/>
-          <InlineKpi label="Abregelung" value={twh(result.summary.curtailmentTWh)}/>
-          <InlineKpi label="CO₂-Intensität" value={`${fmt0.format(result.summary.co2GperKWh)} g/kWh`} primary/>
-          <InlineKpi label="CO₂ Jahr" value={`${fmt.format(result.summary.co2MtPerYear)} Mt`}/>
-          <InlineKpi label="Export" value={twh(result.summary.exportTWh)}/>
-          <InlineKpi label="Peak-Last" value={`${fmt0.format(result.summary.peakLoadGW)} GW`}/>
-          <InlineKpi label="Stunden Fehlend" value={`${fmt0.format(result.summary.hoursWithLoadShedding)} h`} tone={result.summary.hoursWithLoadShedding > 0 ? 'angespannt' : 'stabil'}/>
-        </div>
-      </div>
-      <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-900 sm:aspect-auto sm:flex-1">
+      <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
           <div className="pointer-events-auto">
             <button
@@ -236,8 +258,12 @@ export default function MixSection(props: MixSectionProps) {
       />
     </ChartPanel>
 
-    <ChartPanel title="Speicherfüllstand" meta="Batterie/H₂">
-      <div id="storage-chart" className="h-[240px] w-full px-3 py-3"/>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      {statGroups.map(group => <StatCard key={group.title} title={group.title} stats={group.stats}/>)}
+    </div>
+
+    <ChartPanel title="Speicherfüllstand" meta="Batterie / H₂" className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div id="storage-chart" className="h-[240px] w-full px-3 pb-3 pt-1"/>
     </ChartPanel>
   </section>;
 }

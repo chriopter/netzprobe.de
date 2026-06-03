@@ -32,6 +32,7 @@ import type { DataSet, ReferenceScale } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
+export type BuildoutYear = '2035' | '2040' | '2045' | '2050' | '2060';
 type LoadPresetState = Pick<Scenario, 'demand' | 'loadYear'>;
 type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
 
@@ -81,6 +82,7 @@ type ScenarioSidebarProps = {
   periodPreset: PeriodPreset;
   customStart: string;
   customEnd: string;
+  buildoutYear: BuildoutYear;
   collapsed: boolean;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
@@ -88,6 +90,7 @@ type ScenarioSidebarProps = {
   onCollapsedChange: (collapsed: boolean) => void;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
+  onBuildoutYear: (year: BuildoutYear) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -146,6 +149,29 @@ const e100StahlAdditionalTWh = (targetMioTon: number, model: DataSet['e100-stahl
 const e100ChemieAdditionalTWh = (targetTotalTWh: number, model: DataSet['e100-chemie']) =>
   Math.max(0, targetTotalTWh - model.alreadyElectricTWh);
 
+// Elektrifizierungsgrad: aktuelle Last ÷ Last bei 100 % Elektrifizierung (alle
+// e100-Sektoren auf ihren aktuellen Zielwerten). Spiegelt die „466/1.808 TWh"-
+// Logik der Last-Karte. null, wenn keine Daten/Potenzial.
+export function electrifiedFraction(scenario: Scenario, data: DataSet | null): number | null {
+  if (!data) return null;
+  const base = (scenario.loadYear === 2017 ? data.loadSum2017TWh : data.loadSumTWh) ?? 0;
+  const adds: Array<[boolean, number]> = [
+    [scenario.demand['e100-pkw'], e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw'])],
+    [scenario.demand['e100-lkw'], e100LkwAdditionalTWh(scenario.demand['e100-lkw-target-bn-km'], data['e100-lkw'])],
+    [scenario.demand['e100-bahn'], e100BahnAdditionalTWh(scenario.demand['e100-bahn-target-twh'], data['e100-bahn'])],
+    [scenario.demand['e100-schiff'], e100SchiffAdditionalTWh(scenario.demand['e100-schiff-target-twh'], data['e100-schiff'])],
+    [scenario.demand['e100-flug'], e100FlugAdditionalTWh(scenario.demand['e100-flug-target-twh'], data['e100-flug'])],
+    [scenario.demand['e100-heiz'], e100HeizAdditionalElectricityTWh(scenario.demand['e100-heiz-target-heat-twh'], data['e100-heiz'])],
+    [scenario.demand['e100-ghd'], e100GhdAdditionalElectricityTWh(scenario.demand['e100-ghd-target-heat-twh'], data['e100-ghd'])],
+    [scenario.demand['e100-industrie-waerme'], e100IndustrieAdditionalElectricityTWh(scenario.demand['e100-industrie-waerme-target-heat-twh'], data['e100-industrie-waerme'])],
+    [scenario.demand['e100-stahl'], e100StahlAdditionalTWh(scenario.demand['e100-stahl-target-mio-ton'], data['e100-stahl'])],
+    [scenario.demand['e100-chemie'], e100ChemieAdditionalTWh(scenario.demand['e100-chemie-target-twh'], data['e100-chemie'])],
+  ];
+  const current = (scenario.demand['last-2025'] ? base : 0) + adds.reduce((sum, [on, v]) => sum + (on ? v : 0), 0);
+  const potential = base + adds.reduce((sum, [, v]) => sum + v, 0);
+  return potential > 0 ? current / potential : null;
+}
+
 export const ScenarioSidebar = memo(function ScenarioSidebar({
   data,
   scenario,
@@ -153,10 +179,12 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   periodPreset,
   customStart,
   customEnd,
+  buildoutYear,
   collapsed,
   openSectors,
   expandedRow,
   actionBar = null,
+  onBuildoutYear,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -258,6 +286,8 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           customStart={customStart}
           customEnd={customEnd}
           loadYear={scenario.loadYear}
+          buildoutYear={buildoutYear}
+          onBuildoutYear={onBuildoutYear}
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
@@ -1295,6 +1325,8 @@ function PeriodControl({
   customStart,
   customEnd,
   loadYear,
+  buildoutYear,
+  onBuildoutYear,
   onPreset,
   onStart,
   onEnd,
@@ -1306,6 +1338,8 @@ function PeriodControl({
   customStart: string;
   customEnd: string;
   loadYear: 2025 | 2017;
+  buildoutYear: BuildoutYear;
+  onBuildoutYear: (year: BuildoutYear) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -1325,7 +1359,8 @@ function PeriodControl({
   };
   const periodMeta = preset === 'year' ? String(loadYear) : `${formatDate(start)} bis ${formatDate(end)}`;
   return <SidebarCard title="Zeitraum" icon={<CalendarDays className="h-4 w-4"/>} badge={activePeriodLabel} meta={periodMeta} collapsible>
-      <div className="grid gap-2">
+      <div className="grid gap-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Betrachtungszeitraum</span>
         <div className="flex flex-wrap gap-1.5">
           <PresetPillRow
             presets={periodPills}
@@ -1334,13 +1369,28 @@ function PeriodControl({
           />
           <PresetDropdownPill label="Mehr" presets={periodMonthPills} activeId={selectedMonthId} onSelect={selectMonth}/>
         </div>
+        {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
+          <input aria-label="Startdatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
+          <input aria-label="Enddatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
+        </div>}
       </div>
-      {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
-        <input aria-label="Startdatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
-        <input aria-label="Enddatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
-      </div>}
+      <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Zeitraum Systemaufbau</span>
+        <div className="flex flex-wrap gap-1.5">
+          <PresetPillRow presets={buildoutYearPills} activeId={buildoutYear} onSelect={onBuildoutYear}/>
+        </div>
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Aufbau bis {buildoutYear} — annualisiert Material- und Investitionsbedarf (Ressourcen, Kosten)</span>
+      </div>
   </SidebarCard>;
 }
+
+const buildoutYearPills: ReadonlyArray<PresetOption<BuildoutYear>> = [
+  { id: '2035', label: '2035', description: 'Systemaufbau bis 2035' },
+  { id: '2040', label: '2040', description: 'Systemaufbau bis 2040' },
+  { id: '2045', label: '2045', description: 'Systemaufbau bis 2045' },
+  { id: '2050', label: '2050', description: 'Systemaufbau bis 2050' },
+  { id: '2060', label: '2060', description: 'Systemaufbau bis 2060' },
+];
 
 const periodPills: ReadonlyArray<{ id: PeriodPreset; label: string; description: string }> = [
   { id: 'year', label: 'Jahr', description: 'Ganzes Datenjahr' },
