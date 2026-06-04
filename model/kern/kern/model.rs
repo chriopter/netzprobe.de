@@ -797,11 +797,11 @@ impl StaticModel {
     ) -> Result<(Vec<SimHour>, StorageState), ModelError> {
         let slots = self.storage_slots(scenario)?;
         let fixed_generation = is_fixed_generation_scenario(scenario);
-        let import_limit_gw = if fixed_generation {
-            0.0
-        } else {
-            s_number(scenario, &["import", "stromGW"])?
-        };
+        // Auch im fixed-generation-Pfad (historische Ist-Jahre) flexiblen Import bis
+        // zur Interkonnektor-Kapazitaet erlauben: er deckt die kleine Bilanzluecke
+        // (historische Erzeugung + Netto-Import vs. Last) statt sie als kuenstlichen
+        // Lastabwurf auszuweisen. Fossile Erzeugung bleibt weiterhin fix (kein Ramp).
+        let import_limit_gw = s_number(scenario, &["import", "stromGW"])?;
         let export_limit_gw = if fixed_generation {
             0.0
         } else {
@@ -811,6 +811,7 @@ impl StaticModel {
         let sector_h2_demand_gw = self.total_sector_h2_demand_gw(scenario)?;
         let h2_import_inflow_gw = s_number(scenario, &["import", "h2TWh"])? * 1000.0 / 8760.0;
         let h2_energy_cap = s_number(scenario, &["storage", "h2EnergyGWh"])?;
+        let demand_last_2025 = s_bool(scenario, &["demand", "last-2025"])?;
         let mut hours = Vec::with_capacity(self.hours.len());
 
         for row in &self.hours {
@@ -822,6 +823,9 @@ impl StaticModel {
             };
             storage.h2 = h2_energy_cap.min(h2_available_gw - pool_cover_h2_gw);
             let load_gw = self.demand_gw(row, scenario, pool_cover_h2_gw)?;
+            // e100-Zusatzlast = Gesamtlast minus historische Basislast (fuer den fixed-Pfad:
+            // die Basislast wurde im Ist-Jahr real gedeckt, die e100-Last nicht).
+            let e100_load_gw = (load_gw - if demand_last_2025 { row.load_mw / 1000.0 } else { 0.0 }).max(0.0);
             let build = self.build_supply(row, scenario)?;
 
             let mut pv_gw = build.pv_available_gw;
@@ -935,10 +939,20 @@ impl StaticModel {
                     }
                     deficit -= discharged;
                 }
-                if !build.fixed_generation {
-                    import_gw = deficit.min(import_limit_gw).max(0.0);
-                    deficit -= import_gw;
-                }
+                // Flexibler Import (additiv ueber den ggf. schon gesetzten fixed_import_gw).
+                let extra_import = if build.fixed_generation {
+                    // Ist-Jahr: die historische Basislast war real gedeckt → ihre Bilanzluecke
+                    // voll per Import schliessen (sonst kuenstliche Blackouts in einem realen,
+                    // stoerungsfrei versorgten Jahr). Die e100-Zusatzlast bleibt jedoch als
+                    // ehrliches Defizit (fixe 2025-Erzeugung deckt sie nicht).
+                    (deficit - e100_load_gw).max(0.0)
+                } else {
+                    // Nicht-fixed: begrenzt durch die Importkapazitaet (import_gw vorher 0 →
+                    // identisches Verhalten wie zuvor).
+                    deficit.min((import_limit_gw - import_gw).max(0.0)).max(0.0)
+                };
+                import_gw += extra_import;
+                deficit -= extra_import;
                 if deficit > EPS && !build.fixed_generation {
                     let gas_headroom = build.gas_max_gw - gas_gw;
                     let kohle_headroom = build.kohle_max_gw - kohle_gw;
