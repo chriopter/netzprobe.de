@@ -83,6 +83,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -100,6 +105,15 @@
         "https://de.wikipedia.org/wiki/Rheinkraftwerk_Iffezheim",
         "https://www.bdew.de/service/daten-und-grafiken/stromerzeugung-wasserkraft/",
         "https://ourworldindata.org/land-use-per-energy-source"
+      ]
+    },
+    "ressourcen": {
+      "source": "Laufwasserkraftwerke sind extrem betonintensiv: nach Flury & Frischknecht 2012 (ESU, durchschnittliches CH-Laufwasserkraftwerk 8,6 MW) ergeben sich ~6,9 Mio t Beton/GW, was mit dem IEA/World-Nuclear-Bulk-Wert von ~15.300 t/TWh (hier 16.000 t/TWh) sehr gut uebereinstimmt. Stahl (Bewehrung, niedriglegiert, Chromstahl) summiert sich auf ~213.000 t/GW; Chromstahl (~10.700 t/GW) ist darin bereits enthalten und separat fuer die Cr/Ni-Bilanz ausgewiesen (nicht zusaetzlich aufaddieren). Kupfer wurde von 3.500 auf ~2.200 t/GW korrigiert, da der Flury-Wert aus einem schwedischen Speicherkraftwerk extrapoliert ist und ~60 % ueber dem IEA-Vergleichswert lag. Alle Werte sind stark standortabhaengig (Niederdruck vs. alpin, Faktor 3-5). Quellen: ESU/Flury 2012, IEA/World-Nuclear, Nature Sci.Rep. 2023.",
+      "sourceUrls": [
+        "https://esu-services.ch/fileadmin/download/publicLCI/flury-2012-hydroelectric-power-generation.pdf",
+        "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+        "https://www.nature.com/articles/s41598-023-43228-1",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
       ]
     }
   },
@@ -132,6 +146,32 @@
       "sourceUrls": [
         "https://www.bdew.de/service/daten-und-grafiken/stromerzeugung-wasserkraft/"
       ]
+    },
+    "resources": {
+      "Beton/Zement": {
+        "tPerGW": 6900000,
+        "sourceUrls": [
+          "https://esu-services.ch/fileadmin/download/publicLCI/flury-2012-hydroelectric-power-generation.pdf",
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerGW": 213000,
+        "sourceUrls": [
+          "https://esu-services.ch/fileadmin/download/publicLCI/flury-2012-hydroelectric-power-generation.pdf",
+          "https://www.nature.com/articles/s41598-023-43228-1"
+        ],
+        "confidence": "mittel"
+      },
+      "Kupfer": {
+        "tPerGW": 2200,
+        "sourceUrls": [
+          "https://esu-services.ch/fileadmin/download/publicLCI/flury-2012-hydroelectric-power-generation.pdf",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

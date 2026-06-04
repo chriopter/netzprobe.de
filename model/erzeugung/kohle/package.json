@@ -95,6 +95,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -121,6 +126,15 @@
         "https://www.umweltbundesamt.de/daten/flaeche-boden-land-oekosysteme/flaeche/flaechenverbrauch-fuer-rohstoffabbau",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Kohlekraftwerke sind baulich material-intensiv (grosse Kessel, Muehlen, Rauchgasreinigung). Bulkwerte aus WNA/US-DOE-Lebenszyklus (Stahl ~310 t/TWh, Beton ~870 t/TWh) umgerechnet ueber ~220 TWh/GW (5.500 VLh x 40 a / 1000); die Quellenspreizung WNA/BNW vs. US-DOE betraegt ~Faktor 2, daher wurden nach Verifikation Stahl auf 50.000, Beton auf 120.000 und Aluminium auf 450 t/GW (jeweils Mittelwert) gesetzt. Kupfer (~1.150 t/GW), Chrom, Nickel und Molybdaen stammen aus dem IEA-Chart fuer ultra-superkritische Kohle (kg/MW = t/GW). Werte sind ueberwiegend niedrig konfident. Brennstoff-Förderung: ~950.000 t Kohle/TWh Strom (deutscher Mix, braunkohledominiert; AGEB-Empirie ~1,14 Mt/TWh Braunkohle, gewichtet mit ~25% Steinkohle ~0,31 Mt/TWh; IPCC-Heizwerte, η~38-40%).",
+      "sourceUrls": [
+        "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+        "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies",
+        "https://ag-energiebilanzen.de/wp-content/uploads/2024/10/Braunkohle_2024.pdf",
+        "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
       ]
     }
   },
@@ -161,6 +175,66 @@
         "https://ag-energiebilanzen.de/wp-content/uploads/AGEB_Jahresbericht2024_20250616_dt.pdf",
         "https://www.ise.fraunhofer.de/en/press-media/press-releases/2025/public-electricity-generation-2024-renewable-energies-cover-more-than-60-percent-of-german-electricity-consumption-for-the-first-time.html"
       ]
+    },
+    "resources": {
+      "Kohle": {
+        "tPerTWh": 950000,
+        "sourceUrls": [
+          "https://ag-energiebilanzen.de/wp-content/uploads/2024/10/Braunkohle_2024.pdf",
+          "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
+        ],
+        "confidence": "hoch"
+      },
+      "Stahl": {
+        "tPerGW": 50000,
+        "sourceUrls": [
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "niedrig"
+      },
+      "Beton/Zement": {
+        "tPerGW": 120000,
+        "sourceUrls": [
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerGW": 1150,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "hoch"
+      },
+      "Chrom": {
+        "tPerGW": 310,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "mittel"
+      },
+      "Nickel": {
+        "tPerGW": 700,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "niedrig"
+      },
+      "Molybdaen": {
+        "tPerGW": 60,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "niedrig"
+      },
+      "Aluminium": {
+        "tPerGW": 450,
+        "sourceUrls": [
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

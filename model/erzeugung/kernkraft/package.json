@@ -89,6 +89,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -115,6 +120,17 @@
         "https://world-nuclear.org/information-library/nuclear-fuel-cycle/mining-of-uranium/uranium-mining-overview",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Kernkraft hat zwei Materialklassen: erzeugungsgebundenes Natururan ~25 tU/TWh (WNA: ~200 tU pro 1000 MWe/a; Energiedichte 44 GWh/t = ~23 tU/TWh; inkl. Anreicherung/Burnup) und kapazitaetsgebundene Baustoffe. Beton (~477.000 t/GW) und Stahl (~58.500 t/GW) folgen aus den WNA-Lebenszykluswerten (1.060 bzw. 130 t/TWh) umgerechnet ueber 450 TWh/GW (7.500 VLh x 60 a / 1000). Kupfer (~1.470), Chrom (~2.190, rostfreie Staehle des Primaerkreises) und Nickel (~1.300 t/GW) stammen aus der IEA-Critical-Minerals-Liste (kg/MW = t/GW), unabhaengig bestaetigt. Uran wird im Modell als jaehrlicher Brennstoff-Flow gefuehrt, nicht als Errichtungsbestand.",
+      "sourceUrls": [
+        "https://world-nuclear.org/information-library/facts-and-figures/world-nuclear-power-reactors-and-uranium-requireme",
+        "https://world-nuclear.org/information-library/nuclear-fuel-cycle/uranium-resources/uranium-markets",
+        "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation",
+        "https://ourworldindata.org/low-carbon-technologies-need-far-less-mining-fossil-fuels",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://www.neimagazine.com/news/newsiea-report-looks-at-critical-minerals-in-clean-energy-transitions-8725909"
       ]
     }
   },
@@ -154,6 +170,63 @@
         "https://pris.iaea.org/PRIS/CountryStatistics/CountryStatisticsLandingPage.aspx?country=DE",
         "https://world-nuclear.org/nuclear-reactor-database/details/ISAR-2"
       ]
+    },
+    "resources": {
+      "Uran": {
+        "tPerTWh": 25,
+        "sourceUrls": [
+          "https://world-nuclear.org/information-library/facts-and-figures/world-nuclear-power-reactors-and-uranium-requireme",
+          "https://world-nuclear.org/information-library/nuclear-fuel-cycle/uranium-resources/uranium-markets"
+        ],
+        "confidence": "hoch"
+      },
+      "Beton/Zement": {
+        "tPerGW": 477000,
+        "sourceUrls": [
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation",
+          "https://ourworldindata.org/low-carbon-technologies-need-far-less-mining-fossil-fuels"
+        ],
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerGW": 58500,
+        "sourceUrls": [
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation",
+          "https://ourworldindata.org/low-carbon-technologies-need-far-less-mining-fossil-fuels"
+        ],
+        "confidence": "mittel"
+      },
+      "Kupfer": {
+        "tPerGW": 1470,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "hoch"
+      },
+      "Chrom": {
+        "tPerGW": 2190,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.neimagazine.com/news/newsiea-report-looks-at-critical-minerals-in-clean-energy-transitions-8725909"
+        ],
+        "confidence": "hoch"
+      },
+      "Nickel": {
+        "tPerGW": 1300,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.neimagazine.com/news/newsiea-report-looks-at-critical-minerals-in-clean-energy-transitions-8725909"
+        ],
+        "confidence": "hoch"
+      },
+      "Aluminium": {
+        "tPerGW": 135,
+        "sourceUrls": [
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      }
     }
   }
 }

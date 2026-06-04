@@ -89,6 +89,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -106,6 +111,18 @@
       "sourceUrls": [
         "https://www.bsh.de/DE/THEMEN/Offshore/Meeresfachplanung/Flaechenentwicklungsplan/flaechenentwicklungsplan_node.html",
         "https://docs.wind-watch.org/Spatial-extents-power-generation.pdf"
+      ]
+    },
+    "ressourcen": {
+      "source": "Offshore-Wind ist der stahl- und seltenerdintensivste Stromerzeuger: Stahl ~350.000 t/GW (Monopile/Jacket-Gruendung + Transition Piece + Turm + Nacelle, Komponentensumme 250.000-500.000 t/GW, hoher Mittelwert) und Kupfer ~8.000 t/GW (lange Array-/Exportseekabel; IEA/Carrara, OWID nennt ~10 t/MW). Da Offshore zu ~100% Permanentmagnet-Direktantrieb nutzt, ist die REE-Intensitaet die hoechste aller Technologien (Nd ~180, Dy ~6 t/GW; IEA-Aggregat ~15,5 t/MW kritische Mineralien). Nach Verifikation wurde Nickel von 240 auf 430 t/GW (JRC/Carrara-Zentralwert) angehoben und Beton von 120.000 auf 80.000 t/GW gesenkt (Stahlgruendungen brauchen wenig Beton; WNA-Wert war onshore-basiert). Stahl/Beton/Al stammen aus LCA-Literatur (IEA schliesst sie aus) und sind entsprechend unsicher.",
+      "sourceUrls": [
+        "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+        "https://www.sciencedirect.com/science/article/pii/S1364032122004993",
+        "https://docs.nrel.gov/docs/fy23osti/81483.pdf",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://ourworldindata.org/grapher/mining-requirements-electricity-sources",
+        "https://www.windfakten.at/assets/downloads/02-windfakten-downloads/rare-earths-in-the-windindustry_2020_c_windeurope.pdf",
+        "https://www.sciencedirect.com/science/article/pii/S0959652626003756"
       ]
     }
   },
@@ -140,6 +157,100 @@
         "https://www.wind-energie.de/fileadmin/redaktion/dokumente/publikationen-oeffentlich/themen/06-zahlen-und-fakten/20250204_Status_des_Offshore_Windenergieausbaus_Jahr_2024.pdf",
         "https://www.bdew.de/energie/erneuerbare-energien/windenergie-offshore/"
       ]
+    },
+    "resources": {
+      "Stahl": {
+        "tPerGW": 350000,
+        "sourceUrls": [
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+          "https://www.sciencedirect.com/science/article/pii/S1364032122004993",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerGW": 8000,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://ourworldindata.org/grapher/mining-requirements-electricity-sources"
+        ],
+        "confidence": "hoch"
+      },
+      "Neodym": {
+        "tPerGW": 180,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.windfakten.at/assets/downloads/02-windfakten-downloads/rare-earths-in-the-windindustry_2020_c_windeurope.pdf"
+        ],
+        "confidence": "mittel"
+      },
+      "Dysprosium": {
+        "tPerGW": 6,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.windfakten.at/assets/downloads/02-windfakten-downloads/rare-earths-in-the-windindustry_2020_c_windeurope.pdf"
+        ],
+        "confidence": "niedrig"
+      },
+      "Zink": {
+        "tPerGW": 5500,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Mangan": {
+        "tPerGW": 790,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Chrom": {
+        "tPerGW": 525,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Molybdaen": {
+        "tPerGW": 109,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Nickel": {
+        "tPerGW": 430,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerGW": 1500,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/pii/S1364032122004993",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "niedrig"
+      },
+      "Beton/Zement": {
+        "tPerGW": 80000,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/pii/S1364032122004993",
+          "https://www.sciencedirect.com/science/article/pii/S0959652626003756"
+        ],
+        "confidence": "niedrig"
+      },
+      "Silizium": {
+        "tPerGW": 200,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

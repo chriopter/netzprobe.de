@@ -140,6 +140,11 @@
         "name": "summary",
         "unit": "Text",
         "description": "Kurzlabel für Kennzahl und Szenarioannahme."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -158,7 +163,14 @@
       "last/e100-heiz/model.rs"
     ],
     "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile Heizung zu Waermepumpe; bestehende elektrische Heizung (Direktheizung, Boiler, Bestand-WP) bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das 24-h-Profil.",
-    "summary": "JAZ 3,3"
+    "summary": "JAZ 3,3",
+    "ressourcen": {
+      "source": "Elektrifizierungs-Delta Wärmepumpe je TWh/a WP-Strom (~222.000 WP zu 4,5 MWh/a): Kupfer-Delta ~2.200 t/TWh (Kältekreis, Verdichter, Wärmetauscher vs. Gasgerät), Aluminium ~900, Stahl ~2.200. Keine Batterie- oder Seltenerd-Rohstoffe. Quellen: CRU, Fraunhofer ISE, LCA-Review.",
+      "sourceUrls": [
+        "https://www.sciencedirect.com/science/article/pii/S0378778825003354",
+        "https://www.ise.fraunhofer.de/en/business-areas/climate-neutral-heat-and-buildings/heat-pumps.html"
+      ]
+    }
   },
   "parameters": {
     "referenceYear": 2023,
@@ -2425,6 +2437,20 @@
         "value": 12.5,
         "unit": "TWh",
         "label": "Mio. Haushalte (à 12.500 kWh/a)"
+      }
+    },
+    "resources": {
+      "Kupfer": {
+        "tPerTWh": 2200,
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerTWh": 900,
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerTWh": 2200,
+        "confidence": "niedrig"
       }
     }
   }

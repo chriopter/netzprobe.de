@@ -109,7 +109,6 @@ export function flaecheFactorVs2025(scenario: Scenario): number | null {
 
 const DEUTSCHLAND_KM2 = 357580;
 const SAARLAND_KM2 = 2570;
-const saarlandComparisonColumns = 12;
 
 type GeoRing = number[][];
 type GeoPolygon = GeoRing[];
@@ -516,7 +515,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   const wirkungTiles = wirkungKm2 / SAARLAND_KM2;
   const offshoreTiles = offshoreWirkungKm2 / SAARLAND_KM2;
   const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
-  const visibleTileCount = Math.max(saarlandComparisonColumns, Math.ceil(saarlands / saarlandComparisonColumns) * saarlandComparisonColumns);
+  const visibleTileCount = Math.max(1, Math.ceil(saarlands));
   const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
   return <div className="group relative border-b border-zinc-100 bg-white pb-5 dark:border-zinc-800 dark:bg-zinc-950">
     <div className="flex items-baseline justify-between gap-4">

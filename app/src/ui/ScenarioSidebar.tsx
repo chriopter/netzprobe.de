@@ -172,6 +172,24 @@ export function electrifiedFraction(scenario: Scenario, data: DataSet | null): n
   return potential > 0 ? current / potential : null;
 }
 
+// GESAMTE elektrische Jahresnachfrage je material-relevantem e100-Sektor (TWh/a),
+// flag-aware: Sektor aktiv → Zielniveau (komplette elektrische Flotte), sonst nur der
+// 2025 bereits elektrische Bestand (alreadyElectric). Fuer den Materialbedarf der
+// Elektrifizierung — so enthaelt auch die 2025-Basis die heute schon elektrische Flotte.
+export function e100ElectricTWh(scenario: Scenario, data: DataSet | null): Record<string, number> {
+  if (!data) return {};
+  const d = scenario.demand;
+  const pkw = data['e100-pkw'], lkw = data['e100-lkw'], heiz = data['e100-heiz'], ghd = data['e100-ghd'], bahn = data['e100-bahn'];
+  const bahnExisting = (bahn as { referenceScales?: { activity?: { value?: number } } }).referenceScales?.activity?.value ?? 0;
+  return {
+    'e100-pkw': (d['e100-pkw'] ? d['e100-pkw-million-km'] : pkw.alreadyElectricMillionKm) * pkw.kwhPer100Km / 100_000,
+    'e100-lkw': (d['e100-lkw'] ? d['e100-lkw-target-bn-km'] : lkw.alreadyElectricBnKm) * lkw.kwhPerKm,
+    'e100-heiz': (d['e100-heiz'] ? d['e100-heiz-target-heat-twh'] : heiz.alreadyElectricHeatTWh) / heiz.seasonalCop,
+    'e100-ghd': (d['e100-ghd'] ? d['e100-ghd-target-heat-twh'] : ghd.alreadyElectricHeatTWh) / ghd.seasonalCop,
+    'e100-bahn': bahnExisting + (d['e100-bahn'] ? d['e100-bahn-target-twh'] : 0),
+  };
+}
+
 export const ScenarioSidebar = memo(function ScenarioSidebar({
   data,
   scenario,

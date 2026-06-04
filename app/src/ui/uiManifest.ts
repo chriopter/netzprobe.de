@@ -62,6 +62,7 @@ export const uiManifest = {
     pumpspeicher: params('pumpspeicher'),
     h2: params('h2'),
   },
+  materials: params('weltfoerderung').materials,
   trade: {
     strom: params('strom-handel'),
     h2: params('h2-handel'),

@@ -119,6 +119,11 @@
         "name": "summary",
         "unit": "Text",
         "description": "Kurzlabel für Kennzahl und Szenarioannahme."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -133,7 +138,14 @@
       "last/e100-bahn/model.rs"
     ],
     "note": "Zusatzlast = max(0, Ziel-TWh) zusätzlich zum historischen Bahnstrom 2025 (rund 11 TWh DB Konzern Integrierter Bericht 2023, bereits in der Last enthalten). Default 10 TWh = 2 TWh Diesel-Substitution (rund 450 Mio. l Diesel/a DB Konzern plus NE-Bahnen Anteil, in Summe rund 500-600 Mio. l/a entsprechend rund 5-6 TWh thermisch; mit Wirkungsgradfaktor rund 3 für elektrische Traktion inklusive Rekuperation ergibt sich rund 2 TWh Strom) + 8 TWh Modal Shift (Verkehrsleistung Schiene laut BMWK Langfristszenarien T45 plus 26-62 % bis 2045, plus Effizienzgewinne kompensieren den Bedarf weitgehend; Deutschlandtakt-Ziele Verdopplung Personenverkehr und plus 50 % Güter sind ambitionierter, daher mittlerer Wert 8 TWh). Maximum 25 TWh deckt aggressive Modal-Shift- und Wasserstoff-Szenarien ab. Stundenverteilung folgt typischem Bahnstrom-Tagesgang mit Morgen- und Nachmittagspeak laut DB Energie.",
-    "summary": "Diesel + Modal Shift"
+    "summary": "Diesel + Modal Shift",
+    "ressourcen": {
+      "source": "Elektrifizierungs-Delta Oberleitung je TWh/a Bahnstrom (~1.000–2.000 Gleis-km/TWh, je Verkehrsdichte): Kupfer ~2.300 t/TWh (Fahrdraht + Tragseil), Stahl ~12.000 (Maste, Ausleger, Fundamente), Aluminium ~500. Keine Batterie-/Seltenerd-Rohstoffe; nur Erstausstattung. Quellen: Overhead-line-Spezifikationen, AAR-Elektrifizierungsreport.",
+      "sourceUrls": [
+        "https://en.wikipedia.org/wiki/Overhead_line",
+        "https://www.aar.org/wp-content/uploads/2025/02/Final-Electrification-Report-02252025.pdf"
+      ]
+    }
   },
   "parameters": {
     "referenceScales": {
@@ -183,6 +195,20 @@
         0.7,
         0.55
       ]
+    },
+    "resources": {
+      "Kupfer": {
+        "tPerTWh": 2300,
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerTWh": 12000,
+        "confidence": "niedrig"
+      },
+      "Aluminium": {
+        "tPerTWh": 500,
+        "confidence": "niedrig"
+      }
     }
   }
 }

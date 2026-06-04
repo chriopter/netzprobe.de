@@ -88,6 +88,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -111,6 +116,14 @@
         "https://www.naturschutz-energiewende.de/fragenundantworten/flaecheneffizienz-erneuerbarer-energien-zur-stromerzeugung/",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Biomasse-Heizkraftwerke sind konventionelle Dampfkraftwerksbloecke (Kessel, Turbine, Generator, Brennstofflogistik); es liegen keine biomasse-spezifischen Mengenquellen vor, die Werte sind Analogien zu thermischen Kohle-/Gas-Bloecken. Stahl ~95.000 t/GW (NREL/Spath-Kohle-LCA ~98 t/MW), Beton nach Verifikation von 120.000 auf 200.000 t/GW angehoben (Kohle-LCA-Anker eher ~4x Stahl), Kupfer ~1.200 t/GW (Generator/Trafo/Netzanbindung; IEA bestaetigt qualitativ kupferarme Bioenergie). Alle Werte niedrig konfident.",
+      "sourceUrls": [
+        "https://www.researchgate.net/publication/317122011_Life_cycle_assessment_of_coal-fired_power_plants_and_sensitivity_analysis_of_CO_2_emissions_from_power_generation_side",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
       ]
     }
   },
@@ -150,6 +163,30 @@
         "https://www.umweltbundesamt.de/service/newsletter/archiv/agee-stat-aktuell-nr-52024",
         "https://www.energy-charts.info/downloads/Stromerzeugung_2024.pdf"
       ]
+    },
+    "resources": {
+      "Stahl": {
+        "tPerGW": 95000,
+        "sourceUrls": [
+          "https://www.researchgate.net/publication/317122011_Life_cycle_assessment_of_coal-fired_power_plants_and_sensitivity_analysis_of_CO_2_emissions_from_power_generation_side"
+        ],
+        "confidence": "niedrig"
+      },
+      "Beton/Zement": {
+        "tPerGW": 200000,
+        "sourceUrls": [
+          "https://www.researchgate.net/publication/317122011_Life_cycle_assessment_of_coal-fired_power_plants_and_sensitivity_analysis_of_CO_2_emissions_from_power_generation_side"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerGW": 1200,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

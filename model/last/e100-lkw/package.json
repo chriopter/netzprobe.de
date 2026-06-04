@@ -131,6 +131,11 @@
         "name": "summary",
         "unit": "Text",
         "description": "Kurzlabel für Kennzahl und Szenarioannahme."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -148,7 +153,14 @@
       "last/e100-lkw/model.rs"
     ],
     "note": "Zusatzlast = max(0, Ziel-Mrd-km - bereits elektrisch gefahrene Mrd. km 2023) * 0,6 kWh/km. Der Slider beginnt beim bereits elektrischen Mindestwert. Default-Fahrleistung 117 Mrd. km/a = Inlandsfahrleistung Lkw+Sattelzug+Bus auf DE-Straßen plus Nutzlast-Aufschlag: 93 Mrd. km deutsche Halter (Inländerfahrleistung BMDV Verkehr in Zahlen 2023/2024, 2022; 2023 vergleichbar - 69,2 Mrd. km Lastkraftwagen, davon laut KBA 57,5 Mrd. km Lkw bis 3,5t / N1 = Transporter und 11,7 Mrd. km Lkw über 3,5t / N2-N3, plus 19,7 Mrd. km Sattelzugmaschinen, 3,8 Mrd. km Kraftomnibusse) zuzüglich rund 18 Mrd. km ausländischer Lkw und Sattelzug im Transit und Kabotage (Fortschreibung BASt Fahrleistungserhebung 2014: damals 41,8 Mrd. km ausländische Fahrzeuge gesamt auf DE-Straßen, Schwerverkehrsanteil hochgerechnet auf 2023 mit BAG/BALM-Marktbeobachtung +20-30% ausländische Mautstrecken-Fahrleistung 2014-2023; DE empfängt etwa 41% aller EU-Kabotagefahrten) zuzüglich rund 6 Mrd. km (~+5%) Nutzlast-Aufschlag wegen Batteriegewicht (Korridor 5-10% je nach Klasse und Jahrgang; konservativ untere Grenze für 2030+ Vollelektrifizierung). Gewichteter Flottenverbrauch ab Netz inklusive Ladeverluste: 57,5 Mrd. km Transporter × 0,30 kWh/km (eSprinter/E-Transit real ~25-30 kWh/100km) + 11,7 Mrd. km Mittel-Lkw × 0,85 kWh/km + 19,7 Mrd. km Sattelzug × 1,15 kWh/km (ICCT Real-World 2025: 107-130 kWh/100km, Mercedes eActros 600 European Tour 103-120 kWh/100km, Volvo FH Electric Green-Truck-Test ~110 kWh/100km) + 3,8 Mrd. km Bus × 1,30 kWh/km (Solaris Urbino, MAN Lion's City E real ~0,8-1,7 kWh/km je Klima) ≈ 55 TWh auf 93 Mrd. km, gerundet 0,6 kWh/km. Der Transit/Kabotage-Aufschlag ist überproportional Sattelzug-lastig, dadurch leichte Unterschätzung des Strombedarfs um ~5-8 TWh. Bereits elektrisch 1,5 Mrd. km/a abgeschätzt aus KBA-Bestand: rund 79.000 BEV-Lkw (überwiegend N1-Transporter, ca. 12.000 km/a) plus rund 2.700 Elektrobusse (ca. 46.000 km/a), Obus-Linien Solingen/Esslingen/Eberswalde. Die eHighway-Pilotstrecken (ELISA Hessen, FESH Schleswig-Holstein, eWayBW Baden-Württemberg) sind Ende 2024 planmäßig ausgelaufen. Maximum 170 Mrd. km/a auf Basis BMDV Verkehrsprognose 2040 (Güterverkehrsleistung +31 %, plus Modal-Shift-Aufschlag und proportionales Mitwachsen des Transit/Kabotage-Anteils, entspricht 117 × ~1,45). Stundenverteilung folgt BASt-Schwerverkehrs-Tagesganglinie.",
-    "summary": "0,6 kWh/km"
+    "summary": "0,6 kWh/km",
+    "ressourcen": {
+      "source": "Elektrifizierungs-Delta E-/BZ-Lkw je TWh/a (~8 GWh Akku/TWh; Lkw zyklen die Batterie viel stärker als Pkw → je TWh materialärmer, LFP-lastig): Li ~750 t/TWh, Ni ~1.450, Kupfer-Delta ~2.300. Quellen: ICCT, Daimler eActros 600, International Copper Association.",
+      "sourceUrls": [
+        "https://theicct.org/wp-content/uploads/2025/08/ID-359-%E2%80%93-EU-goods-transport_report_final.pdf",
+        "https://incorrys.com/technology-data-and-forecasts/electric-vehicles/copper-requirements-per-vehicle-type/"
+      ]
+    }
   },
   "parameters": {
     "referenceScales": {
@@ -198,6 +210,44 @@
         0.45,
         0.35
       ]
+    },
+    "resources": {
+      "Lithium": {
+        "tPerTWh": 750,
+        "confidence": "mittel"
+      },
+      "Nickel": {
+        "tPerTWh": 1450,
+        "confidence": "mittel"
+      },
+      "Kobalt": {
+        "tPerTWh": 320,
+        "confidence": "mittel"
+      },
+      "Mangan": {
+        "tPerTWh": 450,
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerTWh": 2300,
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerTWh": 2700,
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerTWh": 900,
+        "confidence": "niedrig"
+      },
+      "Neodym": {
+        "tPerTWh": 11,
+        "confidence": "niedrig"
+      },
+      "Dysprosium": {
+        "tPerTWh": 2,
+        "confidence": "niedrig"
+      }
     }
   }
 }

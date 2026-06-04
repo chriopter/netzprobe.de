@@ -89,6 +89,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -107,6 +112,18 @@
         "https://www.naturschutz-energiewende.de/wortmeldung/wortmeldung-zum-flaechenbedarf-der-windenergie/",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Onshore-Wind ist von Bulkmaterialien dominiert: Beton (~400.000 t/GW, Schwergewichtsfundament, ~75 Gew.-%) und Stahl (~115.000 t/GW, Turm/Gondel/Bewehrung, ~110 +-20 t/MW laut ScienceDirect/JRC/NREL); kg/MW x 1000 = t/GW. Die kritischen Metalle (Cu ~2900, Zn ~5500, Mn, Cr, Mo, Ni) stammen aus der IEA-Onshore-Tabelle auf DFIG-Basis (Getriebeanlage ohne Permanentmagnet). Seltene Erden treten nur ueber den kleinen PMSG-Direktantriebsanteil (~8% des Onshore-Mix) auf; nach Verifikation wurden Neodym auf 15 t/GW und Dysprosium auf 1 t/GW gesenkt, da die urspruengliche Herleitung arithmetisch nicht trug. REE-Werte bleiben sehr unsicher (mix- und magnetabhaengig).",
+      "sourceUrls": [
+        "https://www.sciencedirect.com/science/article/abs/pii/S0921344921005474",
+        "https://docs.nrel.gov/docs/fy23osti/81483.pdf",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation",
+        "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources",
+        "https://renewablewatch.in/2017/07/29/turbine-configuration/",
+        "https://www.sciencedirect.com/science/article/pii/S0301420717300077"
       ]
     }
   },
@@ -140,6 +157,94 @@
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/presseinformationen/2025/Stromerzeugung_2024.pdf"
       ]
+    },
+    "resources": {
+      "Stahl": {
+        "tPerGW": 115000,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/abs/pii/S0921344921005474",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "hoch"
+      },
+      "Beton/Zement": {
+        "tPerGW": 400000,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/abs/pii/S0921344921005474",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "hoch"
+      },
+      "Kupfer": {
+        "tPerGW": 2900,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "hoch"
+      },
+      "Aluminium": {
+        "tPerGW": 700,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/abs/pii/S0921344921005474",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "mittel"
+      },
+      "Zink": {
+        "tPerGW": 5500,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Mangan": {
+        "tPerGW": 780,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Chrom": {
+        "tPerGW": 470,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Molybdaen": {
+        "tPerGW": 99,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Nickel": {
+        "tPerGW": 404,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://world-nuclear.org/information-library/energy-and-the-environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Neodym": {
+        "tPerGW": 15,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources",
+          "https://renewablewatch.in/2017/07/29/turbine-configuration/",
+          "https://docs.nrel.gov/docs/fy23osti/81483.pdf"
+        ],
+        "confidence": "niedrig"
+      },
+      "Dysprosium": {
+        "tPerGW": 1,
+        "sourceUrls": [
+          "https://www.sciencedirect.com/science/article/pii/S0301420717300077",
+          "https://renewablewatch.in/2017/07/29/turbine-configuration/"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }
