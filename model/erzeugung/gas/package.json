@@ -95,6 +95,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -119,6 +124,17 @@
         "https://www.nature.com/articles/s41560-017-0004-0",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Gaskraftwerke (GuD/CCGT) sind baulich materialarm. Auf reiner Konstruktionsbasis (DOE Quadrennial Technology Review via NextBigFuture): ~3.300 t Stahl/GW (3,3 t/MW) und ~65.000 t Beton/GW (27 m3/MW x 2,4 t/m3; reiner Zementanteil nur ~7.000-9.000 t/GW). Kupfer wurde von 1.100 auf ~900 t/GW korrigiert, da die IEA-Zahl von ~1.100 kg/MW die Gesamt-Mineralien (kupferdominiert) umfasst und die separat gelisteten Legierungsmetalle sonst doppelt gezaehlt wuerden. Aluminium (~35 t/GW) sowie die Legierungsmetalle Chrom (~30), Nickel (~25, baulich, nicht batterieaktiv) und Molybdaen (~10 t/GW) in den hitzebestaendigen Heissgaspfad-Staehlen sind grobe, niedrig-konfidente Groessenordnungen. Quellen: NextBigFuture/DOE-QTR, IEA Critical Minerals, World-Nuclear. Brennstoff-Förderung: ~150.000 t Erdgas/TWh Strom (LHV 48 MJ/kg, Flottenmittel-Wirkungsgrad ~50% GuD+OCGT).",
+      "sourceUrls": [
+        "https://www.nextbigfuture.com/2007/07/constructing-lot-of-nuclear-power.html",
+        "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies",
+        "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/6106766",
+        "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
       ]
     }
   },
@@ -159,6 +175,70 @@
         "https://ag-energiebilanzen.de/wp-content/uploads/AGEB_Jahresbericht2024_20250616_dt.pdf",
         "https://www.bundesnetzagentur.de/DE/Beschlusskammern/BK06/BK6_27_Monitoring/Monitoring_node.html"
       ]
+    },
+    "resources": {
+      "Erdgas": {
+        "tPerTWh": 150000,
+        "sourceUrls": [
+          "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
+        ],
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerGW": 3300,
+        "sourceUrls": [
+          "https://www.nextbigfuture.com/2007/07/constructing-lot-of-nuclear-power.html",
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Beton/Zement": {
+        "tPerGW": 65000,
+        "sourceUrls": [
+          "https://www.nextbigfuture.com/2007/07/constructing-lot-of-nuclear-power.html",
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "mittel"
+      },
+      "Kupfer": {
+        "tPerGW": 900,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies"
+        ],
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerGW": 35,
+        "sourceUrls": [
+          "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+        ],
+        "confidence": "niedrig"
+      },
+      "Chrom": {
+        "tPerGW": 30,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/6106766"
+        ],
+        "confidence": "niedrig"
+      },
+      "Nickel": {
+        "tPerGW": 25,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/6106766"
+        ],
+        "confidence": "niedrig"
+      },
+      "Molybdaen": {
+        "tPerGW": 10,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/6106766"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

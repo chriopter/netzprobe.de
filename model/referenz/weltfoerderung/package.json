@@ -1,0 +1,222 @@
+{
+  "$schema": "../../schemas/dataset.schema.json",
+  "id": "weltfoerderung",
+  "domain": "referenz",
+  "kind": "dataset",
+  "method": {
+    "title": "Ressourcen — Weltförderung",
+    "short": "Globale Jahresförderung der für Kraftwerks- und Speicherbau relevanten Rohstoffe; Bezugsgröße für den Ressourcen-Anteil.",
+    "source": "USGS Mineral Commodity Summaries 2025 (meiste Mineralien); worldsteel (Rohstahl); International Aluminium Institute (Primäraluminium); World Nuclear Association (Natururan). Deutscher Jahresverbrauch je Rohstoff: DERA/BGR, Destatis, WV Stahl, VDZ, AGEB/BDEW (alle Sektoren, 2023/2024; kritische Metalle teils abgeleitet, niedrige Konfidenz).",
+    "sourceUrls": [
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-lithium.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-cobalt.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-nickel.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-copper.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-rare-earths.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-silver.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-manganese.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-chromium.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-molybdenum.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-zinc.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-silicon.pdf",
+      "https://worldsteel.org/media/press-releases/2025/december-2024-crude-steel-production-and-2024-global-totals/",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-aluminum.pdf",
+      "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-cement.pdf",
+      "https://world-nuclear.org/information-library/facts-and-figures/uranium-production-by-country",
+      "https://www.deutsche-rohstoffagentur.de/DE/Themen/Rohstoffe/Downloads/Downloads-MR/rohsit-2024.pdf",
+      "https://www.wvstahl.de/konjunkturinformationen/",
+      "https://www.vdz-online.de/zementindustrie/zahlen-und-daten/zementindustrie-in-deutschland",
+      "https://ag-energiebilanzen.de/wp-content/uploads/AGEB_Jahresbericht2024_20250616_dt.pdf"
+    ],
+    "period": "2024/2025",
+    "resolution": "jährlich (globale Minen- bzw. Primärproduktion)",
+    "unit": "t/Jahr",
+    "description": [
+      "Dieses Paket bündelt die **heutige globale Jahresförderung** je Rohstoff als Nenner für den Ressourcen-Anteil im Dashboard. Der Materialbedarf eines Szenarios (Σ Intensität × installierte Leistung, annualisiert über den Aufbauzeitraum) wird gegen diese Weltförderung gesetzt — so wird sichtbar, welcher Anteil der globalen Jahresproduktion ein deutsches Stromsystem binden würde.",
+      "Mengenanker (gerundet): Stahl `~1.880 Mt/a` und Beton `~30.000 Mt/a` (abgeleitet aus Zement `~4.000 Mt/a` × ~7,5) dominieren die Tonnage, sind aber unkritisch; die Engpasskandidaten sind Lithium `~240 kt/a`, Kobalt `~290 kt/a`, Silber `~25 kt/a` sowie die Seltenen Erden Neodym/Dysprosium. Natururan `~60 kt/a` ist brennstoffgebunden (t/TWh).",
+      "Neodym- und Dysprosium-Förderung sind aus der gesamten Seltenerd-Oxid-Produktion abgeleitete Massenanteile (USGS berichtet keinen Element-Split) und entsprechend mit niedriger Konfidenz versehen."
+    ],
+    "fields": [
+      {
+        "name": "materials",
+        "unit": "Objekt",
+        "description": "Je Rohstoff: globalProductionTPerYear (t/Jahr), label, sourceUrls, confidence. Bezugsgröße für den Ressourcen-Anteil."
+      }
+    ],
+    "caveats": [
+      "Weltförderung ist ein Momentwert (2024/2025); Minenkapazitäten wachsen — der reale Anteil 2045 läge bei steigender Förderung niedriger.",
+      "Neodym/Dysprosium als abgeleitete Anteile der SE-Gesamtförderung (niedrige Konfidenz).",
+      "Recycling und Sekundärmaterial sind nicht abgebildet; gezeigt wird Primärförderung.",
+      "Kobalt-Förderschätzungen streuen in der Literatur (240–310 kt/a)."
+    ],
+    "file": "referenz/weltfoerderung/package.json"
+  },
+  "parameters": {
+    "materials": {
+      "Lithium": {
+        "label": "Lithium",
+        "globalProductionTPerYear": 240000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-lithium.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 5000
+      },
+      "Kobalt": {
+        "label": "Kobalt",
+        "globalProductionTPerYear": 290000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-cobalt.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 10000
+      },
+      "Nickel": {
+        "label": "Nickel",
+        "globalProductionTPerYear": 3700000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-nickel.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 150000
+      },
+      "Kupfer": {
+        "label": "Kupfer",
+        "globalProductionTPerYear": 23000000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-copper.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 1200000
+      },
+      "Neodym": {
+        "label": "Neodym",
+        "globalProductionTPerYear": 62000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-rare-earths.pdf"
+        ],
+        "confidence": "niedrig",
+        "germanyDemandTPerYear": 3000
+      },
+      "Dysprosium": {
+        "label": "Dysprosium",
+        "globalProductionTPerYear": 2700,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-rare-earths.pdf"
+        ],
+        "confidence": "niedrig",
+        "germanyDemandTPerYear": 150
+      },
+      "Silber": {
+        "label": "Silber",
+        "globalProductionTPerYear": 25000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-silver.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 300
+      },
+      "Mangan": {
+        "label": "Mangan",
+        "globalProductionTPerYear": 20000000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-manganese.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 200000
+      },
+      "Chrom": {
+        "label": "Chrom",
+        "globalProductionTPerYear": 47000000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-chromium.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 300000
+      },
+      "Molybdaen": {
+        "label": "Molybdaen",
+        "globalProductionTPerYear": 260000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-molybdenum.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 12000
+      },
+      "Zink": {
+        "label": "Zink",
+        "globalProductionTPerYear": 12000000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-zinc.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 500000
+      },
+      "Silizium": {
+        "label": "Silizium",
+        "globalProductionTPerYear": 5100000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-silicon.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 200000
+      },
+      "Stahl": {
+        "label": "Stahl",
+        "globalProductionTPerYear": 1882600000,
+        "sourceUrls": [
+          "https://worldsteel.org/media/press-releases/2025/december-2024-crude-steel-production-and-2024-global-totals/"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 27000000
+      },
+      "Aluminium": {
+        "label": "Aluminium",
+        "globalProductionTPerYear": 72000000,
+        "sourceUrls": [
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-aluminum.pdf"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 2600000
+      },
+      "Beton/Zement": {
+        "label": "Beton",
+        "globalProductionTPerYear": 30000000000,
+        "sourceUrls": [
+          "https://www.nature.com/articles/d41586-025-00568-4",
+          "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-cement.pdf",
+          "https://www.transportbeton.org/wir/wirtschaftsdaten/"
+        ],
+        "confidence": "mittel",
+        "germanyDemandTPerYear": 200000000
+      },
+      "Uran": {
+        "label": "Uran",
+        "globalProductionTPerYear": 60213,
+        "sourceUrls": [
+          "https://world-nuclear.org/information-library/facts-and-figures/uranium-production-by-country"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 0
+      },
+      "Kohle": {
+        "label": "Kohle",
+        "globalProductionTPerYear": 8700000000,
+        "sourceUrls": [
+          "https://www.iea.org/reports/coal-2023"
+        ],
+        "confidence": "hoch",
+        "germanyDemandTPerYear": 118000000
+      },
+      "Erdgas": {
+        "label": "Erdgas",
+        "globalProductionTPerYear": 3040000000,
+        "sourceUrls": [
+          "https://www.iea.org/energy-system/fossil-fuels/natural-gas"
+        ],
+        "confidence": "mittel",
+        "germanyDemandTPerYear": 60000000
+      }
+    }
+  }
+}

@@ -124,6 +124,11 @@
         "name": "summary",
         "unit": "Text",
         "description": "Kurzlabel für Kennzahl und Szenarioannahme."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -134,7 +139,14 @@
       "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert; Mieter ohne Heim-Wallbox laden in der Praxis mit anderem Tagesprofil."
     ],
     "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr).",
-    "summary": "20 kWh/100 km"
+    "summary": "20 kWh/100 km",
+    "ressourcen": {
+      "source": "Elektrifizierungs-Delta des Pkw-Antriebs je TWh/a Fahrstrom (~454.500 Pkw zu 2,2 MWh/a, 60-kWh-Akku): Akku im NMC-Korridor (Li ~2.700 t/TWh, Ni ~12.300, Co ~2.700, Mn ~3.800), E-Motor-Magnet (Nd ~180, Dy ~27) und Kupfer-Delta ~27.300 t/TWh (BEV 83 − ICE 23 kg/Pkw). Nur Mehrbedarf gegenüber Verbrenner; eine LFP-dominierte Flotte würde Ni/Co stark senken. Quellen: IEA Critical Minerals, International Copper Association, Argonne GREET.",
+      "sourceUrls": [
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/executive-summary",
+        "https://incorrys.com/technology-data-and-forecasts/electric-vehicles/copper-requirements-per-vehicle-type/"
+      ]
+    }
   },
   "parameters": {
     "referenceScales": {
@@ -186,6 +198,44 @@
         1.279,
         1.016
       ]
+    },
+    "resources": {
+      "Lithium": {
+        "tPerTWh": 2700,
+        "confidence": "hoch"
+      },
+      "Nickel": {
+        "tPerTWh": 12300,
+        "confidence": "mittel"
+      },
+      "Kobalt": {
+        "tPerTWh": 2700,
+        "confidence": "mittel"
+      },
+      "Mangan": {
+        "tPerTWh": 3800,
+        "confidence": "mittel"
+      },
+      "Kupfer": {
+        "tPerTWh": 27300,
+        "confidence": "hoch"
+      },
+      "Aluminium": {
+        "tPerTWh": 54500,
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerTWh": 9100,
+        "confidence": "niedrig"
+      },
+      "Neodym": {
+        "tPerTWh": 180,
+        "confidence": "mittel"
+      },
+      "Dysprosium": {
+        "tPerTWh": 27,
+        "confidence": "mittel"
+      }
     }
   }
 }

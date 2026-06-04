@@ -6,7 +6,7 @@ type PackageJson = DatasetDoc & { parameters: Record<string, unknown> };
 const modules = import.meta.glob('../../model/**/package.json', { eager: true, import: 'default' }) as Record<string, PackageJson>;
 
 const validKinds = new Set<DatasetDoc['kind']>(['dataset', 'scenario', 'composition', 'model', 'template']);
-const validDomains = /^(last|erzeugung|speicher|aussenhandel|modell)$/;
+const validDomains = /^(last|erzeugung|speicher|aussenhandel|modell|referenz)$/;
 
 type Entry = { path: string; stem: string; doc: DatasetDoc };
 

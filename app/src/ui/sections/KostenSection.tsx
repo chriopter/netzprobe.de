@@ -1,4 +1,4 @@
-import { ChartPanel, PlaceholderGlass, SectionHeading, StatCard } from '../sectionUi';
+import { ChartPanel, SectionHeading, StatCard } from '../sectionUi';
 
 // UI-Mockup: 9999-Platzhalter, bis echte Kostenkoeffizienten (Fraunhofer ISE)
 // pro Modellpaket vorliegen. Layout spiegelt die spätere Struktur.
@@ -21,7 +21,6 @@ export default function KostenSection() {
   return <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
     <SectionHeading id="kosten" placeholder/>
 
-    <PlaceholderGlass>
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <StatCard title="Gesamt" stats={[{ label: 'Systemkosten', value: `${MOCK} Mrd €` }, { label: 'Strompreis', value: `${MOCK} €/MWh` }]}/>
       <StatCard title="Haushalt & CO₂" stats={[{ label: 'Pro Haushalt', value: `${MOCK} €/a` }, { label: 'CO₂-Kosten', value: `${MOCK} Mrd €` }]}/>
@@ -53,6 +52,5 @@ export default function KostenSection() {
           </div>)}
       </dl>
     </ChartPanel>
-    </PlaceholderGlass>
   </section>;
 }

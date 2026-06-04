@@ -1010,7 +1010,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <RessourcenSection buildoutYear={buildoutYear}/>
+          <RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/>
           <KostenSection/>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}

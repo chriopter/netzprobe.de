@@ -134,6 +134,11 @@
         "name": "summary",
         "unit": "Text",
         "description": "Kurzlabel für Kennzahl und Szenarioannahme."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -152,7 +157,14 @@
       "last/e100-ghd/model.rs"
     ],
     "note": "Zusatzlast = max(0, Ziel-Waerme - bereits elektrisch gedeckte Waerme) / Jahresarbeitszahl. Modelliert den Uebergang fossile GHD-Heizung (Buero, Handel, Schule, Krankenhaus, Gastronomie, Kommunalbau) zu Waermepumpe; bestehende elektrische GHD-Heizung bleibt unveraendert in der historischen Last. Tagesgewichte folgen realen Gradtagszahlen 2025, innerhalb des Tages moduliert das G0-Bueroprofil mit Nachtabsenkung und Plateau 8-18 Uhr.",
-    "summary": "JAZ 2,8"
+    "summary": "JAZ 2,8",
+    "ressourcen": {
+      "source": "Elektrifizierungs-Delta Gewerbe-Wärmepumpe je TWh/a (größere Aggregate, ähnliche Intensität wie Haushalts-WP): Kupfer-Delta ~2.200 t/TWh, Aluminium ~900, Stahl ~2.200. Keine Batterie-/Seltenerd-Rohstoffe. Quellen: CRU, Fraunhofer ISE.",
+      "sourceUrls": [
+        "https://www.sciencedirect.com/science/article/pii/S0378778825003354",
+        "https://www.ise.fraunhofer.de/en/business-areas/climate-neutral-heat-and-buildings/heat-pumps.html"
+      ]
+    }
   },
   "parameters": {
     "referenceYear": 2023,
@@ -2416,6 +2428,20 @@
         "value": 10,
         "unit": "TWh",
         "label": "GHD-Wärme einer Großstadt (~1 Mio. Einw.)"
+      }
+    },
+    "resources": {
+      "Kupfer": {
+        "tPerTWh": 2200,
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerTWh": 900,
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerTWh": 2200,
+        "confidence": "niedrig"
       }
     }
   }

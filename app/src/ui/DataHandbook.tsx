@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Menu, SlidersHorizontal, Zap } from 'lucide-react';
+import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Globe, Menu, SlidersHorizontal, Zap } from 'lucide-react';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
@@ -15,6 +15,7 @@ const domainLabels: Record<string, string> = {
   speicher: 'Speicher',
   aussenhandel: 'Außenhandel',
   modell: 'Modell',
+  referenz: 'Referenz',
   templates: 'Vorlagen',
 };
 
@@ -24,6 +25,7 @@ const domainIcons: Record<string, typeof Zap> = {
   speicher: BatteryCharging,
   aussenhandel: ArrowRightLeft,
   modell: SlidersHorizontal,
+  referenz: Globe,
   templates: Bookmark,
 };
 
@@ -33,6 +35,7 @@ const domainBlurbs: Record<string, string> = {
   speicher: 'Batterie, Pumpspeicher und H₂-Saison-Speicher mit Roundtrip-Daten.',
   aussenhandel: 'Strom- und H₂-Import/-Export, Emissionsfaktoren, Bounds für Slider.',
   modell: 'Dispatch-Engine: stündliche Bilanz, Speicherlogik, CO₂.',
+  referenz: 'Themenübergreifende Bezugsdaten: globale Weltförderung der Rohstoffe (Nenner für den Ressourcen-Anteil).',
   templates: 'Arbeitsvorlagen für Datenpakete und Wiki-Einträge.',
 };
 const kindLabels: Record<DatasetDoc['kind'], string> = {
@@ -54,10 +57,28 @@ const tocAnchors = {
   model: 'modellansatz',
   derivation: 'herleitung',
   caveats: 'grenzen',
+  ressourcen: 'ressourcen',
   sources: 'quellen',
   files: 'files',
   homeDomains: 'wiki-domaenen',
 } as const;
+
+type ResourceEntry = { tPerGW?: number; tPerGWh?: number; tPerTWh?: number; confidence?: string };
+
+function packageResources(selected: DatasetDoc): { rows: Array<[string, ResourceEntry]>; narrative?: string; sourceUrls?: string[] } | null {
+  const pkg = getPackage(selected.id) as { parameters?: Record<string, unknown>; method?: Record<string, unknown> } | null;
+  const res = pkg?.parameters?.resources as Record<string, ResourceEntry> | undefined;
+  if (!res || !Object.keys(res).length) return null;
+  const meta = pkg?.method?.ressourcen as { source?: string; sourceUrls?: string[] } | undefined;
+  return { rows: Object.entries(res), narrative: meta?.source, sourceUrls: meta?.sourceUrls };
+}
+
+function resourceValue(e: ResourceEntry): string {
+  if (e.tPerGW != null) return `${e.tPerGW.toLocaleString('de-DE')} t/GW`;
+  if (e.tPerGWh != null) return `${e.tPerGWh.toLocaleString('de-DE')} t/GWh`;
+  if (e.tPerTWh != null) return `${e.tPerTWh.toLocaleString('de-DE')} t/TWh`;
+  return '–';
+}
 
 const wikiSections = [
   ['last', 'Last'],
@@ -65,6 +86,7 @@ const wikiSections = [
   ['speicher', 'Speicher'],
   ['aussenhandel', 'Außenhandel'],
   ['modell', 'Modell'],
+  ['referenz', 'Referenz'],
   ['templates', 'Vorlagen'],
 ] as const;
 
@@ -107,6 +129,7 @@ function articleToc(selected: DatasetDoc): TocItem[] {
     selected.method.sections?.forEach(section => items.push({ id: sectionAnchor(section.title), label: section.title, level: 2 }));
     if (selected.method.caveats?.length) items.push({ id: tocAnchors.caveats, label: 'Grenzen', level: 2 });
   }
+  if (packageResources(selected)) items.push({ id: tocAnchors.ressourcen, label: 'Ressourcen' });
   if (selected.method.source) items.push({ id: tocAnchors.sources, label: 'Quellen' });
   if (hasFileRows(selected)) items.push({ id: tocAnchors.files, label: 'Files' });
   return items;
@@ -395,12 +418,44 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
         </ul>
       </section>}
     </section>}
+    <ResourcesSection selected={selected}/>
     {selected.method.source && <SourcesSection selected={selected}/>}
     {showFileRows && <section id={tocAnchors.files} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Files</h2>
       <FileContentTabs selected={selected}/>
     </section>}
   </div>;
+}
+
+function ResourcesSection({ selected }: { selected: DatasetDoc }) {
+  const data = packageResources(selected);
+  if (!data) return null;
+  return <section id={tocAnchors.ressourcen} className="mt-9 scroll-mt-8">
+    <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Ressourcen</h2>
+    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{data.narrative}</p>}
+    <table className="mt-4 w-full max-w-2xl text-sm">
+      <thead>
+        <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
+          <th className="py-1.5 font-medium">Material</th>
+          <th className="py-1.5 text-right font-medium">Intensität</th>
+          <th className="py-1.5 text-right font-medium">Konfidenz</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.rows.map(([m, e]) => <tr key={m} className="border-t border-zinc-100 dark:border-zinc-800">
+          <td className="py-1.5 text-zinc-700 dark:text-zinc-300">{m}</td>
+          <td className="py-1.5 text-right tabular-nums text-zinc-950 dark:text-zinc-50">{resourceValue(e)}</td>
+          <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">{e.confidence ?? '–'}</td>
+        </tr>)}
+      </tbody>
+    </table>
+    <p className="mt-3 max-w-3xl text-xs leading-6 text-zinc-400 dark:text-zinc-500">t/GW = pro installierter Leistung (Bau), t/GWh = pro Speicherkapazität, t/TWh = pro erzeugter Energie (Brennstoff).</p>
+    {data.sourceUrls?.length
+      ? <ul className="mt-3 grid max-w-3xl gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+          {data.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
+        </ul>
+      : null}
+  </section>;
 }
 
 function SourcesSection({ selected }: { selected: DatasetDoc }) {
@@ -914,13 +969,14 @@ function DataHandbookHome({ docs }: { docs: DatasetDoc[] }) {
     ['speicher', 'Speicher'],
     ['aussenhandel', 'Außenhandel'],
     ['modell', 'Modell'],
+    ['referenz', 'Referenz'],
     ['templates', 'Vorlagen'],
   ];
   return <div>
     <div>
       <p className="text-xs font-medium uppercase text-zinc-400">model/</p>
       <h1 className="mt-2 text-4xl font-semibold leading-tight dark:text-zinc-50">netzprobe.de Wiki</h1>
-      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">Dokumentation der Modellpakete, die UI und Rust-API aus dem statischen <code>model/</code>-Ordner laden. Sechs Domänen, eine Engine.</p>
+      <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">Dokumentation der Modellpakete, die UI und Rust-API aus dem statischen <code>model/</code>-Ordner laden. Sieben Domänen, eine Engine.</p>
     </div>
     <section id={tocAnchors.homeDomains} className="mt-10 scroll-mt-8">
       <div className="grid gap-3 sm:grid-cols-2">

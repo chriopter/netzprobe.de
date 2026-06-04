@@ -83,6 +83,11 @@
         "name": "anlagenFlaeche",
         "unit": "Objekt",
         "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -100,6 +105,19 @@
       "sourceUrls": [
         "https://www.ess-news.com/2025/09/09/tesla-unveils-new-generation-of-utility-scale-batteries-megapack-3-and-megablock/",
         "https://www.lineaenergy.com/battery-energy-storage-systems-faq"
+      ]
+    },
+    "ressourcen": {
+      "source": "Stationaere Lithium-Ionen-Grossspeicher (BESS) werden energieskaliert bilanziert (Werte je GWh Speicherkapazitaet). Das Aktivmaterial Lithium liegt bei rund 97 t/GWh (~0,097 kg Li/kWh; LFP ~0,09, NMC811 ~0,11 kg Li/kWh), in Lithiummetall, nicht in Li2CO3 (LCE-Faktor 5,32). Da Netzspeicher heute zu ~95-98 % auf cobalt-, nickel- und manganfreiem LFP setzen (IEA/BNEF 'almost total switchover to LFP'), wurden Nickel (~20 t/GWh), Kobalt (~3 t/GWh) und Mangan (~3 t/GWh) gegenueber einem 90/10-LFP/NMC-Mix nach unten korrigiert; sie stammen ausschliesslich aus dem kleinen NMC-Restanteil und sind chemieabhaengig (0 bei reinem LFP). Konstruktionsmetalle (Kupfer ~7, Aluminium ~15, Stahl ~22 t/GWh) sind nur grob aus LCA-Peripheriewerten geschaetzt; insbesondere Stahl koennte system-/containerbedingt deutlich hoeher liegen. Quellen: IEA Critical Minerals, Wikipedia LFP/BESS, RSC- und ScienceDirect-LCA.",
+      "sourceUrls": [
+        "https://en.wikipedia.org/wiki/Lithium_iron_phosphate_battery",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://www.sciencedirect.com/science/article/pii/S0378775325000060",
+        "https://electronics360.globalspec.com/article/22873/from-nmc-to-lfp-batteries",
+        "https://www.iea.org/energy-system/electricity/grid-scale-storage",
+        "https://pubs.rsc.org/en/content/articlehtml/2026/ya/d5ya00341e",
+        "https://en.wikipedia.org/wiki/Battery_energy_storage_system",
+        "https://www.sciencedirect.com/science/article/pii/S0959652622024921"
       ]
     }
   },
@@ -129,6 +147,68 @@
       "anlageKm2PerGWh": 0.015,
       "wirkungKm2PerGW": 0.001,
       "kategorie": "Industrie"
+    },
+    "resources": {
+      "Lithium": {
+        "tPerGWh": 97,
+        "sourceUrls": [
+          "https://en.wikipedia.org/wiki/Lithium_iron_phosphate_battery",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.sciencedirect.com/science/article/pii/S0378775325000060"
+        ],
+        "confidence": "hoch"
+      },
+      "Nickel": {
+        "tPerGWh": 20,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://electronics360.globalspec.com/article/22873/from-nmc-to-lfp-batteries",
+          "https://www.iea.org/energy-system/electricity/grid-scale-storage"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kobalt": {
+        "tPerGWh": 3,
+        "sourceUrls": [
+          "https://electronics360.globalspec.com/article/22873/from-nmc-to-lfp-batteries",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://www.iea.org/energy-system/electricity/grid-scale-storage"
+        ],
+        "confidence": "niedrig"
+      },
+      "Mangan": {
+        "tPerGWh": 3,
+        "sourceUrls": [
+          "https://electronics360.globalspec.com/article/22873/from-nmc-to-lfp-batteries",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerGWh": 7,
+        "sourceUrls": [
+          "https://pubs.rsc.org/en/content/articlehtml/2026/ya/d5ya00341e",
+          "https://en.wikipedia.org/wiki/Battery_energy_storage_system",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "niedrig"
+      },
+      "Aluminium": {
+        "tPerGWh": 15,
+        "sourceUrls": [
+          "https://pubs.rsc.org/en/content/articlehtml/2026/ya/d5ya00341e",
+          "https://www.sciencedirect.com/science/article/pii/S0959652622024921"
+        ],
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerGWh": 22,
+        "sourceUrls": [
+          "https://pubs.rsc.org/en/content/articlehtml/2026/ya/d5ya00341e",
+          "https://en.wikipedia.org/wiki/Battery_energy_storage_system"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

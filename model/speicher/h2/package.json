@@ -92,6 +92,11 @@
         "name": "anlagenFlaeche",
         "unit": "Objekt",
         "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -110,6 +115,15 @@
       "sourceUrls": [
         "https://www.ieg.fraunhofer.de/de/presse/pressemitteilungen/salzlagerstaetten.html",
         "https://www.solarserver.de/2020/11/19/norddeutsche-salzkavernen-ideal-fuer-wasserstoff/"
+      ]
+    },
+    "ressourcen": {
+      "source": "Elektrolyseure sind kapazitaetsgebunden (t/GW). Leitmaterial alkalischer Stacks ist Nickel: IEA nennt '>1 t/MW', State-of-the-art ~800 kg/MW = 800 t/GW (PEM nutzt stattdessen PGM, SOEC nur ~150-200 kg Ni/MW). Strukturstahl (Stacks, BoP, Verrohrung) ~8.000 t/GW, Kupfer ~1.000 t/GW (Gleichrichter/Hochstrom-DC; nach Verifikation von 1.500 auf 1.000 t/GW gesenkt) und Aluminium ~500 t/GW sind grobe Engineering-Schaetzungen ohne primaere t/MW-Quelle (niedrige Konfidenz). Der reale Flottenwert haengt stark vom alkalisch/PEM/SOEC-Mix ab.",
+      "sourceUrls": [
+        "https://thebreakthrough.org/issues/energy/are-there-enough-critical-minerals-for-hydrogen-electrolyzers",
+        "https://www.iea.org/energy-system/low-emission-fuels/electrolysers",
+        "https://www.nature.com/articles/s43247-025-02621-6",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
       ]
     }
   },
@@ -145,6 +159,40 @@
       "wirkungKm2PerGW": 0.05,
       "kategorie": "Industrie",
       "wirkungKm2PerGWh": 0.001
+    },
+    "resources": {
+      "Nickel": {
+        "tPerGW": 800,
+        "sourceUrls": [
+          "https://thebreakthrough.org/issues/energy/are-there-enough-critical-minerals-for-hydrogen-electrolyzers",
+          "https://www.iea.org/energy-system/low-emission-fuels/electrolysers"
+        ],
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerGW": 8000,
+        "sourceUrls": [
+          "https://thebreakthrough.org/issues/energy/are-there-enough-critical-minerals-for-hydrogen-electrolyzers",
+          "https://www.nature.com/articles/s43247-025-02621-6"
+        ],
+        "confidence": "niedrig"
+      },
+      "Kupfer": {
+        "tPerGW": 1000,
+        "sourceUrls": [
+          "https://thebreakthrough.org/issues/energy/are-there-enough-critical-minerals-for-hydrogen-electrolyzers",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "niedrig"
+      },
+      "Aluminium": {
+        "tPerGW": 500,
+        "sourceUrls": [
+          "https://www.nature.com/articles/s43247-025-02621-6",
+          "https://thebreakthrough.org/issues/energy/are-there-enough-critical-minerals-for-hydrogen-electrolyzers"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

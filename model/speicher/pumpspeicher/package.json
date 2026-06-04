@@ -85,6 +85,11 @@
         "name": "anlagenFlaeche",
         "unit": "Objekt",
         "description": "Flächenbedarf in DE: anlage (versiegelt, pro GW und/oder GWh) + wirkung (blockiert)."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -101,6 +106,15 @@
       "sourceUrls": [
         "https://de.wikipedia.org/wiki/Pumpspeicherwerk_Goldisthal",
         "https://powerplants.vattenfall.com/de/goldisthal/"
+      ]
+    },
+    "ressourcen": {
+      "source": "Pumpspeicherkraftwerke werden leistungsbezogen bilanziert (t/GW). Groesster Posten ist Beton fuer Staudaemme, Becken, Krafthaus und Druckstollen: die DLR-Studie (2015, Tab. 3-13) nennt 6,7-11 Mio t/GW (Pacca 7.644, Rule 6.680, Flury 11.026 t/MW); als matrix-konsistenter, leicht konservativer Mittelwert sind ~8 Mio t/GW gesetzt (Spanne 6,7-11 Mio, stark standortabhaengig). Stahl (Bewehrung, Panzerung, Maschinensatz) liegt bei ~80.000 t/GW (Flury-Wert; Quervalidierung Quaranta 2023: elektromechanik allein 5,7 t/MW). Kupfer ~3.120 t/GW (Generator, Trafo, Verkabelung) und Aluminium ~50 t/GW sind nachrangig. Quellen: DLR Materialbedarf, PMC/ACS-LCA, IEA.",
+      "sourceUrls": [
+        "https://elib.dlr.de/98018/1/Materialbedarf%20von%20Energieerzeugungssystemen.pdf",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC10448748/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC10556128/",
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
       ]
     }
   },
@@ -130,6 +144,39 @@
       "anlageKm2PerGWh": 0.06,
       "wirkungKm2PerGW": 0.06,
       "kategorie": "Stausee"
+    },
+    "resources": {
+      "Beton/Zement": {
+        "tPerGW": 8000000,
+        "sourceUrls": [
+          "https://elib.dlr.de/98018/1/Materialbedarf%20von%20Energieerzeugungssystemen.pdf",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC10448748/"
+        ],
+        "confidence": "mittel"
+      },
+      "Stahl": {
+        "tPerGW": 80000,
+        "sourceUrls": [
+          "https://elib.dlr.de/98018/1/Materialbedarf%20von%20Energieerzeugungssystemen.pdf",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC10556128/"
+        ],
+        "confidence": "mittel"
+      },
+      "Kupfer": {
+        "tPerGW": 3120,
+        "sourceUrls": [
+          "https://elib.dlr.de/98018/1/Materialbedarf%20von%20Energieerzeugungssystemen.pdf",
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerGW": 50,
+        "sourceUrls": [
+          "https://elib.dlr.de/98018/1/Materialbedarf%20von%20Energieerzeugungssystemen.pdf"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }

@@ -89,6 +89,11 @@
         "name": "referenceYield",
         "unit": "Objekt",
         "description": "Typischer DE-Jahresertrag (TWh/GW·a) für km²/TWh-Energiedichte-Berechnung. Mit Quelle dokumentiert."
+      },
+      {
+        "name": "resources",
+        "unit": "Objekt",
+        "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
       }
     ],
     "caveats": [
@@ -107,6 +112,18 @@
         "https://www.umweltbundesamt.de/sites/default/files/medien/479/publikationen/texte_76-2022_anpassung_der_flaechenkulisse_fuer_pv-freiflaechenanlagen_im_eeg_vor_dem_hintergrund_erhoehter_zubauziele.pdf",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
+      ]
+    },
+    "ressourcen": {
+      "source": "Die PV-Intensitaeten stammen ueberwiegend aus der IEA-Technologietabelle (kg/MW = t/GW), trianguliert mit Silver Institute/pv-magazine und OWID. Hauptposten sind Aluminium (Rahmen + Unterkonstruktion) und Stahl (v.a. Freiflaechen-Montage, ~30 t/MW laut EPR-Benchmark), gefolgt von Kupfer (~2800 t/GW, Verschaltung/Wechselrichter/Trafo) und Silizium (~3950 t/GW, IEA-Kategorie Silicon/other inkl. Glas). Silber ist mit ~11 t/GW gut belegt (PERC/TOPCon-Mix, ~10-12 t/GW). Der Aluminiumwert wurde nach Verifikation von 6000 auf 10000 t/GW angehoben, bleibt aber wegen breiter Systemgrenzen (Wood Mackenzie/Hydro bis ~21 t/MW) unsicher. Werte gelten fuer ein gemischtes Freiflaeche/Aufdach-Portfolio mit grosser Spannweite.",
+      "sourceUrls": [
+        "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+        "https://www.pv-magazine.com/2024/11/13/solar-underpins-record-high-industrial-demand-for-silver/",
+        "https://www.silverinstitute.org/wp-content/uploads/2020/06/SilverSolarPower_CRU2020.pdf",
+        "https://ourworldindata.org/grapher/materials-low-carbon-electricity",
+        "https://thebreakthrough.org/issues/energy/updated-mining-footprints-and-raw-material-needs-for-clean-energy",
+        "https://www.eprmagazine.com/industry-analysis/benchmarking-the-solar-pv-mounting-industry/",
+        "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources"
       ]
     }
   },
@@ -140,6 +157,61 @@
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/presseinformationen/2025/Stromerzeugung_2024.pdf"
       ]
+    },
+    "resources": {
+      "Silizium": {
+        "tPerGW": 3950,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+        ],
+        "confidence": "mittel"
+      },
+      "Silber": {
+        "tPerGW": 11,
+        "sourceUrls": [
+          "https://www.pv-magazine.com/2024/11/13/solar-underpins-record-high-industrial-demand-for-silver/",
+          "https://www.silverinstitute.org/wp-content/uploads/2020/06/SilverSolarPower_CRU2020.pdf"
+        ],
+        "confidence": "hoch"
+      },
+      "Kupfer": {
+        "tPerGW": 2800,
+        "sourceUrls": [
+          "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
+          "https://ourworldindata.org/grapher/materials-low-carbon-electricity"
+        ],
+        "confidence": "mittel"
+      },
+      "Aluminium": {
+        "tPerGW": 10000,
+        "sourceUrls": [
+          "https://ourworldindata.org/grapher/materials-low-carbon-electricity",
+          "https://thebreakthrough.org/issues/energy/updated-mining-footprints-and-raw-material-needs-for-clean-energy"
+        ],
+        "confidence": "niedrig"
+      },
+      "Stahl": {
+        "tPerGW": 30000,
+        "sourceUrls": [
+          "https://www.eprmagazine.com/industry-analysis/benchmarking-the-solar-pv-mounting-industry/",
+          "https://thebreakthrough.org/issues/energy/updated-mining-footprints-and-raw-material-needs-for-clean-energy"
+        ],
+        "confidence": "niedrig"
+      },
+      "Zink": {
+        "tPerGW": 45,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources"
+        ],
+        "confidence": "mittel"
+      },
+      "Mangan": {
+        "tPerGW": 8,
+        "sourceUrls": [
+          "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources"
+        ],
+        "confidence": "niedrig"
+      }
     }
   }
 }
