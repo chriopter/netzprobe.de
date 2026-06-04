@@ -100,6 +100,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -135,6 +140,14 @@
         "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies",
         "https://ag-energiebilanzen.de/wp-content/uploads/2024/10/Braunkohle_2024.pdf",
         "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
+      ]
+    },
+    "kosten": {
+      "source": "**Kohle (Braun+Steinkohle-Mix, 2024, real, netto).** CAPEX 2000 EUR/kW (ISE: Braunkohle 1850-2550, Steinkohle 1700-2300; IEA WEO2024 ~2235 USD/kW). Fix-O&M 40 EUR/kW/a (Braun 42, Stein 37), Var-O&M 5 EUR/MWh. Lebensdauer 35 a Mix (Braun 40, Stein 30). Netto-Wirkungsgrad 0,385 (Braun 0,38 / Stein 0,39). Brennstoff frei Kraftwerk 5 EUR/MWh_th als braunkohledominierter Mix (ISE: Braunkohle 2,3 / Steinkohle 11,6). WARNUNG (Verifikation): bei ausgeglichenerem Mix waere ~7-8 angemessener (Vorschlag 7); Wert stark mixabhaengig. CO2-Kosten NICHT enthalten. LCOE inkl. CO2: Braunkohle ~204, Steinkohle ~233 EUR/MWh. Quellen: Fraunhofer ISE 2024; IEA WEO 2024. Konfidenz: mittel.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -235,6 +248,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 2000,
+      "omFixEurPerKWa": 40,
+      "omVarEurPerMWh": 5,
+      "lifetimeYears": 35,
+      "fuelEurPerMWhTh": 5,
+      "efficiency": 0.385
     }
   }
 }

@@ -88,6 +88,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -118,6 +123,14 @@
         "https://pubs.rsc.org/en/content/articlehtml/2026/ya/d5ya00341e",
         "https://en.wikipedia.org/wiki/Battery_energy_storage_system",
         "https://www.sciencedirect.com/science/article/pii/S0959652622024921"
+      ]
+    },
+    "kosten": {
+      "source": "**Batterie (Li-Ion Netzspeicher, Leistung und Energie getrennt).** Energiekomponente 280 EUR/kWh nutzbar (Grossspeicher 2024-25; NREL ATB 2024 Pack ~283 USD/kWh ~260 EUR; ISE-Heimspeicher hoeher 400-1000, Projektion 2045 180-700; Spanne 180-700). Leistungskomponente (PCS/Wechselrichter) 150 EUR/kW (DEA/PyPSA/NREL-BOS 130-160). Wirkungsgrad (RTE) 0,90 (ISE). Lebensdauer 15 a (ISE), danach Zellersatz. WARNUNG (Verifikation): Fix-O&M 4 EUR/kW/a ist nur fuer die reine Leistungskomponente plausibel; NREL ATB setzt ~2,5 % von Gesamt-CAPEX/a an, was bei mehrstuendigen Systemen (Energie dominiert) deutlich hoeher liegt (4h-System ~32 EUR/kW/a). Var-O&M ~1,5 EUR/MWh. CAPEX streut stark je Quelle/Jahr und brutto/netto-Kapazitaet. Quellen: Fraunhofer ISE 2024; NREL ATB 2024; PyPSA. Konfidenz: mittel.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -209,6 +222,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 150,
+      "capexEurPerKWh": 280,
+      "omFixEurPerKWa": 4,
+      "omVarEurPerMWh": 1.5,
+      "lifetimeYears": 15,
+      "efficiency": 0.9
     }
   }
 }

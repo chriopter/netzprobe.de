@@ -94,6 +94,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -123,6 +128,14 @@
         "https://ourworldindata.org/grapher/mining-requirements-electricity-sources",
         "https://www.windfakten.at/assets/downloads/02-windfakten-downloads/rare-earths-in-the-windindustry_2020_c_windeurope.pdf",
         "https://www.sciencedirect.com/science/article/pii/S0959652626003756"
+      ]
+    },
+    "kosten": {
+      "source": "**Wind offshore inkl. Netzanbindung (Turbinen 6-15 MW, 2024, real).** CAPEX 2800 EUR/kW = Mittel der ISE-Spanne 2200-3400 (IRENA 2024 Welt 2852 USD/kW ~2640 EUR bestaetigt). ACHTUNG/Warnung der Verifikation: ISE schliesst die Netzanbindung teils explizit AUS den LCOE aus; PyPSA/DEA-Wert 2224 EUR/kW (2020) hat die Netzanbindung ABGEZOGEN und ist daher nicht direkt vergleichbar. Die Aussage 'ISE inkl. Netzanbindung 2200-3400' sollte am Primaerdokument verifiziert werden; die CAPEX-Groessenordnung ist korrekt. Fix-O&M 39 EUR/kW/a, Var-O&M 8 EUR/MWh. Lebensdauer 25 a. WACC real 6,0 % (hoeheres Risiko). LCOE ~79 EUR/MWh (Korridor 55-103). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: mittel (starke CAPEX-Streuung je Netzanbindungstiefe).",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -251,6 +264,12 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 2800,
+      "omFixEurPerKWa": 39,
+      "omVarEurPerMWh": 8,
+      "lifetimeYears": 25
     }
   }
 }

@@ -94,6 +94,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -124,6 +129,14 @@
         "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources",
         "https://renewablewatch.in/2017/07/29/turbine-configuration/",
         "https://www.sciencedirect.com/science/article/pii/S0301420717300077"
+      ]
+    },
+    "kosten": {
+      "source": "**Wind onshore (Turbinen 2-5 MW, 2024, real).** CAPEX 1600 EUR/kW = Mittel der ISE-Spanne 1300-1900 (IRENA 2024 Welt 1041 USD/kW ~960 EUR liegt niedriger, Welt vs. DE; PyPSA/DEA ~1439 EUR/kW). Fix-O&M 32 EUR/kW/a (ISE Tab. 2), Var-O&M 7 EUR/MWh (=0,007 EUR/kWh). Kein Brennstoff. Lebensdauer 25 a (ISE; DEA/PyPSA bis 28-30 a). WACC real 3,9 % (ISE). LCOE-Quercheck ~67 EUR/MWh (Korridor 43-92). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: hoch.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -245,6 +258,12 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 1600,
+      "omFixEurPerKWa": 32,
+      "omVarEurPerMWh": 7,
+      "lifetimeYears": 25
     }
   }
 }

@@ -88,6 +88,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -114,6 +119,14 @@
         "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation",
         "https://www.nature.com/articles/s41598-023-43228-1",
         "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+      ]
+    },
+    "kosten": {
+      "source": "**Laufwasser (run-of-river).** WICHTIG: Fraunhofer ISE 2024 betrachtet Wasserkraft NICHT (zu standortspezifisch, geringes DE-Neubaupotenzial), daher keine DE-Primaerquelle. Werte aus PyPSA technology-data (ror): CAPEX ~4000 EUR/kW (PyPSA 4333, DIW DataDoc), Fix-O&M 2 %/a ~80 EUR/kW/a, Wirkungsgrad 0,9, Lebensdauer 60 a oekonomisch (baulich 80-100 a, PyPSA 80). Var-O&M vernachlaessigbar. IRENA 2023 Welt-Wasserkraft gesamt ~2800-3050 USD/kW liegt niedriger; reale CAPEX-Spanne ca. 2000-7000 EUR/kW je Standort/Fallhoehe. Quellen: PyPSA technology-data costs_2025; NREL ATB 2024 hydropower; IRENA 2023. Konfidenz: niedrig (extreme Standortstreuung, keine DE-Primaerquelle).",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -172,6 +185,12 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 4000,
+      "omFixEurPerKWa": 80,
+      "lifetimeYears": 60,
+      "efficiency": 0.9
     }
   }
 }

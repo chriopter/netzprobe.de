@@ -63,6 +63,7 @@ export const uiManifest = {
     h2: params('h2'),
   },
   materials: params('weltfoerderung').materials,
+  prices: params('preise'),
   trade: {
     strom: params('strom-handel'),
     h2: params('h2-handel'),

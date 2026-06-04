@@ -14,7 +14,7 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixVisibility } from './chartOptions';
-import { MAIN_VIEW_IMPLEMENTED, MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
+import { ComingSoonGate, MAIN_VIEW_IMPLEMENTED, MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
 import MixSection from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
@@ -994,6 +994,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             result={result}
             resolvedScenario={resolvedScenario}
             electrifiedPct={electrifiedFraction(resolvedScenario, data)}
+            buildoutYear={buildoutYear}
             chartMode={chartMode}
             setChartMode={setChartMode}
             mixVisibility={mixVisibility}
@@ -1010,8 +1011,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/>
-          <KostenSection/>
+          <ComingSoonGate id="ressourcen"><RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/></ComingSoonGate>
+          <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear}/></ComingSoonGate>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
