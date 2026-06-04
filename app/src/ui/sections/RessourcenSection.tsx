@@ -5,99 +5,17 @@ import type { DataSet } from '../../types/data';
 import { SectionHeading } from '../sectionUi';
 import { e100ElectricTWh } from '../ScenarioSidebar';
 import { cx, muted } from '../ui';
-import { uiManifest } from '../uiManifest';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
-
-// material-relevante e100-Sektoren: [uiManifest-Key, additionalTWh-Key]
-const E100_SECTORS: Array<[string, string]> = [
-  ['pkw', 'e100-pkw'], ['lkw', 'e100-lkw'], ['heiz', 'e100-heiz'], ['ghd', 'e100-ghd'], ['bahn', 'e100-bahn'],
-];
+import { annualByMaterial, groupSums, BULK, FUEL, type MaterialInfo } from '../ressourcen';
+import { uiManifest } from '../uiManifest';
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
-// Gruppen: Beton/Stahl/Alu = Bau-Massenmaterial; Brennstoff = Kohle/Erdgas;
-// "Spezial" = alle uebrigen Mineralien inkl. Uran.
-const BULK = new Set(['Beton/Zement', 'Stahl', 'Aluminium']);
-const FUEL = new Set(['Kohle', 'Erdgas']);
 const catColor = (m: string) => FUEL.has(m) ? 'bg-stone-700 dark:bg-stone-400' : BULK.has(m) ? 'bg-zinc-400 dark:bg-zinc-500' : 'bg-zinc-600 dark:bg-zinc-300';
 
-// Brennstoff analytisch (Kapazitaet × realistische Volllaststunden) — fuer Basis UND
-// Szenario gleich gerechnet, damit das Default-Szenario sauber 1× ergibt.
-const VLH: Record<string, number> = { kohle: 3000, gas: 1500, kernkraft: 7500 };
-
-type ResourceEntry = { tPerGW?: number; tPerGWh?: number; tPerTWh?: number };
-type MaterialInfo = { label: string; globalProductionTPerYear: number; germanyDemandTPerYear?: number };
-
-const genCaps = (s: Scenario): Array<[string, number]> => [
-  ['pv', s.generation.pvInstalledGW],
-  ['windon', s.generation.windOnInstalledGW],
-  ['windoff', s.generation.windOffInstalledGW],
-  ['biomasse', s.generation.biomasseInstalledGW],
-  ['laufwasser', s.generation.laufwasserInstalledGW],
-  ['kernkraft', s.generation.kernkraftInstalledGW],
-  ['gas', s.generation.gasInstalledGW],
-  ['kohle', s.generation.kohleInstalledGW],
-];
-
-const storCaps = (s: Scenario): Array<[string, number, number]> => [
-  ['batterie', s.storage.batteriePowerGW, s.storage.batterieEnergyGWh],
-  ['pumpspeicher', s.storage.pumpspeicherPowerGW, s.storage.pumpspeicherEnergyGWh],
-  ['h2', Math.max(s.storage.h2ChargePowerGW, s.storage.h2DischargePowerGW), s.storage.h2EnergyGWh],
-];
-
-// Jaehrlicher Materialbedarf je Rohstoff (t/a): Bau/Elektrifizierung annualisiert
-// (Bestand ÷ Aufbaujahre), Brennstoff pro Jahr (tPerTWh × installierte GW × Volllaststunden).
-function annualByMaterial(s: Scenario, years: number, e100TWh: Record<string, number>): Record<string, number> {
-  const stock: Record<string, number> = {};
-  const fuel: Record<string, number> = {};
-  const addS = (m: string, t: number) => { stock[m] = (stock[m] ?? 0) + t; };
-  const addF = (m: string, t: number) => { fuel[m] = (fuel[m] ?? 0) + t; };
-  for (const [id, gw] of genCaps(s)) {
-    const res = (uiManifest.generation as Record<string, any>)[id]?.resources as Record<string, ResourceEntry> | undefined;
-    if (!res) continue;
-    for (const m in res) {
-      const e = res[m];
-      if (e.tPerGW) addS(m, e.tPerGW * gw);
-      if (e.tPerTWh) addF(m, e.tPerTWh * gw * (VLH[id] ?? 0) / 1000);
-    }
-  }
-  for (const [id, power, energy] of storCaps(s)) {
-    const res = (uiManifest.storage as Record<string, any>)[id]?.resources as Record<string, ResourceEntry> | undefined;
-    if (!res) continue;
-    for (const m in res) {
-      const e = res[m];
-      if (e.tPerGW) addS(m, e.tPerGW * power);
-      if (e.tPerGWh) addS(m, e.tPerGWh * energy);
-    }
-  }
-  // Elektrifizierte Last: Material je TWh zusaetzlicher elektrischer Nachfrage (Bestand).
-  for (const [umKey, twhKey] of E100_SECTORS) {
-    const res = (uiManifest.e100 as Record<string, any>)[umKey]?.resources as Record<string, ResourceEntry> | undefined;
-    const twh = e100TWh[twhKey] ?? 0;
-    if (!res || twh <= 0) continue;
-    for (const m in res) {
-      const e = res[m];
-      if (e.tPerTWh) addS(m, e.tPerTWh * twh);
-    }
-  }
-  const out: Record<string, number> = {};
-  for (const m of new Set([...Object.keys(stock), ...Object.keys(fuel)])) out[m] = (stock[m] ?? 0) / years + (fuel[m] ?? 0);
-  return out;
-}
-
-function groupSums(annual: Record<string, number>) {
-  let bulk = 0, spezial = 0, brennstoff = 0;
-  for (const m in annual) {
-    if (FUEL.has(m)) brennstoff += annual[m];
-    else if (BULK.has(m)) bulk += annual[m];
-    else spezial += annual[m];
-  }
-  return { bulk, spezial, brennstoff };
-}
-
 const fmtMass = (t: number) => t >= 1e6
-  ? `${(t / 1e6).toLocaleString('de-DE', { maximumFractionDigits: t / 1e6 < 10 ? 1 : 0 })} Mt/a`
-  : `${(t / 1e3).toLocaleString('de-DE', { maximumFractionDigits: t / 1e3 < 10 ? 1 : 0 })} kt/a`;
+  ? `${(t / 1e6).toLocaleString('de-DE', { maximumFractionDigits: t / 1e6 < 10 ? 1 : 0 })} Mt`
+  : `${(t / 1e3).toLocaleString('de-DE', { maximumFractionDigits: t / 1e3 < 10 ? 1 : 0 })} kt`;
 const factorStr = (scen: number, base: number) => base > 0 ? `${(scen / base).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : (scen > 0 ? 'neu' : '–');
 const pctStr = (p: number) => p <= 0 ? '0 %' : p < 0.01 ? '<0,01 %' : `${p.toLocaleString('de-DE', { maximumFractionDigits: p < 1 ? 2 : 1 })} %`;
 
@@ -140,7 +58,7 @@ function MultipleTiles({ title, base, scen, colorClass, buildoutYear, continuous
         <div className="flex justify-between gap-4"><span className="text-zinc-500 dark:text-zinc-400">Heute (2025)</span><span className="font-medium tabular-nums text-zinc-950 dark:text-zinc-50">{fmtMass(base)}</span></div>
         <div className="flex justify-between gap-4"><span className="text-zinc-500 dark:text-zinc-400">Bis {buildoutYear}</span><span className="font-medium tabular-nums text-zinc-950 dark:text-zinc-50">{fmtMass(scen)}</span></div>
       </div>
-      <div className="mt-2 border-t border-zinc-100 pt-2 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Eine Kachel = Jahresbedarf des deutschen Energiesystems 2025.</div>
+      <div className="mt-2 border-t border-zinc-100 pt-2 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Gesamtbedarf über den Aufbauzeitraum. Eine Kachel = Materialbedarf des deutschen Energiesystems 2025 über denselben Zeitraum.</div>
     </div>
   </div>;
 }
@@ -165,9 +83,9 @@ export default function RessourcenSection({ scenario, buildoutYear, data }: { sc
     <SectionHeading id="ressourcen"/>
 
     <div className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white py-1 dark:border-zinc-800 dark:bg-zinc-950">
-      <MultipleTiles title="Beton, Stahl & Aluminium pro Jahr" base={base.bulk} scen={scen.bulk} colorClass="bg-zinc-400 dark:bg-zinc-500" buildoutYear={buildoutYear}/>
-      <MultipleTiles title="Spezialmaterialien pro Jahr" base={base.spezial} scen={scen.spezial} colorClass="bg-zinc-600 dark:bg-zinc-300" buildoutYear={buildoutYear}/>
-      <MultipleTiles title="Brennstoff (Kohle, Erdgas) pro Jahr" base={base.brennstoff} scen={scen.brennstoff} colorClass="bg-stone-700 dark:bg-stone-400" buildoutYear={buildoutYear} continuous/>
+      <MultipleTiles title={`Beton, Stahl & Aluminium · gesamt bis ${buildoutYear}`} base={base.bulk * buildoutYears} scen={scen.bulk * buildoutYears} colorClass="bg-zinc-400 dark:bg-zinc-500" buildoutYear={buildoutYear}/>
+      <MultipleTiles title={`Spezialmaterialien · gesamt bis ${buildoutYear}`} base={base.spezial * buildoutYears} scen={scen.spezial * buildoutYears} colorClass="bg-zinc-600 dark:bg-zinc-300" buildoutYear={buildoutYear}/>
+      <MultipleTiles title={`Brennstoff (Kohle, Erdgas) · gesamt bis ${buildoutYear}`} base={base.brennstoff * buildoutYears} scen={scen.brennstoff * buildoutYears} colorClass="bg-stone-700 dark:bg-stone-400" buildoutYear={buildoutYear} continuous/>
     </div>
 
     <details className="group rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
@@ -208,7 +126,7 @@ export default function RessourcenSection({ scenario, buildoutYear, data }: { sc
         Wie wird der Materialbedarf berechnet?
       </summary>
       <p className={cx(muted, 'mt-2 text-xs leading-5')}>
-        Jährlicher Materialbedarf, annualisiert über den Aufbauzeitraum bis {buildoutYear}: „Heute" = Material des deutschen Energiesystems 2025 (Erzeugung + Speicher + die 2025 bereits elektrische Flotte: ~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn), „Bis {buildoutYear}" = aktuelles Szenario inkl. gesamter elektrifizierter Last. Erzeugung/Speicher kapazitätsgebunden; elektrifizierte Last (E-Pkw/-Lkw, Wärmepumpen, Bahn) = nur das Antriebs-/Aggregat-Delta je TWh Zusatznachfrage (Schiff, Flug, Industriewärme, Stahl, Chemie noch nicht enthalten). „× 2025" = Vielfaches gegenüber dem deutschen Energiesystem 2025 (Kraftwerks-/Speicherflotte), „% DE" = Anteil am gesamten deutschen Jahresverbrauch des Rohstoffs (alle Sektoren; kritische Metalle teils abgeleitet/unsicher, Uran „–" mangels Reaktoren), „% Welt" = Anteil an der globalen Jahresförderung. Bau-Material kapazitätsgebunden; Brennstoff (Kohle/Erdgas/Uran) = Kapazität × Volllaststunden pro Jahr. Quellen je Technologie im Datenhandbuch (USGS, IEA, worldsteel, WNA). Der deutsche Jahresverbrauch (% DE) ist für Stahl, Zement, Aluminium, Kupfer, Kohle und Gas gut belegt; für kritische Metalle (Lithium, Kobalt, Nickel, Seltene Erden, Mangan, Chrom, Molybdän, Silizium) nur über Endanwendungen abgeleitet (niedrige Konfidenz). Recycling und Netzinfrastruktur sind nicht enthalten.
+        Die oberen Kacheln zeigen den <strong>Gesamtbedarf über den Aufbauzeitraum</strong> bis {buildoutYear}: „Heute" = Material des deutschen Energiesystems 2025 (Erzeugung + Speicher + die 2025 bereits elektrische Flotte: ~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn) über denselben Zeitraum, „Bis {buildoutYear}" = aktuelles Szenario inkl. gesamter elektrifizierter Last. Erzeugung/Speicher kapazitätsgebunden (einmaliger Bau); elektrifizierte Last (E-Pkw/-Lkw, Wärmepumpen, Bahn) = nur das Antriebs-/Aggregat-Delta je TWh Zusatznachfrage (Schiff, Flug, Industriewärme, Stahl, Chemie noch nicht enthalten); Brennstoff (Kohle/Erdgas/Uran) = Kapazität × Volllaststunden, über den Zeitraum summiert. Die <strong>Details je Rohstoff</strong> bleiben auf Jahresbasis (dimensionsrein gegenüber der Jahresproduktion): „× 2025" = Vielfaches gegenüber dem deutschen Energiesystem 2025 (Kraftwerks-/Speicherflotte; für Bau-Material identisch zur Gesamt-Sicht), „% DE" = Anteil am gesamten deutschen Jahresverbrauch des Rohstoffs (alle Sektoren; kritische Metalle teils abgeleitet/unsicher, Uran „–" mangels Reaktoren), „% Welt" = Anteil an der globalen Jahresförderung. Quellen je Technologie im Datenhandbuch (USGS, IEA, worldsteel, WNA). Der deutsche Jahresverbrauch (% DE) ist für Stahl, Zement, Aluminium, Kupfer, Kohle und Gas gut belegt; für kritische Metalle (Lithium, Kobalt, Nickel, Seltene Erden, Mangan, Chrom, Molybdän, Silizium) nur über Endanwendungen abgeleitet (niedrige Konfidenz). Recycling und Netzinfrastruktur sind nicht enthalten.
       </p>
     </details>
   </section>;

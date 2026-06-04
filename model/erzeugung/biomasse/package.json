@@ -93,6 +93,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -124,6 +129,14 @@
         "https://www.researchgate.net/publication/317122011_Life_cycle_assessment_of_coal-fired_power_plants_and_sensitivity_analysis_of_CO_2_emissions_from_power_generation_side",
         "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
         "https://world-nuclear.org/Information-Library/Energy-and-the-Environment/mineral-requirements-for-electricity-generation"
+      ]
+    },
+    "kosten": {
+      "source": "**Feste Biomasse / Holz-HKW (>=500 kWel, KWK, 2024, real).** CAPEX 4600 EUR/kW = Mittel der ISE-Spanne feste Biomasse 3473-5788. Fix-O&M 185 EUR/kW/a (ISE-Methode 4 % von CAPEX/a; Spanne 139-232). Var-O&M ~6 EUR/MWh (ISE 4 EUR/MWh + PyPSA solid-biomass-CHP 6,1). Brennstoff frei Kraftwerk 24 EUR/MWh_th (Hackschnitzel/Waldrestholz 35 % Feuchte, ~2,4 ct/kWh_th). El. Wirkungsgrad 0,35 (ISE nicht explizit; PyPSA biomass 0,468 / solid-biomass-CHP 0,27 el bei KWK) -> Brennstoffkostenanteil ~69 EUR/MWh_el. Lebensdauer 25 a. Hinweis: Biogas (500 kWel) abweichend (CAPEX 2894-5788, Substrat 87,5 EUR/MWh_th). Quellen: Fraunhofer ISE 2024; PyPSA technology-data. Konfidenz: mittel.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -187,6 +200,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 4600,
+      "omFixEurPerKWa": 185,
+      "omVarEurPerMWh": 6,
+      "lifetimeYears": 25,
+      "fuelEurPerMWhTh": 24,
+      "efficiency": 0.35
     }
   }
 }

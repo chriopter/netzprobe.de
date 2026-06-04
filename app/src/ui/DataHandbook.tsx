@@ -35,7 +35,7 @@ const domainBlurbs: Record<string, string> = {
   speicher: 'Batterie, Pumpspeicher und H₂-Saison-Speicher mit Roundtrip-Daten.',
   aussenhandel: 'Strom- und H₂-Import/-Export, Emissionsfaktoren, Bounds für Slider.',
   modell: 'Dispatch-Engine: stündliche Bilanz, Speicherlogik, CO₂.',
-  referenz: 'Themenübergreifende Bezugsdaten: globale Weltförderung der Rohstoffe (Nenner für den Ressourcen-Anteil).',
+  referenz: 'Themenübergreifende Bezugsdaten: globale Weltförderung der Rohstoffe (Nenner für den Ressourcen-Anteil) sowie Preis- und Kapitalkosten-Annahmen (Eingang in die Systemkosten).',
   templates: 'Arbeitsvorlagen für Datenpakete und Wiki-Einträge.',
 };
 const kindLabels: Record<DatasetDoc['kind'], string> = {
@@ -58,6 +58,7 @@ const tocAnchors = {
   derivation: 'herleitung',
   caveats: 'grenzen',
   ressourcen: 'ressourcen',
+  kosten: 'kosten',
   sources: 'quellen',
   files: 'files',
   homeDomains: 'wiki-domaenen',
@@ -78,6 +79,25 @@ function resourceValue(e: ResourceEntry): string {
   if (e.tPerGWh != null) return `${e.tPerGWh.toLocaleString('de-DE')} t/GWh`;
   if (e.tPerTWh != null) return `${e.tPerTWh.toLocaleString('de-DE')} t/TWh`;
   return '–';
+}
+
+const KOSTEN_FIELDS: Array<[string, string, (v: number) => string]> = [
+  ['capexEurPerKW', 'CAPEX (Leistung)', v => `${v.toLocaleString('de-DE')} €/kW`],
+  ['capexEurPerKWh', 'CAPEX (Energie)', v => `${v.toLocaleString('de-DE')} €/kWh`],
+  ['omFixEurPerKWa', 'O&M fix', v => `${v.toLocaleString('de-DE')} €/kW·a`],
+  ['omVarEurPerMWh', 'O&M variabel', v => `${v.toLocaleString('de-DE')} €/MWh`],
+  ['fuelEurPerMWhTh', 'Brennstoff', v => `${v.toLocaleString('de-DE')} €/MWh_th`],
+  ['efficiency', 'Wirkungsgrad', v => `${(v * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %`],
+  ['lifetimeYears', 'Lebensdauer', v => `${v.toLocaleString('de-DE')} a`],
+];
+
+function packageKosten(selected: DatasetDoc): { rows: Array<[string, string]>; narrative?: string; sourceUrls?: string[] } | null {
+  const pkg = getPackage(selected.id) as { parameters?: Record<string, unknown>; method?: Record<string, unknown> } | null;
+  const k = pkg?.parameters?.kosten as Record<string, number> | undefined;
+  if (!k || !Object.keys(k).length) return null;
+  const meta = pkg?.method?.kosten as { source?: string; sourceUrls?: string[] } | undefined;
+  const rows = KOSTEN_FIELDS.filter(([key]) => k[key] != null).map(([key, label, fmt]) => [label, fmt(k[key])] as [string, string]);
+  return { rows, narrative: meta?.source, sourceUrls: meta?.sourceUrls };
 }
 
 const wikiSections = [
@@ -130,6 +150,7 @@ function articleToc(selected: DatasetDoc): TocItem[] {
     if (selected.method.caveats?.length) items.push({ id: tocAnchors.caveats, label: 'Grenzen', level: 2 });
   }
   if (packageResources(selected)) items.push({ id: tocAnchors.ressourcen, label: 'Ressourcen' });
+  if (packageKosten(selected)) items.push({ id: tocAnchors.kosten, label: 'Kosten' });
   if (selected.method.source) items.push({ id: tocAnchors.sources, label: 'Quellen' });
   if (hasFileRows(selected)) items.push({ id: tocAnchors.files, label: 'Files' });
   return items;
@@ -419,6 +440,7 @@ function DatasetArticle({ selected }: { selected: DatasetDoc }) {
       </section>}
     </section>}
     <ResourcesSection selected={selected}/>
+    <KostenWikiSection selected={selected}/>
     {selected.method.source && <SourcesSection selected={selected}/>}
     {showFileRows && <section id={tocAnchors.files} className="mt-9 scroll-mt-8">
       <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Files</h2>
@@ -450,6 +472,35 @@ function ResourcesSection({ selected }: { selected: DatasetDoc }) {
       </tbody>
     </table>
     <p className="mt-3 max-w-3xl text-xs leading-6 text-zinc-400 dark:text-zinc-500">t/GW = pro installierter Leistung (Bau), t/GWh = pro Speicherkapazität, t/TWh = pro erzeugter Energie (Brennstoff).</p>
+    {data.sourceUrls?.length
+      ? <ul className="mt-3 grid max-w-3xl gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+          {data.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
+        </ul>
+      : null}
+  </section>;
+}
+
+function KostenWikiSection({ selected }: { selected: DatasetDoc }) {
+  const data = packageKosten(selected);
+  if (!data) return null;
+  return <section id={tocAnchors.kosten} className="mt-9 scroll-mt-8">
+    <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Kosten</h2>
+    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{data.narrative}</p>}
+    <table className="mt-4 w-full max-w-2xl text-sm">
+      <thead>
+        <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
+          <th className="py-1.5 font-medium">Parameter</th>
+          <th className="py-1.5 text-right font-medium">Wert</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.rows.map(([label, value]) => <tr key={label} className="border-t border-zinc-100 dark:border-zinc-800">
+          <td className="py-1.5 text-zinc-700 dark:text-zinc-300">{label}</td>
+          <td className="py-1.5 text-right tabular-nums text-zinc-950 dark:text-zinc-50">{value}</td>
+        </tr>)}
+      </tbody>
+    </table>
+    <p className="mt-3 max-w-3xl text-xs leading-6 text-zinc-400 dark:text-zinc-500">CAPEX annuisiert über die Lebensdauer (Kapitalwiedergewinnungsfaktor, realer WACC im Register „Preise"). Brennstoff zusätzlich durch den Wirkungsgrad geteilt. Eingang in die Systemkosten-Rechnung der Kosten-Sektion.</p>
     {data.sourceUrls?.length
       ? <ul className="mt-3 grid max-w-3xl gap-1 text-sm text-zinc-700 dark:text-zinc-300">
           {data.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}

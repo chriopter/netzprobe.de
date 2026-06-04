@@ -94,6 +94,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -124,6 +129,14 @@
         "https://thebreakthrough.org/issues/energy/updated-mining-footprints-and-raw-material-needs-for-clean-energy",
         "https://www.eprmagazine.com/industry-analysis/benchmarking-the-solar-pv-mounting-industry/",
         "https://www.iea.org/data-and-statistics/charts/minerals-used-in-clean-energy-technologies-compared-to-other-power-generation-sources"
+      ]
+    },
+    "kosten": {
+      "source": "**PV (Mix Freiflaeche + Aufdach, 2024, real, netto).** CAPEX ~1000 EUR/kW als Freiflaeche-lastiger Flottenmittel (Fraunhofer ISE 2024 Tab. 1: Freiflaeche >1 MWp 700-900, Dach >30 kWp 900-1600, Dach <=30 kWp 1000-2000, Agri-PV 900-1700; IRENA 2024 Welt-Utility 691 USD/kW ~640 EUR bestaetigt unteres Ende). Reine Freiflaeche eher ~800, reines Aufdach ~1100-1300. Fix-O&M 18 EUR/kW/a (ISE Tab. 2: Freiflaeche 13,3 / Dach-Gross 21,5 / Dach-Klein 26 -> Mix). Kein Var-O&M, kein Brennstoff. Lebensdauer 30 a (ISE; IRENA/DEA 25-37 a). Jaehrliche Wirkungsgradminderung ~0,25 %/a. LCOE-Quercheck: Freiflaeche ~55 EUR/MWh (Korridor 41-69). Quellen: Fraunhofer ISE Stromgestehungskosten 2024; IRENA RPGC 2024. Konfidenz: hoch.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -212,6 +225,11 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 1000,
+      "omFixEurPerKWa": 18,
+      "lifetimeYears": 30
     }
   }
 }

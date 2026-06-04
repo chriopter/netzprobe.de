@@ -97,6 +97,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -124,6 +129,14 @@
         "https://www.iea.org/energy-system/low-emission-fuels/electrolysers",
         "https://www.nature.com/articles/s43247-025-02621-6",
         "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+      ]
+    },
+    "kosten": {
+      "source": "**Wasserstoff (Elektrolyse + Kavernenspeicher + Rueckverstromung).** Leistungskomponente kombiniert (Ein- + Ausspeisung) 1500 EUR/kW (Elektrolyseur ~545-1040; Rueckverstromung BZ ~480-1040 bzw. H2-GT 550-1200 / H2-GuD 1100-2400; kombiniert ~1000-2000). Energiekomponente Kavernenspeicher 6 EUR/kWh (=6010 EUR/MWh, Viswanathan via PyPSA; EWI-Salzkaverne aehnlich; sehr guenstige Energiekosten). Wirkungsgrad RTE 0,35 (Strom->H2->Strom: ~0,71 Elektrolyse x ~0,49 BZ; mit H2-GuD eher 0,30-0,40). Fix-O&M ~25 EUR/kW/a auf Gesamtleistung. Var-O&M ~1 EUR/MWh. Lebensdauer 30 a (Kaverne/Elektrolyseur; Stacks ~80000 h frueher ersetzt; ISE BZ nur 12 a). Quellen: PyPSA technology-data; Fraunhofer ISE 2024; EWI Salzkavernen. Konfidenz: niedrig (Werte streuen extrem, stark marktreife-/skalierungsabhaengig). [Korrektur: Kavernen-Energie-CAPEX auf ~0,5 EUR/kWh gesenkt (Salzkaverne; 6 war ~12x zu hoch).]",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -193,6 +206,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 1500,
+      "capexEurPerKWh": 0.5,
+      "omFixEurPerKWa": 25,
+      "omVarEurPerMWh": 1,
+      "lifetimeYears": 30,
+      "efficiency": 0.35
     }
   }
 }

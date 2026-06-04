@@ -100,6 +100,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -135,6 +140,14 @@
         "https://www.iea.org/data-and-statistics/charts/minerals-used-in-selected-power-generation-technologies",
         "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/6106766",
         "https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_1_Ch1_Introduction.pdf"
+      ]
+    },
+    "kosten": {
+      "source": "**Gas (GuD/OCGT-Flottenmix, 2024, real, netto).** CAPEX 1100 EUR/kW als GuD-gewichteter Flottenmittel (ISE: GuD 500 MW 900-1300, OCGT 200 MW 450-700; IEA WEO2024 CCGT ~1040 USD/kW bestaetigt). Fix-O&M 20 EUR/kW/a (GuD 20, OCGT 23), Var-O&M 5 EUR/MWh. Lebensdauer 30 a. Netto-Wirkungsgrad 0,60 (GuD; steigt auf 62 % bis 2045). WARNUNG (Verifikation): 0,60 ist reiner GuD-Wert; falls 'gas' auch Spitzenlast/OCGT abdeckt, ist eine reine OCGT-Flotte eher 0,40 (dann LCOE deutlich hoeher). Erdgaspreis frei Kraftwerk 38 EUR/MWh_th (2024; ISE-Pfad faellt auf 27 ab 2030; Verifikation merkt 38 als oberes/konservatives Ende an, Vorschlag 32, da TTF-Jahresmittel 2024 eher 30-35). CO2-Kosten NICHT enthalten (separat 75-90 EUR/t). LCOE GuD inkl. CO2 ~145 EUR/MWh. Quellen: Fraunhofer ISE 2024; IEA WEO 2024. Konfidenz: hoch.",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -239,6 +252,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 1100,
+      "omFixEurPerKWa": 20,
+      "omVarEurPerMWh": 5,
+      "lifetimeYears": 30,
+      "fuelEurPerMWhTh": 38,
+      "efficiency": 0.6
     }
   }
 }

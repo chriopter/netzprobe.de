@@ -90,6 +90,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -115,6 +120,14 @@
         "https://pmc.ncbi.nlm.nih.gov/articles/PMC10448748/",
         "https://pmc.ncbi.nlm.nih.gov/articles/PMC10556128/",
         "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions"
+      ]
+    },
+    "kosten": {
+      "source": "**Pumpspeicher (Leistung und Energie getrennt).** Leistungskomponente (Maschinensatz/Pump-Turbine) ~1140 EUR/kW (Viswanathan/PNNL 2022 via PyPSA ~1138). Energiekomponente 125 EUR/MWh = 0,125 EUR/kWh (sehr guenstiges Reservoir, PyPSA 120-132). WARNUNG (Verifikation): Feldname capexEurPerKWh, Wert 125 ist als EUR/MWh dokumentiert (=0,125 EUR/kWh) - keine echte Einheitenverwechslung, aber nur via Note eindeutig. Fix-O&M 17 EUR/kW/a (1,5 % CAPEX), Var-O&M ~0,5 EUR/MWh. Wirkungsgrad (RTE) 0,80 konservativ (Viswanathan ~90 %, reale dt. Anlagen 75-82 %). Lebensdauer 60 a (PyPSA/NREL; Bauwerke bis 80 a, Maschinensatz 30-40 a). Stark standortabhaengig, Neubau in DE begrenzt. Quellen: PyPSA technology-data; NREL ATB 2024; JRC. Konfidenz: mittel. [Korrektur: Energie-CAPEX als 0,125 EUR/kWh = 125 EUR/MWh interpretiert.]",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -177,6 +190,14 @@
         ],
         "confidence": "niedrig"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 1140,
+      "capexEurPerKWh": 0.125,
+      "omFixEurPerKWa": 17,
+      "omVarEurPerMWh": 0.5,
+      "lifetimeYears": 60,
+      "efficiency": 0.8
     }
   }
 }

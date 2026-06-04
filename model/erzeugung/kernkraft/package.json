@@ -94,6 +94,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Materialintensitaet je kritischem Rohstoff: t/GW (Bau, kapazitaetsgebunden), t/GWh (Speicher-Aktivmaterial) bzw. t/TWh (Brennstoff). Quellen und Umrechnung in method.ressourcen."
+      },
+      {
+        "name": "kosten",
+        "unit": "Objekt",
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -131,6 +136,14 @@
         "https://ourworldindata.org/low-carbon-technologies-need-far-less-mining-fossil-fuels",
         "https://www.iea.org/reports/the-role-of-critical-minerals-in-clean-energy-transitions/mineral-requirements-for-clean-energy-transitions",
         "https://www.neimagazine.com/news/newsiea-report-looks-at-critical-minerals-in-clean-energy-transitions-8725909"
+      ]
+    },
+    "kosten": {
+      "source": "**Kernkraft (Neubau 1200 MW, 2024, real).** CAPEX 8000 EUR/kW als unteres-mittleres EU-Neubau-Niveau (ISE-Spanne 6000-16000 sehr breit; Olkiluoto 3/Flamanville 3 ~8100-8700, Hinkley Point C bis ~16000 EUR/kW). Fix-O&M 100 EUR/kW/a, Var-O&M 7 EUR/MWh. Lebensdauer 45 a (Auslegung real 60). KONVENTION: efficiency=1 gesetzt, weil fuelEurPerMWhTh=23 bereits EUR/MWh_el ist (ISE Uran 8,0 EUR/MWh_th / 0,35 Netto-Wirkungsgrad = 22,9) -> wird durch eff=1 unveraendert durchgereicht. WNA/NEI reine Front-End-Fuel ~5-9 USD/MWh_el liegt niedriger; ISE-Vollkostenansatz stuetzt 23. Rueckbau/Endlager NICHT in LCOE. WACC real 7,8 % (ISE). LCOE ~313 EUR/MWh (Korridor 136-490). Quellen: Fraunhofer ISE 2024; WNA; IEA Nuclear 2025. Konfidenz: niedrig (extreme CAPEX-Streuung, reale FOAK bis 16000 EUR/kW).",
+      "sourceUrls": [
+        "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+        "https://ens.dk/en/our-services/technology-catalogues",
+        "https://atb.nrel.gov/"
       ]
     }
   },
@@ -227,6 +240,14 @@
         ],
         "confidence": "mittel"
       }
+    },
+    "kosten": {
+      "capexEurPerKW": 8000,
+      "omFixEurPerKWa": 100,
+      "omVarEurPerMWh": 7,
+      "lifetimeYears": 45,
+      "fuelEurPerMWhTh": 23,
+      "efficiency": 1
     }
   }
 }
