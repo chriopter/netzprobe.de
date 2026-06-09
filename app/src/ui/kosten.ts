@@ -34,7 +34,7 @@ export type KostenResult = {
   total: number;
   perMWh: number;
   perHousehold: number;
-  breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number };
+  breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
   perTech: KostenTech[];
 };
 
@@ -95,14 +95,22 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   // CO₂-Bepreisung bewusst NICHT enthalten: rein politisch gesetzter Transfer,
   // kein realer Ressourcenaufwand des Systems.
   const importNet = result.summary.importTWh * 1e6 * (P.importEurPerMWh ?? 0) - result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
-  const total = capexSum + omSum + fuelSum + h2Import + importNet;
+
+  // Netzausbau: gekoppelt an volatilen EE-Zubau über den 2025-Bestand hinaus,
+  // annuisiert wie CAPEX. Null im 2025-Bestand (Kupferplatte als Nullpunkt),
+  // wächst mit dem EE-Ausbau. Faktor an Vollnetz-Schätzungen (IMK/NEP/DIHK) geeicht.
+  const reGW = scenario.generation.pvInstalledGW + scenario.generation.windOnInstalledGW + scenario.generation.windOffInstalledGW;
+  const addedReGW = Math.max(0, reGW - (P.netzBaselineReCapacityGW ?? 0));
+  const netz = (P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW * 1e6 * crf(wacc, P.netzLifetimeYears ?? 40);
+
+  const total = capexSum + omSum + fuelSum + h2Import + importNet + netz;
 
   const servedMWh = Math.max(1, (result.summary.totalDemandTWh - result.summary.loadSheddingTWh) * 1e6);
   return {
     total,
     perMWh: total / servedMWh,
     perHousehold: total / (P.households ?? 41_100_000),
-    breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet },
+    breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet, netz },
     perTech: perTech.sort((a, b) => b.total - a.total),
   };
 }
