@@ -18,11 +18,16 @@
 pub const EE_PV_SHARE: f64 = 0.30;
 pub const EE_WIND_ON_SHARE: f64 = 0.40;
 pub const EE_WIND_OFF_SHARE: f64 = 0.30;
-// Cushion 1.15 (Iteration 3 — kostenoptimal-näher): Studien-Konsens (Agora 1.15-1.20).
-// Vorher 1.25 führte zu 184 % EE-Anteil — zuviel Curtailment (Verschwendung). Mit 1.15
-// landen wir bei ~130 % EE-Anteil, was näher am Optimum ist. Die Speicher-Aufrüstung
-// (mehr Charge, größerer H2-Speicher) kompensiert den geringeren Überbau.
-pub const EE_CUSHION: f64 = 1.15;
+// Cushion 1.30 (Stand-alone-DE-Überbau, Fraunhofer ISE Konsens 1.25-1.40, hier mittig).
+// Historie: Iteration 3 hatte auf 1.15 gesenkt (Agora 1.15-1.20) mit der Annahme, ein
+// größerer H2-Speicher kompensiere den geringeren Überbau. Dispatch-Messung über das
+// Wetterjahr 2025 widerlegt das: bei 1.15 füllt sich der Saisonspeicher nur auf 61 TWh
+// (Sommer-Überschuss fehlt, Curtailment nur 1 TWh) und ist Mitte Januar leer → 499 h
+// Lastabwurf (70 TWh) Jan-März. Der Agora-Wert gilt nur MIT Import; ohne Import zu knapp.
+// 1.25 beseitigt den Lastabwurf zwar (0 h), liegt aber genau auf der Kante (Speicher-Peak
+// 111 TWh, keine Wetter-Reserve). 1.30 gibt Marge: 0 h Lastabwurf, Speicher-Peak 156 TWh,
+// Curtailment nur 19 TWh (~0.8 %) — weit unter dem kostenoptimalen 10-12 %.
+pub const EE_CUSHION: f64 = 1.30;
 // Batterie: 0.4 GW/TWh + 2.0 GWh/TWh (C-Rate 5h). Aggressiv für Peak-Last-Deckung +
 // Tag/Nacht-Glättung in vollelektrifiziertem Szenario.
 pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.4;
@@ -32,10 +37,13 @@ pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 2.0;
 // H2 Discharge 0.15 GW/TWh: deckt Peak-Last gemeinsam mit Batterie.
 pub const EE_H2_CHARGE_PER_TWH: f64 = 0.30;
 pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.15;
-// H2-Saisonspeicher 0.50 × Demand: bei 1830 TWh ~915 TWh. Größer als Iteration 2 (732),
-// weil bei niedrigerem Cushion (1.15 statt 1.25) der saisonale Mismatch stärker durch
-// Speicher gepuffert werden muss. Salzkavernen-Potenzial DE 9400 TWh (Fraunhofer IEG) → 10 %.
-pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.50;
+// H2-Saisonspeicher 0.11 × Demand: bei ~1810 TWh ~200 TWh. Vorher 0.50 (~915 TWh) war
+// reine Phantom-Kapazität: die Dispatch-Messung zeigt einen tatsächlichen Speicher-Peak
+// von nur 156 TWh (bei Cushion 1.30). 200 TWh decken den Saison-Peak mit Reserve und
+// liegen im oberen Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80,
+// Agora 70, DVGW ~120 — alle MIT Import, daher hier oberer Rand). Salzkavernen-Potenzial
+// DE 9400 TWh (Fraunhofer IEG) → genutzt nur ~2 %, also problemlos.
+pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.11;
 pub const EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER: f64 = 1.8;
 // Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
 // Floating-Offshore könnte +20-30 GW, aber kommerziell erst nach 2040 — daher Hard-Cap.
@@ -124,8 +132,8 @@ mod tests {
         // Batterie 0.4 × 466 = 186.4 GW, 2.0 × 466 = 932 GWh
         assert!((battery_power_gw(466.0) - 186.4).abs() < 1e-9);
         assert!((battery_energy_gwh(466.0) - 932.0).abs() < 1e-9);
-        // H2-Energie 0.50 × 466 × 1000 = 233_000 GWh = 233 TWh
-        assert!((h2_energy_gwh(466.0) - 233_000.0).abs() < 1e-9);
+        // H2-Energie 0.11 × 466 × 1000 = 51_260 GWh = 51.26 TWh
+        assert!((h2_energy_gwh(466.0) - 51_260.0).abs() < 1e-9);
     }
 
     #[test]
