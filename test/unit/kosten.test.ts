@@ -155,12 +155,13 @@ describe('Kosten · B Invarianten', () => {
     expect(k.breakdown.capex).toBeCloseTo(capex, -3);
   });
 
-  it('11 Total = capex + om + fuel + h2Import + importNet (kein CO2)', () => {
+  it('11 Total = capex + om + fuel + h2Import + importNet + netz (kein CO2)', () => {
     const hours = Array.from({ length: 365 }, () => hour({ loadGW: 60, gasGW: 10, pvGW: 30 }));
     const k = computeKosten(scen({ pvInstalledGW: 200, gasInstalledGW: 20 }, { batteriePowerGW: 5, batterieEnergyGWh: 20 }, 50),
       result(hours, { totalDemandTWh: 525.6, importTWh: 10, exportTWh: 4 }));
     const b = k.breakdown;
-    expect(b.capex + b.om + b.fuel + b.h2Import + b.importNet).toBeCloseTo(k.total, -2);
+    expect(b.netz).toBeGreaterThan(0); // PV 200 GW > 174,7 GW Basis ⇒ Netz-Posten aktiv
+    expect(b.capex + b.om + b.fuel + b.h2Import + b.importNet + b.netz).toBeCloseTo(k.total, -2);
   });
 
   it('16 H2-Import nur bei h2TWh>0; Wert = TWh × Preis', () => {
@@ -200,5 +201,65 @@ describe('Kosten · B Invarianten', () => {
   it('13 Ø Stromkosten endlich auch bei voller Lastunterdeckung', () => {
     const k = computeKosten(scen({ pvInstalledGW: 100 }), result([hour({ loadGW: 50 })], { totalDemandTWh: 100, loadSheddingTWh: 100 }));
     expect(Number.isFinite(k.perMWh)).toBe(true);
+  });
+});
+
+// ===========================================================================
+// C — Netzausbau (standardmäßig enthalten, an EE-Zubau über 2025-Basis gekoppelt,
+//     Faktor an Vollnetz-Schätzungen IMK/NEP/DIHK geeicht)
+// ===========================================================================
+describe('Kosten · C Netzausbau', () => {
+  const netz = { capex: prices.netzCapexEurPerKwAddedRE, life: prices.netzLifetimeYears, base: prices.netzBaselineReCapacityGW };
+  const netzAnnual = (pv: number, won: number, woff: number) =>
+    netz.capex * Math.max(0, pv + won + woff - netz.base) * 1e6 * crf(prices.wacc, netz.life);
+
+  it('C.0 Netz-Parameter vorhanden, dokumentiert & plausibel', () => {
+    expect(netz.capex).toBeGreaterThan(0);
+    expect(netz.life).toBeGreaterThanOrEqual(30);
+    expect(netz.life).toBeLessThanOrEqual(60);
+    expect(netz.base).toBeGreaterThan(150);
+    expect(netz.base).toBeLessThan(200);
+  });
+
+  it('C.1 standardmäßig enthalten: oberhalb Basis ⇒ netz > 0, Formel korrekt', () => {
+    const s = scen({ pvInstalledGW: 400, windOnInstalledGW: 160, windOffInstalledGW: 70 });
+    const k = computeKosten(s, result([], {}));
+    expect(k.breakdown.netz).toBeCloseTo(netzAnnual(400, 160, 70), -3);
+    expect(k.breakdown.netz).toBeGreaterThan(0);
+  });
+
+  it('C.2 2025-Basis & darunter: Zubau ≤ 0 ⇒ Netz 0', () => {
+    const basis = scen({ pvInstalledGW: 102.5, windOnInstalledGW: 62.8, windOffInstalledGW: 9.4 });
+    expect(computeKosten(basis, result([], {})).breakdown.netz).toBeCloseTo(0, 3);
+    const unter = scen({ pvInstalledGW: 50, windOnInstalledGW: 20, windOffInstalledGW: 5 });
+    expect(computeKosten(unter, result([], {})).breakdown.netz).toBe(0);
+  });
+
+  it('C.3 O45-Strom-Pfad: Eichung ~0,8 Bio € (Aufbau bis 2050)', () => {
+    const s = scen({ pvInstalledGW: 400, windOnInstalledGW: 160, windOffInstalledGW: 70 });
+    const k = computeKosten(s, result([], {}));
+    // Zentralanker IMK-Vollnetz (~651 Mrd Invest) .. DIHK all-in (~1,2 Bio); O45 ergibt ~0,8 Bio
+    const total2050 = k.breakdown.netz * (2050 - 2025);
+    expect(total2050).toBeGreaterThan(0.65e12);
+    expect(total2050).toBeLessThan(0.95e12);
+  });
+
+  it('C.4 nur volatile EE zählt — Gas/Kohle/Kern ohne Netzwirkung', () => {
+    const re = computeKosten(scen({ pvInstalledGW: 300, windOnInstalledGW: 100, windOffInstalledGW: 40 }), result([], {}));
+    const rePlusFirm = computeKosten(scen({ pvInstalledGW: 300, windOnInstalledGW: 100, windOffInstalledGW: 40, gasInstalledGW: 50, kernkraftInstalledGW: 20, kohleInstalledGW: 30 }), result([], {}));
+    expect(rePlusFirm.breakdown.netz).toBeCloseTo(re.breakdown.netz, -2);
+  });
+
+  it('C.5 Netz steckt genau einmal in total (Summe der Bestandteile = total)', () => {
+    const k = computeKosten(scen({ pvInstalledGW: 400, windOnInstalledGW: 160, windOffInstalledGW: 70 }), result([], {}));
+    const b = k.breakdown;
+    expect(b.netz).toBeGreaterThan(0);
+    expect(b.capex + b.om + b.fuel + b.h2Import + b.importNet + b.netz).toBeCloseTo(k.total, -2);
+  });
+
+  it('C.6 Netz wächst streng monoton mit volatilem EE-Zubau', () => {
+    const lo = computeKosten(scen({ pvInstalledGW: 200, windOnInstalledGW: 80, windOffInstalledGW: 30 }), result([], {}));
+    const hi = computeKosten(scen({ pvInstalledGW: 500, windOnInstalledGW: 200, windOffInstalledGW: 70 }), result([], {}));
+    expect(hi.breakdown.netz).toBeGreaterThan(lo.breakdown.netz);
   });
 });
