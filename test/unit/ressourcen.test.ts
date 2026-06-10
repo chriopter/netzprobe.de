@@ -129,9 +129,12 @@ describe('Ressourcen · 0 Realismus', () => {
 // B — Rechenlogik & Invarianten
 // ===========================================================================
 describe('Ressourcen · B Invarianten', () => {
-  it('7 Hand-Szenario: nur Batterie 100 GWh, bis 2045 (20 J.) → Lithium = 485 t/a', () => {
+  it('7 Hand-Szenario: nur Batterie 100 GWh, bis 2045 (20 J.) → Lithium mit Renewal 20/15', () => {
+    // Batterie-Lebensdauer 15 a, Horizont 20 a ⇒ Renewal = 20/15 ≈ 1,333.
+    // Lithium-Annual = 97 t/GWh × 100 GWh × 1,333 / 20 ≈ 647 t/a.
+    const renewal = Math.max(1, 20 / 15);
     const out = annualByMaterial(scen({}, { batterieEnergyGWh: 100 }), 20, {});
-    expect(out['Lithium']).toBeCloseTo(97 * 100 / 20, 6); // 485
+    expect(out['Lithium']).toBeCloseTo(97 * 100 * renewal / 20, 1);
   });
   it('10 Gruppensumme = Σ der Materialien je Gruppe', () => {
     const annual = annualByMaterial(scen({ windOnInstalledGW: 10, kohleInstalledGW: 5 }), 20, {});
@@ -141,14 +144,22 @@ describe('Ressourcen · B Invarianten', () => {
     expect(g.bulk).toBeCloseTo(bulk, 3);
     expect(g.brennstoff).toBeCloseTo(fuel, 3);
   });
-  it('11 Annualisierung: Bau ∝ 1/Jahre, Brennstoff NICHT', () => {
-    const s = scen({ windOnInstalledGW: 10, kohleInstalledGW: 5 });
-    const a20 = annualByMaterial(s, 20, {});
-    const a40 = annualByMaterial(s, 40, {});
-    expect(a20['Stahl']).toBeCloseTo(a40['Stahl'] * 2, 3); // Bau halbiert sich
-    expect(a20['Kohle']).toBeCloseTo(a40['Kohle'], 3);     // Brennstoff unverändert
-    // exakter Brennstoffwert: kohle 950000 t/TWh × 5 GW × 3000 VLh / 1000
-    expect(a20['Kohle']).toBeCloseTo(950000 * 5 * VLH['kohle'] / 1000, 3);
+  it('11 Annualisierung mit Renewal: Bau ∝ 1/Jahre solange years ≤ Lebensdauer, dann ∝ 1/Lebensdauer; Brennstoff unverändert', () => {
+    // Wind on Lebensdauer 25 a.
+    const s = scen({ windOnInstalledGW: 10 });
+    const a10 = annualByMaterial(s, 10, {});  // 10 < 25: kein Renewal
+    const a25 = annualByMaterial(s, 25, {});  // exakt: kein Renewal
+    const a50 = annualByMaterial(s, 50, {});  // 50 > 25: 2 Bauzyklen
+    // Im Renewal-freien Bereich (years ≤ 25): a × years = stock (konstant).
+    expect(a10['Stahl'] * 10).toBeCloseTo(a25['Stahl'] * 25, 0);
+    // Über die Lebensdauer hinaus: Bau-Material wächst linear mit den Zyklen.
+    expect(a50['Stahl'] * 50).toBeCloseTo(a10['Stahl'] * 10 * 2, 0);
+    // Brennstoff (kein Bau) bleibt unabhängig vom Horizont.
+    const sk = scen({ kohleInstalledGW: 5 });
+    const k20 = annualByMaterial(sk, 20, {});
+    const k40 = annualByMaterial(sk, 40, {});
+    expect(k20['Kohle']).toBeCloseTo(k40['Kohle'], 3);
+    expect(k20['Kohle']).toBeCloseTo(950000 * 5 * VLH['kohle'] / 1000, 3);
   });
   it('13 kein Kohle/Gas → Brennstoff-Gruppe 0; nur PV → keine Brennstoffe', () => {
     const g = groupSums(annualByMaterial(scen({ pvInstalledGW: 100 }), 20, {}));
@@ -159,5 +170,26 @@ describe('Ressourcen · B Invarianten', () => {
     const base = annualByMaterial(normalizeScenario(defaultScenario), 20, {});
     const scenA = annualByMaterial(normalizeScenario(defaultScenario), 20, {});
     for (const m of Object.keys(base)) if (base[m] > 0) expect(scenA[m] / base[m]).toBeCloseTo(1, 9);
+  });
+  it('14 Renewal-Faktor: Bau-Material × max(1, years/lifetime) je Technologie', () => {
+    // Batterie-Lebensdauer 15 a — Renewal greift ab 16 a.
+    const sb = scen({}, { batterieEnergyGWh: 100 });
+    for (const years of [10, 15, 30, 45, 60]) {
+      const rf = Math.max(1, years / 15);
+      const out = annualByMaterial(sb, years, {});
+      // Gesamt über Horizont = annual × years = 97 × 100 × rf (1 Bauzyklus × Renewal-Faktor).
+      expect(out['Lithium'] * years).toBeCloseTo(97 * 100 * rf, 0);
+    }
+    // PV-Lebensdauer 30 a — über 30 a hinaus kommt 1.+x. Bauzyklus.
+    const sp = scen({ pvInstalledGW: 100 });
+    const pv20 = annualByMaterial(sp, 20, {}); // 20 < 30: kein Renewal
+    const pv60 = annualByMaterial(sp, 60, {}); // 60/30 = 2 Bauzyklen
+    expect(pv20['Silber'] * 20).toBeCloseTo(11 * 100, 1);          // ein Bau
+    expect(pv60['Silber'] * 60).toBeCloseTo(11 * 100 * 2, 1);      // zwei Bauzyklen
+    // Langlebige Tech (Laufwasser 60 a) — bei Horizont 50 a noch kein Renewal.
+    const sl = scen({ laufwasserInstalledGW: 5 });
+    const lw50 = annualByMaterial(sl, 50, {});
+    const lw60 = annualByMaterial(sl, 60, {});
+    expect(lw50['Beton/Zement'] * 50).toBeCloseTo(lw60['Beton/Zement'] * 60, 0); // beide ein Bau
   });
 });

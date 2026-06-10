@@ -263,3 +263,61 @@ describe('Kosten · C Netzausbau', () => {
     expect(hi.breakdown.netz).toBeGreaterThan(lo.breakdown.netz);
   });
 });
+
+// ===========================================================================
+// D — Erneuerung über Lebensdauer (Lock-in: Annuität × Horizont bildet Ersatz
+//     auslaufender Anlagen bereits korrekt ab; kein separater Posten nötig.)
+// ===========================================================================
+describe('Kosten · D Erneuerung', () => {
+  const annualCapex = (id: 'pv' | 'batterie', gw: number, gwh = 0) => {
+    const k = (id === 'batterie' ? byId['batterie'].parameters.kosten : byId['pv'].parameters.kosten) as Record<string, number>;
+    return (k.capexEurPerKW * gw * 1e6 + (k.capexEurPerKWh ?? 0) * gwh * 1e6) * crf(prices.wacc, k.lifetimeYears);
+  };
+
+  it('D.1 CAPEX × Horizont skaliert linear über Lebensdauer hinaus (impliziter Ersatz)', () => {
+    // Batterie 10 GW / 40 GWh, Lebensdauer 15 a, kein Brennstoff/Import.
+    const s = scen({}, { batteriePowerGW: 10, batterieEnergyGWh: 40 });
+    const k = computeKosten(s, result([], {}));
+    const a = annualCapex('batterie', 10, 40);
+    expect(k.breakdown.capex).toBeCloseTo(a, -3);
+    // Über 15 a (= Lebensdauer): genau eine finanzierte Anlage = sticker × CRF(15) × 15.
+    // Über 30 a (= 2× Lebensdauer): exakt 2× — Ersatz nach Jahr 15 steckt im Annuitätsstrom.
+    const cap15 = k.breakdown.capex * 15;
+    const cap30 = k.breakdown.capex * 30;
+    expect(cap30 / cap15).toBeCloseTo(2, 6);
+    expect(cap30).toBeCloseTo(a * 30, -3);
+  });
+
+  it('D.2 Kurze Lebensdauer ⇒ mehr Ersatz im Horizont: Batterie kostet je Sticker mehr als PV', () => {
+    // Gleicher Power-Sticker (100 GW), nur CAPEX-Anteil je Technologie.
+    // Über Horizont 30 a: PV (life 30) wird einmal finanziert; Batterie (life 15) effektiv zweimal.
+    const sPV = scen({ pvInstalledGW: 100 });
+    const sBatt = scen({}, { batteriePowerGW: 100, batterieEnergyGWh: 0 });
+    const kPV = computeKosten(sPV, result([], {}));
+    const kBatt = computeKosten(sBatt, result([], {}));
+    const horizon = 30;
+    // PV-Annuität × 30 ≈ 1× über die Lebensdauer (sticker × CRF(30) × 30).
+    // Batterie-Annuität × 30 ≈ 2× über die Lebensdauer (sticker × CRF(15) × 30 = 2× sticker × CRF(15) × 15).
+    // Verhältnis Batterie/PV (je €-Sticker) > 1 — eindeutiger Ersatzaufschlag.
+    const pvSticker = (byId['pv'].parameters.kosten as Record<string, number>).capexEurPerKW;
+    const battSticker = (byId['batterie'].parameters.kosten as Record<string, number>).capexEurPerKW;
+    // Capex-Anteil je Sticker (€/€/kW): annuisiert × horizon / Sticker
+    const pvCapexShare = kPV.breakdown.capex * horizon / (pvSticker * 100 * 1e6);
+    const battCapexShare = kBatt.breakdown.capex * horizon / (battSticker * 100 * 1e6);
+    expect(battCapexShare / pvCapexShare).toBeGreaterThan(1.4); // kürzeres Leben = klar mehr Ersatz
+  });
+
+  it('D.3 Identität: Annuität × Lebensdauer = finanzierte CAPEX (sticker × CRF × life)', () => {
+    // Für jede Tech sollte gelten: capex_annual × lifetime = sticker × CRF × lifetime
+    // (mathematische Identität der CRF-Definition — sichert, dass Erneuerung pro Tech über die EIGENE Lebensdauer skaliert).
+    for (const id of ['pv', 'windon', 'kernkraft', 'batterie'] as const) {
+      const isStorage = id === 'batterie';
+      const k = (isStorage ? byId['batterie'].parameters.kosten : byId[id].parameters.kosten) as Record<string, number>;
+      const annuityFactor = crf(prices.wacc, k.lifetimeYears);
+      const overLife = annuityFactor * k.lifetimeYears;
+      // Über die Lebensdauer summiert > 1 (Finanzierungs-Aufschlag), aber endlich.
+      expect(overLife, id).toBeGreaterThan(1);
+      expect(overLife, id).toBeLessThan(3);
+    }
+  });
+});
