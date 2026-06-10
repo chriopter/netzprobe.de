@@ -19,9 +19,9 @@
     "unit": "GW, GWh, TWh",
     "description": [
       "**Komposition:** Stresstest-Preset. Reine Kernkraft-Säule: ALLE anderen Erzeuger (`PV`, `Wind on`, `Wind off`, `Biomasse`, `Laufwasser`, `Gas`, `Kohle`) auf 0 — »100 % Kernkraft« heißt wörtlich nur Kernkraft. Kein H₂-Speicher (keine Saisonalität nötig), Import-Cap auf null. Kernkraft lastfolgend im Dispatch — französisches Modell (CF historisch ~0,65-0,70 wegen Lastfolge statt 0,85+ reine Baseload).",
-      "**Werte (Iteration 2 — Lasttest):** Auslegungsziel `Jahres-Kernkraft = 1,10 × Demand − Biomasse − Laufwasser`. Der **Cushion 1,10** ist deutlich niedriger als bei EE-Presets (1,25), weil Kernkraft KEINE saisonale Volatilität hat — sie produziert konstant, daher reicht knapper Überbau für Tag/Nacht-Lastfolge. Iteration 1 hatte Cushion 1,30 → 400 TWh Curtailment (= Lastfolge-Drosselung, im Modell als Curtailment gezählt, weil konstanter Max-Output über Demand-Mittel lag). Speicher-Sizing: Batterie `0,10 GW/TWh × Demand` Leistung und `0,60 GWh/TWh × Demand` Energie (C-Rate 6h). Bei e100 Demand 1830 TWh: 183 GW / 1098 GWh Batterie — puffert Tag/Nacht-Delta (Peak 300 GW vs. Nacht-Min 150 GW × 8h ≈ 1200 GWh Bedarf). Pumpspeicher bleibt 2025-Default 9,4 GW. **H₂-Speicher: 0** — Saisonalspeicher entfällt komplett, weil Kernkraft im Winter wie im Sommer ~gleich produziert.",
+      "**Werte (Iteration 3 — Peak-Deckung):** Auslegungsziel `Jahres-Kernkraft = 1,40 × Demand − Biomasse − Laufwasser`. Der **Cushion 1,40** stellt sicher, dass die Peak-Last direkt aus Kernkraft × Verfügbarkeit gedeckt ist; das saisonale Revisionsprofil (Winter 0,95, Sommertal 0,83) senkt das Angebot bewusst in der lastschwachen Jahreszeit. Frühere Iterationen: 1,30 (zu viel Lastfolge-Drosselung gezählt), 1,10 (Peak-Deckung zu knapp). Speicher-Sizing: Batterie `0,10 GW/TWh × Demand` Leistung und `0,60 GWh/TWh × Demand` Energie (C-Rate 6h). Bei e100 Demand 1830 TWh: 183 GW / 1098 GWh Batterie — puffert Tag/Nacht-Delta (Peak 300 GW vs. Nacht-Min 150 GW × 8h ≈ 1200 GWh Bedarf). Pumpspeicher bleibt 2025-Default 9,4 GW. **H₂-Speicher: 0** — Saisonalspeicher entfällt komplett, weil Kernkraft im Winter wie im Sommer ~gleich produziert.",
       "**Anwendungsfall:** Vergleichsanker zur 100%-EE-Variante. Zeigt, wie viel firme dispatch-fähige Leistung nötig wäre, wenn das System auf einer einzigen Säule ohne EE-Volatilität läuft. **WICHTIG:** physisch unrealistisch bis 2045. Bei e100-Demand 1830 TWh ergibt das ~249 GW Kernkraft = 178 EPR2-Reaktoren à 1,4 GW. EPR Flamanville-3 brauchte 17 Jahre Bauzeit, Weltrekord-Zubau China ~3-4 GW/a → 249 GW bis 2045 ausgeschlossen. Selbst Frankreichs aggressivstes RTE-N03-Szenario (52 GW Kernkraft 2050) ist nur 50/50-Mix mit EE. Realistisch: Kernkraft-Anteil 20-40 % einer diversifizierten Versorgung; 100 % als Gedankenexperiment.",
-      "**Hinweis Curtailment:** Im netzprobe-Dispatch wird Kernkraft als variable Quelle modelliert (kernkraft_available_gw = installed × availability). Das simuliert Lastfolge: bei Demand-Unterdeckung Output unverändert, bei Überschuss wird Output 'curtailed' = gedrosselt. Der angezeigte 'Curtailment'-Wert entspricht damit der **Lastfolge-Drosselung** (Frankreich-Modell), nicht Verschwendung im EE-Sinn. Bei Cushion 1,10 ist Drosselung minimal."
+      "**Hinweis Curtailment:** Im netzprobe-Dispatch wird Kernkraft als variable Quelle modelliert (kernkraft_available_gw = installed × availabilityMonthly[Monat]; Winter 0,95, Sommertal 0,83). Das simuliert Lastfolge: bei Demand-Unterdeckung Output unverändert, bei Überschuss wird Output 'curtailed' = gedrosselt. Der angezeigte 'Curtailment'-Wert entspricht damit der **Lastfolge-Drosselung** (Frankreich-Modell), nicht Verschwendung im EE-Sinn. Die Drosselung ist der Preis des Peak-Cushions 1,40."
     ],
     "overview": [
       {
@@ -30,7 +30,7 @@
       },
       {
         "label": "Cushion-Faktor",
-        "value": "**Auslegung:** `Jahres-Kernkraft ≥ 1,10 × Demand`. Deutlich niedriger als bei EE (1,25), weil Kernkraft keine saisonale Volatilität hat — Output ist konstant, daher reicht knapper Überbau für Tag/Nacht-Lastfolge plus Revisionen (availability 0,9). Iteration 1 hatte 1,30 → 400 TWh 'Curtailment' (= Lastfolge-Drosselung)."
+        "value": "**Auslegung:** `Jahres-Kernkraft ≥ 1,40 × Demand`. Der Cushion deckt Peak-Last direkt aus Kernkraft × Verfügbarkeit (Revisionsprofil Winter 0,95 / Sommer 0,83); überschüssige Energie erscheint als Lastfolge-Drosselung im Curtailment."
       },
       {
         "label": "Speicher-Sizing",
@@ -43,7 +43,7 @@
     ],
     "reasoning": [
       "referenceYield Kernkraft = 7,6 TWh/GW·a (DE-Bestandskonvoi-Median IAEA PRIS).",
-      "target = max(0, demandTWh × 1,30 − BiomasseTWh − LaufwasserTWh).",
+      "target = max(0, demandTWh × 1,40 − BiomasseTWh − LaufwasserTWh).",
       "Kernkraft-GW = target / referenceYield = target / 7,6.",
       "Batterie-Leistung = 0,05 × Demand GW; Batterie-Energie = 0,20 × Demand × 1000 GWh.",
       "Pumpspeicher = historisch-2025-Default. Kein H₂. Import/H₂-Import = 0.",
@@ -57,8 +57,8 @@
       }
     ],
     "caveats": [
-      "Cushion 1,30 entspricht 30 % Überbau über Demand. Studien-Korridor breit (1,15-1,55) wegen unterschiedlicher Annahmen zur Lastfolge-Praxis.",
-      "Kernkraft-CF im Modell über availability=0,9 abgebildet (DE-Bestandskonvoi). Reale Lastfolge in 100%-Kernkraft-System würde CF auf ~0,70-0,75 drücken (Frankreich-Erfahrung) — dann wäre noch mehr Überbau nötig.",
+      "Cushion 1,40 entspricht 40 % Überbau über Demand (Peak-Deckung direkt aus Kernkraft). Studien-Korridor breit (1,15-1,55) wegen unterschiedlicher Annahmen zur Lastfolge-Praxis.",
+      "Kernkraft-Verfügbarkeit folgt einem 12-Monats-Profil (Revisionsfenster im Sommer, volle Verfügbarkeit im Winter — Frankreich-Logik, bei 100+ Blöcken planbar; Jahresmittel 0,90). Reale Lastfolge in einem 100%-Kernkraft-System würde den effektiven CF zusätzlich auf ~0,70-0,75 drücken (Frankreich-Erfahrung) — das bildet der Dispatch über Curtailment ab, nicht die Verfügbarkeit.",
       "Speicher-Sizing für Tag/Nacht-Lastfolge, keine Saisonalspeicher (Kernkraft hat keine saisonale Volatilität wie PV/Wind).",
       "**Physikalisch unrealistisch:** 297 GW Kernkraft bei e100 = 212 EPR2-Blöcke. Bauzeit pro Block 12-17 Jahre, Weltrekord-Zubau China 3-4 GW/a. Selbst optimistisch wären in DE bis 2045 max. 20-40 GW realisierbar. Preset zeigt Gedankenexperiment, kein Pfad.",
       "**Politisch unrealistisch:** Atomausstieg DE 2023 abgeschlossen, kein Standort, kein Genehmigungsrahmen, kein Endlager. Selbst Restart-Studien (Radiant Energy Group) sprechen nur von 6-8 abgeschalteten Anlagen = ~10 GW.",

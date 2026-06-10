@@ -11,15 +11,20 @@
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
       "https://www.ipcc.ch/report/ar6/wg3/downloads/report/IPCC_AR6_WGIII_Annex-III.pdf",
       "https://www.umweltbundesamt.de/sites/default/files/medien/11850/publikationen/13_2025_cc.pdf",
-      "https://app.electricitymaps.com/zone/DE"
+      "https://app.electricitymaps.com/zone/DE",
+      "https://www.energy-charts.info/",
+      "https://transparency.entsoe.eu/",
+      "https://sfeninenglish.org/available-power-nuclear-fleet-2020-2025/",
+      "https://analysesetdonnees.rte-france.com/en/generation/nuclear",
+      "https://opendata.edf.fr/explore/dataset/disponibilite-du-parc-nucleaire-d-edf-sa-depuis-2002/"
     ],
     "period": "2025",
     "resolution": "stündlich (Verfügbarkeitsmittel) / jährlich (installierte Leistung)",
     "unit": "GW, g/kWh",
     "description": [
       "**Anlagenpark:** Deutschland hat den letzten Reaktor (Isar 2, Emsland, Neckarwestheim 2) am `15.04.2023` vom Netz genommen — installierter Bestand 2025 ist `0 GW`, der **Default**. Der Slider erlaubt eine hypothetische Wiederinbetriebnahme bis `500 GW` (Schritt `0,5 GW`); das Maximum geht weit über die historische Spitzenkapazität Deutschlands (rund `21 GW`) hinaus und bedient extrem hypothetische Vollkernkraft-Szenarien inklusive europäischer Importperspektive.",
-      "**Einspeisecharakteristik:** das Modell bildet Kernkraft als **Baseload** ab — `supplyGW(t) = installedGW × 0,9` konstant über alle `8760 h/a`. Bei einer Verfügbarkeit von `0,9` ergibt das Volllaststunden von rund `7900 h/a`; bereits `50 GW` reichen für einen Jahresertrag von etwa `395 TWh/a` — zum Vergleich: die deutsche Gesamt-Bruttostromerzeugung liegt bei rund `500 TWh/a`. Spezifische Emissionen sind mit `12 g/kWh` als **IPCC-AR6-Median** angesetzt (Spannweite `5–110 g/kWh`); enthalten sind Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau.",
-      "**Modellgrenze:** die Verfügbarkeit ist konstant `0,9` als Jahresmittel — Revisionsfenster, planbare Stillstände und Lastfolgebetrieb (in DE historisch kaum, in FR üblich) sind nicht stundenscharf modelliert. Endlager-Kosten und Versicherungsrisiken bleiben außen vor. Im Curtailment-Stack des Kernmodells wird Kernkraft nach Wind und PV abgeregelt, läuft also bei Überschuss länger als die volatilen Erneuerbaren."
+      "**Einspeisecharakteristik:** das Modell bildet Kernkraft als **Baseload mit saisonalem Revisionsprofil** ab — `supplyGW(t) = installedGW × availabilityMonthly[Monat]`. Das Profil legt Brennelementwechsel und Revisionen in den Sommer: Winterplateau `0,95` (Nov–Feb), breites Revisionstal `0,83–0,85` Mai–August (Minimum Juli), langsame Herbst-Erholung, Jahresmittel `0,90`. Empirische Basis: ENTSO-E-Stundendaten der deutschen Flotte 2018–2019 (Erzeugung ÷ installierte Leistung: Winter `0,94–0,97`, Tal April–Juni mit Minimum Mai `0,67`) und der französischen EDF-Flotte (breites Tal April–Oktober, Winterspitze ~`91 %` verfügbare Leistung, Sfen/RTE/EDF Open Data). Das Modellprofil glättet beides zur Großflotten-Staffelung: bei 100+ Blöcken müssen ~6-7 % Flottenzeit an Revisionen über April–Oktober verteilt werden (Personal-/Spezialteam-Grenzen), das Tal liegt auf der DE-Lastsenke Jun–Aug; das Winterplateau `0,95` liegt bewusst zwischen Konvoi-Bestleistung (`0,96–0,97`, kleine handverlesene Flotte) und EDF-Flottenrealität (~`0,88–0,91`). Im Jahresmittel ergibt das weiterhin Volllaststunden von rund `7900 h/a`; bereits `50 GW` reichen für einen Jahresertrag von etwa `395 TWh/a` — zum Vergleich: die deutsche Gesamt-Bruttostromerzeugung liegt bei rund `500 TWh/a`. Spezifische Emissionen sind mit `12 g/kWh` als **IPCC-AR6-Median** angesetzt (Spannweite `5–110 g/kWh`); enthalten sind Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau.",
+      "**Modellgrenze:** das Monatsprofil ist ein **Erwartungswert über viele Blöcke** — bei großen Flotten (ein 100%-Pfad bedeutet 100+ Blöcke) glättet sich die Revisionsstaffelung, bei kleinen Flotten ist das reale Profil eine Treppenfunktion (1 Block in Revision = mehrere Prozentpunkte). Ungeplante Ausfälle sind nicht saisonal steuerbar: Brokdorf stand 2017 fünf Monate (Brennstab-Oxidation), die französische Stresskorrosion drückte die Flotte im August 2022 auf `40 %` — Common-Mode-Befunde treffen baugleiche Reaktoren gleichzeitig. Lastfolgebetrieb ist nicht Teil der Verfügbarkeit, sondern entsteht im Dispatch über Curtailment. Endlager-Kosten und Versicherungsrisiken bleiben außen vor. Im Curtailment-Stack des Kernmodells wird Kernkraft nach Wind und PV abgeregelt, läuft also bei Überschuss länger als die volatilen Erneuerbaren."
     ],
     "overview": [
       {
@@ -28,7 +33,7 @@
       },
       {
         "label": "Verteilung",
-        "value": "**Profil:** `supplyGW(t) = installedGW × 0,9` als konstanter Baseload. Keine Stundenstruktur, keine Saisonmodulation."
+        "value": "**Profil:** `supplyGW(t) = installedGW × availabilityMonthly[Monat]` — Winterplateau `0,95`, Revisionstal Jun–Aug `0,83–0,84`, Jahresmittel `0,90`. Kein Tagesgang; Lastfolge entsteht im Dispatch (Curtailment als letztes nach Wind/PV)."
       },
       {
         "label": "Formel",
@@ -36,7 +41,7 @@
       }
     ],
     "reasoning": [
-      "Verfügbarkeit 90 % als konstanter Jahresanteil — entspricht typischer Revisionsbilanz.",
+      "Verfügbarkeit als 12-Monats-Profil availabilityMonthly (Sommer-Revisionen, Winter 0,95, Jahresmittel 0,90); availability 0,9 bleibt als flacher Fallback-Skalar.",
       "Emissionsfaktor 12 g/kWh als Median IPCC AR6 / UBA-Vorkettenwert — beinhaltet Uran-Bergbau, Anreicherung, Brennstoff-Lebenszyklus, Anlagenbau und Rückbau."
     ],
     "fields": [
@@ -63,7 +68,7 @@
       {
         "name": "availability",
         "unit": "Anteil",
-        "description": "Jahresverfügbarkeit (0,9)."
+        "description": "Flache Fallback-Verfügbarkeit (0,9) — im Dispatch durch availabilityMonthly ersetzt, solange das Profil 12 valide Werte hat."
       },
       {
         "name": "emissions",
@@ -99,12 +104,20 @@
         "name": "kosten",
         "unit": "Objekt",
         "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
+      },
+      {
+        "name": "availabilityMonthly",
+        "unit": "Liste",
+        "description": "Monatliche Verfügbarkeit Jan-Dez (Sommer-Revisionsfenster, Winterplateau 0,95, Jahresmittel 0,90). Ersetzt die flache availability im Dispatch."
       }
     ],
     "caveats": [
       "Default 0 GW reflektiert den Status Deutschland 2025 — Szenarien mit Kernkraft-Wiederinbetriebnahme sind hypothetisch.",
-      "Verfügbarkeit konstant 0,9 — Revisionsfenster und planbare Ausfälle nicht stundenaufgelöst.",
-      "Emissionsfaktor 12 g/kWh entspricht IPCC-AR6-Median (Spannweite 5-110 g/kWh, je nach Methodik); konservativer Wert inkl. Vorketten und Anlagenbau. Frühere Annahme 5 g/kWh war pro-nuklear-optimistisch."
+      "Monatsprofil (Jahresmittel 0,90, Winter 0,95, Sommertal 0,83) ist idealisierte Revisionsplanung großer Flotten — DE 2017 (Brokdorf-Langzeitausfall) und FR-Stresskorrosion 2022 (Flotte im August auf 40 %) zeigen, wie ungeplante Common-Mode-Ausfälle das Muster brechen.",
+      "Emissionsfaktor 12 g/kWh entspricht IPCC-AR6-Median (Spannweite 5-110 g/kWh, je nach Methodik); konservativer Wert inkl. Vorketten und Anlagenbau. Frühere Annahme 5 g/kWh war pro-nuklear-optimistisch.",
+      "Niveau 0,90 ist oberer Rand der Empirie: DE-Flotte real 0,85-0,86, EDF-Kd 0,58-0,83, US-Flotte ~0,92 (18-24-Monats-Zyklen) — Modellkonvention zur Kalibrierung, als Best-Case zu lesen.",
+      "Sommer-Hitzewellen-/Kühlwasser-Derating (Flusskraftwerke, 2018/2019 real) steckt teilweise in der ENTSO-E-Basis, ist aber kein eigener Modellterm — klimatisch wachsender Sommer-Malus genau im Revisionstal.",
+      "Drei Jahresausnutzungen koexistieren bewusst: 7.500 VLh (ressourcen.ts, Uran-Brennstoff analytisch), 7,6 TWh/GW·a (referenceYield, PRIS-Lifetime-CF inkl. ungeplanter Ausfälle, fürs Preset-Sizing), 7,88 TWh/GW·a (Dispatch-Brutto = 0,90 × 8 760 vor Curtailment)."
     ],
     "file": "erzeugung/kernkraft/data.json",
     "scripts": [
@@ -248,6 +261,20 @@
       "lifetimeYears": 45,
       "fuelEurPerMWhTh": 23,
       "efficiency": 1
-    }
+    },
+    "availabilityMonthly": [
+      0.95,
+      0.95,
+      0.93,
+      0.9,
+      0.85,
+      0.84,
+      0.83,
+      0.84,
+      0.89,
+      0.93,
+      0.94,
+      0.95
+    ]
   }
 }

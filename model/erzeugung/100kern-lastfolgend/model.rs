@@ -15,6 +15,9 @@ use super::error::ModelError;
 use super::StaticModel;
 
 // Iteration 3 (Mai 2026): Frankreich-Modell ohne Batterie.
+// Seit Juni 2026 gilt zusätzlich das saisonale Revisionsprofil availabilityMonthly
+// (Winter 0,95, Sommertal 0,83; Jahresmittel 0,90) statt flacher 0,9 — siehe
+// kernkraft/package.json; das Sizing über KERN_REFERENCE_YIELD bleibt jahresbasiert.
 // - Cushion 1.40 (statt 1.10): genug Kernkraft installiert, damit Peak-Demand
 //   direkt aus Kernkraft-Output gedeckt wird ohne Batterie-Puffer.
 // - Batterie = 0: bei lastfolgender Kernkraft (5%/min Rampe, Min-Last 30-50%)
