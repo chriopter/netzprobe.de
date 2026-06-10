@@ -9,7 +9,8 @@
     "source": "Energy-Charts public_power und installed_power APIs.",
     "sourceUrls": [
       "https://api.energy-charts.info/public_power?country=de&start=2025-01-01&end=2026-01-01",
-      "https://api.energy-charts.info/installed_power?country=de&time_step=monthly"
+      "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
+      "https://www.bdew.de/media/documents/BDEW_Wirtschaftliche_Analyse_von_Offshore-Wind-%C3%9Cberbauung_-_Endbericht_-_2026-03-12.pdf"
     ],
     "period": "2025",
     "resolution": "stündlich",
@@ -75,7 +76,7 @@
     "caveats": [
       "Keine Rohwetterdaten, sondern empirische Faktoren aus Einspeisung und Bestand.",
       "Abregelung ist nicht herausgerechnet; die Faktoren unterschätzen mögliche Erzeugung — Offshore am stärksten (Anbindungs-Engpässe).",
-      "Offshore-Faktor bildet die Bestandsflotte 2025 ab (~2.800 VLH beobachtet); Neubau der 15-MW-Klasse erreicht ~4.000+ VLH — über windOffCapacityFactorMultiplier (~1,4) abbildbar.",
+      "Offshore-Faktor bildet die Bestandsflotte 2025 ab (~2.800 VLH beobachtet); 2045-Flottenmittel ~3.400 VLH (NEP-Orientierungswert 70 GW → 238 TWh, wake-begrenzt) → windOffCapacityFactorMultiplier ~1,2, bis ~1,7 für einzelne optimierte Flächen.",
       "Ein Wetterjahr (2025, eher windschwach); Extremjahre und Klimatrends sind nicht abgedeckt."
     ],
     "file": "erzeugung/einspeisefaktoren-2025/data.json",

@@ -12,7 +12,8 @@
       "https://github.com/MTGermany/energy-simulation-de",
       "https://app.electricitymaps.com/zone/DE",
       "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
-      "https://www.pv-magazine.de/2026/02/02/freiwillige-abregelung-von-erneuerbarer-erzeugung-steigt-2025-auf-rekordniveau-von-knapp-175-terawattstunden/"
+      "https://www.pv-magazine.de/2026/02/02/freiwillige-abregelung-von-erneuerbarer-erzeugung-steigt-2025-auf-rekordniveau-von-knapp-175-terawattstunden/",
+      "https://www.bdew.de/media/documents/BDEW_Wirtschaftliche_Analyse_von_Offshore-Wind-%C3%9Cberbauung_-_Endbericht_-_2026-03-12.pdf"
     ],
     "period": "2025",
     "resolution": "stündlich (Faktor) / jährlich (installierte Leistung)",
@@ -20,7 +21,7 @@
     "description": [
       "**Anlagenpark:** rund `1.560` Offshore-Turbinen in Nordsee und Ostsee mit einer installierten Gesamtleistung von `9,4 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Der Ausbau läuft im Korridor `1–2 GW/a`; das Slider-Maximum `400 GW` (Schritt `2 GW`) erlaubt H2- und Vollelektrifizierungs-Szenarien deutlich jenseits des deutschen Hoheitsgebiets, in dem das WindSeeG-Ziel `70 GW` bis 2045 vorsieht. **Offizielle Vergleichspunkte:** Osterpaket-Zwischenziel 2030 `30 GW`, WindSeeG-/O45-Strom-Ziel 2045 `70 GW` (AWZ-Limit; die Frontier/DIHK-Studie »Plan B« 2025 rechnet mit diesem Pfad).",
       "**Einspeisecharakteristik:** die Stundenleistung folgt dem eigenen Offshore-Einspeisefaktor — `supplyGW(t) = installedGW × windOff100m[t]` aus `einspeisefaktoren-2025` (beobachtete Offshore-Einspeisung 2025 ÷ monatlich installierte Offshore-Leistung). Jahressumme `~2.800 h/a` Volllaststunden-Äquivalent — beim Default `9,4 GW` rund `26 TWh/a`, deckungsgleich mit der realen 2025er Offshore-Einspeisung (`26,1 TWh`, Energy-Charts). Die Lastform ist **glatter und schwächer mit Onshore korreliert** (`r ≈ 0,63`): nur `~870` Flautenstunden unter `5 %` gegenüber `~1.350` bei Onshore — Offshore puffert damit einen Teil der Onshore-Dunkelflauten. Spezifische Emissionen `13 g/kWh` (Anlagenbau und Fundamente; electricitymaps DE).",
-      "**Modellgrenze:** der Faktor bildet die **Bestandsflotte 2025 inklusive Anbindungs-Abregelung** ab — Neubau-Standorte der 15-MW-Klasse erreichen `4000+ h/a` (Fraunhofer IWES, BNetzA Monitoring); für Neubau-Szenarien lässt sich das über den `windOffCapacityFactorMultiplier` (`~1,4`) abbilden. Die beobachteten `~2.800 h/a` liegen unter dem Anlagenpotenzial, weil Offshore-Anbindungs-Engpässe einen erheblichen Teil der realen `9,4 TWh` Netzengpass-Abregelung 2025 (SMARD) ausmachen — diese steckt bereits im Faktor, weitere reale Abregelung bildet das Kupferplatten-Modell nicht ab. Standortabhängigkeit Nordsee vs. Ostsee, HVDC-Wartungsausfälle und Cluster-Wirbeleffekte sind im Bundesmittel aggregiert. Curtailment greift im Kernmodell als erstes bei Überschuss."
+      "**Modellgrenze:** der Faktor bildet die **Bestandsflotte 2025 inklusive Anbindungs-Abregelung** ab. Für Zukunfts-Szenarien gilt der `windOffCapacityFactorMultiplier`: das **70-GW-Flottenmittel 2045** liegt laut NEP-Orientierungswert bei `238 TWh = ~3.400 VLH` (Wake-Effekte bei hoher Belegungsdichte: die dichteste Fläche N-10 mit `13,7 MW/km²` schafft nur `~3.000 VLH`) — also Multiplier `~1,2`; einzelne ferne, dünn belegte Flächen erreichen `4.200–4.700 VLH` (`~1,5–1,7`), das alte Pauschal-`1,4` gilt nur dort. Die beobachteten `~2.800 h/a` liegen unter dem Anlagenpotenzial, weil Offshore-Anbindungs-Engpässe einen erheblichen Teil der realen `9,4 TWh` Netzengpass-Abregelung 2025 (SMARD) ausmachen — diese steckt bereits im Faktor, weitere reale Abregelung bildet das Kupferplatten-Modell nicht ab. Die eingebettete Kappung ist dabei kein Datenartefakt, sondern künftig geplanter Normalzustand: volkswirtschaftlich optimal sind `4,6–10,2 %` Überbauung der Netzanbindung mit `3,5–4,2 %` Spitzenkappung (Frontier/BDEW-BWO 2026; BSH schlägt im FEP sogar 20 % vor). Standortabhängigkeit Nordsee vs. Ostsee, HVDC-Wartungsausfälle und Cluster-Wirbeleffekte sind im Bundesmittel aggregiert. Curtailment greift im Kernmodell als erstes bei Überschuss."
     ],
     "overview": [
       {
@@ -105,7 +106,7 @@
     ],
     "caveats": [
       "Eigener Offshore-Faktor windOff100m seit Juni 2026 — zuvor Onshore-Faktor × 1,8 (Energie grob korrekt, Lastform gleichphasig falsch).",
-      "Faktor bildet Bestandsflotte 2025 ab (~2.800 VLH beobachtet, inkl. Anbindungs-Abregelung); Neubau 15-MW-Klasse erreicht 4.000+ VLH — über windOffCapacityFactorMultiplier (~1,4) abbildbar, Default 1,0.",
+      "Faktor bildet Bestandsflotte 2025 ab (~2.800 VLH beobachtet, inkl. Anbindungs-Abregelung); 2045-Flottenmittel laut NEP-Orientierungswert ~3.400 VLH (70 GW → 238 TWh, wake-begrenzt) → Multiplier ~1,2; bis ~1,7 nur für einzelne optimierte ferne Flächen. Default 1,0.",
       "Ein Wetterjahr (2025, eher windschwach) und nur 9,4 GW Bestand als Datenbasis — die statistische Basis ist dünner als bei Onshore (62,8 GW).",
       "Installierte Leistung ist Jahresmittel; Inbetriebnahmen während des Jahres nicht stundenaufgelöst."
     ],

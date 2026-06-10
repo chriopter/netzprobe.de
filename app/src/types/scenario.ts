@@ -43,8 +43,9 @@ export type Scenario = {
      * einen eigenen beobachteten Faktor windOff100m mit ~2800 VLH). Höhere
      * Werte beschreiben Neubau-Mix: PV ~1.5 (Aufdach modern + Freifläche
      * bifazial 1100 kWh/kWp/a vs. heute 702), Wind Onshore ~1.4 (~2400 VLH
-     * Neubau vs. heute ~1600 beobachtet), Wind Offshore ~1.4 (~4000 VLH
-     * 15-MW-Klasse vs. ~2800 beobachtet inkl. Anbindungs-Abregelung).
+     * Neubau vs. heute ~1600 beobachtet), Wind Offshore ~1.2 (70-GW-Flotten-
+     * mittel 2045 ~3400 VLH laut NEP-Orientierungswert 238 TWh, wake-begrenzt;
+     * bis ~1.7 nur für einzelne ferne, dünn belegte Flächen).
      */
     pvCapacityFactorMultiplier: number;
     windOnCapacityFactorMultiplier: number;
