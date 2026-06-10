@@ -124,8 +124,22 @@ struct DemandPackage {
 #[derive(Debug, Clone)]
 struct GenerationPackage {
     availability: f64,
+    // Optionales 12-Monats-Verfügbarkeitsprofil (Revisionsplanung mit Sommer-
+    // Wartungsfenstern). Fehlt es, gilt availability flach. Der Parser liest es
+    // für jedes Erzeugungspaket, ANGEWANDT wird es im Supply-Build derzeit nur
+    // für kernkraft — ein Profil in anderen Paketen wäre ein stiller No-Op.
+    availability_monthly: Option<Vec<f64>>,
     min_load_fraction: f64,
     co2: f64,
+}
+
+impl GenerationPackage {
+    fn availability_for_month(&self, month_index: usize) -> f64 {
+        self.availability_monthly
+            .as_ref()
+            .and_then(|monthly| monthly.get(month_index).copied())
+            .unwrap_or(self.availability)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -143,6 +157,7 @@ struct HourInput {
     solar_factor: f64,
     wind_on_factor: f64,
     wind_off_factor: f64,
+    month_index: usize,
     heating_degree_day_weight: f64,
     hour_of_day_berlin: usize,
 }
@@ -283,6 +298,14 @@ impl StaticModel {
             let heating_weight = *heating_by_date
                 .get(&date)
                 .ok_or_else(|| data_error(format!("missing heating day for {}", date)))?;
+            // Monat aus dem Berlin-Datum (konsistent mit Heiztagen/Tagesstunde,
+            // nicht UTC — sonst rutschen 1-2 h je Monatsgrenze in den Nachbarmonat).
+            let month_index = date
+                .get(5..7)
+                .and_then(|m| m.parse::<usize>().ok())
+                .filter(|m| (1..=12).contains(m))
+                .map(|m| m - 1)
+                .ok_or_else(|| data_error(format!("invalid month in {date}")))?;
             hours.push(HourInput {
                 index,
                 time: load.time,
@@ -290,6 +313,7 @@ impl StaticModel {
                 solar_factor: factor.solar_irradiance.first().copied().unwrap_or(0.0),
                 wind_on_factor: factor.wind_on_100m.first().copied().unwrap_or(0.0),
                 wind_off_factor: factor.wind_off_100m.first().copied().unwrap_or(0.0),
+                month_index,
                 heating_degree_day_weight: heating_weight,
                 hour_of_day_berlin: hour,
             });
@@ -385,6 +409,25 @@ impl StaticModel {
                 id,
                 GenerationPackage {
                     availability: number_or(&data, "availability", 1.0),
+                    // Vorhandenes, aber ungültiges Profil ist ein Datenfehler —
+                    // kein stiller Fallback auf die flache availability.
+                    availability_monthly: match data.get("availabilityMonthly") {
+                        None => None,
+                        Some(raw) => {
+                            let values: Vec<f64> = raw
+                                .as_array()
+                                .map(|a| a.iter().filter_map(Value::as_f64).collect())
+                                .unwrap_or_default();
+                            if values.len() != 12
+                                || values.iter().any(|v| !(0.0..=1.0).contains(v))
+                            {
+                                return Err(data_error(format!(
+                                    "{id}: availabilityMonthly must be 12 values in 0..=1"
+                                )));
+                            }
+                            Some(values)
+                        }
+                    },
                     min_load_fraction: number_or(&data, "minLoadFraction", 0.0),
                     co2: path_number(&data, &["emissions", "co2eGperKWh"])?,
                 },
@@ -1104,7 +1147,7 @@ impl StaticModel {
             wind_off_available_gw: s_number(scenario, &["generation", "windOffInstalledGW"])?
                 * wind_off_factor,
             kernkraft_available_gw: s_number(scenario, &["generation", "kernkraftInstalledGW"])?
-                * self.generation["kernkraft"].availability,
+                * self.generation["kernkraft"].availability_for_month(row.month_index),
             biomasse_gw: s_number(scenario, &["generation", "biomasseInstalledGW"])?
                 * self.generation["biomasse"].availability,
             laufwasser_gw: s_number(scenario, &["generation", "laufwasserInstalledGW"])?
