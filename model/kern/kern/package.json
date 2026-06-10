@@ -8,7 +8,9 @@
     "short": "Stündlicher Dispatch aus Last, Erzeugung, Speicher und Außenhandel mit CO₂-Bilanz.",
     "source": "Eigene Implementierung; Dispatch-Reihenfolge inspiriert von MTGermany energy-simulation-de.",
     "sourceUrls": [
-      "https://github.com/MTGermany/energy-simulation-de"
+      "https://github.com/MTGermany/energy-simulation-de",
+      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
+      "https://www.pv-magazine.de/2026/02/02/freiwillige-abregelung-von-erneuerbarer-erzeugung-steigt-2025-auf-rekordniveau-von-knapp-175-terawattstunden/"
     ],
     "period": "laufend",
     "resolution": "stündlich",
@@ -16,7 +18,7 @@
     "description": [
       "**Aufgabe:** das Kernmodell iteriert über `8.760` Stunden pro Jahr und schließt in jeder Stunde die Bilanz aus Last (aggregiert via `demand.ts` aus `last-2025` und aktiven `e100-*` Modulen), variabler RE-Erzeugung (PV/Wind mit `einspeisefaktoren-2025[t] × capacityFactorMultiplier`), Baseload (Kernkraft, Biomasse, Laufwasser × `availability`), Dispatchable-Floor (Gas/Kohle auf `minLoadFraction`) und Speicher-Slots. Ergebnis pro Stunde sind alle Quellenbeiträge, Curtailment, Speicher-SoC, Import/Export, Lastabwurf und CO₂ in `t/h`; auf Jahressumme aggregiert das Modell `Last`, `EE-Anteil`, `Import`, `Export`, `Curtailment`, `Lastabwurf`, `CO₂ Mt/a` und `g/kWh`, Peak-Last sowie Stundenkennzahlen.",
       "**Dispatch-Logik:** vor der Strombilanz läuft pro Stunde der H₂-Pool-Schritt — Import-Inflow (`h2TWh·1000/8760` GW) addiert sich auf den Pool-SoC, dann deckt der Pool den Sektor-H₂-Bedarf priority-basiert (Flug → Schiff → Chemie → Stahl), ungedeckter Rest wird Direkt-Elektrolyse-Stromlast. Anschließend `mismatch = baselineSupply − loadGW`. Bei **Überschuss** lädt die Engine die Speicher in der Reihenfolge `dispatchPriority` (Batterie → Pumpspeicher → H₂-Pool, mit η = 0,34 für H₂-Charge), exportiert dann bis `export.stromGW`-Cap, curtailed RE nach `curtailmentPriority` (Wind offshore → onshore → PV → Kernkraft); im Notfall werden Min-Last-Fossile/Biomasse/Laufwasser reduziert. Bei **Unterdeckung** Speicher entladen (auch H₂-Pool-Rückverstromung), Import bis `import.stromGW`-Cap, `Gas + Kohle` im `rampUpRatio` (Default `2:1`) bis `maxAvailable`; Rest als `loadSheddingGW`. CO₂ pro Stunde: `Σ supply_q × emissions.co2eGperKWh_q + import × stromEmissionGperKWh`.",
-      "**Modellgrenze:** keine Marktlogik, kein preisgetriebener Handel, kein Redispatch, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen, kein Netzmodell mit regionalen Engpässen. Min-Last für Gas (`10 %`) und Kohle (`20 %`) wird auch bei viel RE als Floor erzwungen — dadurch laufen `~9 GW` fossil weiter und der Default-Export sinkt auf `~3 TWh/a` (real `~54 TWh/a`). Import/Export-Caps sind harte Grenzen ohne Preissignal; der `capacityFactorMultiplier` linearisiert Technologiefortschritt zwischen Bestand und Neubau ohne Anlagen-Mix-Verschiebung."
+      "**Modellgrenze:** keine Marktlogik, kein preisgetriebener Handel, kein Redispatch, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen, kein Netzmodell mit regionalen Engpässen. Die Größenordnung dieser Kupferplatten-Vereinfachung ist am Jahr 2025 messbar: real wurden `9,4 TWh` Wind+PV netzbedingt abgeregelt (SMARD/BNetzA Netzengpassmanagement) plus `~1,75 TWh` marktlich bei Negativpreisen (Montel) — zusammen `~5 %` der Wind+PV-Erzeugung von `~201 TWh` — während das Kernmodell mit 2025-Kapazitäten `0 TWh` Abregelung zeigt (kein Bilanz-Überschuss auf Bundesebene). Simulierte Abregelung bei höherem EE-Ausbau ist also rein bilanzgetrieben und kommt zu den real existierenden Netzengpass-Verlusten hinzu. Min-Last für Gas (`10 %`) und Kohle (`20 %`) wird auch bei viel RE als Floor erzwungen — dadurch laufen `~9 GW` fossil weiter und der Default-Export sinkt auf `~3 TWh/a` (real `~54 TWh/a`). Import/Export-Caps sind harte Grenzen ohne Preissignal; der `capacityFactorMultiplier` linearisiert Technologiefortschritt zwischen Bestand und Neubau ohne Anlagen-Mix-Verschiebung."
     ],
     "overview": [
       {
@@ -97,7 +99,7 @@
       "Curtailment-Fallback (greift nur wenn Speicher voll, Export am Cap und alle RE auf 0): reduziert Min-Last fossil, danach Biomasse und Laufwasser. Physikalisch fragwürdig (KWK-Wärmesenken, Wasser-Bypass), aber Sicherheitsventil zur Schließung der Bilanz. Greift im Default praktisch nie.",
       "Import/Export-Cap sind harte Grenzen, kein preisgetriebener Handel. Default Import 13 GW reproduziert 2025-Brutto-Import; Export 25 GW orientiert sich am NTC.",
       "Wind Offshore nutzt denselben Einspeisefaktor wie Onshore (einspeisefaktoren-2025 hat keinen Offshore-Faktor).",
-      "Kein Netzmodell: keine regionalen Engpässe, keine Redispatch-Kosten, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen."
+      "Kein Netzmodell: keine regionalen Engpässe, keine Redispatch-Kosten, kein Reservebedarf, keine Frequenzhaltung über rotierende Massen. Quantifizierter Anker 2025: real 9,4 TWh netzbedingte + ~1,75 TWh marktliche Abregelung (≈ 5 % der Wind+PV-Erzeugung) und ~3,1 Mrd EUR Redispatch-Kosten (davon 433 Mio EUR Abregelungs-Entschädigung) — im Modell 0 TWh, 0 EUR."
     ],
     "file": "kern/data.json",
     "scripts": [
