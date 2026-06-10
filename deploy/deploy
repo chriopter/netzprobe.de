@@ -40,9 +40,9 @@ fi
 
 log "deploying $after"
 
+# Tests laufen in der CI (sichtbares Feedback, blockt den Webhook via needs: build).
+# Hier nur noch bauen + restarten — ein roter Commit erreicht diesen Punkt nie.
 npm ci
-cargo test --workspace
-npm test
 npm run build
 cargo build --release --workspace
 

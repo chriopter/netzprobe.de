@@ -30,6 +30,14 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Rust einrichten
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust-Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Rust-Tests
+        # Einziges Rust-Gate der Pipeline — bewusst hier statt im Server-Deploy,
+        # damit das Testurteil sichtbar ist und ein roter Commit den Webhook nie erreicht.
+        run: NETZPROBE_BUILD_COMMIT="${{ github.sha }}" cargo test --workspace
 
   deploy:
     name: Trigger VPS
