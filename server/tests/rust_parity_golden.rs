@@ -145,3 +145,31 @@ fn e100_historical_2025_scenario() -> Value {
         }
     })
 }
+
+// Regeneriert die Golden-Fingerprints nach einer LEGITIMEN Modelländerung
+// (z. B. neue Einspeisefaktoren). Szenarien bleiben unverändert, nur die
+// Fingerprints werden mit dem aktuellen Modell neu berechnet. Lauf:
+//   cargo test -p netzprobe-api --test rust_parity_golden -- --ignored regenerate
+// Danach den Diff von test/fixtures/rust-parity-v1.json fachlich reviewen.
+#[test]
+#[ignore]
+fn regenerate_golden_fixture() {
+    let raw = include_str!("../../test/fixtures/rust-parity-v1.json");
+    let mut fixture: Value = serde_json::from_str(raw).expect("fixture must be valid JSON");
+    let harness = SimulationHarness::new();
+    let cases = fixture
+        .get_mut("cases")
+        .and_then(Value::as_array_mut)
+        .expect("fixture has cases");
+    for case in cases.iter_mut() {
+        let scenario = case.get("scenario").expect("case has scenario").clone();
+        let id = case.get("id").and_then(Value::as_str).unwrap_or("?").to_string();
+        let fingerprint = harness
+            .run_fingerprint(&scenario)
+            .unwrap_or_else(|err| panic!("{id} failed: {err}"));
+        case["fingerprint"] = serde_json::to_value(fingerprint).expect("fingerprint serializes");
+    }
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../test/fixtures/rust-parity-v1.json");
+    std::fs::write(path, format!("{}\n", serde_json::to_string(&fixture).expect("fixture serializes")))
+        .expect("fixture written");
+}

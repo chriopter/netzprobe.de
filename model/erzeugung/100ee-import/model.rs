@@ -32,7 +32,6 @@ pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.08;
 // H2-Saisonspeicher: 0.10 × Demand. Bei e100 ~183 TWh, bei 2025 ~47 TWh.
 // Über Agora-Konsens 70-80 TWh, weil bei e100-Demand mehr Saisonpufferung nötig.
 pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.10;
-pub const EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER: f64 = 1.8;
 // Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
 pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 70.0;
 
@@ -75,9 +74,10 @@ pub fn variable_re_gw(target_twh: f64, share: f64, total_share: f64, yield_twh_p
     (target_twh * share / total_share) / yield_twh_per_gw.max(0.1)
 }
 
-pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_onshore: f64) -> f64 {
-    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    let raw_gw = (target_twh * share / total_share) / yield_offshore.max(0.1);
+// Offshore-Yield kommt seit dem Faktor-Split direkt aus windOff100m (beobachtete
+// Offshore-Einspeisung 2025, ~2,8 TWh/GW·a) — kein Multiplier-Umweg mehr.
+pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_offshore: f64) -> f64 {
+    let raw_gw = (target_twh * share / total_share) / yield_wind_offshore.max(0.1);
     raw_gw.min(EE_WIND_OFFSHORE_MAX_GW)
 }
 
@@ -87,12 +87,11 @@ pub fn h2_import_compensation_twh(
     target_twh: f64,
     share_wind_off: f64,
     total_share: f64,
-    yield_wind_onshore: f64,
+    yield_wind_offshore: f64,
 ) -> f64 {
-    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_offshore.max(0.1);
+    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_wind_offshore.max(0.1);
     let wind_off_shortfall_gw = (wind_off_raw_gw - EE_WIND_OFFSHORE_MAX_GW).max(0.0);
-    wind_off_shortfall_gw * yield_offshore
+    wind_off_shortfall_gw * yield_wind_offshore
 }
 
 pub fn strom_import_gw_cap(demand_twh: f64) -> f64 {
@@ -150,7 +149,7 @@ mod tests {
 
     #[test]
     fn wind_offshore_capped_at_70_gw() {
-        let result = wind_offshore_gw(10_000.0, 0.25, 1.0, 2.0);
+        let result = wind_offshore_gw(10_000.0, 0.25, 1.0, 2.8);
         assert!((result - EE_WIND_OFFSHORE_MAX_GW).abs() < 1e-6);
     }
 

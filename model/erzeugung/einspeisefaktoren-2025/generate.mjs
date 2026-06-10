@@ -47,11 +47,13 @@ function round(value) {
 const hours = generation.hours.map((hour) => {
   const index = monthIndex(hour.time);
   const solarFactor = round(factor(hour.pvMW, solar[index]));
-  const windFactor = round(factor(hour.windOnMW + hour.windOffMW, windOn[index] + windOff[index]));
+  const windOnFactor = round(factor(hour.windOnMW, windOn[index]));
+  const windOffFactor = round(factor(hour.windOffMW, windOff[index]));
   return {
     time: hour.time,
     solarIrradiance: [solarFactor],
-    wind100m: [windFactor],
+    windOn100m: [windOnFactor],
+    windOff100m: [windOffFactor],
   };
 });
 
@@ -66,9 +68,10 @@ writeFileSync(outputPath, `${JSON.stringify({
   notes: [
     'Regenerated locally from repository generation data and freshly fetched Energy-Charts installed_power data.',
     'solarIrradiance = observed pvMW / monthly Solar AC installed MW.',
-    'wind100m = (observed windOnMW + windOffMW) / monthly installed wind MW.',
+    'windOn100m = observed windOnMW / monthly Wind onshore installed MW.',
+    'windOff100m = observed windOffMW / monthly Wind offshore installed MW.',
     'Values are clipped to 0..1 and are feed-in factors, not raw weather measurements.',
-    'Curtailment is not added back.',
+    'Curtailment is not added back — offshore in particular embeds grid-connection curtailment.',
   ],
   hours,
 })}\n`);

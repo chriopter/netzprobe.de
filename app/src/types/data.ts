@@ -26,7 +26,8 @@ export type GenerationHour = ObservedPower & {
 export type ModelFactorHour = {
   time: string;
   solarIrradiance: number[];
-  wind100m: number[];
+  windOn100m: number[];
+  windOff100m: number[];
 };
 
 export type HeatingDegreeDay = {
@@ -250,7 +251,7 @@ export type ErzeugungsModellVariableReSource = {
   name: string;
   mode: 'variable-re';
   factorPackage: 'einspeisefaktoren-2025';
-  factorField: 'solarIrradiance' | 'wind100m';
+  factorField: 'solarIrradiance' | 'windOn100m' | 'windOff100m';
 } & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzeugungsModellBaseloadSource = {
@@ -322,7 +323,7 @@ export type AussenhandelPool = {
 export type ErzPackageVariableRe = {
   mode: 'variable-re';
   factorPackage: 'einspeisefaktoren-2025';
-  factorField: 'solarIrradiance' | 'wind100m';
+  factorField: 'solarIrradiance' | 'windOn100m' | 'windOff100m';
 } & CapacityBounds & WithEmissions & WithReferenceScales;
 
 export type ErzPackageBaseload = {

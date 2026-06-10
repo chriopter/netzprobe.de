@@ -32,7 +32,7 @@ export const defaultScenario: Scenario = {
     kohleInstalledGW: uiManifest.historisch2025.kohleInstalledGW,
     pvCapacityFactorMultiplier: 1.0,
     windOnCapacityFactorMultiplier: 1.0,
-    windOffCapacityFactorMultiplier: 1.8,
+    windOffCapacityFactorMultiplier: 1.0,
   },
   storage: {
     batteriePowerGW: uiManifest.historisch2025.batteriePowerGW,

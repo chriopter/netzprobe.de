@@ -151,7 +151,7 @@ const base = {
     // hardcoded weil nicht in package.json (Offshore-Korrektur fuer 4000+ VLH).
     pvCapacityFactorMultiplier: 1.0,
     windOnCapacityFactorMultiplier: 1.0,
-    windOffCapacityFactorMultiplier: 1.8,
+    windOffCapacityFactorMultiplier: 1.0,
   },
   storage: {
     batteriePowerGW: h2025.batteriePowerGW,

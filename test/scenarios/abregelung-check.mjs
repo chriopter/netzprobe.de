@@ -43,7 +43,7 @@ const scenario = {
     pvInstalledGW: h2025.pvInstalledGW, windOnInstalledGW: h2025.windOnInstalledGW, windOffInstalledGW: h2025.windOffInstalledGW,
     kernkraftInstalledGW: h2025.kernkraftInstalledGW, biomasseInstalledGW: h2025.biomasseInstalledGW, laufwasserInstalledGW: h2025.laufwasserInstalledGW,
     gasInstalledGW: h2025.gasInstalledGW, kohleInstalledGW: h2025.kohleInstalledGW,
-    pvCapacityFactorMultiplier: 1.0, windOnCapacityFactorMultiplier: 1.0, windOffCapacityFactorMultiplier: 1.8,
+    pvCapacityFactorMultiplier: 1.0, windOnCapacityFactorMultiplier: 1.0, windOffCapacityFactorMultiplier: 1.0,
   },
   storage: {
     batteriePowerGW: h2025.batteriePowerGW, batterieEnergyGWh: h2025.batterieEnergyGWh,
