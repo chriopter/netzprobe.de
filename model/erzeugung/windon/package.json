@@ -10,7 +10,9 @@
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
       "https://github.com/MTGermany/energy-simulation-de",
-      "https://app.electricitymaps.com/zone/DE"
+      "https://app.electricitymaps.com/zone/DE",
+      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
+      "https://www.pv-magazine.de/2026/02/02/freiwillige-abregelung-von-erneuerbarer-erzeugung-steigt-2025-auf-rekordniveau-von-knapp-175-terawattstunden/"
     ],
     "period": "2025",
     "resolution": "stündlich (Faktor) / jährlich (installierte Leistung)",
@@ -18,7 +20,7 @@
     "description": [
       "**Anlagenpark:** rund `28.700` Onshore-Windturbinen mit einer installierten Gesamtleistung von `62,8 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default** — überwiegend in Nord- und Ostdeutschland, mit zunehmend repowerten Standorten in der Mitte. Der Nettozubau liegt zuletzt bei `3–4 GW/a`; das Slider-Maximum `1200 GW` (Schritt `5 GW`) deckt auch radikale Ausbau- und H2-Szenarien ab. **Offizielle Vergleichspunkte:** Osterpaket-Ausbauziel 2030 `115 GW`, BMWK-Langfristszenario O45-Strom 2045 `~160 GW` (Pfad, den die Frontier/DIHK-Studie »Plan B« 2025 bepreist).",
       "**Einspeisecharakteristik:** die Stundenleistung folgt dem deutschlandweit gewichteten 100-m-Windfeld — `supplyGW(t) = installedGW × wind100m[t]`. Der normierte Einspeisefaktor aus `einspeisefaktoren-2025` läuft stündlich zwischen `0` (Flautenstunden) und etwa `0,95` (Sturmphasen). Über das Jahr ergibt das Volllaststunden im Korridor `1900–2200 h/a` und damit beim Default-Bestand rund `120 TWh/a` Energieertrag; die Lastform ist **antizyklisch zu PV** (Winterhochs, Sommerschwäche) und an die Großwetterlage gekoppelt — Dunkelflauten von mehreren Tagen sind in den Faktoren enthalten. Spezifische Emissionen `13 g/kWh` (Anlagenbau, Wartung; electricitymaps DE).",
-      "**Modellgrenze:** der Einspeisefaktor ist ein **Bundesmittel**: Standortqualität (Küste vs. Mittelgebirge vs. Süd), Repowering-Effekte und Nabenhöhen-Mix sind aggregiert. Installierte Leistung ist Jahresmittel — unterjähriger Zubau wird nicht stundenscharf ausgerollt. Curtailment im Kernmodell greift nach Wind Offshore und vor PV; reale Netzengpass-Abregelung (Schleswig-Holstein, NEMO) ist nicht abgebildet."
+      "**Modellgrenze:** der Einspeisefaktor ist ein **Bundesmittel**: Standortqualität (Küste vs. Mittelgebirge vs. Süd), Repowering-Effekte und Nabenhöhen-Mix sind aggregiert. Installierte Leistung ist Jahresmittel — unterjähriger Zubau wird nicht stundenscharf ausgerollt. Curtailment im Kernmodell greift nach Wind Offshore und vor PV; reale Netzengpass-Abregelung (Schleswig-Holstein, NEMO) ist nicht abgebildet. Größenordnung dieser Lücke: real wurden 2025 `9,4 TWh` Wind+PV netzbedingt abgeregelt (SMARD; Wind-Schwerpunkt im Winter) plus `~1,75 TWh` marktlich bei Negativpreisen — das Kupferplatten-Modell zeigt mit 2025-Kapazitäten `0 TWh`."
     ],
     "overview": [
       {

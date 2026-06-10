@@ -10,7 +10,9 @@
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
       "https://github.com/MTGermany/energy-simulation-de",
-      "https://app.electricitymaps.com/zone/DE"
+      "https://app.electricitymaps.com/zone/DE",
+      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
+      "https://www.pv-magazine.de/2026/02/02/freiwillige-abregelung-von-erneuerbarer-erzeugung-steigt-2025-auf-rekordniveau-von-knapp-175-terawattstunden/"
     ],
     "period": "2025",
     "resolution": "stündlich (Faktor) / jährlich (installierte Leistung)",
@@ -18,7 +20,7 @@
     "description": [
       "**Anlagenpark:** rund zwei Millionen Aufdach- und Freiflächenanlagen mit einer installierten Wechselrichter-Gesamtleistung von `102,5 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Der Bestand wuchs zuletzt mit etwa `15 GW/a`; das Slider-Maximum `2000 GW` (Schritt `10 GW`) ist bewusst weit über jeden realistischen Ausbaupfad gelegt, damit auch Vollversorgungs-Studien mit Süd-Überschuss durchgespielt werden können. **Offizielle Vergleichspunkte:** Osterpaket-Ausbauziel 2030 `215 GW`, BMWK-Langfristszenario O45-Strom 2045 `~400 GW` (Pfad, den die Frontier/DIHK-Studie »Plan B« 2025 bepreist).",
       "**Einspeisecharakteristik:** die Stundenleistung folgt strikt der Solarstrahlung — `supplyGW(t) = installedGW × solarIrradiance[t]`. Der normierte Einspeisefaktor aus dem Paket `einspeisefaktoren-2025` deckt den deutschlandweit gewichteten Mittelwert ab und schwankt stündlich zwischen `0` (Nacht, Bewölkung) und etwa `0,5` (Sommer-Mittag, Mittelung über alle Standortorientierungen). Die Jahressumme der 8760 Stundenfaktoren liegt bei rund `700 h/a` Volllaststunden-Äquivalent — also etwa `72 TWh/a` Energieertrag beim Default-Bestand, im Korridor der realen 2025er Erzeugung (`60–75 TWh/a`, BDEW/AGEB). Die **Saisonsignatur** ist ausgeprägt: ein Juni-Tag liefert rund zehnmal so viel wie ein Dezember-Tag. Spezifische Emissionen sind mit `35 g/kWh` angesetzt (Modulfertigung und Wechselrichter-Verluste, electricitymaps DE).",
-      "**Modellgrenze:** die installierte Leistung ist ein Jahresmittel — Inbetriebnahmen während des Jahres werden nicht stundenscharf ausgerollt. Der Einspeisefaktor ist ein **bundesweiter Mix**: Süd-Nord-Gradient, Ost-/West-Ausrichtung, Aufständerungswinkel und Verschattung sind aggregiert. Curtailment greift erst nach Wind Offshore und Onshore — Kernmodell schaltet PV bei Überschuss als drittes ab; redispatchbedingte Abregelung im realen Netz ist nicht abgebildet."
+      "**Modellgrenze:** die installierte Leistung ist ein Jahresmittel — Inbetriebnahmen während des Jahres werden nicht stundenscharf ausgerollt. Der Einspeisefaktor ist ein **bundesweiter Mix**: Süd-Nord-Gradient, Ost-/West-Ausrichtung, Aufständerungswinkel und Verschattung sind aggregiert. Curtailment greift erst nach Wind Offshore und Onshore — Kernmodell schaltet PV bei Überschuss als drittes ab; redispatchbedingte Abregelung im realen Netz ist nicht abgebildet. Größenordnung dieser Lücke: real wurden 2025 `9,4 TWh` Wind+PV netzbedingt abgeregelt (SMARD, PV-Anteil stark steigend, `+94 %`) plus `~1,75 TWh` marktlich bei Negativpreisen — das Kupferplatten-Modell zeigt mit 2025-Kapazitäten `0 TWh`."
     ],
     "overview": [
       {

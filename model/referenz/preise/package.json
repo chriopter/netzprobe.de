@@ -12,7 +12,8 @@
       "https://ens.dk/en/our-services/technology-catalogues",
       "https://atb.nrel.gov/",
       "https://www.eex.com/",
-      "https://www.destatis.de/"
+      "https://www.destatis.de/",
+      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger"
     ],
     "period": "2024",
     "resolution": "Annahmen (Szenario-Spannen im Wiki)",
@@ -97,6 +98,7 @@
       "Netzkosten standardmäßig in den Systemkosten enthalten; null im 2025-Bestand (Kupferplatte als Nullpunkt), steigend mit dem EE-Zubau darüber.",
       "Netz-Faktor 1.200 EUR/kW ist eine grobe Pauschale ohne Spannungsebenen-Auflösung (PV→Verteilnetz vs. Wind→Übertragung nicht getrennt); niedrige Konfidenz. Anker-Spanne ~650 Mrd (IMK, reine Investition) bis ~1,2 Bio EUR (DIHK »Plan B«, all-in inkl. Betrieb).",
       "Netz wird marginal ab 2025-Bestand gerechnet, die Erzeugung dagegen als Vollkosten der Zielflotte — die beiden Posten sind nicht ohne Weiteres zu einer Summe addierbar.",
+      "Realer Untergrenzen-Anker: schon beim 2025-Bestand kostet Netzengpassmanagement ~3,1 Mrd EUR/a (Redispatch gesamt, davon 433 Mio EUR EE-Abregelungs-Entschädigung; BNetzA/SMARD) — Betriebskosten dieser Art sind im pauschalen Netz-Posten nur grob mit abgedeckt, in der Kupferplatte ohne Netz-Posten gar nicht.",
       "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW) belastbar, in Überbau-Extremen nur als Richtungssignal."
     ],
     "file": "referenz/preise/package.json"
