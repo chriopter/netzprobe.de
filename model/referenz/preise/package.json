@@ -13,7 +13,8 @@
       "https://atb.nrel.gov/",
       "https://www.eex.com/",
       "https://www.destatis.de/",
-      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger"
+      "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
+      "https://www.bdew.de/media/documents/BDEW_Wirtschaftliche_Analyse_von_Offshore-Wind-%C3%9Cberbauung_-_Endbericht_-_2026-03-12.pdf"
     ],
     "period": "2024",
     "resolution": "Annahmen (Szenario-Spannen im Wiki)",
@@ -99,7 +100,8 @@
       "Netz-Faktor 1.200 EUR/kW ist eine grobe Pauschale ohne Spannungsebenen-Auflösung (PV→Verteilnetz vs. Wind→Übertragung nicht getrennt); niedrige Konfidenz. Anker-Spanne ~650 Mrd (IMK, reine Investition) bis ~1,2 Bio EUR (DIHK »Plan B«, all-in inkl. Betrieb).",
       "Netz wird marginal ab 2025-Bestand gerechnet, die Erzeugung dagegen als Vollkosten der Zielflotte — die beiden Posten sind nicht ohne Weiteres zu einer Summe addierbar.",
       "Realer Untergrenzen-Anker: schon beim 2025-Bestand kostet Netzengpassmanagement ~3,1 Mrd EUR/a (Redispatch gesamt, davon 433 Mio EUR EE-Abregelungs-Entschädigung; BNetzA/SMARD) — Betriebskosten dieser Art sind im pauschalen Netz-Posten nur grob mit abgedeckt, in der Kupferplatte ohne Netz-Posten gar nicht.",
-      "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW) belastbar, in Überbau-Extremen nur als Richtungssignal."
+      "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW) belastbar, in Überbau-Extremen nur als Richtungssignal.",
+      "Die Netz-Pauschale (1.200 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch."
     ],
     "file": "referenz/preise/package.json"
   },
