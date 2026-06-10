@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import type { ChartMode } from './chartOptions';
 import { cx, muted, panelHeader } from './ui';
 
@@ -11,24 +11,11 @@ export const MAIN_VIEW_LABELS: Record<MainViewId, string> = {
   kosten: 'Kosten',
 };
 
-export const MAIN_VIEW_IMPLEMENTED: Record<MainViewId, boolean> = {
-  mix: true,
-  flaeche: true,
-  ressourcen: true,
-  kosten: true,
-};
-
 export function SectionHeading({ id, placeholder }: { id: MainViewId; placeholder?: boolean }) {
   return <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
     {MAIN_VIEW_LABELS[id]}
     {placeholder && <span className="ml-2 align-middle text-sm font-normal text-zinc-400 dark:text-zinc-500">(Platzhalter)</span>}
   </h2>;
-}
-
-export function ComingSoonPanel() {
-  return <div className="grid min-h-[40vh] place-items-center rounded-lg border border-dashed border-zinc-200 bg-white text-center dark:border-zinc-700 dark:bg-zinc-900">
-    <p className="px-6 py-12 text-sm text-zinc-500 dark:text-zinc-400">Coming soon.</p>
-  </div>;
 }
 
 export function ChartPanel({ title, meta, className, children }: { title?: string; meta?: string; className?: string; children: ReactNode }) {
@@ -92,30 +79,6 @@ export function PlaceholderGlass({ children }: { children: ReactNode }) {
     <div className="absolute inset-0 z-10 grid place-items-center rounded-lg bg-white/30 backdrop-blur-[3px] dark:bg-zinc-950/30">
       <span className="rounded-full border border-zinc-200 bg-white/85 px-4 py-1.5 text-sm font-medium text-zinc-500 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/85 dark:text-zinc-300">In Arbeit</span>
     </div>
-  </div>;
-}
-
-// Milchglas-„Coming Soon"-Gate: frostet den Abschnitt, bis man ihn per Klick
-// freigibt (gemerkt in localStorage). Inhalt bleibt im DOM (Layout/Navigation).
-export function ComingSoonGate({ id, children }: { id: string; children: ReactNode }) {
-  const key = `np-reveal-${id}`;
-  const [revealed, setRevealed] = useState(() => {
-    try { return localStorage.getItem(key) === '1'; } catch { return false; }
-  });
-  if (revealed) return <>{children}</>;
-  return <div className="relative">
-    <div className="pointer-events-none select-none blur-[5px] saturate-50 opacity-70" aria-hidden>{children}</div>
-    <button
-      type="button"
-      onClick={() => { setRevealed(true); try { localStorage.setItem(key, '1'); } catch { /* ignore */ } }}
-      className="absolute inset-0 z-10 grid place-items-center rounded-lg bg-white/40 backdrop-blur-[3px] transition hover:bg-white/30 dark:bg-zinc-950/40 dark:hover:bg-zinc-950/30"
-      aria-label="Abschnitt anzeigen"
-    >
-      <span className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90">
-        <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white dark:bg-zinc-100 dark:text-zinc-900">Coming Soon</span>
-        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Klicken zum Anzeigen</span>
-      </span>
-    </button>
   </div>;
 }
 

@@ -14,7 +14,7 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixVisibility } from './chartOptions';
-import { ComingSoonGate, MAIN_VIEW_IMPLEMENTED, MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
+import { MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
 import MixSection from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
@@ -1011,8 +1011,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <ComingSoonGate id="ressourcen"><RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/></ComingSoonGate>
-          <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear}/></ComingSoonGate>
+          <RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/>
+          <KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear}/>
           <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
@@ -1214,7 +1214,7 @@ function scrollToSection(id: MainViewId) {
 }
 
 function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
-  const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label, ready: MAIN_VIEW_IMPLEMENTED[id] }));
+  const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label }));
   const activeIndex = tabs.findIndex(tab => tab.id === active);
   return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3">
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
@@ -1231,14 +1231,11 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
           type="button"
           aria-current={isActive ? 'page' : undefined}
           onClick={() => { onChange(tab.id); scrollToSection(tab.id); }}
-          title={tab.ready ? undefined : `${tab.label} – Coming soon`}
           className={cx(
             'relative z-10 rounded-full px-3 py-1.5 transition-colors duration-200',
             isActive
               ? 'text-white dark:text-zinc-950'
-              : tab.ready
-                ? 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50'
-                : 'text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400',
+              : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
           )}
         >{tab.label}</button>;
       })}
