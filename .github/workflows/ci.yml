@@ -14,8 +14,11 @@ concurrency:
 
 jobs:
   build:
-    name: Build check
+    name: Build check + Deploy
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://netzprobe.de/
     steps:
       - name: Auschecken
         uses: actions/checkout@v4
@@ -30,24 +33,17 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
-      - name: Rust einrichten
-        uses: dtolnay/rust-toolchain@stable
       - name: Rust-Cache
         uses: Swatinem/rust-cache@v2
       - name: Rust-Tests
         # Einziges Rust-Gate der Pipeline — bewusst hier statt im Server-Deploy,
         # damit das Testurteil sichtbar ist und ein roter Commit den Webhook nie erreicht.
-        run: NETZPROBE_BUILD_COMMIT="${{ github.sha }}" cargo test --workspace
-
-  deploy:
-    name: Trigger VPS
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: production
-      url: https://netzprobe.de/
-    steps:
+        # --release: Golden-Test (50 Jahres-Simulationen) läuft optimiert ~10× schneller;
+        # Toolchain ist auf ubuntu-latest vorinstalliert, kein Setup-Step nötig.
+        run: NETZPROBE_BUILD_COMMIT="${{ github.sha }}" cargo test --release --workspace
       - name: Deploy-Webhook aufrufen
+        # Im selben Job statt separatem Deploy-Job: spart Runner-Spin-up (~10 s).
+        # Der Webhook blockiert bis zum Server-Restart — grün heißt: neue Version läuft.
         env:
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
         run: |
