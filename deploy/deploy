@@ -40,10 +40,22 @@ fi
 
 log "deploying $after"
 
-# Tests laufen in der CI (sichtbares Feedback, blockt den Webhook via needs: build).
-# Hier nur noch bauen + restarten — ein roter Commit erreicht diesen Punkt nie.
-npm ci
-npm run build
+# Tests und Typecheck laufen in der CI (sichtbares Feedback; der Webhook feuert
+# erst nach grünem Gate). Hier nur noch bauen + restarten — ein roter Commit
+# erreicht diesen Punkt nie.
+
+# npm ci nur, wenn sich das Lockfile geändert hat (spart ~5 s je Deploy).
+LOCK_HASH_FILE="$CARGO_TARGET_DIR/.npm-lock-hash"
+lock_hash="$(sha256sum package-lock.json | cut -d' ' -f1)"
+if [ ! -d node_modules ] || [ "$(cat "$LOCK_HASH_FILE" 2>/dev/null || true)" != "$lock_hash" ]; then
+  npm ci
+  printf '%s' "$lock_hash" > "$LOCK_HASH_FILE"
+else
+  log "node_modules aktuell (Lockfile unverändert)"
+fi
+
+# vite ohne tsc: der Typecheck lief in der CI auf exakt diesem Commit.
+npx vite build --config app/vite.config.ts
 cargo build --release --workspace
 
 if [ ! -x "$API_BINARY" ]; then
