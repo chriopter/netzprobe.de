@@ -20,8 +20,8 @@
     "description": [
       "**Komposition:** Realistischer 100%-EE-Pfad mit Import-Bilanzierung. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`), aber Strom- und H₂-Import sind gesetzt. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. PV, Wind onshore, Wind offshore und Speicher dimensioniert nach Studien-Konsens (Agora KN2045, BMWK LFS3 T45-H2, dena Aufbruch, Ariadne). Variable EE-Anteile im Verhältnis `PV 35 % / Wind on 40 % / Wind off 25 %` (PV-lastiger als lokales Preset, weil H₂-Import den saisonalen Winter-Mismatch puffert).",
       "**Werte (Mai 2026, validiert durch 5 Experten):** Auslegungsziel `Jahres-RE = 1,20 × Demand − Biomasse − Laufwasser`. **Cushion 1,20** (statt 1,10 zuvor): Import puffert zwar saisonal, aber das System braucht trotzdem Reserve für schlechte Wetterjahre + Round-trip-Verluste. Speicher: Batterie `0,08 GW/TWh` und `0,4 GWh/TWh`; **H₂ Elektrolyse `0,06 GW/TWh`, Rückverstromung `0,03 GW/TWh` (2:1 — Sommer-Befüllung läuft länger als Winter-Spitzen-Rückverstromung)**, Saisonspeicher-Energie `0,04 × Demand` (~73 TWh bei 1 830 TWh Demand — exakter Agora-Konsens 70–80 TWh).",
-      "**Import-Bilanz:** **H₂-Import** Basis `0,15 × Demand` = ~275 TWh bei e100 (Agora KN2045: 270 TWh — exakte Übereinstimmung). Falls Wind off durch AWZ-Cap (70 GW) gedeckelt wird, deckt zusätzlicher H₂-Import den Energie-Shortfall — bei e100 erreicht Gesamt-H₂-Import dann ~541 TWh (deutlich über Agora; geopolitisches Klumpenrisiko explizit). **Strom-Import-Cap proportional** zur Demand: `0,011 GW/TWh` → 5 GW bei 466 TWh Last, 20 GW bei 1 830 TWh (Ariadne 94 TWh bei 1 100 TWh Demand, EU-NTC 2030: 25–30 GW). **Emissionsfaktor 25 g/kWh** für grünen H₂-Import (Elektrolyse-RE in MENA/Skandinavien/AUS + Transport-Verluste 5–10 g) — konsistent mit »100ee«-Label. Blauer H₂ mit CCS (100 g/kWh) wäre Inkonsistenz.",
-      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG-Ziel 2045 = physisches DE-AWZ-Limit unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap, wird der Energie-Shortfall durch **zusätzlichen H₂-Import** gedeckt (Studien-Logik: Import-Pfad rechtfertigt sich gerade durch Limits inländischer Erzeugung). Folge: bei e100 wandert ~266 TWh zusätzlicher Bedarf in den H₂-Import (Gesamt ~541 TWh).",
+      "**Import-Bilanz:** **H₂-Import** Basis `0,15 × Demand` = ~275 TWh bei e100 (Agora KN2045: 270 TWh — exakte Übereinstimmung). Falls Wind off durch AWZ-Cap (70 GW) gedeckelt wird, deckt zusätzlicher H₂-Import den Energie-Shortfall — bei e100 erreicht Gesamt-H₂-Import dann ~596 TWh (deutlich über Agora; geopolitisches Klumpenrisiko explizit). **Strom-Import-Cap proportional** zur Demand: `0,011 GW/TWh` → 5 GW bei 466 TWh Last, 20 GW bei 1 830 TWh (Ariadne 94 TWh bei 1 100 TWh Demand, EU-NTC 2030: 25–30 GW). **Emissionsfaktor 25 g/kWh** für grünen H₂-Import (Elektrolyse-RE in MENA/Skandinavien/AUS + Transport-Verluste 5–10 g) — konsistent mit »100ee«-Label. Blauer H₂ mit CCS (100 g/kWh) wäre Inkonsistenz.",
+      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG-Ziel 2045 = physisches DE-AWZ-Limit unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap, wird der Energie-Shortfall durch **zusätzlichen H₂-Import** gedeckt (Studien-Logik: Import-Pfad rechtfertigt sich gerade durch Limits inländischer Erzeugung). Folge: bei e100 wandert ~321 TWh zusätzlicher Bedarf in den H₂-Import (Gesamt ~596 TWh).",
       "**Anwendungsfall:** Realistischer Klimaneutralitäts-Pfad nach Studien-Konsens. Zeigt was passiert, wenn Deutschland Studien-typische Annahmen übernimmt: PV-Schwerpunkt im Inland, H₂ überwiegend importiert (MENA, Skandinavien, Australien), Strom-Verbund mit EU für Flex-Puffer. Im Vergleich zum lokal-Preset (`100ee-noimport`) sind installierte EE-Leistungen kleiner — dafür entsteht eine substantielle Import-Abhängigkeit. **Geopolitisches Klumpenrisiko** durch H₂-Import nicht modelliert; Diversifizierungspflicht (3+ Regionen, davon eine in EU) sollte real beachtet werden."
     ],
     "overview": [
@@ -39,7 +39,7 @@
       },
       {
         "label": "Hard Cap Wind offshore",
-        "value": "**70 GW** (BSH FEP / WindSeeG-Ziel 2045). Übersteigt die Auslegung den Cap, wandert die Energie-Lücke in zusätzlichen H₂-Import. Bei e100 ergibt das insgesamt ~541 TWh H₂-Import — deutlich über Agora 270 TWh (geopolitisches Risiko)."
+        "value": "**70 GW** (BSH FEP / WindSeeG-Ziel 2045). Übersteigt die Auslegung den Cap, wandert die Energie-Lücke in zusätzlichen H₂-Import. Bei e100 ergibt das insgesamt ~596 TWh H₂-Import — deutlich über Agora 270 TWh (geopolitisches Risiko)."
       },
       {
         "label": "Handel",
@@ -47,11 +47,11 @@
       }
     ],
     "reasoning": [
-      "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
+      "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWindOn/yieldWindOff analog mit windOn100m bzw. windOff100m.",
       "target = max(0, demandTWh × 1,20 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (35%), WindOn (40%), WindOff (25%).",
       "PV-GW = target × 0,35 / yieldPV.",
       "WindOn-GW = target × 0,40 / yieldWind.",
-      "WindOff-GW = min(70, target × 0,25 / (yieldWind × 1,8)) — Hard Cap 70 GW DE-AWZ.",
+      "WindOff-GW = min(70, target × 0,25 / yieldWindOff) — yieldWindOff aus eigenem Offshore-Faktor windOff100m (~2,8 TWh/GW·a); Hard Cap 70 GW DE-AWZ.",
       "H₂-Saisonspeicher = 0,04 × Demand × 1 000 GWh.",
       "H₂-Charge:Discharge = 2:1 (Elektrolyse 0,06 GW/TWh, Rückverstromung 0,03 GW/TWh).",
       "H₂-Import-Basis = 0,15 × Demand TWh/Jahr (Agora-konform).",
@@ -72,7 +72,7 @@
       "H₂-Import-Basis 0,15 × Demand entspricht Agora KN2045 (270 TWh bei 1 270 TWh Demand). Studien-Range: BMWK LFS3 T45-Strom 100-150 TWh, T45-H2 300-450 TWh, dena 250+ TWh, Ariadne 60-250 TWh.",
       "Strom-Import-Cap proportional zur Demand (0,011 GW/TWh) — ~5 GW bei heutiger Last, 20 GW bei e100. Real verfügbar bei EU-Nachbarn fraglich, weil FR/DK/NO/CH 2045 selbst Klimaneutral-Pfade verfolgen.",
       "Emissionsfaktor 25 g/kWh setzt grünen H₂-Import voraus (Elektrolyse mit RE in Exportland). Bei realem Mix mit blauem H₂ (CCS, ~100 g/kWh) wäre der Wert deutlich höher und das Preset-Label »100ee« inkonsistent.",
-      "Hard Cap Wind offshore 70 GW (BSH FEP / WindSeeG-Ziel 2045). Bei e100 ist die Cap wirksam — Energie-Shortfall wandert in zusätzlichen H₂-Import (~266 TWh extra → ~541 TWh Total, doppelt so viel wie Agora). Geopolitisches Klumpenrisiko explizit.",
+      "Hard Cap Wind offshore 70 GW (BSH FEP / WindSeeG-Ziel 2045). Bei e100 ist die Cap wirksam — Energie-Shortfall wandert in zusätzlichen H₂-Import (~321 TWh extra → ~596 TWh Total, mehr als doppelt so viel wie Agora). Geopolitisches Klumpenrisiko explizit.",
       "Geopolitisches Risiko durch H₂-Import-Abhängigkeit (MENA, Skandinavien, AUS) ist im Modell nicht abgebildet — bei Embargo/Krieg-Szenario kollabiert die Bilanz schnell. Diversifizierungspflicht (3+ Regionen, davon eine in EU) sollte real beachtet werden. Import-Cap kann manuell auf 0 gesetzt werden, um Stand-alone-Stresstest zu simulieren — empfohlen ist dazu Wechsel auf `100ee-noimport`.",
       "Pro TWh Demand sind die EE-Werte (PV 0,36, Wind on 0,21, Wind off 0,07/TWh) konsistent mit Agora KN2045 / Ariadne Median. Bei e100-Demand 1 830 TWh ist die Skalierung allerdings 40-70 % über Studien-Demand (1 100-1 270 TWh) — siehe e100-Caveat zu fehlender Sektorkopplung (WP-JAZ, Smart Charging)."
     ],

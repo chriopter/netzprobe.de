@@ -21,7 +21,7 @@
       "**Komposition:** Autarkie-Preset. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und Import-Cap auf null. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. PV, Wind onshore, Wind offshore sowie Batterie und H₂-Saisonspeicher werden proportional zur Jahres-Last dimensioniert. Variable EE-Anteile im Verhältnis `PV 30 % / Wind on 40 % / Wind off 30 %` aufgeteilt (Wind 70 % / PV 30 % insgesamt, saisonal-optimal nach Heide et al. 2010 — Wind dominiert Winter, PV den Sommer).",
       "**Werte (Mai 2026, validiert durch 5 Experten gegen DE-2045-Studien):** Auslegungsziel `Jahres-RE = 1,25 × Demand − Biomasse − Laufwasser`. Der **Cushion-Faktor 1,25** entspricht dem Studien-Median (BMWK LFS3 1,40, Agora KN2045 1,15–1,20, Fraunhofer ISE) — er deckt 10–12 % Curtailment plus H₂-Speicher-Roundtrip (η ≈ 0,5). Speicher-Sizing: Batterie `0,1 GW/TWh` Leistung und `0,5 GWh/TWh` Energie (C-Rate 5h, Tag/Nacht-Glättung); **H₂ Elektrolyse `0,08 GW/TWh`, Rückverstromung `0,04 GW/TWh` (2:1-Verhältnis: Elektrolyse läuft 3000-4000 VLh im Sommer-Überschuss, Rückverstromung nur Winter-Spitzen)**, Saisonspeicher-Energie `0,15 × Demand` in TWh.",
       "**Saisonbilanz:** Bei Demand 1830 TWh ergibt die Saisonspeicher-Logik ~275 TWh H₂ — konsistent mit Fraunhofer ISE REMod (130 TWh als Untergrenze für autark + Industrie-H₂). Saisonbilanz-Experten-Befund: Winterdefizit (Dez-Feb) ~660 TWh bei e100, davon nach H₂-Rückverstromung ~140 TWh aus Speicher deckbar = 21 %; Rest aus winterhoher Wind-Erzeugung. Salzkavernen-Potenzial DE onshore: 9 400 TWh (Fraunhofer IEG), keine Engstelle.",
-      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG 2045-Ziel = physisches Maximum DE-AWZ unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap (typisch bei e100-Demand), wird der Energie-Shortfall durch **zusätzlichen PV-Ausbau** kompensiert (PV-Fläche elastischer als 2 %-Wind-Vorranggebiete). Folge: bei e100 wächst PV auf ~1050 GW (2,9 % DE-Fläche bei 10 km²/GW — am oberen Rand des physisch Machbaren).",
+      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG 2045-Ziel = physisches Maximum DE-AWZ unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap (typisch bei e100-Demand), wird der Energie-Shortfall durch **zusätzlichen PV-Ausbau** kompensiert (PV-Fläche elastischer als 2 %-Wind-Vorranggebiete). Folge: bei e100 wächst PV auf ~1660 GW (Offshore-Cap-Kompensation; Flächenwirkung siehe Fläche-Sektion mit Flottenmix 6 km²/GW — am oberen Rand des physisch Machbaren).",
       "**Anwendungsfall:** Autarkie-Stresstest. Zeigt, wie groß PV-, Wind- und Speicherflotte werden müssen, wenn weder fossile Backup-Kraftwerke noch Strom-/H₂-Import zur Verfügung stehen. **WICHTIG:** Kein veröffentlichter Studienpfad modelliert echtes Stand-alone DE ohne H₂-Import; Import-Anteile von 50–80 % am H₂ sind durchgängig gesetzt (Agora 270 TWh, dena 458 TWh, Ariadne 60–250 TWh, BMWK LFS3 T45-H2 300–450 TWh). Dieses Preset zeigt den extremen Stresstest, nicht die wahrscheinliche Lösung. Bei e100-Demand 1830 TWh ohne Sektorkopplung/WP-JAZ liegen die GW-Werte 50–60 % über vergleichbaren Studien-Szenarien — siehe Caveat zur Demand-Skalierung."
     ],
     "overview": [
@@ -47,11 +47,11 @@
       }
     ],
     "reasoning": [
-      "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWind analog mit wind100m.",
+      "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWindOn/yieldWindOff analog mit windOn100m bzw. windOff100m.",
       "target = max(0, demandTWh × 1,25 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (40%), WindOff (30%).",
       "PV-GW = target × 0,30 / yieldPV plus PV-Kompensation, falls Wind off-Cap greift.",
       "WindOn-GW = target × 0,40 / yieldWind.",
-      "WindOff-GW = min(70, target × 0,30 / (yieldWind × 1,8)) — Multiplier 1,8 korrigiert Onshore-Wind-Profil auf Offshore-CF; Hard Cap 70 GW = DE-AWZ-Limit (BSH FEP).",
+      "WindOff-GW = min(70, target × 0,30 / yieldWindOff) — yieldWindOff kommt aus dem eigenen Offshore-Faktor windOff100m (~2,8 TWh/GW·a beobachtet 2025); Hard Cap 70 GW = DE-AWZ-Limit (BSH FEP).",
       "PV-Kompensation = max(0, (raw_windoff_gw − 70) × yield_offshore) / yield_pv — fängt Wind-off-Cap-Energie via PV ab.",
       "H₂-Saisonspeicher = 0,15 × Demand × 1 000 GWh (Fraunhofer ISE REMod-Niveau, autark-konform).",
       "H₂-Charge:Discharge = 2:1 (Elektrolyse 0,08 GW/TWh, Rückverstromung 0,04 GW/TWh) — Sommer-Befüllung läuft 3 000–4 000 VLh, Rückverstromung deckt nur Winter-Spitzen ~500-1 500 VLh.",
@@ -68,7 +68,7 @@
       "Mix-Anteile (30/40/30) basieren auf Heide et al. 2010 (saisonal-optimal 55–60 % Wind / 40–45 % PV); reale Langfristszenarien streuen je nach Yield-Annahme.",
       "Cushion 1,25 deckt Curtailment 10–12 % plus H₂-Roundtrip; bei sehr hoher Demand (e100) reicht es knapp — Saisonbilanz-Experten halten 1,40 für autark-Last 1 800+ TWh sicherer.",
       "Speicher-Sizing (Batterie 0,5 GWh/TWh, H₂-Saison 0,15 × Demand) ist Daumenregel mit Studien-Median; H₂-Saison 0,15 entspricht Fraunhofer ISE REMod-Niveau, deckt Winterdefizit knapp aber realistisch.",
-      "Wind Offshore nutzt Onshore-Einspeisefaktor mit Multiplier 1,8 zur Annäherung der Offshore-CF (~4 200 vs. ~2 000 Vlh).",
+      "Wind Offshore nutzt seit Juni 2026 den eigenen beobachteten Offshore-Faktor windOff100m (~2 800 Vlh Bestand 2025 inkl. Anbindungs-Abregelung); kein Multiplier-Umweg mehr.",
       "**Hard Cap Wind offshore 70 GW** (BSH FEP / WindSeeG): bei e100-Demand wird der Cap getroffen, fehlende Energie via PV kompensiert → PV wächst auf ~1 050 GW (2,9 % DE-Fläche, physisch grenzwertig).",
       "Bei e100-Demand 1 830 TWh (ohne Sektorkopplung/WP-JAZ/Smart Charging) liegen Erzeugungs-GW 35–45 % über Studien-Szenarien — siehe e100-Caveat zu Effizienz-Annahmen. Mit Sektorkopplung wäre Demand ~1 100 TWh und alle Werte würden 1:1 zu Studien passen.",
       "Echtes Stand-alone DE wird in keiner publizierten Studie modelliert; Import-Anteile am H₂-Bedarf 50–80 % sind durchgängig gesetzt (Agora KN2045: 270 TWh, dena: 458 TWh, BMWK LFS3 T45-H2: 300–450 TWh, Ariadne: 60–250 TWh). Dieses Preset zeigt den extremen Stresstest, nicht die wahrscheinliche Lösung."

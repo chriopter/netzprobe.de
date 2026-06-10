@@ -39,11 +39,12 @@ export type Scenario = {
     /**
      * Multiplier auf die einspeisefaktoren-2025-Werte, um modernere Anlagen-
      * Flotten als die aktuelle DE-2025-Realflotte zu modellieren. Defaults =
-     * 1.0 (heutiger Flottenschnitt). Höhere Werte beschreiben Neubau-Mix:
-     * PV ~1.5 (Aufdach modern + Freifläche bifazial 1100 kWh/kWp/a vs. heute
-     * 702), Wind Onshore ~1.4 (~2400 VLH neubau vs. heute 1745 gemischt),
-     * Wind Offshore default 1.8 (~4000 VLH 15 MW-Klasse vs. heute auf
-     * gemischtem Faktor abgebildet).
+     * 1.0 (heutiger Flottenschnitt; seit dem Faktor-Split hat auch Offshore
+     * einen eigenen beobachteten Faktor windOff100m mit ~2800 VLH). Höhere
+     * Werte beschreiben Neubau-Mix: PV ~1.5 (Aufdach modern + Freifläche
+     * bifazial 1100 kWh/kWp/a vs. heute 702), Wind Onshore ~1.4 (~2400 VLH
+     * Neubau vs. heute ~1600 beobachtet), Wind Offshore ~1.4 (~4000 VLH
+     * 15-MW-Klasse vs. ~2800 beobachtet inkl. Anbindungs-Abregelung).
      */
     pvCapacityFactorMultiplier: number;
     windOnCapacityFactorMultiplier: number;

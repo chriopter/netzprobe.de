@@ -5,7 +5,7 @@
   "kind": "scenario",
   "method": {
     "title": "Wind Onshore",
-    "short": "Installierte Wind-Onshore-Leistung; stündliche Einspeisung aus 100-m-Windfeld.",
+    "short": "Installierte Wind-Onshore-Leistung; stündliche Einspeisung aus eigenem Onshore-Einspeisefaktor.",
     "source": "Energy-Charts installed_power 2025 (Wind Onshore Deutschland); MTGermany energy-simulation-de (Emissionsfaktor).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -19,8 +19,8 @@
     "unit": "GW, g/kWh",
     "description": [
       "**Anlagenpark:** rund `28.700` Onshore-Windturbinen mit einer installierten Gesamtleistung von `62,8 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default** — überwiegend in Nord- und Ostdeutschland, mit zunehmend repowerten Standorten in der Mitte. Der Nettozubau liegt zuletzt bei `3–4 GW/a`; das Slider-Maximum `1200 GW` (Schritt `5 GW`) deckt auch radikale Ausbau- und H2-Szenarien ab. **Offizielle Vergleichspunkte:** Osterpaket-Ausbauziel 2030 `115 GW`, BMWK-Langfristszenario O45-Strom 2045 `~160 GW` (Pfad, den die Frontier/DIHK-Studie »Plan B« 2025 bepreist).",
-      "**Einspeisecharakteristik:** die Stundenleistung folgt dem deutschlandweit gewichteten 100-m-Windfeld — `supplyGW(t) = installedGW × wind100m[t]`. Der normierte Einspeisefaktor aus `einspeisefaktoren-2025` läuft stündlich zwischen `0` (Flautenstunden) und etwa `0,95` (Sturmphasen). Über das Jahr ergibt das Volllaststunden im Korridor `1900–2200 h/a` und damit beim Default-Bestand rund `120 TWh/a` Energieertrag; die Lastform ist **antizyklisch zu PV** (Winterhochs, Sommerschwäche) und an die Großwetterlage gekoppelt — Dunkelflauten von mehreren Tagen sind in den Faktoren enthalten. Spezifische Emissionen `13 g/kWh` (Anlagenbau, Wartung; electricitymaps DE).",
-      "**Modellgrenze:** der Einspeisefaktor ist ein **Bundesmittel**: Standortqualität (Küste vs. Mittelgebirge vs. Süd), Repowering-Effekte und Nabenhöhen-Mix sind aggregiert. Installierte Leistung ist Jahresmittel — unterjähriger Zubau wird nicht stundenscharf ausgerollt. Curtailment im Kernmodell greift nach Wind Offshore und vor PV; reale Netzengpass-Abregelung (Schleswig-Holstein, NEMO) ist nicht abgebildet. Größenordnung dieser Lücke: real wurden 2025 `9,4 TWh` Wind+PV netzbedingt abgeregelt (SMARD; Wind-Schwerpunkt im Winter) plus `~1,75 TWh` marktlich bei Negativpreisen — das Kupferplatten-Modell zeigt mit 2025-Kapazitäten `0 TWh`."
+      "**Einspeisecharakteristik:** die Stundenleistung folgt dem eigenen Onshore-Einspeisefaktor — `supplyGW(t) = installedGW × windOn100m[t]` aus `einspeisefaktoren-2025` (beobachtete Onshore-Einspeisung 2025 ÷ monatlich installierte Onshore-Leistung; seit dem Faktor-Split ohne Offshore-Beimischung). Der Faktor läuft stündlich zwischen `0` (Flautenstunden) und etwa `0,7` (Sturmphasen); Jahressumme `~1.600 h/a` Volllaststunden-Äquivalent (Wetterjahr 2025, eher windschwach, Abregelung enthalten) und damit beim Default-Bestand rund `100 TWh/a` Energieertrag — nah an der realen 2025er Onshore-Einspeisung (`105 TWh`); die Lastform ist **antizyklisch zu PV** (Winterhochs, Sommerschwäche) und an die Großwetterlage gekoppelt — Dunkelflauten von mehreren Tagen sind in den Faktoren enthalten. Spezifische Emissionen `13 g/kWh` (Anlagenbau, Wartung; electricitymaps DE).",
+      "**Modellgrenze:** der Einspeisefaktor ist ein **Bundesmittel**: Standortqualität (Küste vs. Mittelgebirge vs. Süd), Repowering-Effekte und Nabenhöhen-Mix sind aggregiert. Installierte Leistung ist Jahresmittel — unterjähriger Zubau wird nicht stundenscharf ausgerollt. Curtailment im Kernmodell greift nach Wind Offshore und vor PV; reale Netzengpass-Abregelung (Schleswig-Holstein, NEMO) ist über die beobachteten Faktoren teilweise eingebettet, zusätzliche Abregelung bildet die Kupferplatte nicht ab. Größenordnung dieser Lücke: real wurden 2025 `9,4 TWh` Wind+PV netzbedingt abgeregelt (SMARD; Wind-Schwerpunkt im Winter) plus `~1,75 TWh` marktlich bei Negativpreisen — das Kupferplatten-Modell zeigt mit 2025-Kapazitäten `0 TWh`."
     ],
     "overview": [
       {
@@ -29,7 +29,7 @@
       },
       {
         "label": "Verteilung",
-        "value": "**Profil:** `supplyGW(t) = installedGW × wind100m[t]` aus `einspeisefaktoren-2025`. Stundenwerte `0`–`0,95`, ausgeprägte Wetterabhängigkeit, Winterüberhang, mehrtägige Flautenphasen erhalten."
+        "value": "**Profil:** `supplyGW(t) = installedGW × windOn100m[t]` aus `einspeisefaktoren-2025` (reiner Onshore-Faktor). Stundenwerte `0`–`0,7`, ausgeprägte Wetterabhängigkeit, Winterüberhang, mehrtägige Flautenphasen erhalten."
       },
       {
         "label": "Formel",
@@ -38,7 +38,7 @@
     ],
     "reasoning": [
       "Installierte Leistung Ende 2025 laut Energy-Charts (Jahresmittel).",
-      "Einspeisefaktor wind100m stündlich aus einspeisefaktoren-2025; Werte 0 bis etwa 0,95.",
+      "Einspeisefaktor windOn100m stündlich aus einspeisefaktoren-2025 (reiner Onshore-Faktor); Werte 0 bis etwa 0,7.",
       "Emissionsfaktor 13 g/kWh laut MTGermany (Quelle: electricitymaps DE)."
     ],
     "fields": [
@@ -70,7 +70,7 @@
       {
         "name": "factorField",
         "unit": "Text",
-        "description": "wind100m."
+        "description": "windOn100m (reiner Onshore-Faktor)."
       },
       {
         "name": "emissions",
@@ -104,7 +104,7 @@
       }
     ],
     "caveats": [
-      "Einspeisefaktor wind100m ist deutschlandweiter Durchschnitt; regionale Unterschiede (Küste vs. Süd) nicht abgebildet.",
+      "Einspeisefaktor windOn100m ist deutschlandweiter Durchschnitt; regionale Unterschiede (Küste vs. Süd) nicht abgebildet.",
       "Default 62,8 GW ist Jahresmittel; Wachstum 2025 wird nicht stundenaufgelöst berücksichtigt.",
       "Standortqualität (Repowering vs. Neuanlagen) ist im Faktor nicht differenziert."
     ],
@@ -145,7 +145,7 @@
   "parameters": {
     "mode": "variable-re",
     "factorPackage": "einspeisefaktoren-2025",
-    "factorField": "wind100m",
+    "factorField": "windOn100m",
     "emissions": {
       "co2eGperKWh": 13
     },

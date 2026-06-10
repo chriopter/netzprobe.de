@@ -44,7 +44,10 @@ struct LoadHour {
 struct FactorHour {
     time: String,
     solar_irradiance: Vec<f64>,
-    wind100m: Vec<f64>,
+    #[serde(rename = "windOn100m")]
+    wind_on_100m: Vec<f64>,
+    #[serde(rename = "windOff100m")]
+    wind_off_100m: Vec<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -138,7 +141,8 @@ struct HourInput {
     time: String,
     load_mw: f64,
     solar_factor: f64,
-    wind_factor: f64,
+    wind_on_factor: f64,
+    wind_off_factor: f64,
     heating_degree_day_weight: f64,
     hour_of_day_berlin: usize,
 }
@@ -284,7 +288,8 @@ impl StaticModel {
                 time: load.time,
                 load_mw: load.load_mw,
                 solar_factor: factor.solar_irradiance.first().copied().unwrap_or(0.0),
-                wind_factor: factor.wind100m.first().copied().unwrap_or(0.0),
+                wind_on_factor: factor.wind_on_100m.first().copied().unwrap_or(0.0),
+                wind_off_factor: factor.wind_off_100m.first().copied().unwrap_or(0.0),
                 heating_degree_day_weight: heating_weight,
                 hour_of_day_berlin: hour,
             });
@@ -539,7 +544,7 @@ impl StaticModel {
                 "kohleInstalledGW": comp_number(composition_id, "kohleInstalledGW")?,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.8,
+                "windOffCapacityFactorMultiplier": 1.0,
             }),
             json!({
                 "batteriePowerGW": comp_number(composition_id, "batteriePowerGW")?,
@@ -579,7 +584,6 @@ impl StaticModel {
         // Alle Werte aus dem Preset-Modul model/erzeugung/100ee-import/model.rs.
         use preset_100ee_import::{
             EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
-            EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
             STROM_IMPORT_EMISSION_G_PER_KWH,
             target_variable_re_twh, variable_re_gw, wind_offshore_gw,
             h2_import_compensation_twh, strom_import_gw_cap,
@@ -587,17 +591,18 @@ impl StaticModel {
             h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh, h2_import_twh,
         };
         let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
-        let yield_wind = self.annual_yield_twh_per_gw("wind").max(0.1);
+        let yield_wind_on = self.annual_yield_twh_per_gw("windon").max(0.1);
+        let yield_wind_off = self.annual_yield_twh_per_gw("windoff").max(0.1);
         let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
         let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
         let target = target_variable_re_twh(demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
         let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
-        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind);
-        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind);
+        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on);
+        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
         // Wenn Wind off gecappt: zusätzlicher H2-Import deckt den Energie-Shortfall.
         let h2_import_shortfall = h2_import_compensation_twh(
-            target, EE_WIND_OFF_SHARE, total_share, yield_wind,
+            target, EE_WIND_OFF_SHARE, total_share, yield_wind_off,
         );
         let h2_import_total = h2_import_twh(demand_twh) + h2_import_shortfall;
         Ok((
@@ -612,7 +617,7 @@ impl StaticModel {
                 "kohleInstalledGW": 0.0,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
+                "windOffCapacityFactorMultiplier": 1.0,
             }),
             json!({
                 "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(demand_twh))?,
@@ -644,25 +649,25 @@ impl StaticModel {
         // Der Kern ist Dispatch-Engine; Szenario-Parameter leben im Preset.
         use preset_100ee_lokal::{
             EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
-            EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
             target_variable_re_twh, variable_re_gw, wind_offshore_gw,
             pv_compensation_for_wind_offshore_cap,
             battery_power_gw, battery_energy_gwh,
             h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh,
         };
         let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
-        let yield_wind = self.annual_yield_twh_per_gw("wind").max(0.1);
+        let yield_wind_on = self.annual_yield_twh_per_gw("windon").max(0.1);
+        let yield_wind_off = self.annual_yield_twh_per_gw("windoff").max(0.1);
         let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
         let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
         let target = target_variable_re_twh(demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
         let pv_base_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
         let pv_compensation = pv_compensation_for_wind_offshore_cap(
-            target, EE_WIND_OFF_SHARE, total_share, yield_wind, yield_pv,
+            target, EE_WIND_OFF_SHARE, total_share, yield_wind_off, yield_pv,
         );
         let pv_gw = pv_base_gw + pv_compensation;
-        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind);
-        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind);
+        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on);
+        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
         Ok((
             json!({
                 "pvInstalledGW": snap_gen("pv", pv_gw)?,
@@ -675,7 +680,7 @@ impl StaticModel {
                 "kohleInstalledGW": 0.0,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER,
+                "windOffCapacityFactorMultiplier": 1.0,
             }),
             json!({
                 "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(demand_twh))?,
@@ -712,7 +717,7 @@ impl StaticModel {
                 "kohleInstalledGW": snap_gen("kohle", comp_number("historisch-2025", "kohleInstalledGW")? * factor)?,
                 "pvCapacityFactorMultiplier": 1.0,
                 "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.8,
+                "windOffCapacityFactorMultiplier": 1.0,
             }),
             json!({
                 "batteriePowerGW": snap_storage("batterie", "powerGW", comp_number("historisch-2025", "batteriePowerGW")? * factor)?,
@@ -737,12 +742,10 @@ impl StaticModel {
     fn annual_yield_twh_per_gw(&self, field: &str) -> f64 {
         self.hours
             .iter()
-            .map(|hour| {
-                if field == "solar" {
-                    hour.solar_factor
-                } else {
-                    hour.wind_factor
-                }
+            .map(|hour| match field {
+                "solar" => hour.solar_factor,
+                "windoff" => hour.wind_off_factor,
+                _ => hour.wind_on_factor,
             })
             .sum::<f64>()
             / 1000.0
@@ -1087,10 +1090,10 @@ impl StaticModel {
         let pv_factor = (row.solar_factor
             * s_number(scenario, &["generation", "pvCapacityFactorMultiplier"])?)
         .min(1.0);
-        let wind_on_factor = (row.wind_factor
+        let wind_on_factor = (row.wind_on_factor
             * s_number(scenario, &["generation", "windOnCapacityFactorMultiplier"])?)
         .min(1.0);
-        let wind_off_factor = (row.wind_factor
+        let wind_off_factor = (row.wind_off_factor
             * s_number(scenario, &["generation", "windOffCapacityFactorMultiplier"])?)
         .min(1.0);
         Ok(SupplyBuild {

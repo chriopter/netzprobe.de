@@ -6,8 +6,10 @@ pub struct FeedInFactorHour {
     pub time: String,
     #[serde(rename = "solarIrradiance")]
     pub solar_irradiance: Vec<f64>,
-    #[serde(rename = "wind100m")]
-    pub wind_100m: Vec<f64>,
+    #[serde(rename = "windOn100m")]
+    pub wind_on_100m: Vec<f64>,
+    #[serde(rename = "windOff100m")]
+    pub wind_off_100m: Vec<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

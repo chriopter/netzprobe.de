@@ -44,7 +44,6 @@ pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.15;
 // Agora 70, DVGW ~120 — alle MIT Import, daher hier oberer Rand). Salzkavernen-Potenzial
 // DE 9400 TWh (Fraunhofer IEG) → genutzt nur ~2 %, also problemlos.
 pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.11;
-pub const EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER: f64 = 1.8;
 // Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
 // Floating-Offshore könnte +20-30 GW, aber kommerziell erst nach 2040 — daher Hard-Cap.
 pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 70.0;
@@ -80,9 +79,10 @@ pub fn variable_re_gw(target_twh: f64, share: f64, total_share: f64, yield_twh_p
     (target_twh * share / total_share) / yield_twh_per_gw.max(0.1)
 }
 
-pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_onshore: f64) -> f64 {
-    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    let raw_gw = (target_twh * share / total_share) / yield_offshore.max(0.1);
+// Offshore-Yield kommt seit dem Faktor-Split direkt aus windOff100m (beobachtete
+// Offshore-Einspeisung 2025, ~2,8 TWh/GW·a) — kein Multiplier-Umweg mehr.
+pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_wind_offshore: f64) -> f64 {
+    let raw_gw = (target_twh * share / total_share) / yield_wind_offshore.max(0.1);
     raw_gw.min(EE_WIND_OFFSHORE_MAX_GW)
 }
 
@@ -93,13 +93,12 @@ pub fn pv_compensation_for_wind_offshore_cap(
     target_twh: f64,
     share_wind_off: f64,
     total_share: f64,
-    yield_wind_onshore: f64,
+    yield_wind_offshore: f64,
     yield_pv: f64,
 ) -> f64 {
-    let yield_offshore = yield_wind_onshore * EE_WIND_OFF_CAPACITY_FACTOR_MULTIPLIER;
-    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_offshore.max(0.1);
+    let wind_off_raw_gw = (target_twh * share_wind_off / total_share) / yield_wind_offshore.max(0.1);
     let wind_off_shortfall_gw = (wind_off_raw_gw - EE_WIND_OFFSHORE_MAX_GW).max(0.0);
-    let shortfall_twh = wind_off_shortfall_gw * yield_offshore;
+    let shortfall_twh = wind_off_shortfall_gw * yield_wind_offshore;
     shortfall_twh / yield_pv.max(0.1)
 }
 
@@ -153,9 +152,21 @@ mod tests {
     fn wind_offshore_capped_at_70_gw() {
         // Bei sehr hohem Target sollte Wind off bei 70 GW kappen.
         let huge_target = 10_000.0;
-        let yield_wind = 2.0;
+        let yield_wind_off = 2.8;
         let total_share = 1.0;
-        let result = wind_offshore_gw(huge_target, 0.30, total_share, yield_wind);
+        let result = wind_offshore_gw(huge_target, 0.30, total_share, yield_wind_off);
         assert!((result - EE_WIND_OFFSHORE_MAX_GW).abs() < 1e-6);
+    }
+
+    #[test]
+    fn pv_compensation_replaces_capped_offshore_energy() {
+        // Shortfall-Energie (über 70 GW) muss vollständig in PV-GW übersetzt werden.
+        let target = 2_000.0;
+        let yield_wind_off = 2.8;
+        let yield_pv = 0.7;
+        let raw_gw = target * 0.30 / yield_wind_off;
+        let shortfall_twh = (raw_gw - EE_WIND_OFFSHORE_MAX_GW).max(0.0) * yield_wind_off;
+        let pv_gw = pv_compensation_for_wind_offshore_cap(target, 0.30, 1.0, yield_wind_off, yield_pv);
+        assert!((pv_gw * yield_pv - shortfall_twh).abs() < 1e-6);
     }
 }
