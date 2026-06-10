@@ -31,8 +31,10 @@ jobs:
         run: npm ci
       - name: Tests
         run: npm test
-      - name: Build
-        run: npm run build
+      - name: Typecheck
+        # Nur tsc — den vite-Produktionsbuild macht der Server selbst (Typecheck
+        # dort wäre auf dem 2-Core-VPS mit ~10 s der teuerste Einzelposten).
+        run: npx tsc -b
       - name: Rust-Cache
         uses: Swatinem/rust-cache@v2
       - name: Rust-Tests
