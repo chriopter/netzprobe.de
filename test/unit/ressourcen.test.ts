@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { annualByMaterial, groupSums, BULK, FUEL, VLH } from '../../app/src/ui/ressourcen';
+import { ELEMENTS, MATERIAL_ELEMENT, NON_ELEMENT_MATERIALS } from '../../app/src/ui/periodicElements';
 import { defaultScenario, normalizeScenario } from '../../app/src/ui/scenarioPresets';
 import type { Scenario } from '../../app/src/types/scenario';
 
@@ -191,5 +192,31 @@ describe('Ressourcen · B Invarianten', () => {
     const lw50 = annualByMaterial(sl, 50, {});
     const lw60 = annualByMaterial(sl, 60, {});
     expect(lw50['Beton/Zement'] * 50).toBeCloseTo(lw60['Beton/Zement'] * 60, 0); // beide ein Bau
+  });
+});
+
+// ===========================================================================
+// C — Periodensystem (Signatur-Element der Ressourcen-Sektion)
+// ===========================================================================
+describe('Ressourcen · C Periodensystem-Mapping', () => {
+  it('jedes Register-Material ist Element-gemappt oder explizit Verbindungs-Chip', () => {
+    const symbols = new Set(ELEMENTS.map(e => e.symbol));
+    for (const m of Object.keys(materials)) {
+      const mapped = MATERIAL_ELEMENT[m];
+      const isChip = NON_ELEMENT_MATERIALS.includes(m);
+      expect(mapped !== undefined || isChip, `${m}: weder Element noch Chip`).toBe(true);
+      if (mapped) expect(symbols.has(mapped), `${m} → ${mapped} existiert nicht im Layout`).toBe(true);
+    }
+  });
+  it('Element-Layout: Symbole eindeutig, Positionen im 18×10-Raster, Kernsymbole vorhanden', () => {
+    const symbols = ELEMENTS.map(e => e.symbol);
+    expect(new Set(symbols).size).toBe(symbols.length);
+    for (const e of ELEMENTS) {
+      expect(e.col, e.symbol).toBeGreaterThanOrEqual(1);
+      expect(e.col, e.symbol).toBeLessThanOrEqual(18);
+      expect(e.row, e.symbol).toBeGreaterThanOrEqual(1);
+      expect(e.row, e.symbol).toBeLessThanOrEqual(10);
+    }
+    for (const s of ['Fe', 'Cu', 'Li', 'U', 'Nd', 'Dy', 'Si', 'Ag']) expect(symbols).toContain(s);
   });
 });

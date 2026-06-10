@@ -8,6 +8,7 @@ import { cx, muted } from '../ui';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
 import { annualByMaterial, groupSums, BULK, FUEL, type MaterialInfo } from '../ressourcen';
 import { uiManifest } from '../uiManifest';
+import { ELEMENTS, MATERIAL_ELEMENT, NON_ELEMENT_MATERIALS } from '../periodicElements';
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
@@ -31,10 +32,12 @@ function ColHead({ label, hint }: { label: string; hint: string }) {
 function MultipleTiles({ title, base, scen, colorClass, buildoutYear, continuous }: { title: string; base: number; scen: number; colorClass: string; buildoutYear: string; continuous?: boolean }) {
   const mult = base > 0 ? scen / base : 0;
   const visible = Math.max(1, Math.ceil(mult));
-  return <div className="group relative px-3 py-2.5">
+  return <div className="group relative px-4 py-3">
     <div className="flex items-baseline justify-between gap-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{title}</h4>
-      <span className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{base > 0 ? `${mult.toLocaleString('de-DE', { maximumFractionDigits: 1 })}× zu 2025` : '–'}</span>
+      <span className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
+        {base > 0 ? <>{mult.toLocaleString('de-DE', { maximumFractionDigits: 1 })}×<span className="ml-1 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">zu 2025</span></> : '–'}
+      </span>
     </div>
     {continuous
       ? <div className="mt-3 flex flex-col gap-1" aria-label={`${mult.toLocaleString('de-DE', { maximumFractionDigits: 1 })}-fach gegenüber 2025`}>
@@ -45,7 +48,7 @@ function MultipleTiles({ title, base, scen, colorClass, buildoutYear, continuous
             </div>;
           })}
         </div>
-      : <div className="mt-3 grid grid-cols-12 gap-1.5" aria-label={`${mult.toLocaleString('de-DE', { maximumFractionDigits: 1 })}-fach gegenüber 2025`}>
+      : <div className="mt-3 grid grid-cols-6 gap-1.5" aria-label={`${mult.toLocaleString('de-DE', { maximumFractionDigits: 1 })}-fach gegenüber 2025`}>
           {Array.from({ length: visible }, (_, i) => i).map(i => {
             const pct = Math.round(Math.max(0, Math.min(1, mult - i)) * 100);
             return <span key={i} className="relative h-3.5 overflow-hidden rounded-[3px] border border-zinc-200 bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-700">
@@ -63,34 +66,61 @@ function MultipleTiles({ title, base, scen, colorClass, buildoutYear, continuous
   </div>;
 }
 
-export default function RessourcenSection({ scenario, buildoutYear, data }: { scenario: Scenario; buildoutYear: string; data: DataSet | null }) {
-  const buildoutYears = Math.max(1, Number(buildoutYear) - 2025);
+type MaterialRow = { m: string; label: string; cat: 'bulk' | 'spezial' | 'brennstoff'; s: number; b: number; pct: number; pctDE: number | null };
 
-  const { scen, base, rows } = useMemo(() => {
-    const scA = annualByMaterial(scenario, buildoutYears, e100ElectricTWh(scenario, data));
-    const baseA = annualByMaterial(scenarioBase, buildoutYears, e100ElectricTWh(scenarioBase, data));
-    const materials = uiManifest.materials as Record<string, MaterialInfo>;
-    const rows = Object.keys(materials).map(m => {
-      const s = scA[m] ?? 0, b = baseA[m] ?? 0, world = materials[m].globalProductionTPerYear;
-      const de = materials[m].germanyDemandTPerYear ?? 0;
-      const cat: 'bulk' | 'spezial' | 'brennstoff' = FUEL.has(m) ? 'brennstoff' : BULK.has(m) ? 'bulk' : 'spezial';
-      return { m, label: materials[m].label, cat, s, b, world, pct: world > 0 ? s / world * 100 : 0, pctDE: de > 0 ? s / de * 100 : null };
-    }).filter(r => r.s > 0 || r.b > 0).sort((a, x) => x.pct - a.pct);
-    return { scen: groupSums(scA), base: groupSums(baseA), rows };
-  }, [scenario, buildoutYears, data]);
+// Signatur-Element der Sektion: ein Periodensystem, in dem die Szenario-
+// Materialien aufleuchten. Füllintensität = Anteil an der globalen
+// Jahresförderung (sqrt-skaliert, damit auch kleine Anteile sichtbar sind).
+function PeriodicTable({ rows }: { rows: MaterialRow[] }) {
+  const bySymbol = new Map<string, MaterialRow>();
+  for (const r of rows) {
+    const symbol = MATERIAL_ELEMENT[r.m];
+    if (symbol && r.s > 0) bySymbol.set(symbol, r);
+  }
+  const maxPct = Math.max(0.0001, ...[...bySymbol.values()].map(r => r.pct));
+  const intensity = (pct: number) => 0.25 + 0.75 * Math.sqrt(pct / maxPct);
+  const chips = rows.filter(r => NON_ELEMENT_MATERIALS.includes(r.m) && r.s > 0);
+  const used = [...bySymbol.values()].sort((a, b) => b.pct - a.pct);
 
-  return <section id="section-ressourcen" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-    <SectionHeading id="ressourcen"/>
-
-    <div className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white py-1 dark:border-zinc-800 dark:bg-zinc-950">
-      <MultipleTiles title={`Beton, Stahl & Aluminium · gesamt bis ${buildoutYear}`} base={base.bulk * buildoutYears} scen={scen.bulk * buildoutYears} colorClass="bg-zinc-400 dark:bg-zinc-500" buildoutYear={buildoutYear}/>
-      <MultipleTiles title={`Spezialmaterialien · gesamt bis ${buildoutYear}`} base={base.spezial * buildoutYears} scen={scen.spezial * buildoutYears} colorClass="bg-zinc-600 dark:bg-zinc-300" buildoutYear={buildoutYear}/>
-      <MultipleTiles title={`Brennstoff (Kohle, Erdgas) · gesamt bis ${buildoutYear}`} base={base.brennstoff * buildoutYears} scen={scen.brennstoff * buildoutYears} colorClass="bg-stone-700 dark:bg-stone-400" buildoutYear={buildoutYear} continuous/>
+  return <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Was das Szenario aus dem Periodensystem braucht</h3>
+    <div className="mt-3 overflow-x-auto">
+      <div className="grid w-full min-w-[480px] gap-[3px]" style={{ gridTemplateColumns: 'repeat(18, minmax(0, 1fr))' }}>
+        {ELEMENTS.map(el => {
+          const hit = bySymbol.get(el.symbol);
+          return <div
+            key={el.symbol}
+            className={cx(
+              'group/el relative grid aspect-square place-items-center rounded-[3px] text-[9px] leading-none sm:text-[10px]',
+              hit
+                ? 'cursor-help font-bold text-white ring-1 ring-sky-700/40 dark:text-zinc-950 dark:ring-sky-300/40'
+                : 'bg-zinc-100 text-zinc-300 dark:bg-zinc-900 dark:text-zinc-700',
+            )}
+            style={{ gridRow: el.row, gridColumn: el.col, ...(hit ? { backgroundColor: `rgba(2,132,199,${intensity(hit.pct).toFixed(2)})` } : {}) }}
+          >
+            {el.symbol}
+            {hit && <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 hidden w-max -translate-x-1/2 rounded-md border border-zinc-200 bg-white p-2 text-left text-[11px] font-normal leading-snug text-zinc-600 shadow-lg group-hover/el:block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              <span className="font-semibold text-zinc-950 dark:text-zinc-50">{hit.label}</span><br/>
+              {fmtMass(hit.s)}/a · {pctStr(hit.pct)} der Weltförderung{hit.pctDE != null ? <><br/>{pctStr(hit.pctDE)} des DE-Jahresverbrauchs</> : null}
+            </span>}
+          </div>;
+        })}
+      </div>
     </div>
-
-    <details className="group rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50 [&::-webkit-details-marker]:hidden">
-        <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90"/>
+    <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+      {used.slice(0, 4).map(r => <span key={r.m} className="flex items-center gap-1.5">
+        <span className="h-2 w-2 rounded-[2px]" style={{ backgroundColor: `rgba(2,132,199,${intensity(r.pct).toFixed(2)})` }}/>
+        {r.label} {pctStr(r.pct)}
+      </span>)}
+      {chips.map(r => <span key={r.m} className="flex items-center gap-1.5">
+        <span className="h-2 w-2 rounded-[2px] bg-stone-500"/>
+        {r.label} {fmtMass(r.s)}/a · {pctStr(r.pct)}
+      </span>)}
+      <span className="ml-auto text-zinc-400 dark:text-zinc-500">Füllung = Anteil an der Welt-Jahresförderung · Grau = nicht gebraucht</span>
+    </div>
+    <details className="group/det mt-3 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-open/det:rotate-90"/>
         Details je Rohstoff
       </summary>
       <dl className="mt-3">
@@ -119,6 +149,35 @@ export default function RessourcenSection({ scenario, buildoutYear, data }: { sc
         })}
       </dl>
     </details>
+  </div>;
+}
+
+export default function RessourcenSection({ scenario, buildoutYear, data }: { scenario: Scenario; buildoutYear: string; data: DataSet | null }) {
+  const buildoutYears = Math.max(1, Number(buildoutYear) - 2025);
+
+  const { scen, base, rows } = useMemo(() => {
+    const scA = annualByMaterial(scenario, buildoutYears, e100ElectricTWh(scenario, data));
+    const baseA = annualByMaterial(scenarioBase, buildoutYears, e100ElectricTWh(scenarioBase, data));
+    const materials = uiManifest.materials as Record<string, MaterialInfo>;
+    const rows = Object.keys(materials).map(m => {
+      const s = scA[m] ?? 0, b = baseA[m] ?? 0, world = materials[m].globalProductionTPerYear;
+      const de = materials[m].germanyDemandTPerYear ?? 0;
+      const cat: 'bulk' | 'spezial' | 'brennstoff' = FUEL.has(m) ? 'brennstoff' : BULK.has(m) ? 'bulk' : 'spezial';
+      return { m, label: materials[m].label, cat, s, b, world, pct: world > 0 ? s / world * 100 : 0, pctDE: de > 0 ? s / de * 100 : null };
+    }).filter(r => r.s > 0 || r.b > 0).sort((a, x) => x.pct - a.pct);
+    return { scen: groupSums(scA), base: groupSums(baseA), rows };
+  }, [scenario, buildoutYears, data]);
+
+  return <section id="section-ressourcen" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+    <SectionHeading id="ressourcen"/>
+
+    <PeriodicTable rows={rows}/>
+
+    <div className="grid divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white py-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-zinc-800/60 dark:border-zinc-800 dark:bg-zinc-950">
+      <MultipleTiles title="Beton, Stahl & Alu" base={base.bulk * buildoutYears} scen={scen.bulk * buildoutYears} colorClass="bg-zinc-400 dark:bg-zinc-500" buildoutYear={buildoutYear}/>
+      <MultipleTiles title="Spezialmaterialien" base={base.spezial * buildoutYears} scen={scen.spezial * buildoutYears} colorClass="bg-zinc-600 dark:bg-zinc-300" buildoutYear={buildoutYear}/>
+      <MultipleTiles title="Brennstoff" base={base.brennstoff * buildoutYears} scen={scen.brennstoff * buildoutYears} colorClass="bg-stone-700 dark:bg-stone-400" buildoutYear={buildoutYear} continuous/>
+    </div>
 
     <details className="group px-1">
       <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">

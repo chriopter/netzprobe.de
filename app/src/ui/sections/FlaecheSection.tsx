@@ -372,7 +372,7 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
     else next.add(id);
     return next;
   });
-  return <div className="min-w-0 overflow-x-auto bg-white dark:bg-zinc-950">
+  return <div className="mt-2 min-w-0 overflow-x-auto bg-white dark:bg-zinc-950">
     <table className="w-full min-w-[360px] text-sm">
       <thead className="text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
         <tr className="border-b border-zinc-200 dark:border-zinc-800">
@@ -442,14 +442,20 @@ function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
 }
 
 function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme }) {
-  return <section className="mt-7 grid gap-5">
+  return <section className="mt-8 grid">
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
       <div className="min-w-0">
         <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2} theme={theme}/>
       </div>
-      <div className="flex min-w-0 flex-col gap-5">
+      <div className="flex min-w-0 flex-col gap-4">
         <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
-        <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
+        <details className="group/det">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="h-3.5 w-3.5 transition-transform group-open/det:rotate-90"/>
+            Details je Technologie
+          </summary>
+          <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
+        </details>
       </div>
     </div>
   </section>;
@@ -476,7 +482,7 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
   return <div>
     <div className="flex items-baseline justify-between gap-4">
       <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Flächenbedarf in Deutschland</h2>
-      <span className="text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
+      <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
     </div>
     <div className="mt-4 bg-white dark:bg-zinc-950">
       <div id="flaeche-map" className="h-[360px] w-full"/>
@@ -487,7 +493,7 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
         {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={`${vorPct.toLocaleString('de-DE', { maximumFractionDigits: vorPct < 1 ? 2 : 1 })} %`} meta={vorLandLabel || 'Brennstoff/Anbau'}/>}
       </div>
       <details className="group mt-3">
-        <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
           <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90"/>
           Was bedeuten die Flächentypen?
         </summary>
@@ -517,7 +523,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
   const visibleTileCount = Math.max(1, Math.ceil(saarlands));
   const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
-  return <div className="group relative border-b border-zinc-100 bg-white pb-5 dark:border-zinc-800 dark:bg-zinc-950">
+  return <div className="group relative border-b border-zinc-100 bg-white pb-4 dark:border-zinc-800 dark:bg-zinc-950">
     <div className="flex items-baseline justify-between gap-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Saarland-Vergleich</h4>
       <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands</span>
