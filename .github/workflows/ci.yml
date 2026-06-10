@@ -29,12 +29,15 @@ jobs:
           cache: npm
       - name: Abhängigkeiten installieren
         run: npm ci
-      - name: Tests
-        run: npm test
-      - name: Typecheck
-        # Nur tsc — den vite-Produktionsbuild macht der Server selbst (Typecheck
-        # dort wäre auf dem 2-Core-VPS mit ~10 s der teuerste Einzelposten).
-        run: npx tsc -b
+      - name: Tests + Typecheck
+        # Parallel: vitest und tsc teilen sich die Runner-Cores. Den
+        # vite-Produktionsbuild macht der Server selbst (dort wäre tsc mit
+        # ~10 s auf dem 2-Core-VPS der teuerste Einzelposten).
+        run: |
+          npx tsc -b &
+          TSC_PID=$!
+          npm test
+          wait "$TSC_PID"
       - name: Rust-Cache
         uses: Swatinem/rust-cache@v2
       - name: Rust-Tests
@@ -42,7 +45,9 @@ jobs:
         # damit das Testurteil sichtbar ist und ein roter Commit den Webhook nie erreicht.
         # --release: Golden-Test (50 Jahres-Simulationen) läuft optimiert ~10× schneller;
         # Toolchain ist auf ubuntu-latest vorinstalliert, kein Setup-Step nötig.
-        run: NETZPROBE_BUILD_COMMIT="${{ github.sha }}" cargo test --release --workspace
+        # Bewusst OHNE NETZPROBE_BUILD_COMMIT: der Stempel zwingt die api-Crate
+        # sonst jede CI zur Neukompilierung — er zählt nur fürs Server-Binary.
+        run: cargo test --release --workspace
       - name: Deploy-Webhook aufrufen
         # Im selben Job statt separatem Deploy-Job: spart Runner-Spin-up (~10 s).
         # Der Webhook blockiert bis zum Server-Restart — grün heißt: neue Version läuft.
