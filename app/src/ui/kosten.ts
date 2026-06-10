@@ -35,6 +35,8 @@ export type KostenResult = {
   perMWh: number;
   perHousehold: number;
   breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
+  importCost: number;
+  exportRevenue: number;
   perTech: KostenTech[];
 };
 
@@ -94,7 +96,9 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
 
   // CO₂-Bepreisung bewusst NICHT enthalten: rein politisch gesetzter Transfer,
   // kein realer Ressourcenaufwand des Systems.
-  const importNet = result.summary.importTWh * 1e6 * (P.importEurPerMWh ?? 0) - result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
+  const importCost = result.summary.importTWh * 1e6 * (P.importEurPerMWh ?? 0);
+  const exportRevenue = result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
+  const importNet = importCost - exportRevenue;
 
   // Netzausbau: gekoppelt an volatilen EE-Zubau über den 2025-Bestand hinaus,
   // annuisiert wie CAPEX. Null im 2025-Bestand (Kupferplatte als Nullpunkt),
@@ -111,6 +115,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     perMWh: total / servedMWh,
     perHousehold: total / (P.households ?? 41_100_000),
     breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet, netz },
+    importCost,
+    exportRevenue,
     perTech: perTech.sort((a, b) => b.total - a.total),
   };
 }

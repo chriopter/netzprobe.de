@@ -177,6 +177,10 @@ describe('Kosten · B Invarianten', () => {
     const k = computeKosten(scen({ pvInstalledGW: 100 }), result([hour({ loadGW: 50, pvGW: 50 })], { totalDemandTWh: 0.438, importTWh: 2, exportTWh: 20 }));
     expect(k.breakdown.importNet).toBeLessThan(0);
     expect(k.breakdown.importNet).toBeCloseTo((2 - 20) * 1e6 * prices.importEurPerMWh, -2);
+    // Bon-Aufschlüsselung: Saldo = Importkosten − Exporterlös, beide einzeln ausgewiesen
+    expect(k.importCost).toBeCloseTo(2e6 * prices.importEurPerMWh, -2);
+    expect(k.exportRevenue).toBeCloseTo(20e6 * prices.exportEurPerMWh, -2);
+    expect(k.importCost - k.exportRevenue).toBeCloseTo(k.breakdown.importNet, -2);
   });
 
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {

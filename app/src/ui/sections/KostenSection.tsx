@@ -1,22 +1,21 @@
-import { Fragment, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
-import { SectionHeading, StatCard } from '../sectionUi';
+import { SectionHeading } from '../sectionUi';
 import { cx, muted } from '../ui';
-import { computeKosten, type KostenTech } from '../kosten';
-
-const STORAGE = new Set(['batterie', 'pumpspeicher', 'h2']);
+import { computeKosten, type KostenResult } from '../kosten';
+import { uiManifest } from '../uiManifest';
 
 // Bestandteile der Systemkosten — Farben technologieneutral (Graustufen).
 // CO₂-Bepreisung bewusst ausgelassen: rein politisch gesetzter Transfer.
-const PARTS: Array<{ key: 'capex' | 'om' | 'fuel' | 'h2Import' | 'importNet' | 'netz'; label: string; color: string }> = [
-  { key: 'capex', label: 'Kapitalkosten (annuisiert)', color: 'bg-zinc-700 dark:bg-zinc-300' },
-  { key: 'om', label: 'Betrieb & Wartung', color: 'bg-zinc-500 dark:bg-zinc-500' },
-  { key: 'fuel', label: 'Brennstoff', color: 'bg-stone-600 dark:bg-stone-400' },
-  { key: 'h2Import', label: 'Wasserstoff-Import', color: 'bg-sky-700 dark:bg-sky-400' },
-  { key: 'importNet', label: 'Strom-Import-Saldo', color: 'bg-zinc-400 dark:bg-zinc-600' },
-  { key: 'netz', label: 'Netzausbau & -betrieb', color: 'bg-neutral-500 dark:bg-neutral-400' },
+const PARTS: Array<{ key: 'capex' | 'om' | 'fuel' | 'h2Import' | 'importNet' | 'netz'; label: string }> = [
+  { key: 'capex', label: 'Kapitalkosten' },
+  { key: 'om', label: 'Betrieb & Wartung' },
+  { key: 'fuel', label: 'Brennstoff' },
+  { key: 'h2Import', label: 'Wasserstoff-Import' },
+  { key: 'importNet', label: 'Strom-Import-Saldo' },
+  { key: 'netz', label: 'Netzausbau & -betrieb' },
 ];
 
 // Gesamtbeträge über den Aufbauzeitraum: groß (Bio €), sonst Mrd €.
@@ -24,34 +23,93 @@ const fmtBig = (x: number) => Math.abs(x) >= 1e12
   ? `${(x / 1e12).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e12 < 10 ? 2 : 1 })} Bio €`
   : `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
 const fmtMrd = (x: number) => `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
-const fmtEurMWh = (x: number | null) => x == null ? '–' : `${x.toLocaleString('de-DE', { maximumFractionDigits: x < 100 ? 1 : 0 })} €/MWh`;
 
-// Spaltenkopf mit sofortigem Hover-Tooltip (wie in der Ressourcen-Sektion).
-function ColHead({ label, hint }: { label: string; hint: string }) {
-  return <dt className="group/h relative cursor-help text-right underline decoration-dotted decoration-zinc-300 underline-offset-2">
-    {label}
-    <span className="pointer-events-none absolute right-0 top-full z-40 mt-1 hidden w-max max-w-[220px] rounded-md border border-zinc-200 bg-white p-2 text-left text-[11px] font-normal normal-case leading-snug tracking-normal text-zinc-600 shadow-lg group-hover/h:block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">{hint}</span>
-  </dt>;
+// Unterposten eines Bon-Postens: die Beiträge der einzelnen Technologien zu
+// dieser Kostenart (bzw. Import/Export beim Saldo). Posten unter 50 Mio €/a
+// sind Floating-Point-Staub bzw. irrelevant — weglassen.
+function subItems(k: KostenResult, key: (typeof PARTS)[number]['key']): Array<{ label: string; v: number }> {
+  const per = (f: (t: KostenResult['perTech'][number]) => number, exclude?: string) => k.perTech
+    .filter(t => t.key !== exclude)
+    .map(t => ({ label: t.label, v: f(t) }));
+  const raw = key === 'capex' ? per(t => t.capex)
+    : key === 'om' ? per(t => t.om)
+      : key === 'fuel' ? per(t => t.fuel, 'h2import')
+        : key === 'importNet' ? [{ label: 'Stromimport', v: k.importCost }, { label: 'Stromexport (Erlös)', v: -k.exportRevenue }]
+          : [];
+  return raw.filter(s => Math.abs(s.v) > 5e7).sort((a, b) => Math.abs(b.v) - Math.abs(a.v));
 }
 
-function TechRow({ t, maxTotal, horizon }: { t: KostenTech; maxTotal: number; horizon: number }) {
-  const pct = maxTotal > 0 ? Math.round(t.total / maxTotal * 100) : 0;
-  return <div className="group/r relative grid grid-cols-[minmax(0,1fr)_5rem_5rem_6rem] items-center gap-x-3 border-b border-zinc-100 py-1.5 text-sm dark:border-zinc-800">
-    <dt className="min-w-0">
-      <div className="truncate text-zinc-700 dark:text-zinc-300">{t.label}</div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <div className="h-full rounded-full bg-zinc-400 dark:bg-zinc-500" style={{ width: `${pct}%` }}/>
+// Zackenrand unten wie bei einem abgerissenen Kassenbon (clip-path, dark-mode-sicher).
+const receiptClip = (() => {
+  const teeth = 28;
+  const points: string[] = ['0% 0%', '100% 0%'];
+  for (let i = teeth; i >= 0; i--) {
+    const x = (i / teeth * 100).toFixed(2);
+    points.push(`${x}% ${i % 2 === 0 ? '100%' : 'calc(100% - 7px)'}`);
+  }
+  return `polygon(${points.join(', ')})`;
+})();
+
+// Signatur-Element der Sektion: die Systemkosten als Stromrechnung — inklusive
+// der Umlage auf einen Durchschnittshaushalt (Verbrauch × Ø Systemkosten).
+function Stromrechnung({ k, buildoutYear, horizon }: { k: ReturnType<typeof computeKosten>; buildoutYear: string; horizon: number }) {
+  const P = uiManifest.prices as Record<string, number>;
+  const kwh = P.householdConsumptionKWhPerA ?? 3000;
+  const perMonth = k.perMWh * kwh / 1000 / 12;
+  const G = (x: number) => fmtBig(x * horizon);
+  // Posten unter 50 Mio €/a sind Floating-Point-Staub (z. B. Netz exakt auf der
+  // 2025-Basis) — auf dem Bon weglassen.
+  const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
+  return <div className="mx-auto my-3 w-full max-w-[340px] font-mono text-[13px] leading-relaxed">
+    <div className="border border-zinc-200 bg-white px-5 pb-7 pt-5 text-zinc-800 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200" style={{ clipPath: receiptClip }}>
+      <p className="text-center text-sm font-bold uppercase tracking-[0.2em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
+      <p className="mt-0.5 text-center text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Deutschland · heute bis {buildoutYear}</p>
+      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-3 space-y-2">
+        {items.map(p => {
+          const subs = subItems(k, p.key);
+          if (!subs.length) return <div key={p.key} className="flex items-baseline justify-between gap-3">
+            <span className="truncate pl-4 text-zinc-500 dark:text-zinc-400">{p.label}</span>
+            <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
+          </div>;
+          return <details key={p.key} className="group/it">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex min-w-0 items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open/it:rotate-90 dark:text-zinc-500"/>
+                <span className="truncate">{p.label}</span>
+              </span>
+              <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
+            </summary>
+            <div className="mb-1 mt-1 space-y-1 pl-6 text-[11px] leading-normal">
+              {subs.map(s => <div key={s.label} className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-zinc-400 dark:text-zinc-500">{s.label}</span>
+                <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{G(s.v)}</span>
+              </div>)}
+            </div>
+          </details>;
+        })}
       </div>
-    </dt>
-    <dd className="text-right tabular-nums text-zinc-950 dark:text-zinc-50">{fmtEurMWh(t.eurPerMWh)}</dd>
-    <dd className="text-right tabular-nums text-zinc-600 dark:text-zinc-400">{fmtMrd(t.total)}/a</dd>
-    <dd className="text-right tabular-nums text-zinc-950 dark:text-zinc-50">{fmtBig(t.total * horizon)}</dd>
-    <div className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-[min(280px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg transition group-hover/r:opacity-100 dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="grid gap-1.5">
-        {([['Kapitalkosten (annuisiert)', t.capex], ['Betrieb & Wartung', t.om], ['Brennstoff', t.fuel]] as const).map(([l, v]) =>
-          <div key={l} className="flex justify-between gap-4"><span className="text-zinc-500 dark:text-zinc-400">{l}</span><span className="font-medium tabular-nums text-zinc-950 dark:text-zinc-50">{fmtMrd(v)}/a</span></div>)}
+      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-3 flex items-baseline justify-between gap-3 text-base font-bold text-zinc-950 dark:text-zinc-50">
+        <span>SUMME</span>
+        <span className="tabular-nums">{G(k.total)}</span>
       </div>
-      <div className="mt-2 border-t border-zinc-100 pt-2 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Gesamt = Jahreskosten × {horizon} Jahre. Import-Saldo wird systemweit ausgewiesen, nicht je Technologie.</div>
+      <div className="mt-1 flex items-baseline justify-between gap-3 text-zinc-500 dark:text-zinc-400">
+        <span>≙ pro Jahr · {horizon} Jahre</span>
+        <span className="tabular-nums">{fmtMrd(k.total)}</span>
+      </div>
+      <div className="mt-1 flex items-baseline justify-between gap-3 text-zinc-500 dark:text-zinc-400">
+        <span>entspricht je MWh</span>
+        <span className="tabular-nums">{k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span>
+      </div>
+      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-3 rounded-md bg-zinc-100 px-3 py-2.5 dark:bg-zinc-800">
+        <p className="text-[11px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Haushalt mit {kwh.toLocaleString('de-DE')} kWh/a</p>
+        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-950 dark:text-zinc-50">{perMonth.toLocaleString('de-DE', { maximumFractionDigits: 0 })} € <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/ Monat</span></p>
+      </div>
+      <p className="mt-4 text-center text-[10px] leading-snug text-zinc-400 dark:text-zinc-500">
+        Systemkosten ab Werk — ohne Netzentgelt-Detail, Steuern, Abgaben, Marge. Annahmen im Datenhandbuch.
+      </p>
     </div>
   </div>;
 }
@@ -60,69 +118,10 @@ export default function KostenSection({ scenario, result, buildoutYear }: { scen
   const k = useMemo(() => computeKosten(scenario, result), [scenario, result]);
   const horizon = Math.max(1, Number(buildoutYear) - 2025);
 
-  // Fester Maßstab: ein voller Balken = 10.000 Mrd € (10 Bio €), Überlauf in weitere Zeilen.
-  const REF_MRD = 10_000;
-  const totalMult = k.total * horizon / 1e9 / REF_MRD;
-  const costRows = Math.max(1, Math.ceil(totalMult));
-  const erzeugung = k.perTech.filter(t => !STORAGE.has(t.key) && t.key !== 'h2import');
-  const speicher = k.perTech.filter(t => STORAGE.has(t.key));
-  const importGrp = k.perTech.filter(t => t.key === 'h2import');
-  const maxTotal = Math.max(1, ...k.perTech.map(t => t.total));
-  const G = (x: number) => fmtBig(x * horizon); // Gesamt über den Aufbauzeitraum
-
   return <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
     <SectionHeading id="kosten"/>
 
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      <StatCard title={`Gesamt bis ${buildoutYear}`} stats={[{ label: 'Systemkosten', value: G(k.total), sub: `${fmtMrd(k.total)}/a` }, { label: 'Ø Stromkosten', value: `${k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €/MWh` }]}/>
-      <StatCard title="Kapitalkosten" stats={[{ label: 'Kapital', value: G(k.breakdown.capex), sub: `${fmtMrd(k.breakdown.capex)}/a` }, { label: 'O&M', value: G(k.breakdown.om), sub: `${fmtMrd(k.breakdown.om)}/a` }]}/>
-      <StatCard title="Variabel" stats={[{ label: 'Brennstoff', value: G(k.breakdown.fuel), sub: `${fmtMrd(k.breakdown.fuel)}/a` }, { label: 'H₂-Import', value: G(k.breakdown.h2Import), sub: `${fmtMrd(k.breakdown.h2Import)}/a` }]}/>
-      <StatCard title="Handel & Dauer" stats={[{ label: 'Strom-Import-Saldo', value: G(k.breakdown.importNet), sub: `${fmtMrd(k.breakdown.importNet)}/a` }, { label: 'Zeitraum', value: `${horizon} Jahre` }]}/>
-    </div>
-
-    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-baseline justify-between gap-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Kostenbestandteile · gesamt bis {buildoutYear}</h3>
-        <span className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{G(k.total)}</span>
-      </div>
-      <div className="mt-3 flex flex-col gap-1" aria-label={`Gesamtkosten — ein voller Balken = ${REF_MRD.toLocaleString('de-DE')} Mrd €`}>
-        {Array.from({ length: costRows }, (_, i) => i).map(i => {
-          const pct = Math.round(Math.max(0, Math.min(1, totalMult - i)) * 100);
-          return <div key={i} className="h-3.5 w-full overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
-            {pct > 0 && <div className="h-full rounded-full bg-zinc-700 dark:bg-zinc-300" style={{ width: `${pct}%` }}/>}
-          </div>;
-        })}
-      </div>
-      <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">Maßstab: ein voller Balken = 10.000 Mrd € (10 Bio €).</p>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
-        {PARTS.filter(p => k.breakdown[p.key] !== 0).map(p => <div key={p.key} className="flex items-center gap-1.5 text-xs">
-          <span className={cx('h-2 w-2 shrink-0 rounded-sm', p.color)}/>
-          <span className="truncate text-zinc-500 dark:text-zinc-400">{p.label}</span>
-          <span className="ml-auto shrink-0 font-medium tabular-nums text-zinc-950 dark:text-zinc-50">{G(k.breakdown[p.key])}</span>
-        </div>)}
-      </dl>
-    </div>
-
-    <details className="group rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50 [&::-webkit-details-marker]:hidden">
-        <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90"/>
-        Kosten je Technologie
-      </summary>
-      <dl className="mt-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_5rem_5rem_6rem] gap-x-3 border-b border-zinc-200 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-          <dt>Technologie</dt>
-          <ColHead label="Effektiv" hint="Effektivkosten je gelieferter MWh: (CAPEX + O&M + Brennstoff) ÷ tatsächlicher Jahreserzeugung — inklusive Abregelung/Auslastung, daher höher und szenarioabhängig. KEINE reinen Stromgestehungskosten (LCOE)."/>
-          <ColHead label="pro Jahr" hint="Jahreskosten dieser Technologie: annuisiertes CAPEX + Betrieb + Brennstoff."/>
-          <ColHead label="Gesamt" hint={`Jahreskosten × ${horizon} Jahre — die Gesamtkosten über den Aufbauzeitraum bis ${buildoutYear}.`}/>
-        </div>
-        {([['Erzeugung', erzeugung], ['Speicher', speicher], ['Import', importGrp]] as const).map(([title, grp]) => grp.length
-          ? <Fragment key={title}>
-              <div className="pt-3 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">{title}</div>
-              {grp.map(t => <TechRow key={t.key} t={t} maxTotal={maxTotal} horizon={horizon}/>)}
-            </Fragment>
-          : null)}
-      </dl>
-    </details>
+    <Stromrechnung k={k} buildoutYear={buildoutYear} horizon={horizon}/>
 
     <details className="group px-1">
       <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
