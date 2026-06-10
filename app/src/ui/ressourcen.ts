@@ -37,29 +37,41 @@ export const storCaps = (s: Scenario): Array<[string, number, number]> => [
   ['h2', Math.max(s.storage.h2ChargePowerGW, s.storage.h2DischargePowerGW), s.storage.h2EnergyGWh],
 ];
 
-// Jaehrlicher Materialbedarf je Rohstoff (t/a): Bau/Elektrifizierung annualisiert
-// (Bestand ÷ Aufbaujahre), Brennstoff pro Jahr (tPerTWh × installierte GW × Volllaststunden).
+// Renewal-Faktor: über lange Horizonte wird die Bau-Material-Flotte ersetzt
+// (Batterie 15 a, PV 30 a, Wind 25 a …). max(1, years/lifetime) entspricht
+// kontinuierlich der Zahl der Bauzyklen im Aufbauzeitraum — analog zur
+// annuisierten Kostenseite (crf×horizon = bauen + ersetzen).
+const renewalFactor = (years: number, lifetimeYears: number | undefined) =>
+  lifetimeYears && lifetimeYears > 0 ? Math.max(1, years / lifetimeYears) : 1;
+
+// Jaehrlicher Materialbedarf je Rohstoff (t/a): Bau-Material erneuerungs-aware
+// annualisiert (Bestand × Renewal-Faktor ÷ Aufbaujahre), Brennstoff pro Jahr
+// (tPerTWh × installierte GW × Volllaststunden).
 export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<string, number>): Record<string, number> {
   const stock: Record<string, number> = {};
   const fuel: Record<string, number> = {};
   const addS = (m: string, t: number) => { stock[m] = (stock[m] ?? 0) + t; };
   const addF = (m: string, t: number) => { fuel[m] = (fuel[m] ?? 0) + t; };
   for (const [id, gw] of genCaps(s)) {
-    const res = (uiManifest.generation as Record<string, any>)[id]?.resources as Record<string, ResourceEntry> | undefined;
+    const pkg = (uiManifest.generation as Record<string, any>)[id];
+    const res = pkg?.resources as Record<string, ResourceEntry> | undefined;
     if (!res) continue;
+    const rf = renewalFactor(years, pkg?.kosten?.lifetimeYears);
     for (const m in res) {
       const e = res[m];
-      if (e.tPerGW) addS(m, e.tPerGW * gw);
+      if (e.tPerGW) addS(m, e.tPerGW * gw * rf);
       if (e.tPerTWh) addF(m, e.tPerTWh * gw * (VLH[id] ?? 0) / 1000);
     }
   }
   for (const [id, power, energy] of storCaps(s)) {
-    const res = (uiManifest.storage as Record<string, any>)[id]?.resources as Record<string, ResourceEntry> | undefined;
+    const pkg = (uiManifest.storage as Record<string, any>)[id];
+    const res = pkg?.resources as Record<string, ResourceEntry> | undefined;
     if (!res) continue;
+    const rf = renewalFactor(years, pkg?.kosten?.lifetimeYears);
     for (const m in res) {
       const e = res[m];
-      if (e.tPerGW) addS(m, e.tPerGW * power);
-      if (e.tPerGWh) addS(m, e.tPerGWh * energy);
+      if (e.tPerGW) addS(m, e.tPerGW * power * rf);
+      if (e.tPerGWh) addS(m, e.tPerGWh * energy * rf);
     }
   }
   // Elektrifizierte Last: Material je TWh zusaetzlicher elektrischer Nachfrage (Bestand).

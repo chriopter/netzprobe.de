@@ -111,10 +111,14 @@
       "erzeugung/pv/model.rs"
     ],
     "flaeche": {
-      "source": "Wirkung 12 km²/GW = 1,2 ha/MWp Bruttoparkfläche (eingezäunt, inkl. Reihenabstände, Wege, Trafostationen). Iteration: 10 → 12 km²/GW (Mai 2026), weil 10 km²/GW KNE-Best-Case für reine EEG-Ausschreibungs-Anlagen war (Flächeneffizienz-getrieben). Bifaziale Anlagen, die seit 2024 dominieren, brauchen 1,2-1,5 ha/MW wegen größerer Reihenabstände (Vermeidung Eigenverschattung der Rückseite). Plausibilitätscheck: 12 km²/GW × 1 TWh/GW·a Yield = 83 GWh/km²·a — am oberen Rand der ChatGPT/Lovering-Range 50-100 GWh/km²·a, realistisch für DE-Bestandsmix Alt+Neu. UBA Texte 76/2022: Versiegelung 0,5-3 % der Parkfläche → `anlage` ~0,03 km²/GW (Punktfundamente). Cross-Check OWID/Lovering 2022: 2000 ha/(TWh·a) ≈ 20 km²/GW DE-CF (US-Median, größere Abstände). Van Zalk & Behrens 2018: Median 6,63 W/m² ≈ 15 km²/GW Peak (auch höher als unser Wert, aber Lovering-konsistent).",
+      "source": "Wirkung `6 km²/GW` als **Flottenmix-Wert** für die DE-PV (Aufdach + Freifläche), angewandt auf die gesamte installierte Leistung. Hintergrund: reale moderne Freiflächen-Parks liegen bei `0,8–0,9 ha/MWp` = `8–9 km²/GW` (Solarpark Witznitz 605 MW/500 ha → 0,83; Weesow-Willmersdorf 187 MW/164 ha → 0,88; Fraunhofer ISE `Aktuelle Fakten zur PV` ~`1 ha/MWp`). Der deutsche PV-Bestand ist aber zu rund `55–60 %` **Aufdach ohne Landverbrauch** (Destatis/BNetzA Marktstammdatenregister 2024), nur `40–45 %` Freifläche. Rechnerisch `0,4 × 9 ≈ 3,6 km²/GW`; mit Puffer für einen Richtung Freifläche verschobenen Zukunftsmix `~6 km²/GW`. Iteration: `10 → 12 → 6 km²/GW` — frühere Werte unterstellten implizit `alles Freifläche` und überschätzten den realen Landbedarf rund Faktor `~2`. Cross-Check OWID/Lovering 2022 `~20 km²/GW` und Van Zalk & Behrens 2018 `~15 km²/GW` liegen klar über `6` — beides sind aber reine Freiflächen-Studien (US-Median bzw. Peak), methodisch nicht direkt mit einem rooftop-dominierten DE-Flottenmix vergleichbar. Versiegelung: UBA Texte 76/2022 `0,5–3 %` der Parkfläche → `anlage ~0,03 km²/GW` (Punktfundamente, unverändert).",
       "sourceUrls": [
         "https://www.naturschutz-energiewende.de/fragenundantworten/flaecheneffizienz-erneuerbarer-energien-zur-stromerzeugung/",
         "https://www.umweltbundesamt.de/sites/default/files/medien/479/publikationen/texte_76-2022_anpassung_der_flaechenkulisse_fuer_pv-freiflaechenanlagen_im_eeg_vor_dem_hintergrund_erhoehter_zubauziele.pdf",
+        "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/aktuelle-fakten-zur-photovoltaik-in-deutschland.pdf",
+        "https://www.destatis.de/DE/Presse/Pressemitteilungen/2025/07/PD25_N034_43.html",
+        "https://www.pv-magazine.de/2024/04/09/605-megawatt-photovoltaik-kraftwerk-in-sachsen-komplett-am-netz/",
+        "https://de.wikipedia.org/wiki/Solarpark_Weesow-Willmersdorf",
         "https://ourworldindata.org/land-use-per-energy-source",
         "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155"
       ]
@@ -161,8 +165,8 @@
     },
     "anlagenFlaeche": {
       "anlageKm2PerGW": 0.03,
-      "wirkungKm2PerGW": 12,
-      "kategorie": "Freifläche"
+      "wirkungKm2PerGW": 6,
+      "kategorie": "Flottenmix Aufdach + Freifläche"
     },
     "referenceYield": {
       "twhPerGWa": 0.95,

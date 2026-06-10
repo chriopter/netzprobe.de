@@ -492,7 +492,7 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
           Was bedeuten die Flächentypen?
         </summary>
         <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-          Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
+          Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
         </p>
       </details>
     </div>
