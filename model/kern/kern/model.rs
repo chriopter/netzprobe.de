@@ -265,6 +265,10 @@ struct SimHour {
     supply_gw: f64,
     balance_gw: f64,
     co2_tph: f64,
+    // Vom H₂-Pool substituierte Sektor-Stromlast (strom-äquivalent): die Last,
+    // die ohne Pool-Deckung des Sektor-H₂-Bedarfs zusätzlich anfiele. Geht in
+    // die Kosten-Umlage ein (Kosten je gedeckter Nachfrage inkl. H₂-Substitution).
+    h2_pool_reduction_gw: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -964,7 +968,9 @@ impl StaticModel {
                 0.0
             };
             storage.h2 = h2_energy_cap.min(h2_available_gw - pool_cover_h2_gw);
-            let load_gw = self.demand_gw(row, scenario, pool_cover_h2_gw)?;
+            let h2_pool_reduction_gw =
+                self.h2_pool_strom_reduction_gw(pool_cover_h2_gw, scenario)?;
+            let load_gw = self.demand_gw(row, scenario, h2_pool_reduction_gw)?;
             // e100-Zusatzlast = Gesamtlast minus historische Basislast (fuer den fixed-Pfad:
             // die Basislast wurde im Ist-Jahr real gedeckt, die e100-Last nicht).
             let e100_load_gw = (load_gw - if demand_last_2025 { row.load_mw / 1000.0 } else { 0.0 }).max(0.0);
@@ -1188,6 +1194,7 @@ impl StaticModel {
                 supply_gw,
                 balance_gw,
                 co2_tph,
+                h2_pool_reduction_gw,
             });
         }
 
@@ -1312,11 +1319,13 @@ impl StaticModel {
         (pv, wind_on, wind_off, kern, remaining.max(0.0))
     }
 
+    // pool_reduction_gw: vorab via h2_pool_strom_reduction_gw berechnete
+    // strom-äquivalente Substitution der Sektor-Last durch den H₂-Pool.
     fn demand_gw(
         &self,
         row: &HourInput,
         scenario: &Value,
-        pool_cover_h2_gw: f64,
+        pool_reduction_gw: f64,
     ) -> Result<f64, ModelError> {
         let mut load = if s_bool(scenario, &["demand", "last-2025"])? {
             row.load_mw / 1000.0
@@ -1393,7 +1402,7 @@ impl StaticModel {
             "e100-chemie",
             "e100-chemie-target-twh",
         )?;
-        Ok((load - self.h2_pool_strom_reduction_gw(pool_cover_h2_gw, scenario)?).max(0.0))
+        Ok((load - pool_reduction_gw).max(0.0))
     }
 
     fn hourly_e100(
