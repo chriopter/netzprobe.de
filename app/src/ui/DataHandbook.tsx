@@ -83,8 +83,12 @@ function resourceValue(e: ResourceEntry): string {
 
 const KOSTEN_FIELDS: Array<[string, string, (v: number) => string]> = [
   ['capexEurPerKW', 'CAPEX (Leistung)', v => `${v.toLocaleString('de-DE')} €/kW`],
+  ['capexChargeEurPerKW', 'CAPEX (Einspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
+  ['capexDischargeEurPerKW', 'CAPEX (Ausspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
   ['capexEurPerKWh', 'CAPEX (Energie)', v => `${v.toLocaleString('de-DE')} €/kWh`],
   ['omFixEurPerKWa', 'O&M fix', v => `${v.toLocaleString('de-DE')} €/kW·a`],
+  ['omFixChargeEurPerKWa', 'O&M fix (Einspeisung)', v => `${v.toLocaleString('de-DE')} €/kW·a`],
+  ['omFixDischargeEurPerKWa', 'O&M fix (Ausspeisung)', v => `${v.toLocaleString('de-DE')} €/kW·a`],
   ['omVarEurPerMWh', 'O&M variabel', v => `${v.toLocaleString('de-DE')} €/MWh`],
   ['fuelEurPerMWhTh', 'Brennstoff', v => `${v.toLocaleString('de-DE')} €/MWh_th`],
   ['efficiency', 'Wirkungsgrad', v => `${(v * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %`],

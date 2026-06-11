@@ -42,8 +42,16 @@ describe('Kosten · A Datenintegrität', () => {
     for (const id of [...GEN, ...STORAGE]) {
       const k = kostenOf(id);
       expect(k, id).toBeDefined();
-      expect(k!.capexEurPerKW, id).toBeGreaterThan(0);
-      expect(k!.omFixEurPerKWa, id).toBeGreaterThanOrEqual(0);
+      if (k!.capexChargeEurPerKW != null || k!.capexDischargeEurPerKW != null) {
+        // Getrennte Ein-/Ausspeise-Anlagen (H2: Elektrolyseur + Rückverstromung).
+        expect(k!.capexChargeEurPerKW, id).toBeGreaterThan(0);
+        expect(k!.capexDischargeEurPerKW, id).toBeGreaterThan(0);
+        expect(k!.omFixChargeEurPerKWa, id).toBeGreaterThanOrEqual(0);
+        expect(k!.omFixDischargeEurPerKWa, id).toBeGreaterThanOrEqual(0);
+      } else {
+        expect(k!.capexEurPerKW, id).toBeGreaterThan(0);
+        expect(k!.omFixEurPerKWa, id).toBeGreaterThanOrEqual(0);
+      }
       expect(k!.lifetimeYears, id).toBeGreaterThan(0);
     }
   });
@@ -176,7 +184,8 @@ describe('Kosten · B Invarianten', () => {
   it('17 Strom-Import-Saldo: Netto-Export ⇒ negativ', () => {
     const k = computeKosten(scen({ pvInstalledGW: 100 }), result([hour({ loadGW: 50, pvGW: 50 })], { totalDemandTWh: 0.438, importTWh: 2, exportTWh: 20 }));
     expect(k.breakdown.importNet).toBeLessThan(0);
-    expect(k.breakdown.importNet).toBeCloseTo((2 - 20) * 1e6 * prices.importEurPerMWh, -2);
+    // Asymmetrische Preise: Import zum Day-Ahead-Mittel, Export-Erlös darunter.
+    expect(k.breakdown.importNet).toBeCloseTo(2e6 * prices.importEurPerMWh - 20e6 * prices.exportEurPerMWh, -2);
     // Bon-Aufschlüsselung: Saldo = Importkosten − Exporterlös, beide einzeln ausgewiesen
     expect(k.importCost).toBeCloseTo(2e6 * prices.importEurPerMWh, -2);
     expect(k.exportRevenue).toBeCloseTo(20e6 * prices.exportEurPerMWh, -2);

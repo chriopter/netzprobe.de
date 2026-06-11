@@ -3,9 +3,16 @@ import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
 
 type Kosten = {
-  capexEurPerKW: number;
+  capexEurPerKW?: number;
+  // Getrennte Leistungs-CAPEX für Speicher mit unterschiedlichen Ein-/Ausspeise-
+  // Anlagen (H₂: Elektrolyseur vs. Rückverstromungskraftwerk). Wenn gesetzt,
+  // ersetzen sie capexEurPerKW/omFixEurPerKWa (max-Logik).
+  capexChargeEurPerKW?: number;
+  capexDischargeEurPerKW?: number;
   capexEurPerKWh?: number;
-  omFixEurPerKWa: number;
+  omFixEurPerKWa?: number;
+  omFixChargeEurPerKWa?: number;
+  omFixDischargeEurPerKWa?: number;
   omVarEurPerMWh?: number;
   lifetimeYears: number;
   fuelEurPerMWhTh?: number;
@@ -37,6 +44,10 @@ export type KostenResult = {
   breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
   importCost: number;
   exportRevenue: number;
+  // Netz-Heuristik außerhalb des geeichten Bereichs (EE-Zubau > ~700 GW über
+  // Bestand): Posten nur als Richtungssignal lesen.
+  netzExtrapolated: boolean;
+  addedReGW: number;
   perTech: KostenTech[];
 };
 
@@ -67,24 +78,33 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     if (!k) continue;
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
-    const capex = k.capexEurPerKW * gw * 1e6 * crf(wacc, k.lifetimeYears);
-    const om = k.omFixEurPerKWa * gw * 1e6 + (k.omVarEurPerMWh ?? 0) * genMWh;
+    const capex = (k.capexEurPerKW ?? 0) * gw * 1e6 * crf(wacc, k.lifetimeYears);
+    const om = (k.omFixEurPerKWa ?? 0) * gw * 1e6 + (k.omVarEurPerMWh ?? 0) * genMWh;
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
     capexSum += capex; omSum += om; fuelSum += fuel;
     const total = capex + om + fuel;
     perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null });
   }
 
-  const storCaps: Array<[string, string, number, number]> = [
-    ['batterie', 'Batterie', scenario.storage.batteriePowerGW, scenario.storage.batterieEnergyGWh],
-    ['pumpspeicher', 'Pumpspeicher', scenario.storage.pumpspeicherPowerGW, scenario.storage.pumpspeicherEnergyGWh],
-    ['h2', 'Wasserstoff', Math.max(scenario.storage.h2ChargePowerGW, scenario.storage.h2DischargePowerGW), scenario.storage.h2EnergyGWh],
+  // [key, label, Lade-GW, Entlade-GW, Energie-GWh]. Batterie/PSW haben EINE
+  // Maschine für beide Richtungen (charge = discharge); H₂ hat getrennte
+  // Anlagen (Elektrolyseur vs. Rückverstromungskraftwerk), beide kosten Capex.
+  const storCaps: Array<[string, string, number, number, number]> = [
+    ['batterie', 'Batterie', scenario.storage.batteriePowerGW, scenario.storage.batteriePowerGW, scenario.storage.batterieEnergyGWh],
+    ['pumpspeicher', 'Pumpspeicher', scenario.storage.pumpspeicherPowerGW, scenario.storage.pumpspeicherPowerGW, scenario.storage.pumpspeicherEnergyGWh],
+    ['h2', 'Wasserstoff', scenario.storage.h2ChargePowerGW, scenario.storage.h2DischargePowerGW, scenario.storage.h2EnergyGWh],
   ];
-  for (const [key, label, power, energy] of storCaps) {
+  for (const [key, label, chargeGW, dischargeGW, energy] of storCaps) {
     const k = stoPkg[key]?.kosten;
-    if (!k || (power <= 0 && energy <= 0)) continue;
-    const capex = (k.capexEurPerKW * power * 1e6 + (k.capexEurPerKWh ?? 0) * energy * 1e6) * crf(wacc, k.lifetimeYears);
-    const om = k.omFixEurPerKWa * power * 1e6;
+    if (!k || (chargeGW <= 0 && dischargeGW <= 0 && energy <= 0)) continue;
+    const split = k.capexChargeEurPerKW != null || k.capexDischargeEurPerKW != null;
+    const powerCapexEur = split
+      ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
+      : (k.capexEurPerKW ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
+    const capex = (powerCapexEur + (k.capexEurPerKWh ?? 0) * energy * 1e6) * crf(wacc, k.lifetimeYears);
+    const om = split
+      ? (k.omFixChargeEurPerKWa ?? 0) * chargeGW * 1e6 + (k.omFixDischargeEurPerKWa ?? 0) * dischargeGW * 1e6
+      : (k.omFixEurPerKWa ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
     capexSum += capex; omSum += om;
     perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null });
   }
@@ -106,6 +126,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   const reGW = scenario.generation.pvInstalledGW + scenario.generation.windOnInstalledGW + scenario.generation.windOffInstalledGW;
   const addedReGW = Math.max(0, reGW - (P.netzBaselineReCapacityGW ?? 0));
   const netz = (P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW * 1e6 * crf(wacc, P.netzLifetimeYears ?? 40);
+  const netzExtrapolated = addedReGW > (P.netzCalibratedMaxAddedReGW ?? 700);
 
   const total = capexSum + omSum + fuelSum + h2Import + importNet + netz;
 
@@ -117,6 +138,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet, netz },
     importCost,
     exportRevenue,
+    netzExtrapolated,
+    addedReGW,
     perTech: perTech.sort((a, b) => b.total - a.total),
   };
 }

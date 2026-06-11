@@ -107,6 +107,9 @@ function Stromrechnung({ k, buildoutYear, horizon }: { k: ReturnType<typeof comp
         <p className="text-[11px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Haushalt mit {kwh.toLocaleString('de-DE')} kWh/a</p>
         <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-950 dark:text-zinc-50">{perMonth.toLocaleString('de-DE', { maximumFractionDigits: 0 })} € <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/ Monat</span></p>
       </div>
+      {k.netzExtrapolated && <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] leading-snug text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+        Netzposten extrapoliert: EE-Zubau {Math.round(k.addedReGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 GW) — nur als Richtungssignal lesen.
+      </p>}
       <p className="mt-4 text-center text-[10px] leading-snug text-zinc-400 dark:text-zinc-500">
         Systemkosten ab Werk — ohne Netzentgelt-Detail, Steuern, Abgaben, Marge. Annahmen im Datenhandbuch.
       </p>
