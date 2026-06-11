@@ -175,7 +175,7 @@ export default function MixSection(props: MixSectionProps) {
   ];
 
   return <section id="section-mix" className="flex flex-col gap-4 scroll-mt-14 pt-3">
-    <ComingSoonGate compact>
+    <ComingSoonGate id="hero-kosten" compact>
       <p className="text-balance text-2xl font-bold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
       </p>

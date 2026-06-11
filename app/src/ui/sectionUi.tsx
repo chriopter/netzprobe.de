@@ -83,17 +83,30 @@ export function PlaceholderGlass({ children }: { children: ReactNode }) {
 }
 
 // Milchglas-„Coming Soon"-Gate: frostet den Abschnitt, bis man ihn per Klick
-// freigibt. Bewusst NICHT persistiert (kein localStorage/URL) — nach einem
-// Reload ist das Gate wieder da. Inhalt bleibt im DOM (Layout/Navigation).
+// freigibt. Das Wegklicken wird in localStorage gemerkt, aber nur 24 Stunden —
+// danach (und in neuen Browsern) ist das Gate wieder da. Kein URL-State: das
+// ist bewusst ephemer, nicht Teil des teilbaren Szenarios.
 // compact: einzeiliges Pill-Badge für niedrige Inhalte (z. B. Hero-Zeile).
-export function ComingSoonGate({ children, compact }: { children: ReactNode; compact?: boolean }) {
-  const [revealed, setRevealed] = useState(false);
+const REVEAL_TTL_MS = 24 * 60 * 60 * 1000;
+
+export function ComingSoonGate({ id, children, compact }: { id: string; children: ReactNode; compact?: boolean }) {
+  const key = `np-reveal-${id}`;
+  const [revealed, setRevealed] = useState(() => {
+    try {
+      const ts = Number(localStorage.getItem(key));
+      return Number.isFinite(ts) && ts > 0 && Date.now() - ts < REVEAL_TTL_MS;
+    } catch { return false; }
+  });
+  const reveal = () => {
+    setRevealed(true);
+    try { localStorage.setItem(key, String(Date.now())); } catch { /* ignore */ }
+  };
   if (revealed) return <>{children}</>;
   return <div className="relative">
     <div className="pointer-events-none select-none blur-[5px] saturate-50 opacity-70" aria-hidden>{children}</div>
     <button
       type="button"
-      onClick={() => setRevealed(true)}
+      onClick={reveal}
       className="absolute inset-0 z-10 grid place-items-center rounded-lg bg-white/40 backdrop-blur-[3px] transition hover:bg-white/30 dark:bg-zinc-950/40 dark:hover:bg-zinc-950/30"
       aria-label="Abschnitt anzeigen"
     >
