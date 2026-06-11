@@ -18,8 +18,8 @@
     "resolution": "stündlich",
     "unit": "GW, GWh",
     "description": [
-      "**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–600 GW`, Default `0,1 GW`, η = `0,34` roundtrip) und H₂-Import (siehe `aussenhandel/h2-handel`, verlustfrei). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–500 GW`, Default `0 GW`). Kavernen-Energie `0–1.500 TWh` (Default `0,1 GWh`). Realistischer Anker `~500 TWh` (norddeutsches Kavernen-Potenzial DEEP.KBB); darüber hinaus als Stresstest-Reserve.",
-      "**Wirkungsgradkette:** die `34 %` Roundtrip gelten für den Power-to-Power-Pfad und ergeben sich aus Elektrolyse `~65 %` × Kavernen-Speicher `~95 %` × Rückverstromung `~55 %`; Quellen-Korridor `30–42 %` (Fraunhofer IKTS/ISE, IEA). Im Pool-Modell schreibt die Bilanz `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung` die Lade-Verluste nur dem Stromüberschuss-Pfad zu — importierter und für Industrie genutzter H₂ ist verlustfrei (kein Power-to-Power-Pfad).",
+      "**Auslegung:** der H₂-Speicher dient als zentraler **H₂-Pool** (Architektur nach PyPSA-Eur/REMod/Agora KNDE2045-Konsens). **Zuflüsse:** Stromüberschuss-Elektrolyse aus Erzeugungsüberschuss (Slider `0–600 GW`, Default `0,1 GW`, Laden mit η = `0,62` Strom→LHV) und H₂-Import (siehe `aussenhandel/h2-handel`, geht als LHV verlustfrei in den Pool). **Abflüsse:** stündlicher H₂-Bedarf der vier Industrie-Sektoren (Stahl/Chemie/Schiff/Flug, priority-basiert nach niedrigstem System-η) und Rückverstromung im Defizit (Slider `0–500 GW`, Default `0 GW`, η = `0,55`). Kavernen-Energie `0–1.500 TWh` in **H₂-LHV** (Default `0,1 GWh`) — direkt vergleichbar mit Kavernen-Potenzialangaben. Realistischer Anker `~500 TWh` (norddeutsches Kavernen-Potenzial DEEP.KBB); darüber hinaus als Stresstest-Reserve.",
+      "**Wirkungsgradkette:** die `34 %` Roundtrip gelten für den Power-to-Power-Pfad und ergeben sich aus Laden `0,62` (Elektrolyse `~65 %` × Verdichtung/Kaverne `~95 %`) × Rückverstromung `0,55` (H₂-ready GuD); Quellen-Korridor `30–42 %` (Fraunhofer IKTS/ISE, IEA). Der Pool bilanziert durchgängig in **H₂-LHV-Einheiten**: `SoC(t+1) = SoC(t) + 0,62·StromLaden + Import − SektorBedarf − Rückverstromung/0,55`. Elektrolyse-Verluste fallen beim Laden an, Rückverstromungs-Verluste beim Entladen — auch Import-H₂ wird im Defizit mit η = `0,55` verstromt; nur die stoffliche Nutzung (Sektorbedarf) verlässt den Pool `1:1`.",
       "**Modellgrenze:** **Dispatch-Priorität** `3` ordnet die Rückverstromung hinter Batterie/Pumpspeicher ein — H₂ übernimmt damit den **saisonalen Ausgleich**. Sektor-H₂-Bedarf wird im Pool-Schritt vor der Strom-Bilanz gedeckt: ungedeckter Bedarf bei leerem Pool fällt auf inländische Direkt-Elektrolyse als Stromlast zurück (entspricht der heutigen Sektor-Last). Eine Mindest-SoC-Restriktion und Temperatur-/Druckverluste der Kaverne bleiben außen vor."
     ],
     "overview": [
@@ -29,16 +29,16 @@
       },
       {
         "label": "Verteilung",
-        "value": "**H₂-Pool-Dispatch:** Zuflüsse aus Stromüberschuss-Elektrolyse (η = 0,34) + Import (verlustfrei). Abflüsse: Sektor-H₂-Bedarf priority-basiert + Rückverstromung (Priorität `3`, nach Batterie und Pumpspeicher; saisonaler Hub)."
+        "value": "**H₂-Pool-Dispatch:** Zuflüsse aus Stromüberschuss-Elektrolyse (Laden η = `0,62` Strom→LHV) + Import (LHV, verlustfrei in den Pool). Abflüsse: Sektor-H₂-Bedarf priority-basiert (`1:1` in LHV) + Rückverstromung (η = `0,55`, Priorität `3`, nach Batterie und Pumpspeicher; saisonaler Hub)."
       },
       {
         "label": "Formel",
-        "value": "**Bilanz:** `SoC(t+1) = SoC(t) + 0,34·ΔStromLaden + ΔImport − ΔSektorBedarf − ΔRückverstromung`. Lade-Verluste nur auf dem Power-to-Power-Pfad."
+        "value": "**Bilanz (alle Terme in H₂-LHV):** `SoC(t+1) = SoC(t) + 0,62·StromLaden + Import − SektorBedarf − Rückverstromung/0,55`. Power-to-Power: `0,62 × 0,55 ≈ 0,34`."
       }
     ],
     "reasoning": [
       "Roundtrip-Wirkungsgrad 34 % als Konsens moderner Anlagen 2025+: Elektrolyse 65 % (PEM/Alkali Stand 2024-2025) × Speicher 95 % (Kavernen-Wirkungsgrad inkl. Verdichtung) × Rückverstromung 55 % (H2-ready GuD, Brennstoffzelle Schnitt). Quellen-Korridor 30-42 % (Fraunhofer IKTS/ISE: 32-40 %, IEA Future of Hydrogen: 30-42 %). Frühere Annahme 24 % entsprach altem BHKW-Stand (40 % Rückverstromung) und ist für Neuanlagen 2025+ zu pessimistisch.",
-      "Getrennte Lade- und Entlade-Leistung: Elektrolyseure und Rückverstromungs-Turbinen sind separate Anlagen.",
+      "Getrennte Lade- und Entlade-Leistung und -Wirkungsgrade: Elektrolyseure (chargeEfficiency 0,62 inkl. Verdichtung) und Rückverstromungs-Turbinen (dischargeEfficiency 0,55) sind separate Anlagen; die SoC-Bilanz läuft in H₂-LHV-Einheiten.",
       "Initial-SoC wird per 2-Pass-Lauf kalibriert: Pass 1 startet leer (`initialStateOfChargeFraction = 0`), simuliert das Jahr und übergibt den Year-End-SoC als Anfangswert an Pass 2. Damit beginnt der ausgegebene Pass mit dem natürlichen saisonalen Anfangszustand — Sommer-Überschüsse füllen den Speicher, Winter-Defizite entladen ihn, ohne dass eine geratene Initial-Füllung das Ergebnis verfälscht.",
       "Dispatch-Priorität 3 — saisonal, nach Batterie/Pumpspeicher."
     ],
@@ -56,7 +56,7 @@
       {
         "name": "energyGWh",
         "unit": "Objekt",
-        "description": "Slider-Range Saisonspeicher-Energie: min/max/step in GWh."
+        "description": "Slider-Range Saisonspeicher-Energie: min/max/step in GWh (Kavernen-Energie in H₂-LHV)."
       },
       {
         "name": "id",
@@ -71,7 +71,17 @@
       {
         "name": "roundtripEfficiency",
         "unit": "Anteil",
-        "description": "Roundtrip-Wirkungsgrad (0,34)."
+        "description": "Roundtrip-Wirkungsgrad Power-to-Power (0,34 = chargeEfficiency × dischargeEfficiency)."
+      },
+      {
+        "name": "chargeEfficiency",
+        "unit": "Anteil",
+        "description": "Lade-Wirkungsgrad Strom → H₂-LHV (0,62 = Elektrolyse ~0,65 × Verdichtung/Kaverne ~0,95)."
+      },
+      {
+        "name": "dischargeEfficiency",
+        "unit": "Anteil",
+        "description": "Entlade-Wirkungsgrad H₂-LHV → Strom (0,55, H₂-ready GuD)."
       },
       {
         "name": "initialStateOfChargeFraction",
@@ -101,7 +111,7 @@
       {
         "name": "kosten",
         "unit": "Objekt",
-        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
+        "description": "Kostenparameter: CAPEX getrennt fuer Elektrolyse (capexChargeEurPerKW) und Rueckverstromung (capexDischargeEurPerKW), Kaverne EUR/kWh, Fix-O&M je Anlage, Var-O&M, Lebensdauer, Roundtrip-Wirkungsgrad. Quellen in method.kosten."
       }
     ],
     "caveats": [
@@ -109,7 +119,7 @@
       "Plausibler Korridor 30-42 %: Worst-Case 30 % (alte Elektrolyse + 50 % BHKW) bis Best-Case 42 % (PEM-Hochtemperatur + 65 % Brennstoffzelle/H2-GuD); aktuelle Großanlagen liegen bei 33-36 %.",
       "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
       "Slider-Maximum 1.500 TWh deckt Stresstests ab; realistischer Anker `~500 TWh` entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
-      "Modell trennt Lade-/Entlade-Leistung, nicht aber Elektrolyseur-Effizienz vs. Rückverstromung — Verluste vollständig beim Laden."
+      "Verdichtungs- und Kavernenverluste stecken pauschal im Lade-Wirkungsgrad `0,62`; der Verdichtungsstrom erscheint nicht als separate Stromlast."
     ],
     "file": "speicher/h2/data.json",
     "scripts": [
@@ -132,7 +142,7 @@
       ]
     },
     "kosten": {
-      "source": "**Wasserstoff (Elektrolyse + Kavernenspeicher + Rueckverstromung).** Leistungskomponente kombiniert (Ein- + Ausspeisung) 1500 EUR/kW (Elektrolyseur ~545-1040; Rueckverstromung BZ ~480-1040 bzw. H2-GT 550-1200 / H2-GuD 1100-2400; kombiniert ~1000-2000). Energiekomponente Kavernenspeicher 6 EUR/kWh (=6010 EUR/MWh, Viswanathan via PyPSA; EWI-Salzkaverne aehnlich; sehr guenstige Energiekosten). Wirkungsgrad RTE 0,35 (Strom->H2->Strom: ~0,71 Elektrolyse x ~0,49 BZ; mit H2-GuD eher 0,30-0,40). Fix-O&M ~25 EUR/kW/a auf Gesamtleistung. Var-O&M ~1 EUR/MWh. Lebensdauer 30 a (Kaverne/Elektrolyseur; Stacks ~80000 h frueher ersetzt; ISE BZ nur 12 a). Quellen: PyPSA technology-data; Fraunhofer ISE 2024; EWI Salzkavernen. Konfidenz: niedrig (Werte streuen extrem, stark marktreife-/skalierungsabhaengig). [Korrektur: Kavernen-Energie-CAPEX auf ~0,5 EUR/kWh gesenkt (Salzkaverne; 6 war ~12x zu hoch).]",
+      "source": "**Wasserstoff (Elektrolyse + Kavernenspeicher + Rueckverstromung).** Leistungskomponenten GETRENNT, weil Elektrolyseur und Rueckverstromungskraftwerk separate Anlagen sind, die beide Capex binden: Elektrolyse 1500 EUR/kW installiert (Grossprojekte 2024/25 ~1500-2500, Lernkurve <1000; PyPSA-Stack ~545-1040 zzgl. BoP/Installation), Rueckverstromung 1100 EUR/kW (H2-ready GuD ~1100-2400, H2-GT 550-1200; Anker am unteren GuD-Rand analog Gas-Capex). Energiekomponente Kavernenspeicher 0,5 EUR/kWh (Salzkaverne; EWI/PyPSA-Korridor ~0,2-0,6). Wirkungsgradkette in parameters: chargeEfficiency 0,62 (Elektrolyse ~0,65 x Verdichtung/Kaverne ~0,95), dischargeEfficiency 0,55 (H2-GuD) — Produkt = roundtripEfficiency ~0,34. Fix-O&M 25 EUR/kW/a Elektrolyse + 22 EUR/kW/a Rueckverstromung. Var-O&M ~1 EUR/MWh. Lebensdauer 30 a (Kaverne/Elektrolyseur; Stacks ~80000 h frueher ersetzt; ISE BZ nur 12 a). Quellen: PyPSA technology-data; Fraunhofer ISE 2024; EWI Salzkavernen. Konfidenz: niedrig (Werte streuen extrem, stark marktreife-/skalierungsabhaengig). [Korrektur 1: Kavernen-Energie-CAPEX auf ~0,5 EUR/kWh gesenkt (6 war ~12x zu hoch). Korrektur 2: max(Lade-, Entlade-Leistung)-Logik durch getrennte Capex ersetzt — vorher bekam die kleinere der beiden Anlagen null Capex.]",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
@@ -142,6 +152,8 @@
   },
   "parameters": {
     "roundtripEfficiency": 0.34,
+    "chargeEfficiency": 0.62,
+    "dischargeEfficiency": 0.55,
     "initialStateOfChargeFraction": 0,
     "dispatchPriority": 3,
     "referenceScales": {
@@ -208,12 +220,14 @@
       }
     },
     "kosten": {
-      "capexEurPerKW": 1500,
+      "capexChargeEurPerKW": 1500,
+      "capexDischargeEurPerKW": 1100,
       "capexEurPerKWh": 0.5,
-      "omFixEurPerKWa": 25,
+      "omFixChargeEurPerKWa": 25,
+      "omFixDischargeEurPerKWa": 22,
       "omVarEurPerMWh": 1,
       "lifetimeYears": 30,
-      "efficiency": 0.35
+      "efficiency": 0.34
     }
   }
 }

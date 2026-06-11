@@ -16,12 +16,21 @@ pub(super) fn charge_storage(
     (charged_gw, soc_gwh + charged_gw * eta)
 }
 
-pub(super) fn discharge_storage(needed_gw: f64, power_gw: f64, soc_gwh: f64) -> (f64, f64) {
+// discharge_eta: Strom-Output pro SoC-Einheit (Batterie/PSW 1,0 — Verluste beim
+// Laden; H₂ 0,55 — SoC in LHV, Rückverstromungsverlust beim Entladen).
+// power_gw und Rückgabewert sind elektrisch, der SoC-Abzug in Speichereinheiten.
+pub(super) fn discharge_storage(
+    needed_gw: f64,
+    power_gw: f64,
+    soc_gwh: f64,
+    discharge_eta: f64,
+) -> (f64, f64) {
     if needed_gw <= 0.0 || power_gw <= 0.0 || soc_gwh <= EPS {
         return (0.0, soc_gwh);
     }
-    let discharged_gw = needed_gw.min(power_gw).min(soc_gwh);
-    (discharged_gw, soc_gwh - discharged_gw)
+    let eta = discharge_eta.max(EPS);
+    let discharged_gw = needed_gw.min(power_gw).min(soc_gwh * eta);
+    (discharged_gw, soc_gwh - discharged_gw / eta)
 }
 
 pub(super) fn ramp_dispatchables(
