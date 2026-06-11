@@ -445,9 +445,10 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
   return <section className="mt-8 grid">
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
       <div className="min-w-0">
-        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2} theme={theme}/>
+        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
       </div>
       <div className="flex min-w-0 flex-col gap-4">
+        <FlaechenTypenPanel anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
         <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
         <details className="group/det">
           <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
@@ -461,12 +462,24 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
   </section>;
 }
 
-function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme }) {
+function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string; theme: ChartTheme }) {
   useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme);
-  const anlagePct = anlageKm2 / DEUTSCHLAND_KM2 * 100;
-  const wirkungPct = wirkungKm2 / DEUTSCHLAND_KM2 * 100;
-  const offshorePct = offshoreWirkungKm2 / DEUTSCHLAND_KM2 * 100;
-  const vorPct = vorFlaecheKm2 / DEUTSCHLAND_KM2 * 100;
+  return <div>
+    <div className="flex items-baseline justify-between gap-4">
+      <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Flächenbedarf in Deutschland</h2>
+      <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
+    </div>
+    <div className="mt-4 bg-white dark:bg-zinc-950">
+      <div id="flaeche-map" className="h-[360px] w-full"/>
+    </div>
+  </div>;
+}
+
+// Flächentypen-Panel rechts neben der Karte: Kennzahl + Kurzerklärung je Typ,
+// Farben identisch zu den Karten-Kreisen. Beantwortet „Was bedeuten die
+// Flächentypen?" direkt am Wert statt in einem versteckten Disclosure.
+function FlaechenTypenPanel({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+  const pct = (km2: number) => `${(km2 / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: km2 / DEUTSCHLAND_KM2 * 100 < 1 ? 2 : 1 })} %`;
   // vorFlaeche-Länder gruppieren für Label-Anzeige
   const vorByLand: Record<string, number> = {};
   for (const r of rows) {
@@ -479,29 +492,36 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
     .sort((a, b) => b[1] - a[1])
     .map(([land, km2]) => `${land} ${fmtKm2(km2)}`)
     .join(' · ');
-  return <div>
-    <div className="flex items-baseline justify-between gap-4">
-      <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Flächenbedarf in Deutschland</h2>
-      <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
-    </div>
-    <div className="mt-4 bg-white dark:bg-zinc-950">
-      <div id="flaeche-map" className="h-[360px] w-full"/>
-      <div className="grid gap-2.5 border-t border-zinc-100 pb-2 pt-4 text-xs dark:border-zinc-800">
-        <LegendMetric color="#dc2626" label="Anlagenfläche" value={`${anlagePct.toLocaleString('de-DE', { maximumFractionDigits: anlagePct < 1 ? 2 : 1 })} %`} meta="DE"/>
-        <LegendMetric color="#16a34a" label="Wirkfläche" value={`${wirkungPct.toLocaleString('de-DE', { maximumFractionDigits: wirkungPct < 1 ? 2 : 1 })} %`} meta="DE"/>
-        {offshoreWirkungKm2 > 0 && <LegendMetric color="#0284c7" label="Wirkfläche Offshore" value={`${offshorePct.toLocaleString('de-DE', { maximumFractionDigits: offshorePct < 1 ? 2 : 1 })} %`} meta="Nordsee/Ostsee"/>}
-        {vorFlaecheKm2 > 0 && <LegendMetric color="#f59e0b" label="Vorfläche" value={`${vorPct.toLocaleString('de-DE', { maximumFractionDigits: vorPct < 1 ? 2 : 1 })} %`} meta={vorLandLabel || 'Brennstoff/Anbau'}/>}
-      </div>
-      <details className="group mt-3">
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
-          <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90"/>
-          Was bedeuten die Flächentypen?
-        </summary>
-        <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-          Anlagenfläche = direkt versiegelt. Wirkfläche = Park/Sperrzone/Stauraum. Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche = DE-Inland-Brennstoff-/Anbaufläche (Biomasse-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
-        </p>
-      </details>
-    </div>
+  const typen: Array<{ color: string; label: string; desc: string; km2: number; meta: string; show: boolean }> = [
+    { color: '#dc2626', label: 'Anlagenfläche', desc: 'Direkt versiegelte Fläche der Anlagen — Fundamente, Module, Gebäude.', km2: anlageKm2, meta: 'DE', show: true },
+    { color: '#16a34a', label: 'Wirkfläche', desc: 'Vom Park beanspruchtes Land — Rotorabstände, Sperrzonen, Stauraum; dazwischen meist weiter nutzbar.', km2: wirkungKm2, meta: 'DE', show: true },
+    { color: '#0284c7', label: 'Wirkfläche Offshore', desc: 'Beanspruchte Meeresfläche der Offshore-Parks, liegt außerhalb der Landesfläche.', km2: offshoreWirkungKm2, meta: 'Nordsee/Ostsee', show: offshoreWirkungKm2 > 0 },
+    { color: '#f59e0b', label: 'Vorfläche', desc: 'Vorgelagerte Brennstoff- und Anbaufläche im Inland — Energiepflanzen-Acker, Braunkohle-Tagebau.', km2: vorFlaecheKm2, meta: vorLandLabel || 'Brennstoff/Anbau', show: vorFlaecheKm2 > 0 },
+  ];
+  return <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-zinc-400 dark:text-zinc-500">Flächentypen</div>
+    <dl className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      {typen.filter(t => t.show).map(t => <div key={t.label} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
+        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }}/>
+        <div className="min-w-0 flex-1">
+          <dt className="text-xs font-medium text-zinc-700 dark:text-zinc-200">{t.label}</dt>
+          <dd className="mt-0.5 text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{t.desc}</dd>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{pct(t.km2)}</div>
+          <div className="whitespace-nowrap text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">{t.meta}</div>
+        </div>
+      </div>)}
+    </dl>
+    <details className="group mt-2 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90"/>
+        Methodik im Detail
+      </summary>
+      <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+        Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent, PV-Modulherstellung in China zählt ebenfalls nicht.
+      </p>
+    </details>
   </div>;
 }
 
