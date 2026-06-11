@@ -130,7 +130,12 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
 
   const total = capexSum + omSum + fuelSum + h2Import + importNet + netz;
 
-  const servedMWh = Math.max(1, (result.summary.totalDemandTWh - result.summary.loadSheddingTWh) * 1e6);
+  // Umlagebasis = gedeckte Stromlast PLUS die strom-äquivalent vom H₂-Pool
+  // gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw.
+  // -Import senkt die Stromlast, wird aber vom selben System bezahlt — ohne
+  // diesen Term würden die Kosten nur auf die Rest-Stromlast umgelegt und
+  // €/MWh in H₂-lastigen Szenarien überzeichnet.
+  const servedMWh = Math.max(1, (result.summary.totalDemandTWh - result.summary.loadSheddingTWh + (result.summary.h2PoolStromReductionTWh ?? 0)) * 1e6);
   return {
     total,
     perMWh: total / servedMWh,

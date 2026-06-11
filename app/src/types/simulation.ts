@@ -57,6 +57,9 @@ export type SimulationResult = {
     importTWh: number;
     exportTWh: number;
     loadSheddingTWh: number;
+    // Strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (TWh/a). Optional,
+    // weil ältere API-Stände das Feld nicht liefern.
+    h2PoolStromReductionTWh?: number;
     hoursWithLoadShedding: number;
     hoursWithCurtailmentOver50pct: number;
     co2MtPerYear: number;

@@ -47,6 +47,9 @@ impl SimulationResult {
                 "importTWh": sum(&self.hours, |hour| hour.import_gw),
                 "exportTWh": sum(&self.hours, |hour| hour.export_gw),
                 "loadSheddingTWh": load_shedding_twh,
+                // Strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage — Teil
+                // der versorgten Gesamtnachfrage, aber nicht der Stromlast.
+                "h2PoolStromReductionTWh": sum(&self.hours, |hour| hour.h2_pool_reduction_gw),
                 "hoursWithLoadShedding": self.hours.iter().filter(|hour| hour.load_shedding_gw > EPS).count(),
                 "hoursWithCurtailmentOver50pct": self.hours.iter().filter(|hour| {
                     let re = hour.pv_gw + hour.wind_on_gw + hour.wind_off_gw + hour.pv_curtailed_gw + hour.wind_on_curtailed_gw + hour.wind_off_curtailed_gw;
