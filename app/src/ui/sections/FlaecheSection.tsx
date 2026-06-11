@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import * as echarts from 'echarts/core';
 import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
@@ -8,7 +8,7 @@ import germanyGeoJson from '../germanyGeoJson.json';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
 import { uiManifest } from '../uiManifest';
 import { cx } from '../ui';
-import { SectionHeading, StatCard } from '../sectionUi';
+import { HelpDot, HelpPanel, SectionHeading, StatCard, ViewPill, type SectionView } from '../sectionUi';
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
@@ -334,7 +334,7 @@ function useFlaecheMapChart(containerId: string, anlageKm2: number, wirkungKm2: 
   return useMainThreadChart(containerId, data, (d, viewport) => buildFlaecheMapOption(d.anlageKm2, d.wirkungKm2, d.offshoreWirkungKm2, d.vorFlaecheKm2, d.fmtKm2, viewport, d.theme));
 }
 
-function FlaechePanel({ scenario, theme }: { scenario: Scenario; theme: ChartTheme }) {
+function FlaechePanel({ scenario, theme, view }: { scenario: Scenario; theme: ChartTheme; view: SectionView }) {
   const rows = flaecheRows(scenario);
   const rows2025 = flaecheRows(scenarioBase);
   const offshoreWirkung = rows.find(r => r.id === 'windoff')?.wirkungKm2 ?? 0;
@@ -347,20 +347,22 @@ function FlaechePanel({ scenario, theme }: { scenario: Scenario; theme: ChartThe
 
   const fmtKm2 = (v: number) => v < 1 ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : v < 100 ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : Math.round(v).toLocaleString('de-DE');
 
-  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-4 dark:border-transparent dark:bg-zinc-950 sm:px-5 sm:py-5 lg:px-6">
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <StatCard title="Flächenbedarf" stats={[
-        { label: 'Summe', value: `${fmtKm2(sumGesamt)} km²` },
-        { label: 'gegen 2025', value: sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–' },
-      ]}/>
-      <StatCard title="Vergleich" stats={[
-        { label: 'DE-Anteil', value: `${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %` },
-        { label: 'Saarlands', value: `${(sumGesamt / SAARLAND_KM2).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` },
-      ]}/>
-    </div>
-
-    <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkungInland} offshoreWirkungKm2={offshoreWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2} theme={theme}/>
+  // Stat-Karten wandern in die rechte Spalte der Zwei-Spalten-Komposition
+  // (links Karte/Tabelle, rechts die Daten).
+  const stats = <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <StatCard title="Flächenbedarf" stats={[
+      { label: 'Summe', value: `${fmtKm2(sumGesamt)} km²` },
+      { label: 'gegen 2025', value: sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–' },
+    ]}/>
+    <StatCard title="Vergleich" stats={[
+      { label: 'DE-Anteil', value: `${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %` },
+      { label: 'Saarlands', value: `${(sumGesamt / SAARLAND_KM2).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` },
+    ]}/>
   </div>;
+
+  // Kein gerahmter Panel-Wrapper um die Komposition: Die Sektion steht wie
+  // Ressourcen direkt auf der Seite (Abbildung rahmenlos, Daten-Karten gerahmt).
+  return <FlaecheMap anlageKm2={sumAnlage} wirkungKm2={sumWirkungInland} offshoreWirkungKm2={offshoreWirkung} vorFlaecheKm2={sumVor} rows={rows} fmtKm2={fmtKm2} theme={theme} view={view} stats={stats}/>;
 }
 
 function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
@@ -372,14 +374,14 @@ function FlaecheTechnologyTable({ rows, fmtKm2 }: { rows: FlaecheRow[]; fmtKm2: 
     else next.add(id);
     return next;
   });
-  return <div className="mt-2 min-w-0 overflow-x-auto bg-white dark:bg-zinc-950">
+  return <div className="min-w-0 overflow-x-auto bg-white dark:bg-zinc-950">
     <table className="w-full min-w-[360px] text-sm">
-      <thead className="text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+      <thead className="text-left text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
         <tr className="border-b border-zinc-200 dark:border-zinc-800">
-          <th className="w-7 py-3 font-medium"/>
-          <th className="py-3 font-medium">Technologie</th>
-          <th className="py-3 text-right font-medium">Bestand</th>
-          <th className="py-3 text-right font-medium">Summe</th>
+          <th className="w-7 py-3"/>
+          <th className="py-3 font-semibold">Technologie</th>
+          <th className="py-3 text-right font-semibold">Bestand</th>
+          <th className="py-3 text-right font-semibold">Summe</th>
         </tr>
       </thead>
       <tbody className="text-zinc-700 dark:text-zinc-300">
@@ -441,22 +443,20 @@ function FlaecheDetailTerm({ label, value }: { label: string; value: string }) {
   </div>;
 }
 
-function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme }) {
-  return <section className="mt-8 grid">
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(300px,0.95fr)_minmax(420px,1.05fr)]">
+function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, theme, view, stats }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; theme: ChartTheme; view: SectionView; stats: ReactNode }) {
+  // Spalten-Verhältnis wie die Ressourcen-Sektion: Karte/Tabelle links 2/3,
+  // Daten-Karten rechts 1/3.
+  return <section className="grid">
+    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
       <div className="min-w-0">
-        <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
+        {view === 'grafisch'
+          ? <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
+          : <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>}
       </div>
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-3">
+        {stats}
         <FlaechenTypenPanel anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
         <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
-        <details className="group/det">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
-            <ChevronRight className="h-3.5 w-3.5 transition-transform group-open/det:rotate-90"/>
-            Details je Technologie
-          </summary>
-          <FlaecheTechnologyTable rows={rows} fmtKm2={fmtKm2}/>
-        </details>
       </div>
     </div>
   </section>;
@@ -464,15 +464,10 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
 
 function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string; theme: ChartTheme }) {
   useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme);
-  return <div>
-    <div className="flex items-baseline justify-between gap-4">
-      <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Flächenbedarf in Deutschland</h2>
-      <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-zinc-500">{fmtKm2(anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2)} km² gesamt</span>
-    </div>
-    <div className="mt-4 bg-white dark:bg-zinc-950">
-      <div id="flaeche-map" className="h-[360px] w-full"/>
-    </div>
-  </div>;
+  // Rahmenlose Abbildung ohne Binnen-Überschrift (analog Periodensystem der
+  // Ressourcen-Sektion): Summe und km² stehen in der Stat-Karte rechts daneben.
+  // Die Geo-Projektion skaliert mit dem Container (layoutSize 92 % von min(w,h)).
+  return <div id="flaeche-map" className="h-[540px] w-full"/>;
 }
 
 // Flächentypen-Panel rechts neben der Karte: Kennzahl + Kurzerklärung je Typ,
@@ -498,30 +493,24 @@ function FlaechenTypenPanel({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
     { color: '#0284c7', label: 'Wirkfläche Offshore', desc: 'Beanspruchte Meeresfläche der Offshore-Parks, liegt außerhalb der Landesfläche.', km2: offshoreWirkungKm2, meta: 'Nordsee/Ostsee', show: offshoreWirkungKm2 > 0 },
     { color: '#f59e0b', label: 'Vorfläche', desc: 'Vorgelagerte Brennstoff- und Anbaufläche im Inland — Energiepflanzen-Acker, Braunkohle-Tagebau.', km2: vorFlaecheKm2, meta: vorLandLabel || 'Brennstoff/Anbau', show: vorFlaecheKm2 > 0 },
   ];
-  return <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
-    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-zinc-400 dark:text-zinc-500">Flächentypen</div>
-    <dl className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-      {typen.filter(t => t.show).map(t => <div key={t.label} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
-        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }}/>
-        <div className="min-w-0 flex-1">
-          <dt className="text-xs font-medium text-zinc-700 dark:text-zinc-200">{t.label}</dt>
-          <dd className="mt-0.5 text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{t.desc}</dd>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{pct(t.km2)}</div>
-          <div className="whitespace-nowrap text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">{t.meta}</div>
-        </div>
-      </div>)}
-    </dl>
-    <details className="group mt-2 border-t border-zinc-100 pt-2 dark:border-zinc-800">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
-        <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90"/>
-        Methodik im Detail
-      </summary>
-      <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-        Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent, PV-Modulherstellung in China zählt ebenfalls nicht.
-      </p>
-    </details>
+  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Flächentypen</h4>
+    <div className="mt-2 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+      {typen.filter(t => t.show).map(t => <details key={t.label} className="group/typ py-2 first:pt-0 last:pb-0">
+        <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }}/>
+          <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open/typ:rotate-90 dark:text-zinc-500"/>
+            <span className="truncate">{t.label}</span>
+          </span>
+          <span className="flex shrink-0 items-baseline gap-1.5 text-right">
+            <span className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{pct(t.km2)}</span>
+            <span className="whitespace-nowrap text-[11px] font-normal tabular-nums text-zinc-400 dark:text-zinc-500">{t.meta}</span>
+          </span>
+        </summary>
+        <p className="mt-1 pl-9 text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{t.desc}</p>
+      </details>)}
+    </div>
   </div>;
 }
 
@@ -543,13 +532,16 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
   const visibleTileCount = Math.max(1, Math.ceil(saarlands));
   const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
-  return <div className="group relative border-b border-zinc-100 bg-white pb-4 dark:border-zinc-800 dark:bg-zinc-950">
+  return <div className="group relative rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
     <div className="flex items-baseline justify-between gap-4">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Saarland-Vergleich</h4>
-      <span className="text-xs tabular-nums text-zinc-500">{saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands</span>
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Saarland-Vergleich</h4>
+      <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
+        {saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })}
+        <span className="ml-1 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">Saarlands</span>
+      </span>
     </div>
     <div
-      className="mt-4 grid grid-cols-12 gap-1.5"
+      className="mt-3 grid grid-cols-12 gap-1.5"
       aria-label={`Entspricht ${saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands`}
     >
       {saarlandTiles.map(index => {
@@ -570,7 +562,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
         />;
       })}
     </div>
-    <div className="pointer-events-none absolute left-4 top-full z-30 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg ring-1 ring-zinc-950/5 transition group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-900 dark:ring-zinc-50/10">
+    <div className="pointer-events-none absolute left-3 top-full z-30 mt-1 w-[min(320px,calc(100vw-3rem))] rounded-md border border-zinc-200 bg-white p-3 text-xs opacity-0 shadow-lg ring-1 ring-zinc-950/5 transition group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-900 dark:ring-zinc-50/10">
       <div className="grid gap-2">
         <LegendMetric color="#dc2626" label="Anlagenfläche" value={anlageTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
         <LegendMetric color="#16a34a" label="Wirkfläche" value={wirkungTiles.toLocaleString('de-DE', { maximumFractionDigits: 1 })} meta="Saarlands"/>
@@ -585,8 +577,18 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
 }
 
 export default function FlaecheSection({ scenario, theme }: { scenario: Scenario; theme: ChartTheme }) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  // Linke Spalte: Deutschlandkarte (Grafisch) oder Technologie-Tabelle (Details).
+  const [view, setView] = useState<SectionView>('grafisch');
   return <section id="section-flaeche" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-    <SectionHeading id="flaeche"/>
-    <FlaechePanel scenario={scenario} theme={theme}/>
+    <div className="flex items-center gap-2">
+      <SectionHeading id="flaeche"/>
+      <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie wird der Flächenbedarf berechnet?"/>
+      <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
+    </div>
+    {helpOpen && <HelpPanel>
+      Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche zählt nur DE-Inland (Energiepflanzen-Acker, Braunkohle-Tagebau); Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
+    </HelpPanel>}
+    <FlaechePanel scenario={scenario} theme={theme} view={view}/>
   </section>;
 }
