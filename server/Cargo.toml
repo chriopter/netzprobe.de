@@ -2,6 +2,9 @@
 name = "netzprobe-api"
 version = "0.1.0"
 edition = "2024"
+# Neben dem API-Server existiert das Szenario-Check-CLI (src/bin/simulate.rs);
+# cargo run soll weiterhin den Server starten.
+default-run = "netzprobe-api"
 
 [dependencies]
 axum = "*"
