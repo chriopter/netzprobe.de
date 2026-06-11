@@ -144,7 +144,14 @@ impl GenerationPackage {
 
 #[derive(Debug, Clone)]
 struct StoragePackage {
-    roundtrip_efficiency: f64,
+    // Lade-Wirkungsgrad (Strom → SoC) und Entlade-Wirkungsgrad (SoC → Strom).
+    // Batterie/Pumpspeicher: charge = roundtripEfficiency, discharge = 1,0 —
+    // SoC in Strom-Äquivalent, Verluste vollständig beim Laden (wie bisher).
+    // H₂: charge = Elektrolyse+Verdichtung (0,62), discharge = Rückverstromung
+    // (0,55) — SoC in H₂-LHV-Einheiten, dadurch einheitenkonsistent mit
+    // H₂-Import und Sektor-H₂-Bedarf im Pool.
+    charge_efficiency: f64,
+    discharge_efficiency: f64,
     initial_state_of_charge_fraction: f64,
     dispatch_priority: u32,
 }
@@ -188,7 +195,8 @@ struct StorageSlot {
     charge_power_gw: f64,
     discharge_power_gw: f64,
     energy_gwh: f64,
-    eta: f64,
+    charge_eta: f64,
+    discharge_eta: f64,
     priority: u32,
 }
 
@@ -447,10 +455,12 @@ impl StaticModel {
             ("h2", include_str!("../../speicher/h2/package.json")),
         ] {
             let data = package_data(raw)?;
+            let roundtrip = number(&data, "roundtripEfficiency")?;
             storage.insert(
                 id,
                 StoragePackage {
-                    roundtrip_efficiency: number(&data, "roundtripEfficiency")?,
+                    charge_efficiency: number_or(&data, "chargeEfficiency", roundtrip),
+                    discharge_efficiency: number_or(&data, "dischargeEfficiency", 1.0),
                     initial_state_of_charge_fraction: number(
                         &data,
                         "initialStateOfChargeFraction",
@@ -812,7 +822,8 @@ impl StaticModel {
                 charge_power_gw: s_number(scenario, &["storage", "batteriePowerGW"])?,
                 discharge_power_gw: s_number(scenario, &["storage", "batteriePowerGW"])?,
                 energy_gwh: s_number(scenario, &["storage", "batterieEnergyGWh"])?,
-                eta: self.storage["batterie"].roundtrip_efficiency,
+                charge_eta: self.storage["batterie"].charge_efficiency,
+                discharge_eta: self.storage["batterie"].discharge_efficiency,
                 priority: self.storage["batterie"].dispatch_priority,
             },
             StorageSlot {
@@ -820,7 +831,8 @@ impl StaticModel {
                 charge_power_gw: s_number(scenario, &["storage", "pumpspeicherPowerGW"])?,
                 discharge_power_gw: s_number(scenario, &["storage", "pumpspeicherPowerGW"])?,
                 energy_gwh: s_number(scenario, &["storage", "pumpspeicherEnergyGWh"])?,
-                eta: self.storage["pumpspeicher"].roundtrip_efficiency,
+                charge_eta: self.storage["pumpspeicher"].charge_efficiency,
+                discharge_eta: self.storage["pumpspeicher"].discharge_efficiency,
                 priority: self.storage["pumpspeicher"].dispatch_priority,
             },
             StorageSlot {
@@ -828,7 +840,8 @@ impl StaticModel {
                 charge_power_gw: s_number(scenario, &["storage", "h2ChargePowerGW"])?,
                 discharge_power_gw: s_number(scenario, &["storage", "h2DischargePowerGW"])?,
                 energy_gwh: s_number(scenario, &["storage", "h2EnergyGWh"])?,
-                eta: self.storage["h2"].roundtrip_efficiency,
+                charge_eta: self.storage["h2"].charge_efficiency,
+                discharge_eta: self.storage["h2"].discharge_efficiency,
                 priority: self.storage["h2"].dispatch_priority,
             },
         ];
@@ -861,6 +874,9 @@ impl StaticModel {
         let mut hours = Vec::with_capacity(self.hours.len());
 
         for row in &self.hours {
+            // H₂-Pool: SoC, Import-Inflow und Sektor-Bedarf rechnen alle in
+            // H₂-LHV-Einheiten (Elektrolyse-Verlust beim Laden, Rückverstromungs-
+            // Verlust beim Entladen) — keine Einheitenvermischung mehr.
             let h2_available_gw = storage.h2 + h2_import_inflow_gw;
             let pool_cover_h2_gw = if sector_h2_demand_gw > 0.0 {
                 sector_h2_demand_gw.min(h2_available_gw)
@@ -919,7 +935,7 @@ impl StaticModel {
                     let (charged, new_soc) = charge_storage(
                         mismatch,
                         slot.charge_power_gw,
-                        slot.eta,
+                        slot.charge_eta,
                         storage_get(storage, slot.id),
                         slot.energy_gwh,
                     );
@@ -975,6 +991,7 @@ impl StaticModel {
                         deficit,
                         slot.discharge_power_gw,
                         storage_get(storage, slot.id),
+                        slot.discharge_eta,
                     );
                     storage_set(&mut storage, slot.id, new_soc);
                     match slot.id {
