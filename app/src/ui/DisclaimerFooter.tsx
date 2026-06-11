@@ -5,7 +5,7 @@ export function DisclaimerFooter({ className = '' }: { className?: string }) {
 
   return <footer className={className}>
     Vibecoded und schnell iteriert. Alle Eingangsgrößen sind dokumentierte Annahmen basierend auf öffentlichen Quellen, keine empirisch belastbaren Werte; Ergebnisse als grobe Orientierung lesen, nicht als Prognose. Code auf <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950 dark:text-zinc-200 dark:decoration-zinc-600 dark:hover:text-white dark:hover:decoration-zinc-300" href={REPO_URL} target="_blank" rel="noreferrer">GitHub</a>. by <a className="text-zinc-800 underline decoration-zinc-400 underline-offset-4 hover:text-zinc-950 dark:text-zinc-200 dark:decoration-zinc-600 dark:hover:text-white dark:hover:decoration-zinc-300" href="https://chriopter.de/imprint" target="_blank" rel="noreferrer" title="Impressum chriopter.de">chriopter.de</a>.
-    <div className="mt-1 text-zinc-400 dark:text-zinc-500">
+    {' '}<span className="whitespace-nowrap text-zinc-400 dark:text-zinc-500">
       Build{' '}
       <a
         href={`${REPO_URL}/commits/main/`}
@@ -14,6 +14,6 @@ export function DisclaimerFooter({ className = '' }: { className?: string }) {
         className="font-mono text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-500 dark:text-zinc-300 dark:decoration-zinc-600 dark:hover:text-white dark:hover:decoration-zinc-300"
       >{__BUILD_COMMIT__}</a>
       {' · '}{buildTime}
-    </div>
+    </span>
   </footer>;
 }

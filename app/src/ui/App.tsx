@@ -1025,7 +1025,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
           <ComingSoonGate id="ressourcen"><RessourcenSection scenario={resolvedScenario} buildoutYear={buildoutYear} data={data}/></ComingSoonGate>
           <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear}/></ComingSoonGate>
-          <DisclaimerFooter className="mt-auto pt-2 text-xs leading-5 text-zinc-500"/>
+          <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
 
