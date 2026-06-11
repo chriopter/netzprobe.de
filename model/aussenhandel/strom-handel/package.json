@@ -18,7 +18,7 @@
     "description": [
       "**Sektor:** grenzüberschreitender Stromhandel über die deutschen Kuppelstellen zu acht Nachbarländern (`FR`, `NL`, `AT`, `DK`, `CH`, `PL`, `CZ`, `BE`). Im Bezugsjahr 2025 lag der Brutto-Import bei rund `76 TWh`, der Brutto-Export bei rund `54 TWh`; physikalische Stundenflüsse erreichten Spitzen von `25–30 GW` je Richtung. Das Szenario bildet diesen Saldo nicht historisch ab, sondern stellt der Engine zwei harte Stunden-Caps für die Dispatch-Entscheidung bereit.",
       "**Mechanik:** der Import-Slider läuft von `0` bis `200 GW` mit Default `13 GW`, der Export-Slider analog mit Default `25 GW` (Schrittweite `5 GW`); beide Defaults sind so gewählt, dass sie die 2025-Jahresbilanz reproduzieren. Importierter Strom wird pauschal mit `300 g CO₂/kWh` bilanziert — ein gewichteter **Nachbarmix** zwischen `~30 g/kWh` (CH-Wasser) und `~660 g/kWh` (PL-Kohle); Electricity Maps weist für DE-Imports 2024 etwa `250–280 g/kWh` aus, der Modellwert liegt wegen erwarteter PL/CZ-Lastflussanteile leicht darüber. Pro Stunde gilt `Importemissionen = importGW(t) × 300 g/kWh`; Exporte werden der eigenen Bilanz nicht zugerechnet.",
-      "**Dispatch-Einbindung:** in der Engine entscheidet die Stunden-Residuallast über die Aktivierung. Bei Überschuss greift die Kaskade Speicher → Export bis Cap → Curtailment, bei Unterdeckung Speicher → Import bis Cap → Gas/Kohle-Rampe (`2:1`) → Lastabwurf. Das **Cap** ist statisch über alle 8.760 Stunden; reale NTCs schwanken mit Last, Wartung und Wetter, und die Marginalquelle hinter einer Importstunde kann von schwedischer Wasserkraft bis polnischer Steinkohle reichen. Der Slider erlaubt bis `200 GW` für Stresstests jenseits jeder physisch verfügbaren Kuppelkapazität."
+      "**Dispatch-Einbindung:** in der Engine entscheidet die Stunden-Residuallast über die Aktivierung. Bei Überschuss greift die Kaskade Speicher → Export bis Cap → Curtailment, bei Unterdeckung Speicher → Gas/Kohle-Rampe (`2:1`) → Import bis Cap → Lastabwurf; heimische Regelbare fahren vor dem flexiblen Import hoch, weil das Modell keine Preise kennt und Versorgungssicherheits-Logik gilt. Das **Cap** ist statisch über alle 8.760 Stunden; reale NTCs schwanken mit Last, Wartung und Wetter, und die Marginalquelle hinter einer Importstunde kann von schwedischer Wasserkraft bis polnischer Steinkohle reichen. Der Slider erlaubt bis `200 GW` für Stresstests jenseits jeder physisch verfügbaren Kuppelkapazität."
     ],
     "overview": [
       {
@@ -27,7 +27,7 @@
       },
       {
         "label": "Verteilung",
-        "value": "**Dispatch:** bei Überschuss Speicher → Export bis Cap → Curtailment; bei Unterdeckung Speicher → Import bis Cap → Gas/Kohle-Rampe (`2:1`) → Lastabwurf. Caps wirken in jeder Stunde, kein Saisonprofil."
+        "value": "**Dispatch:** bei Überschuss Speicher → Export bis Cap → Curtailment; bei Unterdeckung Speicher → Gas/Kohle-Rampe (`2:1`) → Import bis Cap → Lastabwurf. Caps wirken in jeder Stunde, kein Saisonprofil."
       },
       {
         "label": "Formel",
@@ -72,6 +72,7 @@
       "Import-Cap und Export-Cap sind statische Jahres-Caps; reale NTCs schwanken stundenweise.",
       "Importemissionen sind ein Nachbarland-Mittelwert; die tatsächliche Marginalquelle (z.B. PL Kohle vs. NO Wasser) kann deutlich abweichen.",
       "Default Import 13 GW reproduziert 2025-Bilanz; reale Stunden-Maximum lag bei 25-30 GW.",
+      "Im historisch-2025-Replay decken öffentliche Erzeugung plus realer Handel die Netzlast nicht ganz (industrielle Eigenerzeugung fehlt im Datensatz); die Engine schließt die Lücke (`~20 TWh`) bewusst per zusätzlichem Import statt künstlichem Lastabwurf — `importTWh` zeigt dort `~54` statt `~34 TWh` des Datensatzes, CO₂ entsprechend `+~6 Mt`.",
       "Export-Emissionen werden ausgeklammert — bei strenger Bilanzierung müssten sie der Quelle (DE-Mix) zugeordnet werden."
     ]
   },
