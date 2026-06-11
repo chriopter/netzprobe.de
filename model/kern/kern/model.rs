@@ -26,6 +26,7 @@ use data::{
 use dispatch::{charge_storage, discharge_storage, ramp_dispatchables, storage_get, storage_set};
 use serde::Deserialize;
 use serde_json::{json, Value};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 const EPS: f64 = 1e-9;
@@ -172,6 +173,11 @@ struct HourInput {
 #[derive(Debug, Clone)]
 pub struct StaticModel {
     hours: Vec<HourInput>,
+    // Basislast 2017 (MW, index-aligned zum 2025-Stundenraster): loadYear 2017
+    // ersetzt nur die Lastwerte; Einspeisefaktoren, Heizgradtage und Zeitstempel
+    // bleiben im 2025-Raster. Für den historisch-2017-Replay paart das die
+    // 2017er-Erzeugung index-korrekt mit der 2017er-Last.
+    loads_2017: Vec<f64>,
     historical_2025: Vec<HistoricalGenerationHour>,
     historical_2017: Vec<HistoricalGenerationHour>,
     demand: HashMap<DemandId, DemandPackage>,
@@ -269,6 +275,15 @@ pub struct SimulationResult {
 impl StaticModel {
     pub fn load() -> Result<Self, ModelError> {
         let loads: Vec<LoadHour> = parse_json(include_str!("../../last/2025/hours.json"))?;
+        let loads_2017_rows: Vec<LoadHour> = parse_json(include_str!("../../last/2017/hours.json"))?;
+        if loads_2017_rows.len() != loads.len() {
+            return Err(data_error(format!(
+                "load series length mismatch: 2025 has {}, 2017 has {} hours",
+                loads.len(),
+                loads_2017_rows.len()
+            )));
+        }
+        let loads_2017: Vec<f64> = loads_2017_rows.into_iter().map(|row| row.load_mw).collect();
         let historical_2025: Vec<HistoricalGenerationHour> =
             parse_json(include_str!("../../erzeugung/2025/hours.json"))?;
         let historical_2017: Vec<HistoricalGenerationHour> =
@@ -486,6 +501,7 @@ impl StaticModel {
 
         Ok(Self {
             hours,
+            loads_2017,
             historical_2025,
             historical_2017,
             demand,
@@ -513,12 +529,34 @@ impl StaticModel {
             });
         }
 
+        let frame = self.hours_for(&scenario)?;
         let mut seed_storage = self.initial_storage_state(&scenario)?;
         if s_number(&scenario, &["storage", "h2EnergyGWh"])? > 100.0 {
-            seed_storage = self.run_loop(&scenario, seed_storage)?.1;
+            seed_storage = self.run_loop(&scenario, &frame, seed_storage)?.1;
         }
-        let (hours, _) = self.run_loop(&scenario, seed_storage)?;
+        let (hours, _) = self.run_loop(&scenario, &frame, seed_storage)?;
         Ok(SimulationResult { hours })
+    }
+
+    // Stundenraster für das gewählte loadYear: 2025 ist das Basisraster; 2017
+    // ersetzt index-aligned nur die Basislast-Werte (Wetter-/Faktorraster und
+    // Zeitstempel bleiben 2025, dokumentiert am Struct-Feld loads_2017).
+    fn hours_for(&self, scenario: &Value) -> Result<Cow<'_, [HourInput]>, ModelError> {
+        let load_year = scenario
+            .get("loadYear")
+            .and_then(Value::as_u64)
+            .unwrap_or(2025);
+        match load_year {
+            2025 => Ok(Cow::Borrowed(&self.hours)),
+            2017 => {
+                let mut hours = self.hours.clone();
+                for (hour, load_mw) in hours.iter_mut().zip(&self.loads_2017) {
+                    hour.load_mw = *load_mw;
+                }
+                Ok(Cow::Owned(hours))
+            }
+            other => Err(data_error(format!("unsupported loadYear {other}"))),
+        }
     }
 
     pub fn resolve_supply_preset(&self, scenario: &Value) -> Result<Value, ModelError> {
@@ -530,7 +568,7 @@ impl StaticModel {
             return Ok(scenario.clone());
         }
 
-        let demand_twh = self.hours.iter().try_fold(0.0, |sum, row| {
+        let demand_twh = self.hours_for(scenario)?.iter().try_fold(0.0, |sum, row| {
             self.demand_gw(row, scenario, 0.0).map(|v| sum + v)
         })? / 1000.0;
         let mut next = scenario.clone();
@@ -852,6 +890,7 @@ impl StaticModel {
     fn run_loop(
         &self,
         scenario: &Value,
+        frame: &[HourInput],
         mut storage: StorageState,
     ) -> Result<(Vec<SimHour>, StorageState), ModelError> {
         let slots = self.storage_slots(scenario)?;
@@ -871,9 +910,9 @@ impl StaticModel {
         let h2_import_inflow_gw = s_number(scenario, &["import", "h2TWh"])? * 1000.0 / 8760.0;
         let h2_energy_cap = s_number(scenario, &["storage", "h2EnergyGWh"])?;
         let demand_last_2025 = s_bool(scenario, &["demand", "last-2025"])?;
-        let mut hours = Vec::with_capacity(self.hours.len());
+        let mut hours = Vec::with_capacity(frame.len());
 
-        for row in &self.hours {
+        for row in frame {
             // H₂-Pool: SoC, Import-Inflow und Sektor-Bedarf rechnen alle in
             // H₂-LHV-Einheiten (Elektrolyse-Verlust beim Laden, Rückverstromungs-
             // Verlust beim Entladen) — keine Einheitenvermischung mehr.
