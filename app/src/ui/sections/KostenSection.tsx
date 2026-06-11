@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
-import { SectionHeading } from '../sectionUi';
+import { SectionHeading, StatCard, type Stat } from '../sectionUi';
 import { cx, muted } from '../ui';
+import { fmt, fmt0 } from '../format';
 import { computeKosten, type KostenResult } from '../kosten';
 import { uiManifest } from '../uiManifest';
 
@@ -23,6 +24,8 @@ const fmtBig = (x: number) => Math.abs(x) >= 1e12
   ? `${(x / 1e12).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e12 < 10 ? 2 : 1 })} Bio €`
   : `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
 const fmtMrd = (x: number) => `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
+// Nackte Mrd-Zahl (ohne Einheit) für Tabellenspalten mit Einheit im Kopf.
+const mrd1 = (x: number) => (x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 });
 
 // Unterposten eines Bon-Postens: die Beiträge der einzelnen Technologien zu
 // dieser Kostenart (bzw. Import/Export beim Saldo). Posten unter 50 Mio €/a
@@ -60,7 +63,7 @@ function Stromrechnung({ k, buildoutYear, horizon }: { k: ReturnType<typeof comp
   // Posten unter 50 Mio €/a sind Floating-Point-Staub (z. B. Netz exakt auf der
   // 2025-Basis) — auf dem Bon weglassen.
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
-  return <div className="mx-auto my-3 w-full max-w-[340px] font-mono text-[13px] leading-relaxed">
+  return <div className="mx-auto w-full max-w-[440px] font-mono text-[13px] leading-relaxed">
     <div className="border border-zinc-200 bg-white px-5 pb-7 pt-5 text-zinc-800 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200" style={{ clipPath: receiptClip }}>
       <p className="text-center text-sm font-bold uppercase tracking-[0.2em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
       <p className="mt-0.5 text-center text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Deutschland · heute bis {buildoutYear}</p>
@@ -117,14 +120,113 @@ function Stromrechnung({ k, buildoutYear, horizon }: { k: ReturnType<typeof comp
   </div>;
 }
 
+// Graustufen je Kostenart (technologieneutral, keine Tech-Farben): dunkel =
+// Kapital, mittel = Betrieb, stone = Brennstoff — dieselbe Brennstoff-Farbe
+// wie in der Ressourcen-Sektion.
+const COST_SHADES = [
+  { key: 'capex', label: 'Kapitalkosten', cls: 'bg-zinc-700 dark:bg-zinc-200' },
+  { key: 'om', label: 'Betrieb & Wartung', cls: 'bg-zinc-400 dark:bg-zinc-500' },
+  { key: 'fuel', label: 'Brennstoff', cls: 'bg-stone-500 dark:bg-stone-400' },
+] as const;
+
+const techRowGrid = 'grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_4rem_3.5rem] items-center gap-x-3 sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_4.5rem_4rem]';
+
+// Begleittafel zum Bon: Jahreskosten je Technologie als horizontale Graustufen-
+// Stapelbalken (Kapital / Betrieb / Brennstoff) mit Mrd €/a und €/MWh, darunter
+// die kapazitätsunabhängigen Systemposten (Netz, Strom-Import-Saldo) einfarbig.
+function TechKostenPanel({ k }: { k: KostenResult }) {
+  const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
+  const system: Array<{ label: string; v: number; hint?: string; mark?: boolean }> = [
+    { label: 'Netzausbau & -betrieb', v: k.breakdown.netz, mark: k.netzExtrapolated, hint: k.netzExtrapolated ? 'Außerhalb des geeichten Bereichs der Netzkosten-Heuristik — nur Richtungssignal' : undefined },
+    { label: 'Strom-Import-Saldo', v: k.breakdown.importNet, hint: `Stromimport ${mrd1(k.importCost)} − Export-Erlös ${mrd1(k.exportRevenue)} Mrd €/a` },
+  ].filter(s => Math.abs(s.v) > 5e7);
+  const max = Math.max(1, ...techs.map(t => t.total), ...system.map(s => Math.abs(s.v)));
+  const num = 'text-right tabular-nums';
+
+  return <div className="flex min-w-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Jahreskosten je Technologie</h3>
+    <div className={cx(techRowGrid, 'mt-3 border-b border-zinc-200 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800 dark:text-zinc-500')}>
+      <span>Technologie</span>
+      <span/>
+      <span className={num}>Mrd €/a</span>
+      <span className={cx(num, 'cursor-help underline decoration-dotted decoration-zinc-300 underline-offset-2')} title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie. Speicher erzeugen nicht selbst — dort „–“.">€/MWh</span>
+    </div>
+    {techs.map(t => <div key={t.key} className={cx(techRowGrid, 'border-b border-zinc-100 py-2 text-sm dark:border-zinc-800/60')}>
+      <span className="truncate text-zinc-700 dark:text-zinc-300" title={t.label}>{t.label}</span>
+      <div className="flex h-3 items-stretch gap-px" title={`Kapital ${mrd1(t.capex)} · Betrieb ${mrd1(t.om)} · Brennstoff ${mrd1(t.fuel)} Mrd €/a`}>
+        {COST_SHADES.map(p => {
+          const w = t[p.key] / max * 100;
+          return w > 0.3 ? <span key={p.key} className={cx('rounded-[2px]', p.cls)} style={{ width: `${w}%` }}/> : null;
+        })}
+      </div>
+      <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(t.total)}</span>
+      <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>{t.eurPerMWh != null ? fmt0.format(t.eurPerMWh) : '–'}</span>
+    </div>)}
+    {system.length > 0 && <>
+      <div className="pt-3 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Systemposten</div>
+      {system.map(s => <div key={s.label} className={cx(techRowGrid, 'border-b border-zinc-100 py-2 text-sm dark:border-zinc-800/60')}>
+        <span className={cx('truncate text-zinc-700 dark:text-zinc-300', s.hint && 'cursor-help')} title={s.hint ?? s.label}>
+          {s.label}
+          {s.mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}
+        </span>
+        <div className="flex h-3 items-stretch" title={s.hint}>
+          <span
+            className={s.v >= 0 ? 'rounded-[2px] bg-zinc-300 dark:bg-zinc-600' : 'rounded-[2px] border border-zinc-400 dark:border-zinc-500'}
+            style={{ width: `${Math.abs(s.v) / max * 100}%` }}
+          />
+        </div>
+        <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(s.v)}</span>
+        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
+      </div>)}
+    </>}
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+      {COST_SHADES.map(p => <span key={p.key} className="flex items-center gap-1.5">
+        <span className={cx('h-2 w-2 rounded-[2px]', p.cls)}/>{p.label}
+      </span>)}
+      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-[2px] bg-zinc-300 dark:bg-zinc-600"/>Systemposten</span>
+      <span className="ml-auto text-zinc-400 dark:text-zinc-500">Balkenlänge = Jahreskosten{k.netzExtrapolated ? ' · * extrapoliert' : ''}</span>
+    </div>
+  </div>;
+}
+
 export default function KostenSection({ scenario, result, buildoutYear }: { scenario: Scenario; result: SimulationResult; buildoutYear: string }) {
   const k = useMemo(() => computeKosten(scenario, result), [scenario, result]);
   const horizon = Math.max(1, Number(buildoutYear) - 2025);
 
+  const P = uiManifest.prices as Record<string, number>;
+  const kwh = P.householdConsumptionKWhPerA ?? 3000;
+  const perMonth = k.perMWh * kwh / 1000 / 12;
+  const share = (x: number) => k.total > 0 ? `${Math.round(x / k.total * 100)} %` : '–';
+  // Laufende Bezüge = Brennstoff + H₂-Import + Stromimport-Saldo (nur wenn er
+  // netto kostet) — der Gegenpol zum gebundenen Kapital.
+  const laufend = k.breakdown.fuel + k.breakdown.h2Import + Math.max(0, k.breakdown.importNet);
+  const statGroups: Array<{ title: string; stats: Stat[] }> = [
+    { title: 'Umlage', stats: [
+      { label: 'Ø Stromkosten', value: `${fmt0.format(k.perMWh)} €/MWh`, sub: `≙ ${fmt.format(k.perMWh / 10)} ct/kWh` },
+      { label: `Haushalt, ${fmt0.format(kwh)} kWh/a`, value: `${fmt0.format(perMonth)} €/Monat` },
+    ] },
+    { title: 'Zeitraum', stats: [
+      { label: 'Pro Jahr', value: fmtMrd(k.total) },
+      { label: `Gesamt bis ${buildoutYear}`, value: fmtBig(k.total * horizon), sub: `${horizon} Jahre` },
+    ] },
+    { title: 'Kostenarten', stats: [
+      { label: 'Kapitalkosten', value: share(k.breakdown.capex), sub: `${fmtMrd(k.breakdown.capex)}/a` },
+      { label: 'Brennstoff & Importe', value: share(laufend), sub: `${fmtMrd(laufend)}/a` },
+    ] },
+  ];
+
   return <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
     <SectionHeading id="kosten"/>
 
-    <Stromrechnung k={k} buildoutYear={buildoutYear} horizon={horizon}/>
+    <div className="mt-1 grid gap-5 lg:grid-cols-[minmax(340px,1fr)_minmax(0,2fr)] lg:gap-8">
+      <Stromrechnung k={k} buildoutYear={buildoutYear} horizon={horizon}/>
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="grid gap-2 sm:grid-cols-3">
+          {statGroups.map(group => <StatCard key={group.title} title={group.title} stats={group.stats}/>)}
+        </div>
+        <TechKostenPanel k={k}/>
+      </div>
+    </div>
 
     <details className="group px-1">
       <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
