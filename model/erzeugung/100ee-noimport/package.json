@@ -5,7 +5,7 @@
   "kind": "composition",
   "method": {
     "title": "100% EE lokal (autark)",
-    "short": "PV/Wind/Speicher auf `1,25 × Last` dimensioniert; Fossil und Import auf null. Stresstest für Autarkie.",
+    "short": "PV/Wind/Speicher auf `1,30 × effektive Last` dimensioniert; Fossil und Import auf null. Stresstest für Autarkie.",
     "source": "Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien: BMWK Langfristszenarien 3 (T45-Strom), Agora KN2045, Ariadne Szenarienreport, Fraunhofer ISE REMod, Heide et al. (saisonal-optimaler Mix), DVGW/EWI H2-Speicherbedarf.",
     "sourceUrls": [
       "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php",
@@ -18,11 +18,11 @@
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
     "description": [
-      "**Komposition:** Autarkie-Preset. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und Import-Cap auf null. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. PV, Wind onshore, Wind offshore sowie Batterie und H₂-Saisonspeicher werden proportional zur Jahres-Last dimensioniert. Variable EE-Anteile im Verhältnis `PV 30 % / Wind on 40 % / Wind off 30 %` aufgeteilt (Wind 70 % / PV 30 % insgesamt, saisonal-optimal nach Heide et al. 2010 — Wind dominiert Winter, PV den Sommer).",
-      "**Werte (Mai 2026, validiert durch 5 Experten gegen DE-2045-Studien):** Auslegungsziel `Jahres-RE = 1,25 × Demand − Biomasse − Laufwasser`. Der **Cushion-Faktor 1,25** entspricht dem Studien-Median (BMWK LFS3 1,40, Agora KN2045 1,15–1,20, Fraunhofer ISE) — er deckt 10–12 % Curtailment plus H₂-Speicher-Roundtrip (η ≈ 0,5). Speicher-Sizing: Batterie `0,1 GW/TWh` Leistung und `0,5 GWh/TWh` Energie (C-Rate 5h, Tag/Nacht-Glättung); **H₂ Elektrolyse `0,08 GW/TWh`, Rückverstromung `0,04 GW/TWh` (2:1-Verhältnis: Elektrolyse läuft 3000-4000 VLh im Sommer-Überschuss, Rückverstromung nur Winter-Spitzen)**, Saisonspeicher-Energie `0,15 × Demand` in TWh.",
-      "**Saisonbilanz:** Bei Demand 1830 TWh ergibt die Saisonspeicher-Logik ~275 TWh H₂ — konsistent mit Fraunhofer ISE REMod (130 TWh als Untergrenze für autark + Industrie-H₂). Saisonbilanz-Experten-Befund: Winterdefizit (Dez-Feb) ~660 TWh bei e100, davon nach H₂-Rückverstromung ~140 TWh aus Speicher deckbar = 21 %; Rest aus winterhoher Wind-Erzeugung. Salzkavernen-Potenzial DE onshore: 9 400 TWh (Fraunhofer IEG), keine Engstelle.",
-      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG 2045-Ziel = physisches Maximum DE-AWZ unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap (typisch bei e100-Demand), wird der Energie-Shortfall durch **zusätzlichen PV-Ausbau** kompensiert (PV-Fläche elastischer als 2 %-Wind-Vorranggebiete). Folge: bei e100 wächst PV auf ~1660 GW (Offshore-Cap-Kompensation; Flächenwirkung siehe Fläche-Sektion mit Flottenmix 6 km²/GW — am oberen Rand des physisch Machbaren).",
-      "**Anwendungsfall:** Autarkie-Stresstest. Zeigt, wie groß PV-, Wind- und Speicherflotte werden müssen, wenn weder fossile Backup-Kraftwerke noch Strom-/H₂-Import zur Verfügung stehen. **WICHTIG:** Kein veröffentlichter Studienpfad modelliert echtes Stand-alone DE ohne H₂-Import; Import-Anteile von 50–80 % am H₂ sind durchgängig gesetzt (Agora 270 TWh, dena 458 TWh, Ariadne 60–250 TWh, BMWK LFS3 T45-H2 300–450 TWh). Dieses Preset zeigt den extremen Stresstest, nicht die wahrscheinliche Lösung. Bei e100-Demand 1830 TWh ohne Sektorkopplung/WP-JAZ liegen die GW-Werte 50–60 % über vergleichbaren Studien-Szenarien — siehe Caveat zur Demand-Skalierung."
+      "**Komposition:** Autarkie-Preset. Fossile Quellen (`Gas = 0 GW`, `Kohle = 0 GW`) und Import-Cap auf null — auch der Sektor-H₂-Bedarf (Stahl, Chemie, Schiff, Flug) wird aus Inlands-Elektrolyse gedeckt. `Biomasse` und `Laufwasser` bleiben auf 2025-Bestand. Variable EE-Anteile im Verhältnis `PV 30 % / Wind on 40 % / Wind off 30 %` (Wind 70 % / PV 30 % insgesamt, saisonal-optimal nach Heide et al. 2010 — Wind dominiert Winter, PV den Sommer).",
+      "**Auslegung:** Die EE-Flotte wird auf die **effektive Stromnachfrage** ausgelegt: `effektive Demand = Demand − Sektor-Elektrolyse-Strom + Sektor-LHV / 0,62` — der H₂-Pool der Engine produziert das Sektor-H₂ aus Überschuss-Elektrolyse (`η 0,62`) statt als direkte Stromlast. Auslegungsziel `Jahres-RE = 1,30 × effektive Demand − Biomasse − Laufwasser`. Der **Cushion 1,30** liegt im Studien-Korridor 1,25–1,40 (BMWK LFS3 1,40, Fraunhofer ISE) und trägt die reale Speicherkette: Elektrolyse `η 0,62` × Rückverstromung `η 0,55` = Roundtrip `0,34`, plus Wetterjahr-Reserve. Der H₂-Kavernenspeicher ist in **TWh H₂-LHV** dimensioniert (`0,11 × effektive Demand`) — direkt vergleichbar mit Kavernen-Potenzial-Angaben.",
+      "**Lasttest (Wetter-/Lastjahr 2025):** `0 h` Lastabwurf bei heutiger Last (466 TWh) und bei e100, auch bei Windjahr-Stress `×0,90` und `×0,85`. Der Preis der Autarkie ist Überbau: bei e100 werden 356 TWh abgeregelt (~17 % der EE-Erzeugung). Kaverne bei e100: 180 TWh H₂-LHV — ~2 % des Salzkavernen-Potenzials DE onshore (9 400 TWh, Fraunhofer IEG), keine Engstelle.",
+      "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG 2045-Ziel = physisches Maximum DE-AWZ unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung diesen Cap (typisch bei e100-Demand), wird der Energie-Shortfall durch **zusätzlichen PV-Ausbau** kompensiert (PV-Fläche elastischer als 2 %-Wind-Vorranggebiete). Folge: bei e100 wächst PV auf 1 480 GW — bei `6 km²/GW` Flottenmix ~2,5 % der DE-Fläche, am oberen Rand des physisch Machbaren.",
+      "**Anwendungsfall:** Autarkie-Stresstest. Zeigt, wie groß PV-, Wind- und Speicherflotte werden müssen, wenn weder fossile Backup-Kraftwerke noch Strom-/H₂-Import zur Verfügung stehen. **WICHTIG:** Kein veröffentlichter Studienpfad modelliert echtes Stand-alone DE ohne H₂-Import; Import-Anteile von 50–80 % am H₂ sind durchgängig gesetzt (Agora 270 TWh, dena 458 TWh, Ariadne 60–250 TWh, BMWK LFS3 T45-H2 300–450 TWh). Die e100-Flotten (1 480 GW PV, 660 GW Batterie-Leistung, 495 GW Elektrolyse) haben keinen Bezug zu realen Bauraten — Stresstest, nicht Pfad-Empfehlung."
     ],
     "overview": [
       {
@@ -31,30 +31,32 @@
       },
       {
         "label": "Cushion-Faktor",
-        "value": "**Auslegung:** `Jahres-RE ≥ 1,25 × Demand`. Studien-Median 1,20–1,40 (BMWK LFS3 1,40, Agora 1,15–1,20). Deckt 10–12 % Curtailment (Fraunhofer ISE: kostenoptimal) plus Round-trip-Verluste H₂-Speicher (η ≈ 0,50)."
+        "value": "**Auslegung:** `Jahres-RE ≥ 1,30 × effektive Demand`. Studien-Korridor 1,25–1,40 (BMWK LFS3 1,40; Agora 1,15–1,20 gilt nur MIT Import). Trägt den H₂-Roundtrip `0,34` (0,62 × 0,55) plus Wetterjahr-Reserve; Lasttest: `0 h` Lastabwurf bei heute und e100, robust bis Windjahr `×0,85`."
       },
       {
-        "label": "Speicher-Sizing (Iteration 2 — Lasttest-validiert)",
-        "value": "**Batterie:** `0,3 GW/TWh × Demand` Leistung, `1,5 GWh/TWh × Demand` Energie (C-Rate 5h). Bei e100: 549 GW / 2 745 GWh. **H₂:** Elektrolyse `0,20 GW/TWh` (Sommer-PV-Spitzen-Aufnahme), Rückverstromung `0,15 GW/TWh` (Winter-Peak-Last-Deckung). Saisonspeicher-Energie `0,40 × Demand × 1 000 GWh`. Bei 1 830 TWh: 732 TWh — deutlich über Studien-Median (BMWK 80, ISE REMod 130 autark), aber Salzkavernen-Potenzial DE 9 400 TWh (Fraunhofer IEG) erlaubt das (~8 %). Aufgebläht gegenüber Studien-Konsens (Iteration 1 hatte Unterdeckung 200+ TWh wegen zu kleinem Discharge und Speicher) — Stresstest-Logik des Presets rechtfertigt das."
+        "label": "Speicher-Sizing (Lasttest-validiert)",
+        "value": "**Batterie:** `0,4 GW/TWh` Leistung, `2,0 GWh/TWh` Energie (C-Rate 5h). Bei e100: 660 GW / 3 300 GWh. **H₂:** Elektrolyse `0,3 GW/TWh` (Sommer-Überschuss-Aufnahme plus Sektor-H₂-Produktion), Rückverstromung `0,15 GW/TWh` (Winter-Peak-Deckung mit Batterie); bei e100: 495 / 245 GW. **Kaverne:** `0,11 × effektive Demand` in TWh H₂-LHV — heute 50, e100 180 TWh. Oberer Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80, Agora 70 — beide MIT Import); vom Salzkavernen-Potenzial DE 9 400 TWh (Fraunhofer IEG) sind das ~2 %."
       },
       {
         "label": "Hard Cap Wind offshore",
-        "value": "**70 GW** (BSH FEP / WindSeeG 2045 — physisches AWZ-Limit unter Wahrung Schifffahrt, Naturschutz und Pipelines). Übersteigt die Auslegung den Cap, wird der Energie-Shortfall via zusätzlichen PV-Ausbau kompensiert. Bei e100 wächst PV dadurch auf ~1 050 GW (2,9 % DE-Fläche)."
+        "value": "**70 GW** (BSH FEP / WindSeeG 2045 — physisches AWZ-Limit unter Wahrung Schifffahrt, Naturschutz und Pipelines). Übersteigt die Auslegung den Cap, wird der Energie-Shortfall via zusätzlichen PV-Ausbau kompensiert. Bei e100 wächst PV dadurch auf 1 480 GW (~2,5 % DE-Fläche bei 6 km²/GW)."
       },
       {
         "label": "Handel",
-        "value": "**Import-Cap:** `0 GW` (autark, ohne H₂-Import). **Export-Cap:** Default — Überschuss kann exportiert werden. **Wichtig:** Studien gehen durchgängig von H₂-Import 60–450 TWh aus; echtes Stand-alone DE wird in keiner publizierten Studie modelliert. Dieses Preset ist Stresstest, nicht Pfad-Empfehlung."
+        "value": "**Import-Cap:** `0 GW` (autark, ohne Strom- und H₂-Import; Sektor-H₂ kommt vollständig aus Inlands-Elektrolyse). **Export-Cap:** Default — Überschuss kann exportiert werden. **Wichtig:** Studien gehen durchgängig von H₂-Import 60–450 TWh aus; echtes Stand-alone DE wird in keiner publizierten Studie modelliert. Dieses Preset ist Stresstest, nicht Pfad-Empfehlung."
       }
     ],
     "reasoning": [
       "yieldPV = Σ solarIrradiance / 1000 (TWh pro GW installiert); yieldWindOn/yieldWindOff analog mit windOn100m bzw. windOff100m.",
-      "target = max(0, demandTWh × 1,25 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (40%), WindOff (30%).",
+      "Effektive Demand = Demand − Sektor-Elektrolyse-Strom + Sektor-LHV / 0,62 (chargeEfficiency) — der Engine-H₂-Pool deckt den Sektor-H₂-Bedarf aus Überschuss-Elektrolyse statt als direkte Stromlast.",
+      "target = max(0, effektive Demand × 1,30 − BiomasseTWh − LaufwasserTWh). Verteilt auf PV (30%), WindOn (40%), WindOff (30%).",
       "PV-GW = target × 0,30 / yieldPV plus PV-Kompensation, falls Wind off-Cap greift.",
       "WindOn-GW = target × 0,40 / yieldWind.",
       "WindOff-GW = min(70, target × 0,30 / yieldWindOff) — yieldWindOff kommt aus dem eigenen Offshore-Faktor windOff100m (~2,8 TWh/GW·a beobachtet 2025); Hard Cap 70 GW = DE-AWZ-Limit (BSH FEP).",
       "PV-Kompensation = max(0, (raw_windoff_gw − 70) × yield_offshore) / yield_pv — fängt Wind-off-Cap-Energie via PV ab.",
-      "H₂-Saisonspeicher = 0,15 × Demand × 1 000 GWh (Fraunhofer ISE REMod-Niveau, autark-konform).",
-      "H₂-Charge:Discharge = 2:1 (Elektrolyse 0,08 GW/TWh, Rückverstromung 0,04 GW/TWh) — Sommer-Befüllung läuft 3 000–4 000 VLh, Rückverstromung deckt nur Winter-Spitzen ~500-1 500 VLh.",
+      "Batterie = 0,4 GW/TWh bzw. 2,0 GWh/TWh effektive Demand.",
+      "H₂-Charge:Discharge = 2:1 (Elektrolyse 0,30 GW/TWh, Rückverstromung 0,15 GW/TWh) — Sommer-Befüllung läuft 3 000–4 000 VLh, Rückverstromung deckt Winter-Spitzen ~500–1 500 VLh.",
+      "H₂-Kaverne = 0,11 × effektive Demand × 1 000 GWh (in H₂-LHV).",
       "Werte werden über snap(min, max, step) auf Slider-Raster gequantelt."
     ],
     "fields": [
@@ -66,12 +68,11 @@
     ],
     "caveats": [
       "Mix-Anteile (30/40/30) basieren auf Heide et al. 2010 (saisonal-optimal 55–60 % Wind / 40–45 % PV); reale Langfristszenarien streuen je nach Yield-Annahme.",
-      "Cushion 1,25 deckt Curtailment 10–12 % plus H₂-Roundtrip; bei sehr hoher Demand (e100) reicht es knapp — Saisonbilanz-Experten halten 1,40 für autark-Last 1 800+ TWh sicherer.",
-      "Speicher-Sizing (Batterie 0,5 GWh/TWh, H₂-Saison 0,15 × Demand) ist Daumenregel mit Studien-Median; H₂-Saison 0,15 entspricht Fraunhofer ISE REMod-Niveau, deckt Winterdefizit knapp aber realistisch.",
-      "Wind Offshore nutzt seit Juni 2026 den eigenen beobachteten Offshore-Faktor windOff100m (~2 800 Vlh Bestand 2025 inkl. Anbindungs-Abregelung); kein Multiplier-Umweg mehr.",
-      "**Hard Cap Wind offshore 70 GW** (BSH FEP / WindSeeG): bei e100-Demand wird der Cap getroffen, fehlende Energie via PV kompensiert → PV wächst auf ~1 050 GW (2,9 % DE-Fläche, physisch grenzwertig).",
-      "Bei e100-Demand 1 830 TWh (ohne Sektorkopplung/WP-JAZ/Smart Charging) liegen Erzeugungs-GW 35–45 % über Studien-Szenarien — siehe e100-Caveat zu Effizienz-Annahmen. Mit Sektorkopplung wäre Demand ~1 100 TWh und alle Werte würden 1:1 zu Studien passen.",
-      "Echtes Stand-alone DE wird in keiner publizierten Studie modelliert; Import-Anteile am H₂-Bedarf 50–80 % sind durchgängig gesetzt (Agora KN2045: 270 TWh, dena: 458 TWh, BMWK LFS3 T45-H2: 300–450 TWh, Ariadne: 60–250 TWh). Dieses Preset zeigt den extremen Stresstest, nicht die wahrscheinliche Lösung."
+      "Cushion 1,30 ist Lasttest-kalibriert (0 h Lastabwurf bei heute und e100, Windjahr-Stress bis ×0,85); der Preis ist Abregelung von 356 TWh (~17 %) bei e100 — ehrlicher Überbau, der vorher in den Verlusten der Elektrolyse-Doppelzählung versteckt war.",
+      "Speicher-Sizing ist Daumenregel pro TWh effektiver Demand; Kaverne 0,11 × Demand (H₂-LHV) liegt über dem Studien-Median, weil alle Vergleichsstudien mit H₂-Import rechnen.",
+      "Hard Cap Wind offshore 70 GW (BSH FEP / WindSeeG): bei e100-Demand wird der Cap getroffen, fehlende Energie via PV kompensiert → PV wächst auf 1 480 GW (~2,5 % DE-Fläche bei 6 km²/GW, physisch grenzwertig).",
+      "Bei e100 liegt der Brutto-Auslegungsbedarf (1 808 TWh, ohne Sektorkopplung/WP-JAZ/Smart Charging) deutlich über Studien-Demand (1 100–1 270 TWh); simuliert wird nach H₂-Pool-Substitution eine Stromlast von 1 068 TWh — siehe e100-Caveat zu Effizienz-Annahmen.",
+      "Echtes Stand-alone DE wird in keiner publizierten Studie modelliert; Import-Anteile am H₂-Bedarf 50–80 % sind durchgängig gesetzt (Agora KN2045: 270 TWh, dena: 458 TWh, BMWK LFS3 T45-H2: 300–450 TWh, Ariadne: 60–250 TWh). Die e100-Flotten (1 480 GW PV, 660 GW Batterie, 495 GW Elektrolyse) haben keinen Bezug zu realen Bauraten — Stresstest, nicht wahrscheinliche Lösung."
     ],
     "scripts": [
       "erzeugung/100ee-noimport/model.rs"

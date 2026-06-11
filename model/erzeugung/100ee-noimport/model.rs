@@ -7,40 +7,42 @@
 // - Curtailment 10-12% (ISE, kostenoptimal); Überbau-Konsens 1.25-1.40
 //
 // Annahmen für stand-alone DE (kein Import):
-// - Cushion 1.25 (Studien-Median, Curtailment-Verluste eingerechnet)
+// - Auslegung auf die EFFEKTIVE Stromnachfrage: eff = demand − Sektor-Elektrolyse-Strom
+//   + Sektor-LHV / 0.62 (chargeEfficiency) — der Engine-H2-Pool deckt den Sektor-H2-Bedarf
+//   aus Überschuss-Elektrolyse statt als direkte Stromlast (preset_100ee_noimport in
+//   model/kern/kern/model.rs). Alle GW/GWh-Regeln hier skalieren mit dieser eff. Demand.
+// - Cushion 1.30 (Studienkorridor 1.25-1.40; trägt Roundtrip 0.34 = 0.62 × 0.55)
 // - Mix 30/40/30 (PV / Wind on / Wind off) — Wind 70% total, saisonale Komplementarität
-// - H2-Energie 0.06 × Demand TWh: 110 TWh bei e100-Demand 1830 TWh
-//   Vergleich BMWK 80 / Agora 70 / DVGW 94 (skaliert auf 1830 TWh ~120 TWh) — mittig im Korridor
+// - H2-Kaverne 0.11 × Demand in TWh H2-LHV: bei e100 ~180 TWh
+//   Vergleich BMWK 80 / Agora 70 / ISE-Stand-alone-Minimum 130 — oberer Rand, weil ohne Import
 // - WICHTIG: kein Studienpfad modelliert echtes Stand-alone DE ohne H2-Import. Werte sind
-//   konsistent mit Studienkorridor BEI gleicher Demand-Annahme; bei e100=1830 TWh (ohne
-//   Sektorkopplung / WP-JAZ-Effizienz / Smart Charging) liegt Demand ~50-60% über Studien.
+//   konsistent mit Studienkorridor BEI gleicher Demand-Annahme; bei e100 = 1808 TWh brutto
+//   (ohne Sektorkopplung / WP-JAZ-Effizienz / Smart Charging) liegt Demand über Studien;
+//   simulierte Stromlast nach H2-Pool-Substitution: 1068 TWh.
 
 pub const EE_PV_SHARE: f64 = 0.30;
 pub const EE_WIND_ON_SHARE: f64 = 0.40;
 pub const EE_WIND_OFF_SHARE: f64 = 0.30;
 // Cushion 1.30 (Stand-alone-DE-Überbau, Fraunhofer ISE Konsens 1.25-1.40, hier mittig).
-// Historie: Iteration 3 hatte auf 1.15 gesenkt (Agora 1.15-1.20) mit der Annahme, ein
-// größerer H2-Speicher kompensiere den geringeren Überbau. Dispatch-Messung über das
-// Wetterjahr 2025 widerlegt das: bei 1.15 füllt sich der Saisonspeicher nur auf 61 TWh
-// (Sommer-Überschuss fehlt, Curtailment nur 1 TWh) und ist Mitte Januar leer → 499 h
-// Lastabwurf (70 TWh) Jan-März. Der Agora-Wert gilt nur MIT Import; ohne Import zu knapp.
-// 1.25 beseitigt den Lastabwurf zwar (0 h), liegt aber genau auf der Kante (Speicher-Peak
-// 111 TWh, keine Wetter-Reserve). 1.30 gibt Marge: 0 h Lastabwurf, Speicher-Peak 156 TWh,
-// Curtailment nur 19 TWh (~0.8 %) — weit unter dem kostenoptimalen 10-12 %.
+// Der Agora-Wert 1.15-1.20 gilt nur MIT Import; ohne Import zu knapp (frühere Messung:
+// 499 h Lastabwurf bei 1.15). Lasttest nach dem LHV-konsistenten H2-Pool (Laden 0.62,
+// Entladen 0.55, Roundtrip 0.34), Wetter-/Lastjahr 2025: 0 h Lastabwurf bei heutiger
+// Last und bei e100, robust auch bei Windjahr ×0.90 und ×0.85. Preis der Autarkie ist
+// Überbau: bei e100 werden 356 TWh abgeregelt (~17 %) — ehrlicher ausgewiesen als zuvor,
+// wo die verlustreiche Elektrolyse-Doppelzählung den Überbau versteckte.
 pub const EE_CUSHION: f64 = 1.30;
 // Batterie: 0.4 GW/TWh + 2.0 GWh/TWh (C-Rate 5h). Aggressiv für Peak-Last-Deckung +
 // Tag/Nacht-Glättung in vollelektrifiziertem Szenario.
 pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.4;
 pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 2.0;
-// H2 Charge 0.30 GW/TWh: muss Sommer-PV-Spitzen aggressiv aufnehmen, weil Cushion geringer
-//   ist und damit Curtailment-Toleranz kleiner — Charge-Power kompensiert.
+// H2 Charge 0.30 GW/TWh: nimmt Sommer-PV-Spitzen auf und produziert zusätzlich das
+//   Sektor-H2 (Pool deckt Stahl/Chemie/Schiff/Flug aus Überschuss-Elektrolyse).
 // H2 Discharge 0.15 GW/TWh: deckt Peak-Last gemeinsam mit Batterie.
 pub const EE_H2_CHARGE_PER_TWH: f64 = 0.30;
 pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.15;
-// H2-Saisonspeicher 0.11 × Demand: bei ~1810 TWh ~200 TWh. Vorher 0.50 (~915 TWh) war
-// reine Phantom-Kapazität: die Dispatch-Messung zeigt einen tatsächlichen Speicher-Peak
-// von nur 156 TWh (bei Cushion 1.30). 200 TWh decken den Saison-Peak mit Reserve und
-// liegen im oberen Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80,
+// H2-Saisonspeicher 0.11 × Demand, dimensioniert in TWh H2-LHV (vergleichbar mit
+// Kavernen-Potenzial-Angaben): bei heutiger Last 50 TWh, bei e100 (eff. Demand ~1650 TWh)
+// 180 TWh. Oberer Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80,
 // Agora 70, DVGW ~120 — alle MIT Import, daher hier oberer Rand). Salzkavernen-Potenzial
 // DE 9400 TWh (Fraunhofer IEG) → genutzt nur ~2 %, also problemlos.
 pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.11;
