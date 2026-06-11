@@ -398,24 +398,40 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   };
 }
 
-export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'light'): EChartsOption {
+export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'light', mode: ChartMode = 'linie', viewport?: ChartViewport): EChartsOption {
   const chartHours = compressHours(hours);
   const colors = chartTheme(theme);
   const line = (name: string, color: string, data: number[]) => ({
     name,
     type: 'line' as const,
+    ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
     smooth: false,
     showSymbol: false,
     itemStyle: { color },
     data,
   });
+  // Gleiche Polar-Geometrie wie der Energiemix: Winkel = Jahresverlauf,
+  // Radius = Füllstand. Im Linienmodus klassische Zeitachse.
+  const compact = isCompactChart(viewport);
+  const coordinate = mode === 'sunburst'
+    ? {
+      polar: {
+        center: ['50%', compact ? '50%' : '52%'],
+        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '92%'],
+      },
+      angleAxis: angleAxis(hours, chartHours, compact, theme),
+      radiusAxis: radiusAxis('GWh', undefined, theme),
+    }
+    : {
+      grid: { left: 46, right: 20, top: 18, bottom: 48 },
+      xAxis: xAxis(hours, chartHours, theme),
+      yAxis: yAxis('GWh', undefined, theme),
+    };
   return {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { trigger: 'axis', backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, textStyle: { color: colors.tooltipText } },
-    grid: { left: 46, right: 20, top: 18, bottom: 48 },
-    xAxis: xAxis(hours, chartHours, theme),
-    yAxis: yAxis('GWh', undefined, theme),
+    ...coordinate,
     series: [
       line('Batterie', '#10b981', chartHours.map(h => h.batteryGWh)),
       line('H₂', '#0891b2', chartHours.map(h => h.h2GWh)),

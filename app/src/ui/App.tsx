@@ -138,6 +138,12 @@ function chartModeFromUrl(): ChartMode {
   return queryParams().get('chart') === 'linie' ? 'linie' : defaultChartMode;
 }
 
+// Speicherfüllstand-Darstellung: Polar wie der Energiemix, per Toggle auf Linie.
+const defaultStorageChartMode: ChartMode = 'sunburst';
+function storageChartModeFromUrl(): ChartMode {
+  return queryParams().get('speicherChart') === 'linie' ? 'linie' : defaultStorageChartMode;
+}
+
 function sidebarCollapsedFromUrl() {
   const value = queryParams().get('sidebar');
   if (value === 'open') return false;
@@ -705,6 +711,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   const hasLiveResultRef = useRef(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(mixVisibilityFromUrl);
   const [chartMode, setChartMode] = useState<ChartMode>(chartModeFromUrl);
+  const [storageChartMode, setStorageChartMode] = useState<ChartMode>(storageChartModeFromUrl);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(sidebarCollapsedFromUrl);
   const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
@@ -781,6 +788,9 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (chartMode === defaultChartMode) url.searchParams.delete('chart');
     else url.searchParams.set('chart', chartMode);
 
+    if (storageChartMode === defaultStorageChartMode) url.searchParams.delete('speicherChart');
+    else url.searchParams.set('speicherChart', storageChartMode);
+
     if (buildoutYear === defaultBuildoutYear) url.searchParams.delete('aufbau');
     else url.searchParams.set('aufbau', buildoutYear);
 
@@ -808,7 +818,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
-  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, storageChartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -997,6 +1007,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             buildoutYear={buildoutYear}
             chartMode={chartMode}
             setChartMode={setChartMode}
+            storageChartMode={storageChartMode}
+            setStorageChartMode={setStorageChartMode}
             mixVisibility={mixVisibility}
             setMixVisibility={setMixVisibility}
             isPending={isPending}

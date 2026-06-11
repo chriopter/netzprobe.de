@@ -14,8 +14,8 @@ import {
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
-import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, ComingSoonGate, StatCard, type Stat } from '../sectionUi';
+import { cx, muted } from '../ui';
+import { ChartModeToggle, ChartPanel, ComingSoonGate, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, scaleMaxGW?: number): boolean {
@@ -23,9 +23,9 @@ function useMixChart(containerId: string, hours: SimHour[] | undefined, visibili
   return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme), mode === 'sunburst');
 }
 
-function useStorageChart(containerId: string, hours: SimHour[] | undefined, theme: ChartTheme): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, theme } : null, [hours, theme]);
-  return useMainThreadChart(containerId, data, d => buildStorageChartOption(d.hours, d.theme));
+function useStorageChart(containerId: string, hours: SimHour[] | undefined, theme: ChartTheme, mode: ChartMode): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, theme, mode } : null, [hours, theme, mode]);
+  return useMainThreadChart(containerId, data, (d, viewport) => buildStorageChartOption(d.hours, d.theme, d.mode, viewport), mode === 'sunburst');
 }
 
 function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleGroup: (groupId: string, checked: boolean) => void }) {
@@ -68,7 +68,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
             onClick={() => onToggleGroup(group.id, !allActive)}
           >
             <span aria-hidden className="text-[10px]" style={{ color: someActive ? group.color : '#d4d4d8' }}>●</span>
-            <span className="text-[9px] font-semibold uppercase tracking-[0.08em]">{group.label}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide">{group.label}</span>
             <span className="text-[10px] text-zinc-400">{activeCount}/{total}</span>
           </button>
           <button
@@ -89,6 +89,21 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
   </div>;
 }
 
+// Zentrale Ergebnis-Kacheln: nutzt die Kartenbreite, statt Label und Wert an
+// die Ränder zu spreizen — Titel oben, darunter die Werte nebeneinander
+// (Label klein über großem Wert).
+function KpiCard({ title, stats }: { title: string; stats: Stat[] }) {
+  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{title}</div>
+    <dl className="mt-2 grid grid-cols-2 gap-3">
+      {stats.map(stat => <div key={stat.label} className="min-w-0">
+        <dt className="truncate text-[11px] text-zinc-400 dark:text-zinc-500" title={stat.label}>{stat.label}</dt>
+        <dd className={cx('mt-0.5 whitespace-nowrap text-lg font-semibold tabular-nums', statToneClass(stat.tone))}>{stat.value}</dd>
+      </div>)}
+    </dl>
+  </div>;
+}
+
 export type MixSectionProps = {
   result: SimulationResult;
   resolvedScenario: Scenario;
@@ -96,6 +111,8 @@ export type MixSectionProps = {
   buildoutYear: string;
   chartMode: ChartMode;
   setChartMode: (mode: ChartMode) => void;
+  storageChartMode: ChartMode;
+  setStorageChartMode: (mode: ChartMode) => void;
   mixVisibility: MixVisibility;
   setMixVisibility: Dispatch<SetStateAction<MixVisibility>>;
   isPending: boolean;
@@ -118,6 +135,8 @@ export default function MixSection(props: MixSectionProps) {
     buildoutYear,
     chartMode,
     setChartMode,
+    storageChartMode,
+    setStorageChartMode,
     mixVisibility,
     setMixVisibility,
     isPending: parentPending,
@@ -133,7 +152,7 @@ export default function MixSection(props: MixSectionProps) {
   } = props;
 
   const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, referenceScaleMaxGW);
-  const storagePending = useStorageChart('storage-chart', sliced, theme);
+  const storagePending = useStorageChart('storage-chart', sliced, theme, storageChartMode);
   const isPending = parentPending || mixPending || storagePending;
   const blackout = result.summary.hoursWithLoadShedding;
   const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
@@ -174,9 +193,9 @@ export default function MixSection(props: MixSectionProps) {
     ] },
   ];
 
-  return <section id="section-mix" className="flex flex-col gap-4 scroll-mt-14 pt-3">
+  return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-3">
     <ComingSoonGate id="hero-kosten" compact>
-      <p className="text-balance text-2xl font-bold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
+      <p className="text-balance text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
       </p>
     </ComingSoonGate>
@@ -269,12 +288,21 @@ export default function MixSection(props: MixSectionProps) {
       />
     </ChartPanel>
 
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-      {statGroups.map(group => <StatCard key={group.title} title={group.title} stats={group.stats}/>)}
+    <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-1 lg:content-start">
+        {statGroups.map(group => <KpiCard key={group.title} title={group.title} stats={group.stats}/>)}
+      </div>
+      {/* Rahmenlose Abbildung (wie Periodensystem/Karte): Titelzeile ohne Panel-Chrome. */}
+      <div className="flex min-w-0 flex-col lg:order-2">
+        <div className="flex items-center justify-between gap-3 pb-2">
+          <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Speicherfüllstand</h2>
+          <div className="flex items-center gap-3">
+            <span className={cx(muted, 'text-xs')}>Batterie / H₂</span>
+            <ChartModeToggle mode={storageChartMode} onChange={setStorageChartMode}/>
+          </div>
+        </div>
+        <div id="storage-chart" className={cx('w-full', storageChartMode === 'sunburst' ? 'h-[420px] sm:h-[520px]' : 'h-[240px] lg:h-full lg:min-h-[240px] lg:flex-1')}/>
+      </div>
     </div>
-
-    <ChartPanel title="Speicherfüllstand" meta="Batterie / H₂" className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <div id="storage-chart" className="h-[240px] w-full px-3 pb-3 pt-1"/>
-    </ChartPanel>
   </section>;
 }
