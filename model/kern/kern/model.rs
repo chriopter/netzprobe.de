@@ -1041,20 +1041,11 @@ impl StaticModel {
                     }
                     deficit -= discharged;
                 }
-                // Flexibler Import (additiv ueber den ggf. schon gesetzten fixed_import_gw).
-                let extra_import = if build.fixed_generation {
-                    // Ist-Jahr: die historische Basislast war real gedeckt → ihre Bilanzluecke
-                    // voll per Import schliessen (sonst kuenstliche Blackouts in einem realen,
-                    // stoerungsfrei versorgten Jahr). Die e100-Zusatzlast bleibt jedoch als
-                    // ehrliches Defizit (fixe 2025-Erzeugung deckt sie nicht).
-                    (deficit - e100_load_gw).max(0.0)
-                } else {
-                    // Nicht-fixed: begrenzt durch die Importkapazitaet (import_gw vorher 0 →
-                    // identisches Verhalten wie zuvor).
-                    deficit.min((import_limit_gw - import_gw).max(0.0)).max(0.0)
-                };
-                import_gw += extra_import;
-                deficit -= extra_import;
+                // Heimische Regelbare VOR flexiblem Import hochfahren: das Modell kennt
+                // keine Preise, daher gilt Versorgungssicherheits-Logik — installierte
+                // Gas-/Kohle-Kapazitaet wird genutzt, bevor Import als Flex-Puffer
+                // einspringt (vorher lief Import zuerst und machte fossile Parks in
+                // Custom-Szenarien unplausibel importlastig).
                 if deficit > EPS && !build.fixed_generation {
                     let gas_headroom = build.gas_max_gw - gas_gw;
                     let kohle_headroom = build.kohle_max_gw - kohle_gw;
@@ -1069,6 +1060,18 @@ impl StaticModel {
                     kohle_gw += ramp.1;
                     deficit = ramp.2;
                 }
+                // Flexibler Import (additiv ueber den ggf. schon gesetzten fixed_import_gw).
+                let extra_import = if build.fixed_generation {
+                    // Ist-Jahr: die historische Basislast war real gedeckt → ihre Bilanzluecke
+                    // voll per Import schliessen (sonst kuenstliche Blackouts in einem realen,
+                    // stoerungsfrei versorgten Jahr). Die e100-Zusatzlast bleibt jedoch als
+                    // ehrliches Defizit (fixe 2025-Erzeugung deckt sie nicht).
+                    (deficit - e100_load_gw).max(0.0)
+                } else {
+                    deficit.min((import_limit_gw - import_gw).max(0.0)).max(0.0)
+                };
+                import_gw += extra_import;
+                deficit -= extra_import;
                 if deficit > EPS {
                     load_shedding_gw = deficit;
                 }
