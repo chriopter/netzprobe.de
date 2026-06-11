@@ -15,7 +15,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, StatCard, type Stat } from '../sectionUi';
+import { ChartModeToggle, ChartPanel, ComingSoonGate, StatCard, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, scaleMaxGW?: number): boolean {
@@ -175,9 +175,11 @@ export default function MixSection(props: MixSectionProps) {
   ];
 
   return <section id="section-mix" className="flex flex-col gap-4 scroll-mt-14 pt-3">
-    <p className="text-balance text-2xl font-bold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
-      <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
-    </p>
+    <ComingSoonGate compact>
+      <p className="text-balance text-2xl font-bold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
+        <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
+      </p>
+    </ComingSoonGate>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">

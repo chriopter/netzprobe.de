@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ChartMode } from './chartOptions';
 import { cx, muted, panelHeader } from './ui';
 
@@ -79,6 +79,31 @@ export function PlaceholderGlass({ children }: { children: ReactNode }) {
     <div className="absolute inset-0 z-10 grid place-items-center rounded-lg bg-white/30 backdrop-blur-[3px] dark:bg-zinc-950/30">
       <span className="rounded-full border border-zinc-200 bg-white/85 px-4 py-1.5 text-sm font-medium text-zinc-500 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/85 dark:text-zinc-300">In Arbeit</span>
     </div>
+  </div>;
+}
+
+// Milchglas-„Coming Soon"-Gate: frostet den Abschnitt, bis man ihn per Klick
+// freigibt. Bewusst NICHT persistiert (kein localStorage/URL) — nach einem
+// Reload ist das Gate wieder da. Inhalt bleibt im DOM (Layout/Navigation).
+// compact: einzeiliges Pill-Badge für niedrige Inhalte (z. B. Hero-Zeile).
+export function ComingSoonGate({ children, compact }: { children: ReactNode; compact?: boolean }) {
+  const [revealed, setRevealed] = useState(false);
+  if (revealed) return <>{children}</>;
+  return <div className="relative">
+    <div className="pointer-events-none select-none blur-[5px] saturate-50 opacity-70" aria-hidden>{children}</div>
+    <button
+      type="button"
+      onClick={() => setRevealed(true)}
+      className="absolute inset-0 z-10 grid place-items-center rounded-lg bg-white/40 backdrop-blur-[3px] transition hover:bg-white/30 dark:bg-zinc-950/40 dark:hover:bg-zinc-950/30"
+      aria-label="Abschnitt anzeigen"
+    >
+      {compact
+        ? <span className="rounded-full border border-zinc-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-zinc-900 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-100" title="Klicken zum Anzeigen">Coming Soon</span>
+        : <span className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90">
+          <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white dark:bg-zinc-100 dark:text-zinc-900">Coming Soon</span>
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Klicken zum Anzeigen</span>
+        </span>}
+    </button>
   </div>;
 }
 
