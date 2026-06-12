@@ -179,7 +179,9 @@ export default function MixSection(props: MixSectionProps) {
       { label: 'EE-Anteil', value: pct(s.renewableSharePct) },
       { label: 'Abregelung', value: twh(s.curtailmentTWh) },
     ] },
-    { title: 'Emissionen', stats: [
+    // Überwiegend Lebenszyklus-Faktoren (PV/Wind/Wasser/Kernkraft nach UNECE/
+    // IPCC — deshalb nicht 0); Kohle/Biomasse ohne volle Vorkette.
+    { title: 'Emissionen · Lebenszyklus', stats: [
       { label: 'CO₂-Intensität', value: `${fmt0.format(s.co2GperKWh)} g/kWh` },
       { label: 'CO₂ Jahr', value: `${fmt.format(s.co2MtPerYear)} Mt` },
     ] },

@@ -15,8 +15,15 @@ impl SimulationResult {
         });
         let load_shedding_twh = sum(&self.hours, |hour| hour.load_shedding_gw);
         let total_co2_t: f64 = self.hours.iter().map(|hour| hour.co2_tph).sum();
-        let generation_twh = sum(&self.hours, |hour| hour.supply_gw + hour.import_gw);
-        let generation_kwh = generation_twh * 1e9;
+        // CO₂-Intensität je kWh VERSORGTER Nachfrage: Stromlast − Lastabwurf +
+        // strom-äquivalent vom H₂-Pool gedeckte Sektoren + Export. So tragen alle
+        // Szenarien denselben Service im Nenner — Erzeugung+Import würde den
+        // internen Speicher-Ladestrom mitzählen und Elektrolyse-schwere Szenarien
+        // künstlich verdünnen; nie gelieferte kWh dürfen nicht verdünnen.
+        let served_twh = demand_twh - load_shedding_twh
+            + sum(&self.hours, |hour| hour.h2_pool_reduction_gw)
+            + sum(&self.hours, |hour| hour.export_gw);
+        let served_kwh = served_twh * 1e9;
         let mut monthly_supply_twh = vec![0.0; 12];
         for hour in &self.hours {
             let month = hour
@@ -56,7 +63,7 @@ impl SimulationResult {
                     re > EPS && hour.curtailment_gw > 0.5 * re
                 }).count(),
                 "co2MtPerYear": total_co2_t / 1_000_000.0,
-                "co2GperKWh": if generation_kwh > 0.0 { (total_co2_t * 1_000_000.0) / generation_kwh } else { 0.0 },
+                "co2GperKWh": if served_kwh > 0.0 { (total_co2_t * 1_000_000.0) / served_kwh } else { 0.0 },
                 "peakLoadGW": self.hours.iter().map(|hour| hour.load_gw).fold(0.0, f64::max),
                 "monthlySupplyTWh": monthly_supply_twh,
                 "securityStatus": security_status,
@@ -72,10 +79,13 @@ impl SimulationResult {
         let load_shedding_twh = sum(&self.hours, |hour| hour.load_shedding_gw);
         let total_co2_t: f64 = self.hours.iter().map(|hour| hour.co2_tph).sum();
         let co2_mt_per_year = total_co2_t / 1_000_000.0;
-        let generation_twh = sum(&self.hours, |hour| hour.supply_gw + hour.import_gw);
-        let generation_kwh = generation_twh * 1e9;
-        let co2_gper_kwh = if generation_kwh > 0.0 {
-            total_co2_t * 1_000_000.0 / generation_kwh
+        // Gleicher Nenner wie to_api_value: versorgte Nachfrage statt Erzeugung+Import.
+        let served_twh = demand_twh - load_shedding_twh
+            + sum(&self.hours, |hour| hour.h2_pool_reduction_gw)
+            + sum(&self.hours, |hour| hour.export_gw);
+        let served_kwh = served_twh * 1e9;
+        let co2_gper_kwh = if served_kwh > 0.0 {
+            total_co2_t * 1_000_000.0 / served_kwh
         } else {
             0.0
         };

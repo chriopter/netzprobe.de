@@ -16,7 +16,7 @@
     "unit": "GW, GWh",
     "description": [
       "**Komposition:** das Preset überschreibt sämtliche Erzeugungs-, Speicher- und Außenhandels-Slider mit den Default-Werten der `erz-*`, `speicher-*` und `aussenhandel-*` Bausteine — also dem installierten Bestand 2025 laut Energy-Charts. Das Kernmodell rechnet den vollen Dispatch (kein Pass-Through-Branch); die Erzeugung folgt damit dem skalierbaren `erzeugungs-modell`, nicht den historischen Stundenwerten.",
-      "**Installierte Leistung 2025:** der **fossile Block** stellt mit `Gas 35,5 GW` und `Kohle 31 GW` rund `66 GW` regelbare Backup-Leistung; **Kernkraft** ist seit dem Ausstieg 2023 auf `0 GW`. Der **erneuerbare Block** liegt bei `PV 102,5 GW`, `Wind onshore 62,8 GW`, `Wind offshore 9,4 GW`, `Biomasse 4,8 GW` und `Laufwasser 4,8 GW`. **Speicher** sind dünn: Batterie `10 GW / 25 GWh` (Heimspeicher- und Großbatterie-Bestand), Pumpspeicher `9,4 GW / 45 GWh`, H₂-Saisonspeicher praktisch null. Der **Außenhandel** ist mit Import-Cap `13 GW` und Export-Cap `25 GW` auf historischen Maximalflüssen gedeckelt. Der Default-Lauf reproduziert `~466 TWh/a` Last, `~55 %` EE-Anteil und `~332 g/kWh` CO₂.",
+      "**Installierte Leistung 2025:** der **fossile Block** stellt mit `Gas 35,5 GW` und `Kohle 31 GW` rund `66 GW` regelbare Backup-Leistung; **Kernkraft** ist seit dem Ausstieg 2023 auf `0 GW`. Der **erneuerbare Block** liegt bei `PV 102,5 GW`, `Wind onshore 62,8 GW`, `Wind offshore 9,4 GW`, `Biomasse 4,8 GW` und `Laufwasser 4,8 GW`. **Speicher** sind dünn: Batterie `10 GW / 25 GWh` (Heimspeicher- und Großbatterie-Bestand), Pumpspeicher `9,4 GW / 45 GWh`, H₂-Saisonspeicher praktisch null. Der **Außenhandel** ist mit Import-Cap `13 GW` und Export-Cap `25 GW` auf historischen Maximalflüssen gedeckelt. Der Default-Lauf reproduziert `~466 TWh/a` Last, `~57 %` EE-Anteil und `~350 g/kWh` CO₂ (je kWh versorgter Nachfrage, inkl. Lebenszyklus).",
       "**Anwendungsfall:** Referenz-Mix, gegen den alle anderen Versorgungs-Presets verglichen werden. Sobald ein einzelner Slider bewegt wird, deaktiviert die Sidebar die Preset-Markierung — so wird sichtbar, welcher Eingriff den 2025-Zustand verlässt."
     ],
     "overview": [
@@ -30,7 +30,7 @@
       },
       {
         "label": "Effekt",
-        "value": "**Reproduktion 2025:** `~466 TWh` Last, `~55 %` EE-Anteil, `~332 g/kWh` CO₂."
+        "value": "**Reproduktion 2025:** `~466 TWh` Last, `~57 %` EE-Anteil, `~350 g/kWh` CO₂ (versorgte Nachfrage, inkl. Lebenszyklus)."
       }
     ],
     "reasoning": [
