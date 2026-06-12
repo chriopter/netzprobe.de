@@ -136,6 +136,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
+      },
+      {
+        "name": "materialLifetimeYears",
+        "unit": "Jahre",
+        "description": "Material-Lebensdauer des E-Lkw-Bestands, Jahre. Fernverkehr ~100-120 Tkm/a, Lebensfahrleistung ~1,2 Mio km (ICCT/VECTO; Daimler eActros-600-Auslegung 1,2 Mio km in 10 Betriebsjahren; Garantie selbst 720.000 km) → 10-12 a; fahrzeug-, nicht akkulimitiert (LFP 3.000-4.000 Zyklen). Unsicherste Annahme des Blocks, Spanne 10-15 a. Konfidenz mittel."
       }
     ],
     "caveats": [
@@ -146,7 +151,8 @@
       "Oberleitungs-Lkw und H2-Brennstoffzellen-Lkw werden nicht separat modelliert; die deutschen eHighway-Tests (ELISA, FESH, eWayBW) sind Ende 2024 ausgelaufen. Das Szenario unterstellt durchgängig batterieelektrischen Antrieb mit AC/DC-Ladung.",
       "Sattelzugmaschinen und ihre Auflieger werden in der KBA-Statistik nur über die Zugmaschine (19,7 Mrd. km 2022) gezählt; eine separate Auflieger-Kilometerleistung existiert nicht.",
       "Transit/Kabotage-Aufschlag 18 Mrd. km ist eine Fortschreibungs-Schätzung aus BASt FLE 2014; die nächste FLE 2024 wird erst 2026/27 veröffentlicht. Plausibler Korridor 15-22 Mrd. km. Der Transit-Anteil entfällt überproportional auf Sattelzug (höherer kWh/km als der Flottenmittelwert 0,6) — bei strenger Klassen-Wichtung wäre der Strombedarf rund 5-8 TWh höher als die einfache Rechnung (117 − 1,5) × 0,6 = 69,3 TWh zeigt. Konservativ wird der Flottenmittelwert beibehalten.",
-      "Nutzlast-Aufschlag +5 % (~6 Mrd. km) ist die untere Korridorgrenze 5-10 %. Aktuelle Modelle (eActros 600) verlieren 12-15 % Nutzlast, optimierte Modelle (eActros 400) nahezu nichts. EU-Gesamtgewichts-Anhebung auf 42-44 t mildert den Effekt. In einem Sofort-Umstellungs-Szenario wären eher +10 % realistisch, in einem 2040-Vollelektrifizierungs-Szenario mit Tech-Fortschritt eher +3-5 %. Slider erlaubt bis 170 Mrd. km — damit decken Anwender Worst-Case-Annahmen ab."
+      "Nutzlast-Aufschlag +5 % (~6 Mrd. km) ist die untere Korridorgrenze 5-10 %. Aktuelle Modelle (eActros 600) verlieren 12-15 % Nutzlast, optimierte Modelle (eActros 400) nahezu nichts. EU-Gesamtgewichts-Anhebung auf 42-44 t mildert den Effekt. In einem Sofort-Umstellungs-Szenario wären eher +10 % realistisch, in einem 2040-Vollelektrifizierungs-Szenario mit Tech-Fortschritt eher +3-5 %. Slider erlaubt bis 170 Mrd. km — damit decken Anwender Worst-Case-Annahmen ab.",
+      "Erneuerung ohne Recycling-Kredit: Ersatzbeschaffung zaehlt vollen Primaermaterialbedarf — konsistent zur Erzeugungs-/Speicher-Konvention, ueberzeichnet Batteriemetalle ab ~2040 (EU-Batterieverordnung erzwingt Rezyklatquoten)."
     ],
     "file": "last/e100-lkw/data.json",
     "scripts": [
@@ -248,6 +254,7 @@
         "tPerTWh": 2,
         "confidence": "niedrig"
       }
-    }
+    },
+    "materialLifetimeYears": 12
   }
 }

@@ -139,6 +139,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
+      },
+      {
+        "name": "materialLifetimeYears",
+        "unit": "Jahre",
+        "description": "Material-Lebensdauer der GHD-Waermepumpen/Kaelteaggregate, Jahre. Gleiche VDI-2067-Klasse wie Wohngebaeude; mehr Betriebsstunden, aber gewartet — keine belastbare Abweichung. Konfidenz mittel."
       }
     ],
     "caveats": [
@@ -2443,6 +2448,7 @@
         "tPerTWh": 2200,
         "confidence": "niedrig"
       }
-    }
+    },
+    "materialLifetimeYears": 18
   }
 }

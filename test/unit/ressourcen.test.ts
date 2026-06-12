@@ -194,6 +194,20 @@ describe('Ressourcen · B Invarianten', () => {
     const lw60 = annualByMaterial(sl, 60, {}, {});
     expect(lw50['Beton/Zement'] * 50).toBeCloseTo(lw60['Beton/Zement'] * 60, 0); // beide ein Bau
   });
+  it('15 Renewal-Faktor gilt auch für e100-Bestände (materialLifetimeYears)', () => {
+    // E-Pkw-Flotte: materialLifetimeYears 18 — bei Horizont 20 a wird 20/18 erneuert.
+    const pkwLi = resourcesOf('e100-pkw')!['Lithium'].tPerTWh;
+    const a18 = annualByMaterial(scen({}), 18, { 'e100-pkw': 10 }, {});
+    const a20 = annualByMaterial(scen({}), 20, { 'e100-pkw': 10 }, {});
+    // ≤ Lebensdauer: annual × years = Bestand (ein Bauzyklus).
+    expect(a18['Lithium'] * 18).toBeCloseTo(pkwLi * 10, 1);
+    // > Lebensdauer: annual = Bestand/Lebensdauer — der Horizont kürzt sich raus.
+    expect(a20['Lithium']).toBeCloseTo(pkwLi * 10 / 18, 1);
+    // Bahn (40 a): bei allen wählbaren Horizonten (≤ 35 a) bleibt Faktor 1.
+    const bahnSt = resourcesOf('e100-bahn')!['Stahl'].tPerTWh;
+    const b35 = annualByMaterial(scen({}), 35, { 'e100-bahn': 5 }, {});
+    expect(b35['Stahl'] * 35).toBeCloseTo(bahnSt * 5, 0);
+  });
 });
 
 // ===========================================================================

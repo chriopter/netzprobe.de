@@ -107,14 +107,18 @@ export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<str
   const h2ImportTWh = s.import.h2TWh ?? 0;
   if (h2ImportTWh > 0) addF('Wasserstoff', h2ImportTWh * H2_TONS_PER_TWH);
 
-  // Elektrifizierte Last: Material je TWh zusaetzlicher elektrischer Nachfrage (Bestand).
+  // Elektrifizierte Last: Material je TWh zusaetzlicher elektrischer Nachfrage —
+  // erneuerungs-aware wie Erzeugung/Speicher (EV-Flotte ~18 a, E-Lkw ~12 a,
+  // Waermepumpen ~18 a, Bahn-Oberleitung 40 a; materialLifetimeYears im Paket).
   for (const [umKey, twhKey] of E100_SECTORS) {
-    const res = (uiManifest.e100 as Record<string, any>)[umKey]?.resources as Record<string, ResourceEntry> | undefined;
+    const pkg = (uiManifest.e100 as Record<string, any>)[umKey];
+    const res = pkg?.resources as Record<string, ResourceEntry> | undefined;
     const twh = e100TWh[twhKey] ?? 0;
     if (!res || twh <= 0) continue;
+    const rf = renewalFactor(years, pkg?.materialLifetimeYears);
     for (const m in res) {
       const e = res[m];
-      if (e.tPerTWh) addS(m, e.tPerTWh * twh);
+      if (e.tPerTWh) addS(m, e.tPerTWh * twh * rf);
     }
   }
   const out: Record<string, number> = {};

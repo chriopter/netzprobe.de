@@ -129,6 +129,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
+      },
+      {
+        "name": "materialLifetimeYears",
+        "unit": "Jahre",
+        "description": "Material-Lebensdauer des elektrifizierten Pkw-Bestands (Fahrzeug inkl. Traktionsbatterie), Jahre. DE-Flottenlebensdauer ~18 a (ICCT-Survival-Kurven, KBA-Durchschnittsalter 10,3 a); EV-Akkus zyklen nur ~37 Vollzyklen/a und halten das Fahrzeugleben (Geotab 2024: ~1,8 %/a Degradation; RWTH/TUM Kalenderalterung 15-20 a). Konfidenz mittel-hoch."
       }
     ],
     "caveats": [
@@ -136,7 +141,8 @@
       "Ungesteuertes Heimladen — Smart-Charging und §14a-Steuerung würden Last in die Nacht verschieben.",
       "Kein Saisonprofil; realer Winterverbrauch liegt 20–30 % höher (Heizung, Kalt-Batterie).",
       "PHEV-Stromquote pauschal 40 % — am oberen Rand der Realweltdaten (ICCT/Plötz: faktisch 20–35 %).",
-      "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert; Mieter ohne Heim-Wallbox laden in der Praxis mit anderem Tagesprofil."
+      "Arbeitsplatz- und öffentliche Ladung sind nicht modelliert; Mieter ohne Heim-Wallbox laden in der Praxis mit anderem Tagesprofil.",
+      "Erneuerung ohne Recycling-Kredit: Ersatzbeschaffung zaehlt vollen Primaermaterialbedarf — konsistent zur Erzeugungs-/Speicher-Konvention, ueberzeichnet Batteriemetalle ab ~2040 (EU-Batterieverordnung erzwingt Rezyklatquoten)."
     ],
     "note": "Zusatzlast = max(0, Ziel-Pkw-km - bereits elektrisch gefahrene Pkw-km 2023) * 20 kWh/100 km. Der Slider beginnt beim bereits elektrischen Mindestwert. Bereits elektrisch gefahrene Pkw-km 2023 sind als Modellwert abgeleitet: rund 1,4 Mio. BEV Ende 2023 (KBA) mit etwa 11.000 km/a Fahrleistung plus rund 0,9 Mio. Plug-in-Hybride mit etwa 14.000 km/a, davon im Mittel 40 % elektrisch gefahren — zusammen rund 20 Mrd. km bereits elektrisch. Stundenverteilung folgt empirischem MOP-Heimladeprofil (ungesteuertes Laden, Abendpeak 17-21 Uhr).",
     "summary": "20 kWh/100 km",
@@ -236,6 +242,7 @@
         "tPerTWh": 27,
         "confidence": "mittel"
       }
-    }
+    },
+    "materialLifetimeYears": 18
   }
 }
