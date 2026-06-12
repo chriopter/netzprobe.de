@@ -137,7 +137,8 @@
       "Die Netz-Pauschale (1.200 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch.",
       "Endkundenpreis-Brücke hält Netzentgelte, Steuern, Abgaben, Umlagen und Vertrieb konstant auf 2025-Niveau — in Ausbau-Szenarien würden reale Netzentgelte eher steigen (der Zubau-Anteil steckt stattdessen im Systemposten Netzausbau), Umlagen sind politisch beweglich.",
       "Vertrieb & Service 2,5 ct/kWh ist eine Setzung mit niedriger Konfidenz; BDEW weist Beschaffung+Vertrieb 2025 nur als Summe (16,0 ct) aus.",
-      "Der Musterhaushalt ordnet PKW- und Wohngebäude-Heizstrom vollständig den Haushalten zu (Dienstwagen, Mietverhältnisse etc. nicht differenziert); E-Auto- und Wärmepumpen-Anteile folgen den Last-Reglern, nicht einer Bestandsprognose."
+      "Der Musterhaushalt ordnet PKW- und Wohngebäude-Heizstrom vollständig den Haushalten zu (Dienstwagen, Mietverhältnisse etc. nicht differenziert); E-Auto- und Wärmepumpen-Anteile folgen den Last-Reglern, nicht einer Bestandsprognose.",
+      "Importiert wird Wasserstoff (LHV), keine fertigen PtL-Kraftstoffe: die Synthese H₂ → Kerosin/Methanol/Olefine findet bilanziell im Inland statt, ihre Energieverluste trägt der H₂-Pool H₂-seitig (implizite Synthese-η 0,61–0,89 je Sektor). Implizit kostet damit e-Kerosin ~212 €/MWh, e-MeOH/NH₃ ~161 €/MWh, der Chemie-Mix ~147 €/MWh — im PtL-Studienkorridor (Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). CAPEX/OPEX der Synthese- und DAC-Anlagen sind nicht im Kosten-Bon."
     ],
     "file": "referenz/preise/package.json"
   },

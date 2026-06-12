@@ -668,10 +668,11 @@ impl StaticModel {
         scenario: &Value,
     ) -> Result<(Value, Value, Value, Value), ModelError> {
         // Effektive Stromnachfrage: der Sektor-H2-Bedarf wird im Engine-Pool aus
-        // Überschuss-Elektrolyse gedeckt (LHV / chargeEfficiency Strom je LHV)
-        // statt als direkte Sektor-Elektrolyse-Stromlast. Ohne diese Korrektur
-        // wäre die EE-Flotte auf den Brutto-Bedarf ausgelegt und nach dem
-        // LHV-Pool-Fix massiv überbaut (~25 % Abregelung bei e100).
+        // Überschuss-Elektrolyse gedeckt (H2-LHV / chargeEfficiency Strom je LHV)
+        // statt als direkte Sektor-Elektrolyse-Stromlast. Seit der Pool echtes
+        // H2-Zwischenprodukt führt (Bedarf = Sektor-Strom × chargeEfficiency),
+        // ist die Korrektur fast neutral — übrig bleibt nur der Stahl-Aufschlag
+        // (Pool-Elektrolyse 0,62 statt Onsite 52 kWh/kg ≈ 0,641, ~+3 TWh).
         let lhv = self.sector_h2_demand_twh(scenario)?;
         let strom = self.sector_h2_strom_twh(scenario)?;
         let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
@@ -1550,19 +1551,25 @@ impl StaticModel {
         Ok(out)
     }
 
+    // Strom je TWh Pool-H₂ (H₂-LHV). Der Pool führt ein ZWISCHENPRODUKT:
+    // je TWh H₂ entfällt nur der Elektrolyse-Strom (1/chargeEfficiency des
+    // H₂-Speicherpakets); die Synthese-Verluste H₂→Endprodukt (PtL-Kerosin,
+    // e-Fuels, Chemie-Derivate) trägt der Pool H₂-seitig — der Sektor zieht
+    // entsprechend mehr H₂ (Kette Flug 0,38 = Elektrolyse 0,62 × Synthese
+    // ≈ 0,61). Stünde hier die volle Ketten-Ratio, entstünde beim Cover
+    // Energie aus dem Nichts (Laden kostet 1/0,62, Entlasten spart 1/0,38).
+    // Stahl nutzt den im Sektorpaket dokumentierten Onsite-Elektrolyseur
+    // (52 kWh/kg H₂); H₂ ist dort selbst das Endprodukt.
     fn sector_strom_per_h2(&self) -> Result<SectorH2, ModelError> {
+        let electrolysis = 1.0 / self.storage["h2"].charge_efficiency.max(0.1);
         Ok(SectorH2 {
             stahl: number(
                 &self.demand[&DemandId::Stahl].data,
                 "electrolyzerKwhPerKgH2",
             )? / H2_LHV_KWH_PER_KG,
-            chemie: 1.0 / number(&self.demand[&DemandId::Chemie].data, "h2SystemEfficiency")?,
-            schiff: 1.0
-                / number(
-                    &self.demand[&DemandId::Schiff].data,
-                    "eFuelSystemEfficiency",
-                )?,
-            flug: 1.0 / number(&self.demand[&DemandId::Flug].data, "ptlEfficiency")?,
+            chemie: electrolysis,
+            schiff: electrolysis,
+            flug: electrolysis,
         })
     }
 }

@@ -13,7 +13,7 @@
 //   model/kern/kern/model.rs). Alle GW/GWh-Regeln hier skalieren mit dieser eff. Demand.
 // - Cushion 1.30 (Studienkorridor 1.25-1.40; trägt Roundtrip 0.34 = 0.62 × 0.55)
 // - Mix 30/40/30 (PV / Wind on / Wind off) — Wind 70% total, saisonale Komplementarität
-// - H2-Kaverne 0.11 × Demand in TWh H2-LHV: bei e100 ~180 TWh
+// - H2-Kaverne 0.11 × Demand in TWh H2-LHV: bei e100 ~200 TWh
 //   Vergleich BMWK 80 / Agora 70 / ISE-Stand-alone-Minimum 130 — oberer Rand, weil ohne Import
 // - WICHTIG: kein Studienpfad modelliert echtes Stand-alone DE ohne H2-Import. Werte sind
 //   konsistent mit Studienkorridor BEI gleicher Demand-Annahme; bei e100 = 1808 TWh brutto
@@ -28,7 +28,7 @@ pub const EE_WIND_OFF_SHARE: f64 = 0.30;
 // 499 h Lastabwurf bei 1.15). Lasttest nach dem LHV-konsistenten H2-Pool (Laden 0.62,
 // Entladen 0.55, Roundtrip 0.34), Wetter-/Lastjahr 2025: 0 h Lastabwurf bei heutiger
 // Last und bei e100, robust auch bei Windjahr ×0.90 und ×0.85. Preis der Autarkie ist
-// Überbau: bei e100 werden 356 TWh abgeregelt (~17 %) — ehrlicher ausgewiesen als zuvor,
+// Überbau: bei e100 werden 422 TWh abgeregelt (~18 % des EE-Potenzials) — ehrlicher als zuvor,
 // wo die verlustreiche Elektrolyse-Doppelzählung den Überbau versteckte.
 pub const EE_CUSHION: f64 = 1.30;
 // Batterie: 0.4 GW/TWh + 2.0 GWh/TWh (C-Rate 5h). Aggressiv für Peak-Last-Deckung +
@@ -41,8 +41,8 @@ pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 2.0;
 pub const EE_H2_CHARGE_PER_TWH: f64 = 0.30;
 pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.15;
 // H2-Saisonspeicher 0.11 × Demand, dimensioniert in TWh H2-LHV (vergleichbar mit
-// Kavernen-Potenzial-Angaben): bei heutiger Last 50 TWh, bei e100 (eff. Demand ~1650 TWh)
-// 180 TWh. Oberer Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80,
+// Kavernen-Potenzial-Angaben): bei heutiger Last 50 TWh, bei e100 (eff. Demand ~1810 TWh)
+// 200 TWh. Oberer Studienkorridor (Fraunhofer ISE Stand-alone-Minimum ~130 TWh; BMWK 80,
 // Agora 70, DVGW ~120 — alle MIT Import, daher hier oberer Rand). Salzkavernen-Potenzial
 // DE 9400 TWh (Fraunhofer IEG) → genutzt nur ~2 %, also problemlos.
 pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.11;

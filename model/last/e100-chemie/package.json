@@ -23,7 +23,7 @@
     "unit": "TWh Strom",
     "description": [
       "**Bezugsjahr 2023:** die Chemie- und Petrochemie-Industrie verbraucht heute rund `55 TWh` Strom (AGEB-Anwendungsbilanz), der bereits in der historischen Last steckt und das Slider-Minimum bildet. Mengenanker für die Defossilisierungs-Rechnung sind die inländischen Produktionsmengen 2023: `~2,0 Mt NH3`, `~1,3 Mt MeOH` sowie der HVC-Naphtha-Output mit `4,1 Mt` Ethylen, `3,0 Mt` Propylen und `~2,8 Mt` BTX.",
-      "**Verbrauch:** der Slider liefert den **Ziel-Gesamtstromverbrauch** der Branche. Das Modell summiert drei Sektorgruppen — Bestand und Hilfsenergie `85 TWh` (`55 TWh` Status quo, `30 TWh` Direktstrom-Zuwachs für Antriebe und IKT), Prozesswärme `75 TWh` (HT-WP bis `200 °C` und E-Dampfkessel) sowie H2-basierte Synthese `275 TWh` (`35 TWh` Ammoniak, `60 TWh` Methanol inkl. CO2-Bereitstellung, `180 TWh` e-Olefine via Methanol-to-Olefins/-Aromatics). Die hinterlegten Bausteine summieren auf `435 TWh`; der Default `440 TWh` entspricht dem VCI/VDI-C4C-Update-2024-H2-max-Pfad mit Mengen nach Produktionsrückgang (NH3 −32 %, MeOH −40 %). **System-η** Strom → H2-Endprodukt-Mix `0,55` — `1 TWh` H2-Import ersetzt `1,82 TWh` inländischen Synthese-Strom.",
+      "**Verbrauch:** der Slider liefert den **Ziel-Gesamtstromverbrauch** der Branche. Das Modell summiert drei Sektorgruppen — Bestand und Hilfsenergie `85 TWh` (`55 TWh` Status quo, `30 TWh` Direktstrom-Zuwachs für Antriebe und IKT), Prozesswärme `75 TWh` (HT-WP bis `200 °C` und E-Dampfkessel) sowie H2-basierte Synthese `275 TWh` (`35 TWh` Ammoniak, `60 TWh` Methanol inkl. CO2-Bereitstellung, `180 TWh` e-Olefine via Methanol-to-Olefins/-Aromatics). Die hinterlegten Bausteine summieren auf `435 TWh`; der Default `440 TWh` entspricht dem VCI/VDI-C4C-Update-2024-H2-max-Pfad mit Mengen nach Produktionsrückgang (NH3 −32 %, MeOH −40 %). **System-η** Strom → H2-Endprodukt-Mix `0,55` — `1 TWh` Pool-/Import-H₂ ersetzt `1/0,62 ≈ 1,61 TWh` inländischen Synthese-Strom (implizite Synthese-η H₂ → Produktmix `0,55/0,62 ≈ 0,89`).",
       "**Lastform:** Chemie ist `24/7`-Kontibetrieb (BDEW-Industrielast G3): konstantes Tagesprofil, Multiplikatoren alle `1,0`. Elektrolyseur-Flexibilität, H2-Speicherung und zeitliche Entkopplung von Stromabnahme und Stoffsynthese bleiben außen vor."
     ],
     "overview": [
@@ -108,7 +108,7 @@
       {
         "name": "h2SystemEfficiency",
         "unit": "Anteil",
-        "description": "System-η Strom → H2-Endprodukt-Mix (NH3 via Haber-Bosch, MeOH via Methanol-Synthese, Olefine via MtO). Default 0,55 als gewichteter Mittelwert über die drei chemischen Pfade (DEA Technology Catalogue 2024, Fraunhofer ISE PtX-Atlas). Wird vom kernmodell für die H2-Import-Substitutionslogik verwendet: 1 TWh importierter H2 ersetzt (1/0,55)=1,82 TWh inländischen Synthese-Strom."
+        "description": "System-η Strom → H2-Endprodukt-Mix (NH3 via Haber-Bosch, MeOH via Methanol-Synthese, Olefine via MtO). Default 0,55 als gewichteter Mittelwert über die drei chemischen Pfade (DEA Technology Catalogue 2024, Fraunhofer ISE PtX-Atlas). Herleitungs-Anker der Strom-Bausteine; im H₂-Pool zieht der Sektor je TWh Synthese-Strom 0,62 TWh H₂-Zwischenprodukt — 1 TWh Pool-/Import-H2 ersetzt 1/0,62 ≈ 1,61 TWh Synthese-Strom, implizite Synthese-η H2 → Produktmix 0,55/0,62 ≈ 0,89."
       },
       {
         "name": "defaultTargetTotalTWh",
@@ -162,7 +162,8 @@
       "CCS-Alternative für Steamcracker und Ammoniak-Reformer (blauer Wasserstoff) ist nicht modelliert; sie würde den Strombedarf erheblich senken.",
       "Importchemie-Verlagerung: ein Teil von NH3/MeOH/Olefinen könnte als Import grüner Grundstoffe statt als Inlandsproduktion realisiert werden (C4C Update zeigt: Strombedarf für Wasserstoff allein 287 TWh bei voller Inlandsproduktion könnte teilweise durch H2-/Derivate-Importe verlagert werden). Das Modell unterstellt vollständige Inlandsproduktion.",
       "Produktionsrückgang seit 2020 (Ammoniak −32 %, Methanol −40 %, Chlor −26 %) ist im C4C Update 2024 bereits eingepreist; weitere Verlagerungen würden Default-Wert weiter senken.",
-      "Roadmap-Annahme bis 2045 (THG-Neutralität); Zwischenstände 2030/2040 sind nicht aufgelöst — Slider gibt nur Zielwert wieder."
+      "Roadmap-Annahme bis 2045 (THG-Neutralität); Zwischenstände 2030/2040 sind nicht aufgelöst — Slider gibt nur Zielwert wieder.",
+      "Implizite Synthese-η H₂ → Produktmix 0,89 (0,55/0,62) ist leicht optimistisch gegenüber Einzelpfaden (Haber-Bosch ~0,83, MtO niedriger), weil die Strom-Bausteine Synthese-/CO₂-Direktstrom enthalten, der im Pool H₂-seitig gelumpt wird — Strombilanz korrekt, H₂-Tonnage leicht überzeichnet."
     ],
     "file": "last/e100-chemie/data.json",
     "scripts": [
