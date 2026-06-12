@@ -1,4 +1,5 @@
 import type { Scenario } from '../types/scenario';
+import type { SimulationResult } from '../types/simulation';
 import { uiManifest } from './uiManifest';
 
 // Pure Rechenlogik der Ressourcen-Sektion — ausgelagert für Unit-Tests.
@@ -16,9 +17,32 @@ export const FUEL = new Set(['Kohle', 'Erdgas', 'Wasserstoff']);
 // Import-H2 als Brennstoff-Massenstrom: 33,33 kWh/kg LHV → 30.000 t je TWh.
 const H2_TONS_PER_TWH = 1e6 / 33.33;
 
-// Brennstoff analytisch (Kapazitaet × realistische Volllaststunden) — fuer Basis UND
-// Szenario gleich gerechnet, damit das Default-Szenario sauber 1× ergibt.
-export const VLH: Record<string, number> = { kohle: 3000, gas: 1500, kernkraft: 7500 };
+// Brennstoffmengen folgen der SIMULIERTEN Erzeugung (TWh je Tech) statt fixer
+// Volllaststunden — sonst zaehlt z.B. Kernkraft Nameplate-Verbrauch, obwohl der
+// Dispatch drosselt. Der 1×-Anker der Basis kommt aus der dokumentierten
+// Ist-Erzeugung 2025 (historisch-2025-Paket).
+export type FuelTWhByTech = Record<string, number>;
+
+// Erzeugungs-TWh je Brennstoff-Tech aus dem Simulationsergebnis. Die Reihe kann
+// in Tagesschritten vorliegen — Skalierung ueber die Jahreslast wie in kosten.ts.
+export function fuelTWhFromResult(result: SimulationResult): FuelTWhByTech {
+  let loadSum = 0;
+  const sums: Record<string, number> = { kohle: 0, gas: 0, kernkraft: 0 };
+  for (const h of result.hours) {
+    loadSum += h.loadGW;
+    sums.kohle += h.kohleGW;
+    sums.gas += h.gasGW;
+    sums.kernkraft += h.kernkraftGW;
+  }
+  const annualScale = loadSum > 0 ? result.summary.totalDemandTWh * 1000 / loadSum : 1;
+  return Object.fromEntries(Object.entries(sums).map(([key, value]) => [key, value * annualScale / 1000]));
+}
+
+// 1×-Anker: Ist-Erzeugung 2025 der Brennstoff-Techs (historisch-2025-Paket).
+export function fuelTWhBase2025(): FuelTWhByTech {
+  const h = uiManifest.historisch2025 as Record<string, number>;
+  return { gas: h.gasGenerationTWh ?? 0, kohle: h.kohleGenerationTWh ?? 0, kernkraft: h.kernkraftGenerationTWh ?? 0 };
+}
 
 export type ResourceEntry = { tPerGW?: number; tPerGWh?: number; tPerTWh?: number };
 export type MaterialInfo = { label: string; globalProductionTPerYear: number; germanyDemandTPerYear?: number };
@@ -49,8 +73,8 @@ const renewalFactor = (years: number, lifetimeYears: number | undefined) =>
 
 // Jaehrlicher Materialbedarf je Rohstoff (t/a): Bau-Material erneuerungs-aware
 // annualisiert (Bestand × Renewal-Faktor ÷ Aufbaujahre), Brennstoff pro Jahr
-// (tPerTWh × installierte GW × Volllaststunden).
-export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<string, number>): Record<string, number> {
+// (tPerTWh × erzeugte TWh aus Dispatch bzw. 2025-Ist fuer die Basis).
+export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<string, number>, fuelTWh: FuelTWhByTech): Record<string, number> {
   const stock: Record<string, number> = {};
   const fuel: Record<string, number> = {};
   const addS = (m: string, t: number) => { stock[m] = (stock[m] ?? 0) + t; };
@@ -63,7 +87,7 @@ export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<str
     for (const m in res) {
       const e = res[m];
       if (e.tPerGW) addS(m, e.tPerGW * gw * rf);
-      if (e.tPerTWh) addF(m, e.tPerTWh * gw * (VLH[id] ?? 0) / 1000);
+      if (e.tPerTWh) addF(m, e.tPerTWh * (fuelTWh[id] ?? 0));
     }
   }
   for (const [id, power, energy] of storCaps(s)) {

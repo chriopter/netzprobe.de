@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annualByMaterial, groupSums, BULK, FUEL, VLH } from '../../app/src/ui/ressourcen';
+import { annualByMaterial, groupSums, BULK, FUEL, fuelTWhBase2025 } from '../../app/src/ui/ressourcen';
 import { ELEMENTS, MATERIAL_ELEMENT, NON_ELEMENT_MATERIALS } from '../../app/src/ui/periodicElements';
 import { defaultScenario, normalizeScenario } from '../../app/src/ui/scenarioPresets';
 import type { Scenario } from '../../app/src/types/scenario';
@@ -134,11 +134,11 @@ describe('Ressourcen · B Invarianten', () => {
     // Batterie-Lebensdauer 15 a, Horizont 20 a ⇒ Renewal = 20/15 ≈ 1,333.
     // Lithium-Annual = 97 t/GWh × 100 GWh × 1,333 / 20 ≈ 647 t/a.
     const renewal = Math.max(1, 20 / 15);
-    const out = annualByMaterial(scen({}, { batterieEnergyGWh: 100 }), 20, {});
+    const out = annualByMaterial(scen({}, { batterieEnergyGWh: 100 }), 20, {}, {});
     expect(out['Lithium']).toBeCloseTo(97 * 100 * renewal / 20, 1);
   });
   it('10 Gruppensumme = Σ der Materialien je Gruppe', () => {
-    const annual = annualByMaterial(scen({ windOnInstalledGW: 10, kohleInstalledGW: 5 }), 20, {});
+    const annual = annualByMaterial(scen({ windOnInstalledGW: 10, kohleInstalledGW: 5 }), 20, {}, { kohle: 15 });
     const g = groupSums(annual);
     let bulk = 0, fuel = 0;
     for (const [m, v] of Object.entries(annual)) { if (BULK.has(m)) bulk += v; else if (FUEL.has(m)) fuel += v; }
@@ -148,28 +148,29 @@ describe('Ressourcen · B Invarianten', () => {
   it('11 Annualisierung mit Renewal: Bau ∝ 1/Jahre solange years ≤ Lebensdauer, dann ∝ 1/Lebensdauer; Brennstoff unverändert', () => {
     // Wind on Lebensdauer 25 a.
     const s = scen({ windOnInstalledGW: 10 });
-    const a10 = annualByMaterial(s, 10, {});  // 10 < 25: kein Renewal
-    const a25 = annualByMaterial(s, 25, {});  // exakt: kein Renewal
-    const a50 = annualByMaterial(s, 50, {});  // 50 > 25: 2 Bauzyklen
+    const a10 = annualByMaterial(s, 10, {}, {});  // 10 < 25: kein Renewal
+    const a25 = annualByMaterial(s, 25, {}, {});  // exakt: kein Renewal
+    const a50 = annualByMaterial(s, 50, {}, {});  // 50 > 25: 2 Bauzyklen
     // Im Renewal-freien Bereich (years ≤ 25): a × years = stock (konstant).
     expect(a10['Stahl'] * 10).toBeCloseTo(a25['Stahl'] * 25, 0);
     // Über die Lebensdauer hinaus: Bau-Material wächst linear mit den Zyklen.
     expect(a50['Stahl'] * 50).toBeCloseTo(a10['Stahl'] * 10 * 2, 0);
     // Brennstoff (kein Bau) bleibt unabhängig vom Horizont.
     const sk = scen({ kohleInstalledGW: 5 });
-    const k20 = annualByMaterial(sk, 20, {});
-    const k40 = annualByMaterial(sk, 40, {});
+    const k20 = annualByMaterial(sk, 20, {}, { kohle: 15 });
+    const k40 = annualByMaterial(sk, 40, {}, { kohle: 15 });
     expect(k20['Kohle']).toBeCloseTo(k40['Kohle'], 3);
-    expect(k20['Kohle']).toBeCloseTo(950000 * 5 * VLH['kohle'] / 1000, 3);
+    // Dispatch-basiert: tPerTWh × erzeugte TWh, unabhaengig von installierten GW.
+    expect(k20['Kohle']).toBeCloseTo(950000 * 15, 3);
   });
   it('13 kein Kohle/Gas → Brennstoff-Gruppe 0; nur PV → keine Brennstoffe', () => {
-    const g = groupSums(annualByMaterial(scen({ pvInstalledGW: 100 }), 20, {}));
+    const g = groupSums(annualByMaterial(scen({ pvInstalledGW: 100 }), 20, {}, {}));
     expect(g.brennstoff).toBe(0);
     expect(g.bulk).toBeGreaterThan(0);
   });
   it('12 Default-Szenario gegen sich selbst → Faktor exakt 1', () => {
-    const base = annualByMaterial(normalizeScenario(defaultScenario), 20, {});
-    const scenA = annualByMaterial(normalizeScenario(defaultScenario), 20, {});
+    const base = annualByMaterial(normalizeScenario(defaultScenario), 20, {}, fuelTWhBase2025());
+    const scenA = annualByMaterial(normalizeScenario(defaultScenario), 20, {}, fuelTWhBase2025());
     for (const m of Object.keys(base)) if (base[m] > 0) expect(scenA[m] / base[m]).toBeCloseTo(1, 9);
   });
   it('14 Renewal-Faktor: Bau-Material × max(1, years/lifetime) je Technologie', () => {
@@ -177,20 +178,20 @@ describe('Ressourcen · B Invarianten', () => {
     const sb = scen({}, { batterieEnergyGWh: 100 });
     for (const years of [10, 15, 30, 45, 60]) {
       const rf = Math.max(1, years / 15);
-      const out = annualByMaterial(sb, years, {});
+      const out = annualByMaterial(sb, years, {}, {});
       // Gesamt über Horizont = annual × years = 97 × 100 × rf (1 Bauzyklus × Renewal-Faktor).
       expect(out['Lithium'] * years).toBeCloseTo(97 * 100 * rf, 0);
     }
     // PV-Lebensdauer 30 a — über 30 a hinaus kommt 1.+x. Bauzyklus.
     const sp = scen({ pvInstalledGW: 100 });
-    const pv20 = annualByMaterial(sp, 20, {}); // 20 < 30: kein Renewal
-    const pv60 = annualByMaterial(sp, 60, {}); // 60/30 = 2 Bauzyklen
+    const pv20 = annualByMaterial(sp, 20, {}, {}); // 20 < 30: kein Renewal
+    const pv60 = annualByMaterial(sp, 60, {}, {}); // 60/30 = 2 Bauzyklen
     expect(pv20['Silber'] * 20).toBeCloseTo(11 * 100, 1);          // ein Bau
     expect(pv60['Silber'] * 60).toBeCloseTo(11 * 100 * 2, 1);      // zwei Bauzyklen
     // Langlebige Tech (Laufwasser 60 a) — bei Horizont 50 a noch kein Renewal.
     const sl = scen({ laufwasserInstalledGW: 5 });
-    const lw50 = annualByMaterial(sl, 50, {});
-    const lw60 = annualByMaterial(sl, 60, {});
+    const lw50 = annualByMaterial(sl, 50, {}, {});
+    const lw60 = annualByMaterial(sl, 60, {}, {});
     expect(lw50['Beton/Zement'] * 50).toBeCloseTo(lw60['Beton/Zement'] * 60, 0); // beide ein Bau
   });
 });

@@ -7,7 +7,7 @@ import { HelpDot, HelpPanel, SectionHeading, ViewPill, type SectionView } from '
 import { e100ElectricTWh } from '../ScenarioSidebar';
 import { cx } from '../ui';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
-import { annualByMaterial, BULK, FUEL, type MaterialInfo } from '../ressourcen';
+import { annualByMaterial, BULK, FUEL, type MaterialInfo, fuelTWhBase2025, fuelTWhFromResult } from '../ressourcen';
 import { uiManifest } from '../uiManifest';
 import { ELEMENTS, MATERIAL_ELEMENT } from '../periodicElements';
 
@@ -218,8 +218,10 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
   const [view, setView] = useState<SectionView>('grafisch');
 
   const { rows } = useMemo(() => {
-    const scA = annualByMaterial(scenario, buildoutYears, e100ElectricTWh(scenario, data));
-    const baseA = annualByMaterial(scenarioBase, buildoutYears, e100ElectricTWh(scenarioBase, data));
+    // Brennstoffmengen folgen dem Dispatch des Szenarios; die 1×-Basis nutzt
+    // die dokumentierte Ist-Erzeugung 2025 (historisch-2025-Paket).
+    const scA = annualByMaterial(scenario, buildoutYears, e100ElectricTWh(scenario, data), fuelTWhFromResult(result));
+    const baseA = annualByMaterial(scenarioBase, buildoutYears, e100ElectricTWh(scenarioBase, data), fuelTWhBase2025());
     const materials = uiManifest.materials as Record<string, MaterialInfo>;
     const rows = Object.keys(materials).map(m => {
       const s = scA[m] ?? 0, b = baseA[m] ?? 0, world = materials[m].globalProductionTPerYear;
@@ -228,7 +230,7 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
       return { m, label: materials[m].label, cat, s, b, world, pct: world > 0 ? s / world * 100 : 0, pctDE: de > 0 ? s / de * 100 : null };
     }).filter(r => r.s > 0 || r.b > 0).sort((a, x) => x.pct - a.pct);
     return { rows };
-  }, [scenario, buildoutYears, data]);
+  }, [scenario, buildoutYears, data, result]);
 
   return <section id="section-ressourcen" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pb-8 pt-10 dark:border-zinc-800">
     <div className="flex items-center gap-2">
@@ -242,7 +244,7 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
         <li><strong>Basis (1×)</strong> — Material des Energiesystems 2025: Erzeugung, Speicher und die schon elektrische Flotte (~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn).</li>
         <li><strong>Erneuerung über Lebensdauer</strong> — Bau-Material × <code>max(1, Horizont/Lebensdauer)</code> je Technologie: Batterie 15 a, PV/Gas/H₂ 30 a, Wind/Biomasse 25 a, Kohle 35 a, Kernkraft 45 a, Pumpspeicher/Laufwasser 60 a (analog zur annuisierten Kostenseite).</li>
         <li><strong>Elektrifizierte Last</strong> — nur das Antriebs-/Aggregat-Delta je TWh Zusatznachfrage (E-Pkw/-Lkw, Wärmepumpen, Bahn); Schiff, Flug, Industriewärme, Stahl und Chemie sind noch nicht enthalten.</li>
-        <li><strong>Brennstoff</strong> — Kohle, Erdgas und Uran als Kapazität × Volllaststunden, über den Zeitraum summiert; importierter Wasserstoff als Massenstrom (33,33 kWh/kg LHV). Inlands-Elektrolyse zählt nicht doppelt — ihr Strom und ihre Anlagen sind bereits erfasst.</li>
+        <li><strong>Brennstoff</strong> — Kohle, Erdgas und Uran aus der <em>simulierten Erzeugung</em> der Stundensimulation (t je TWh × dispatchte TWh; 1× = Ist-Erzeugung 2025); importierter Wasserstoff als Massenstrom (33,33 kWh/kg LHV). Inlands-Elektrolyse zählt nicht doppelt — ihr Strom und ihre Anlagen sind bereits erfasst.</li>
       </ul>
       <p>Die <strong>Details je Rohstoff</strong> bleiben auf Jahresbasis (dimensionsrein gegenüber der Jahresproduktion):</p>
       <ul>
