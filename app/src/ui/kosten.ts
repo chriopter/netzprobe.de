@@ -60,6 +60,9 @@ export type KostenResult = {
   netzExtrapolated: boolean;
   addedReGW: number;
   addedPeakLoadGW: number;
+  // Export läuft praktisch dauerhaft am Cap: die Erlösgutschrift ist dann eine
+  // Obergrenze (der eigene Caveat im strom-handel-Paket greift).
+  exportAtCap: boolean;
   perTech: KostenTech[];
   // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
   params: {
@@ -197,6 +200,10 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   const importCost = result.summary.importTWh * 1e6 * (P.importEurPerMWh ?? 0);
   const exportRevenue = result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
   const importNet = importCost - exportRevenue;
+  // Dauerhaft am Export-Cap (≥95 % der theoretischen Cap-Energie): Erlös als
+  // Obergrenze flaggen — z.B. 100kern exportiert 25 GW × 8.760 h durchgehend.
+  const exportCapTWh = (scenario.export?.stromGW ?? 0) * 8.76;
+  const exportAtCap = exportCapTWh > 0 && result.summary.exportTWh >= 0.95 * exportCapTWh;
 
   // Netzausbau, zwei Treiber: (1) erzeugungsgetrieben am volatilen EE-Zubau
   // über den 2025-Bestand (Übertragungsnetz + EE-Anschluss im Verteilnetz),
@@ -234,6 +241,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     netzExtrapolated,
     addedReGW,
     addedPeakLoadGW,
+    exportAtCap,
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
       wacc,

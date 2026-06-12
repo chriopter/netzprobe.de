@@ -229,11 +229,12 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
   const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
   const netzHint = k.netzExtrapolated ? `Extrapoliert: EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW bzw. Peak-Zuwachs ${Math.round(k.addedPeakLoadGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 / ~100 GW) — implizit ${(k.breakdown.netz / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
+  const exportHint = k.exportAtCap ? `Export läuft praktisch dauerhaft am Cap (~${n0(k.params.exportTWh)} TWh/a, ≥95 % der Cap-Energie) — die Erlösgutschrift ist eine Obergrenze; ob die Nachbarn den Dauerexport abnehmen, modelliert die Kupferplatte nicht.` : undefined;
   // Kapazitätsunabhängige Posten gehören in beide Gruppierungen — nur so summieren
   // sich beide Knoten auf dieselbe SUMME.
   const sysRows = [
-    { key: 'netz', label: 'Netzausbau & -betrieb', v: k.breakdown.netz, mark: k.netzExtrapolated },
-    { key: 'importNet', label: 'Strom-Import-Saldo', v: k.breakdown.importNet, mark: false },
+    { key: 'netz', label: 'Netzausbau & -betrieb', v: k.breakdown.netz, hint: netzHint },
+    { key: 'importNet', label: 'Strom-Import-Saldo', v: k.breakdown.importNet, hint: exportHint },
   ].filter(r => Math.abs(r.v) > 5e7);
   // Nadeldrucker-Balken aus Blockzeichen (░) in derselben Zeile: das Label
   // endet an einer festen Spaltenkante, ab dort wächst der Balken Richtung
@@ -314,11 +315,12 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
         {group === 'art' && <div className="mt-4 space-y-4">
           {items.map(p => {
             const subs = subItems(k, p.key);
-            const mark = p.key === 'netz' && k.netzExtrapolated;
+            const hint = p.key === 'netz' ? netzHint : p.key === 'importNet' ? exportHint : undefined;
+            const mark = !!hint;
             const bar = '░'.repeat(segCh(Math.abs(k.breakdown[p.key]), maxArt));
             const own = p.key === 'netz' ? netzFacts(k) : p.key === 'h2Import' ? h2ImportFacts(k) : null;
             if (!subs.length && !own) return <div key={p.key} className={rowGrid}>
-              <span className={cx('min-w-0 truncate pl-5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', mark && 'cursor-help')} title={mark ? netzHint : undefined}>
+              <span className={cx('min-w-0 truncate pl-5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', mark && 'cursor-help')} title={hint}>
                 {p.label}{pctOf(k.breakdown[p.key])}{mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}
               </span>
               <span aria-hidden className={barInline}>{bar}</span>
@@ -327,11 +329,11 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
             return <details key={p.key} className="group/it">
               <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 <div className={rowGrid}>
-                  <span className="flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <span className={cx('flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', mark && 'cursor-help')} title={hint}>
                     <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
                       <span className="group-open/it:hidden">▸</span><span className="hidden group-open/it:inline">▾</span>
                     </span>
-                    <span className="truncate">{p.label}{pctOf(k.breakdown[p.key])}</span>
+                    <span className="truncate">{p.label}{pctOf(k.breakdown[p.key])}{mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}</span>
                   </span>
                   <span aria-hidden className={barInline}>{bar}</span>
                   <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
@@ -386,11 +388,11 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
           {sysRows.map(r => <details key={r.key} className="group/sr">
             <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <div className={rowGrid}>
-                <span className={cx('flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', r.mark && 'cursor-help')} title={r.mark ? netzHint : undefined}>
+                <span className={cx('flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', r.hint && 'cursor-help')} title={r.hint}>
                   <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
                     <span className="group-open/sr:hidden">▸</span><span className="hidden group-open/sr:inline">▾</span>
                   </span>
-                  <span className="truncate">{r.label}{pctOf(r.v)}{r.mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}</span>
+                  <span className="truncate">{r.label}{pctOf(r.v)}{r.hint && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}</span>
                 </span>
                 <span aria-hidden className={barInline}>{'░'.repeat(segCh(Math.abs(r.v), maxTech))}</span>
                 <span className="shrink-0 tabular-nums">{G(r.v)}</span>
@@ -562,7 +564,8 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
         <li><strong>Netzausbau &amp; -betrieb</strong> — zwei Pauschalen, annuisiert über 40 Jahre: 1.000 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; erzeugungsgetrieben: Übertragungsnetz, EE-Anschluss) plus 1.200 €/kW je kW Spitzenlast-Zuwachs über 2025 (75,6 GW; lastgetrieben: Verteilnetz für E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Im 2025-Bestand null (Kupferplatte als Nullpunkt). Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur als Richtungssignal zu lesen.</li>
       </ul>
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
-      <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«).</p>
+      <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«). Weil der Energieanteil kostenbasiert ab Werk gerechnet wird (statt Marktpreis + Marge), liegt das absolute Niveau ~10 % unter der realen BDEW-Rechnung — die Szenario-Vergleiche untereinander bleiben gültig.</p>
+      <p>Der <strong>Gesamt-bis-Schalter</strong> multipliziert die Jahres-Systemkosten mit dem Aufbauhorizont — das sind Vollkosten des gesamten Stromsystems, nicht die »Mehrinvestitionen« aus Energiewende-Studien (die nur die Differenz zu einem Referenzpfad zählen). Die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (~70–90 Mrd €/a Heizöl, Erdgas, Kraftstoffe).</p>
       <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
     </HelpPanel>}
 

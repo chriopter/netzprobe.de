@@ -106,7 +106,8 @@
     "caveats": [
       "Einspeisefaktor windOn100m ist deutschlandweiter Durchschnitt; regionale Unterschiede (Küste vs. Süd) nicht abgebildet.",
       "Default 62,8 GW ist Jahresmittel; Wachstum 2025 wird nicht stundenaufgelöst berücksichtigt.",
-      "Standortqualität (Repowering vs. Neuanlagen) ist im Faktor nicht differenziert."
+      "Standortqualität (Repowering vs. Neuanlagen) ist im Faktor nicht differenziert.",
+      "Die Flächen-Kategorie heißt bewusst 'direkte Inanspruchnahme' (Fundament, Kranstellfläche, Brandschutzring ≈ 1 km²/GW): politische Vorrang-/Eignungsgebiete werden NICHT gezählt, weil sie zu ~98 % landwirtschaftlich weiternutzbar sind. Unter Vorrangflächen-Accounting (20–25 MW/km² ≈ 40–50 km²/GW) ergäben z. B. 870 GW rund 35.000–44.000 km² Planungsfläche — eine andere, nicht addierbare Flächendefinition."
     ],
     "file": "erzeugung/windon/data.json",
     "scripts": [
@@ -164,7 +165,7 @@
     "anlagenFlaeche": {
       "anlageKm2PerGW": 0.5,
       "wirkungKm2PerGW": 1,
-      "kategorie": "Vorrangfläche"
+      "kategorie": "direkte Inanspruchnahme"
     },
     "referenceYield": {
       "twhPerGWa": 2.0,

@@ -99,7 +99,9 @@
       "Keine Selbstentladung modelliert.",
       "Wirkungsgrad vollständig beim Laden — getrennte Lade-/Entlade-Effizienz nicht abgebildet.",
       "Keine Mindest-SoC oder DoD-Restriktionen — Batterie kann zwischen 0 und Max schwingen.",
-      "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung."
+      "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung.",
+      "Der Greedy-Residuallast-Dispatch kennt keine Spotmarkt-Arbitrage: im Referenzszenario fahren Batterien ~85 äquivalente Vollzyklen/a statt real ~250–350 (Großspeicher im Day-Ahead-/Intraday-Handel). Die ausgewiesene Zyklenzahl misst nur den bilanzgetriebenen Einsatz, nicht den Markteinsatz.",
+      "CAPEX 280 EUR/kWh ist ein heutiger (2024/25) europäischer Turnkey-Großspeicherpreis ohne Lernkurve (NREL ATB Pack ~283 USD; BNEF: Europa ~275, USA 236, China ~101 USD/kWh). Der Markt fällt schnell: Netzspeicher sind zu ~95 % LFP, Pack-Preise fielen 2024/25 auf ~70–110 USD/kWh, Studienpfade sehen ~100–200 EUR/kWh System für 2030–2045. Im 100ee-noimport-Szenario ist die Batterie (~1.800 GWh, ~55 Mrd EUR/a) der größte Speicher-Einzelposten und viertgrößte Posten insgesamt — jede −100 EUR/kWh senkt den Bon um ~17 Mrd EUR/a. 280 ist die konservative Heute-Obergrenze; Gegenrisiken: Zellersatz innerhalb der 15-a-Lebensdauer, Lithium-Zyklen, EU-Lokalisierungsaufschläge."
     ],
     "file": "speicher/batterie/data.json",
     "scripts": [

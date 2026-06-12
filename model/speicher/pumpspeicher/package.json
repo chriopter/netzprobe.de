@@ -100,7 +100,8 @@
     "caveats": [
       "Maximum 15 GW / 100 GWh reflektiert DE-LU-Marktgebietsbestand (9,4 GW) plus aggressives Zubaupotenzial (+5-6 GW); weiterer Zubau topographisch und durch Naturschutz limitiert. Default 9,4 GW schließt Vianden Luxembourg ein (gehört bilanziell zum DE-LU-Marktgebiet); DE-only wären ~6,8 GW.",
       "Wirkungsgrad 80 % ist optimistisch — reale Anlagen 70-78 %.",
-      "Saisonale Befüllung nicht modelliert; reale Pumpspeicher haben Frühjahrshochwasser-Bonus."
+      "Saisonale Befüllung nicht modelliert; reale Pumpspeicher haben Frühjahrshochwasser-Bonus.",
+      "Der Greedy-Residuallast-Dispatch kennt keine Spotmarkt-Arbitrage: im Referenzszenario entladen die Pumpspeicher ~0,1 TWh/a statt real ~8–10 TWh/a (Faktor ~100), weil die Batterie mit Dispatch-Priorität 1 den Tageshub übernimmt und ohne Preissignal kein Arbitrage-Zyklus entsteht. Modellintern konsistent, aber die ausgewiesene PSW-Nutzung ist kein Abbild des realen Markteinsatzes."
     ],
     "file": "speicher/pumpspeicher/data.json",
     "scripts": [
