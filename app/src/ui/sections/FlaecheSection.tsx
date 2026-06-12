@@ -349,14 +349,14 @@ function FlaechePanel({ scenario, theme, view }: { scenario: Scenario; theme: Ch
 
   // Stat-Karten wandern in die rechte Spalte der Zwei-Spalten-Komposition
   // (links Karte/Tabelle, rechts die Daten).
-  const stats = <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  // Eine Karte statt zwei: Summe, Vielfaches gegenüber 2025 und der Anteil an
+  // der Landesfläche mit explizitem Bezug. Die frühere „Saarlands"-Zeile war
+  // ein Duplikat der Saarland-Vergleich-Karte darunter.
+  const stats = <div className="grid gap-3">
     <StatCard title="Flächenbedarf" stats={[
       { label: 'Summe', value: `${fmtKm2(sumGesamt)} km²` },
-      { label: 'gegen 2025', value: sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–' },
-    ]}/>
-    <StatCard title="Vergleich" stats={[
-      { label: 'DE-Anteil', value: `${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %` },
-      { label: 'Saarlands', value: `${(sumGesamt / SAARLAND_KM2).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` },
+      { label: 'zu 2025', value: sum2025 > 0 ? `${(sumGesamt / sum2025).toLocaleString('de-DE', { maximumFractionDigits: 1 })}×` : '–' },
+      { label: 'Anteil DE', value: `${(sumGesamt / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: sumGesamt / DEUTSCHLAND_KM2 < 0.01 ? 2 : 1 })} %`},
     ]}/>
   </div>;
 
@@ -447,7 +447,7 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
   // Spalten-Verhältnis wie die Ressourcen-Sektion: Karte/Tabelle links 2/3,
   // Daten-Karten rechts 1/3.
   return <section className="grid">
-    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
       <div className="min-w-0">
         {view === 'grafisch'
           ? <FlaecheMapCard anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
@@ -455,8 +455,8 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
       </div>
       <div className="flex min-w-0 flex-col gap-3">
         {stats}
-        <FlaechenTypenPanel anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2}/>
         <SaarlandComparison anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} fmtKm2={fmtKm2} theme={theme}/>
+        <FlaechenTypenPanel anlageKm2={anlageKm2} wirkungKm2={wirkungKm2} offshoreWirkungKm2={offshoreWirkungKm2} vorFlaecheKm2={vorFlaecheKm2} rows={rows} fmtKm2={fmtKm2} forceOpen={view === 'details'}/>
       </div>
     </div>
   </section>;
@@ -473,7 +473,7 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
 // Flächentypen-Panel rechts neben der Karte: Kennzahl + Kurzerklärung je Typ,
 // Farben identisch zu den Karten-Kreisen. Beantwortet „Was bedeuten die
 // Flächentypen?" direkt am Wert statt in einem versteckten Disclosure.
-function FlaechenTypenPanel({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2 }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string }) {
+function FlaechenTypenPanel({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, rows, fmtKm2, forceOpen }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; rows: FlaecheRow[]; fmtKm2: (value: number) => string; forceOpen?: boolean }) {
   const pct = (km2: number) => `${(km2 / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: km2 / DEUTSCHLAND_KM2 * 100 < 1 ? 2 : 1 })} %`;
   // vorFlaeche-Länder gruppieren für Label-Anzeige
   const vorByLand: Record<string, number> = {};
@@ -496,19 +496,16 @@ function FlaechenTypenPanel({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
     <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Flächentypen</h4>
     <div className="mt-2 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-      {typen.filter(t => t.show).map(t => <details key={t.label} className="group/typ py-2 first:pt-0 last:pb-0">
+      {typen.filter(t => t.show).map(t => <details key={t.label} open={forceOpen} className="group/typ py-2 first:pt-0 last:pb-0">
         <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }}/>
           <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300">
             <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open/typ:rotate-90 dark:text-zinc-500"/>
             <span className="truncate">{t.label}</span>
           </span>
-          <span className="flex shrink-0 items-baseline gap-1.5 text-right">
-            <span className="text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{pct(t.km2)}</span>
-            <span className="whitespace-nowrap text-[11px] font-normal tabular-nums text-zinc-400 dark:text-zinc-500">{t.meta}</span>
-          </span>
+          <span className="shrink-0 text-right text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{pct(t.km2)}</span>
         </summary>
-        <p className="mt-1 pl-9 text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{t.desc}</p>
+        <p className="mt-1 pl-9 text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{t.desc} <span className="whitespace-nowrap">Bezug: {t.meta}.</span></p>
       </details>)}
     </div>
   </div>;
@@ -530,7 +527,9 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
   const wirkungTiles = wirkungKm2 / SAARLAND_KM2;
   const offshoreTiles = offshoreWirkungKm2 / SAARLAND_KM2;
   const vorTiles = vorFlaecheKm2 / SAARLAND_KM2;
-  const visibleTileCount = Math.max(1, Math.ceil(saarlands));
+  // Gleiche Kachel-Geometrie wie die Ressourcen-Karten (SlotRow): 6 Spalten,
+  // mindestens eine volle Zeile, damit Headroom sichtbar ist.
+  const visibleTileCount = Math.max(6, Math.ceil(saarlands));
   const saarlandTiles = Array.from({ length: visibleTileCount }, (_, index) => index);
   return <div className="group relative rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
     <div className="flex items-baseline justify-between gap-4">
@@ -541,7 +540,7 @@ function SaarlandComparison({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlae
       </span>
     </div>
     <div
-      className="mt-3 grid grid-cols-12 gap-1.5"
+      className="mt-3 grid grid-cols-6 gap-1.5"
       aria-label={`Entspricht ${saarlands.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Saarlands`}
     >
       {saarlandTiles.map(index => {
