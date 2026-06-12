@@ -2,15 +2,10 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardE
 import {
   Activity,
   ArrowRightLeft,
-  BatteryCharging,
   CalendarDays,
-  Car,
   ChevronDown,
   ChevronUp,
-  Database,
   Edit3,
-  Factory,
-  Flame,
   Info,
   Menu,
   SlidersHorizontal,
@@ -526,7 +521,7 @@ function PresetPillRow<TId extends string>({
         title={p.description}
         onClick={() => onSelect(p.id)}
         className={cx(
-          'rounded-full px-3 py-1 text-xs font-medium transition',
+          'inline-flex h-[26px] items-center rounded-full px-3 text-xs font-medium transition',
           p.id === activeId ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50',
         )}
       >{p.label}</button>
@@ -636,12 +631,12 @@ function ErzeugungSection({
     collapsible
     defaultOpen
   >
-    <div className="flex flex-wrap gap-1.5">
+    <div className="mt-2.5 flex flex-wrap gap-2">
       <PresetPillRow presets={visibleSupplyPills} activeId={activeId} onSelect={onSupplyPresetChange}/>
       <PresetDropdownPill label="Mehr" groups={supplyDropdownGroups} activeId={activeId} active={!visibleSupplyPillIds.has(activeId)} onSelect={onSupplyPresetChange}/>
     </div>
 
-    <div className="mt-2 grid gap-2">
+    <div className="mt-3 grid">
       <SupplyGroupAccordions
         data={data}
         scenario={scenario}
@@ -705,12 +700,11 @@ function AussenhandelSection({
     meta={`${fmt0.format(scenario.import.stromGW)}/${fmt0.format(scenario.export.stromGW)} GW · ${fmt0.format(scenario.import.h2TWh)} TWh H₂`}
     collapsible
   >
-    <div className="grid gap-1.5">
+    <div className="grid divide-y divide-zinc-100 dark:divide-zinc-800">
       {groups.map(group => <GroupAccordion
         key={group.id}
         title={group.title}
         summary={group.summary(scenario)}
-        icon={<ArrowRightLeft className="h-3.5 w-3.5"/>}
         open={open[group.id] ?? false}
         onToggle={() => toggle(group.id)}
         docId={group.docId}
@@ -820,12 +814,11 @@ function SupplyGroupAccordions({
     }
   };
 
-  return <div className="grid gap-1.5">
+  return <div className="grid divide-y divide-zinc-100 dark:divide-zinc-800">
     {genGroups.map(group => <GroupAccordion
       key={group.id}
       title={group.title}
       summary={group.summary(scenario)}
-      icon={<Zap className="h-3.5 w-3.5"/>}
       open={open[group.id]}
       onToggle={() => toggle(group.id)}
       checked={isGenEnabled(group)}
@@ -851,7 +844,6 @@ function SupplyGroupAccordions({
       title={group.title}
       subtitle={group.subtitle}
       summary={group.summary(scenario)}
-      icon={<BatteryCharging className="h-3.5 w-3.5"/>}
       open={open[group.id]}
       onToggle={() => toggle(group.id)}
       checked={isStoEnabled(group)}
@@ -889,7 +881,7 @@ function GroupAccordion({
   title: string;
   subtitle?: string;
   summary: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   open: boolean;
   onToggle: () => void;
   checked?: boolean;
@@ -899,14 +891,14 @@ function GroupAccordion({
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
   const hasCheckbox = onChecked !== undefined;
-  return <section className={cx(
-    'overflow-hidden rounded-md transition',
-    open ? 'border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/70' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70',
-  )}>
+  // Rahmenlos: die Liste trennt mit divide-y, die Kopfzeile zeigt Hover.
+  return <section>
     <div
       className={cx(
-      'grid w-full cursor-pointer items-center gap-1.5 px-2.5 py-2',
-      hasCheckbox ? 'grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px]' : 'grid-cols-[24px_minmax(72px,1fr)_auto_16px]',
+      'grid w-full cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-2.5 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
+      hasCheckbox
+        ? (icon ? 'grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px]' : 'grid-cols-[18px_minmax(72px,1fr)_auto_16px]')
+        : (icon ? 'grid-cols-[24px_minmax(72px,1fr)_auto_16px]' : 'grid-cols-[minmax(72px,1fr)_auto_16px]'),
       )}
       onClick={onToggle}
     >
@@ -918,7 +910,7 @@ function GroupAccordion({
         onChange={event => onChecked!(event.target.checked)}
         aria-label={`${title} aktivieren`}
       />}
-      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}>{icon}</span>
+      {icon && <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}>{icon}</span>}
       <div className="flex min-w-0 items-center gap-1">
         <button
           type="button"
@@ -939,7 +931,7 @@ function GroupAccordion({
         <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
       </button>
     </div>
-    {open && <div className="border-t border-zinc-100 px-2 py-1 dark:border-zinc-700">
+    {open && <div className="px-1.5 pb-2 pt-0.5">
       {subtitle && <div className="px-1 pb-1 pt-0.5 text-[11px] leading-4 text-zinc-400">{subtitle}</div>}
       {children}
     </div>}
@@ -1224,12 +1216,12 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     collapsible
     defaultOpen
   >
-      <div className="flex flex-wrap gap-1.5">
+      <div className="mt-2.5 flex flex-wrap gap-2">
         <PresetPillRow presets={loadPills} activeId={loadPillId} onSelect={selectLoadPill}/>
         <PresetDropdownPill label="Mehr" presets={loadDropdownPills} activeId={loadPillId} active={loadPillId === 'nur-2017'} docId={datasetIds.loadHistorical2017} onSelect={selectLoadPill}/>
       </div>
 
-    <div className="mt-2 grid gap-2">
+    <div className="mt-3 grid divide-y divide-zinc-100 dark:divide-zinc-800">
         <BasisSubSection
           checked={scenario.demand['last-2025']}
           meta={data?.loadSumTWh ? twh0(data.loadSumTWh) : 'Basislast'}
@@ -1239,7 +1231,6 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         {data && <AccordionSection
           title="Verkehr"
           value={twh0(transportTotal)}
-          icon={<Car className="h-4 w-4"/>}
           checked={transportEnabled}
           docId={datasetIds.e100Pkw}
           open={openSectors.verkehr}
@@ -1293,7 +1284,6 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         {data && <AccordionSection
           title="Wärme"
           value={twh0(heatTotal)}
-          icon={<Flame className="h-4 w-4"/>}
           checked={heatEnabled}
           docId={datasetIds.e100Heiz}
           open={openSectors.waerme}
@@ -1323,7 +1313,6 @@ function LoadConfiguration(props: LoadConfigurationProps) {
         {data && <AccordionSection
           title="Industrie"
           value={twh0(industryTotal)}
-          icon={<Factory className="h-4 w-4"/>}
           checked={industryEnabled}
           docId={datasetIds.e100IndustrieWaerme}
           open={openSectors.industrie}
@@ -1546,8 +1535,8 @@ function SectionHeader({ title, icon, docId, badge, meta }: { title: string; ico
 }
 
 function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean; meta: string; docId: string; onChange: (checked: boolean) => void }) {
-  return <section className="overflow-hidden rounded-md border border-zinc-200/70 bg-zinc-50/70 transition hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70">
-    <label className="group grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5">
+  return <section>
+    <label className="group grid cursor-pointer grid-cols-[18px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 rounded-md px-1.5 py-2.5 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
       <input
         className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
@@ -1555,7 +1544,6 @@ function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean;
         onChange={event => onChange(event.target.checked)}
         aria-label="Basis aktivieren"
       />
-      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}><Database className="h-4 w-4"/></span>
       <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
         <span className={cx('truncate', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400')}>Basis</span>
         <InfoLink id={docId} label="Basis im Wiki öffnen"/>
@@ -1569,7 +1557,6 @@ function BasisSubSection({ checked, meta, docId, onChange }: { checked: boolean;
 function AccordionSection({
   title,
   value,
-  icon,
   checked,
   docId,
   open,
@@ -1579,7 +1566,6 @@ function AccordionSection({
 }: {
   title: string;
   value: string;
-  icon: ReactNode;
   checked: boolean;
   docId: string;
   open: boolean;
@@ -1588,11 +1574,8 @@ function AccordionSection({
   children: ReactNode;
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
-  return <section className={cx(
-    'overflow-hidden rounded-md transition',
-    open ? 'border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/70' : 'border border-zinc-200/70 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800/70',
-  )}>
-    <div className="grid cursor-pointer grid-cols-[18px_24px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 px-2.5 py-2.5" onClick={onToggle}>
+  return <section>
+    <div className="grid cursor-pointer grid-cols-[18px_minmax(72px,1fr)_auto_16px] items-center gap-1.5 rounded-md px-1.5 py-2.5 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50" onClick={onToggle}>
       <input
         className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
@@ -1601,7 +1584,6 @@ function AccordionSection({
         onChange={event => onChecked(event.target.checked)}
         aria-label={`${title} aktivieren`}
       />
-      <span className={cx(iconTile, 'h-6 w-6 rounded-md bg-transparent')}>{icon}</span>
       <button
         type="button"
         className="group flex min-w-0 items-center gap-1 text-left"
@@ -1614,7 +1596,7 @@ function AccordionSection({
       <span className={cx('whitespace-nowrap text-right text-sm font-semibold tabular-nums', checked ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-400 dark:text-zinc-500')}>{value}</span>
       <Chevron aria-hidden="true" className="h-4 w-4 text-zinc-400"/>
     </div>
-    {open && <div className="border-t border-zinc-100 px-2 py-1 dark:border-zinc-700">{children}</div>}
+    {open && <div className="px-1.5 pb-2 pt-0.5">{children}</div>}
   </section>;
 }
 
