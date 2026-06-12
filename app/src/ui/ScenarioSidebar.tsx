@@ -34,7 +34,15 @@ import type { Scenario } from '../types/scenario';
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
 export type BuildoutYear = '2035' | '2040' | '2045' | '2050' | '2060';
 type LoadPresetState = Pick<Scenario, 'demand' | 'loadYear'>;
-type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
+export type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
+
+// Kurzlabels der Last-Pillen — auch von der Stromrechnung (Kosten-Sektion) genutzt.
+export const loadPillLabels: Record<LoadPillId, string> = {
+  'nur-2025': '2025',
+  'nur-2017': '2017',
+  e100: '100% Elektrifizierung',
+  custom: 'Manuell',
+};
 
 const e100DemandFlags = Object.entries(defaultScenario.demand)
   .filter(([key, value]) => key.startsWith('e100-') && typeof value === 'boolean')
@@ -68,7 +76,7 @@ function sameRecord<T extends Record<string, unknown>>(a: T, b: T) {
   return true;
 }
 
-function matchingLoadPreset(scenario: Scenario): LoadPillId {
+export function matchingLoadPreset(scenario: Scenario): LoadPillId {
   for (const [id, preset] of Object.entries(loadPresetStates) as Array<[Exclude<LoadPillId, 'custom'>, LoadPresetState]>) {
     if (scenario.loadYear === preset.loadYear && sameRecord(scenario.demand, preset.demand)) return id;
   }
@@ -148,6 +156,17 @@ const e100StahlAdditionalTWh = (targetMioTon: number, model: DataSet['e100-stahl
   Math.max(0, Math.max(0, targetMioTon) * model.mwhPerTon - (model.alreadyElectricTWh ?? 0));
 const e100ChemieAdditionalTWh = (targetTotalTWh: number, model: DataSet['e100-chemie']) =>
   Math.max(0, targetTotalTWh - model.alreadyElectricTWh);
+
+// Haushaltsrelevante Zusatz-Stromlast des Szenarios (TWh/a): PKW und
+// Wohngebäude-Heizung, flag-gated und oberhalb des schon elektrischen Bestands —
+// Basis des Musterhaushalts in der Kosten-Sektion (siehe Wiki »preise«).
+export function householdElectrificationTWh(scenario: Scenario, data: DataSet | null): { pkwTWh: number; heizTWh: number } {
+  if (!data) return { pkwTWh: 0, heizTWh: 0 };
+  return {
+    pkwTWh: scenario.demand['e100-pkw'] ? e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw']) : 0,
+    heizTWh: scenario.demand['e100-heiz'] ? e100HeizAdditionalElectricityTWh(scenario.demand['e100-heiz-target-heat-twh'], data['e100-heiz']) : 0,
+  };
+}
 
 // Elektrifizierungsgrad: aktuelle Last ÷ Last bei 100 % Elektrifizierung (alle
 // e100-Sektoren auf ihren aktuellen Zielwerten). Spiegelt die „466/1.808 TWh"-
@@ -378,6 +397,7 @@ type GenerationFieldSpec = {
   baseline?: number;
   co2eGperKWh?: number;
   referenceScale?: ReferenceScale;
+  docId?: string;
 };
 
 type GenerationGroup = {
@@ -408,18 +428,18 @@ function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] 
   const conventionalBaseline = h.gasInstalledGW + h.kohleInstalledGW;
   return [
     { id: 'erneuerbar', title: 'Erneuerbar', fields: [
-      { key: 'pvInstalledGW',         label: 'PV',            unit: 'GW',  min: erz.sources.pv.installedGW.min,         max: erz.sources.pv.installedGW.max,         step: erz.sources.pv.installedGW.step,         baseline: h.pvInstalledGW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,  },
-      { key: 'windOnInstalledGW',     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.installedGW.min,     max: erz.sources.windOn.installedGW.max,     step: erz.sources.windOn.installedGW.step,     baseline: h.windOnInstalledGW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power,  },
-      { key: 'windOffInstalledGW',    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.installedGW.min,    max: erz.sources.windOff.installedGW.max,    step: erz.sources.windOff.installedGW.step,    baseline: h.windOffInstalledGW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
-      { key: 'biomasseInstalledGW',   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.installedGW.min,   max: erz.sources.biomasse.installedGW.max,   step: erz.sources.biomasse.installedGW.step,   baseline: h.biomasseInstalledGW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
-      { key: 'laufwasserInstalledGW', label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.installedGW.min, max: erz.sources.laufwasser.installedGW.max, step: erz.sources.laufwasser.installedGW.step, baseline: h.laufwasserInstalledGW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
+      { key: 'pvInstalledGW', docId: datasetIds.erzPv,         label: 'PV',            unit: 'GW',  min: erz.sources.pv.installedGW.min,         max: erz.sources.pv.installedGW.max,         step: erz.sources.pv.installedGW.step,         baseline: h.pvInstalledGW,         co2eGperKWh: erz.sources.pv.emissions.co2eGperKWh,         referenceScale: erz.sources.pv.referenceScales?.power,  },
+      { key: 'windOnInstalledGW', docId: datasetIds.erzWindOn,     label: 'Wind Onshore',  unit: 'GW',  min: erz.sources.windOn.installedGW.min,     max: erz.sources.windOn.installedGW.max,     step: erz.sources.windOn.installedGW.step,     baseline: h.windOnInstalledGW,     co2eGperKWh: erz.sources.windOn.emissions.co2eGperKWh,     referenceScale: erz.sources.windOn.referenceScales?.power,  },
+      { key: 'windOffInstalledGW', docId: datasetIds.erzWindOff,    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.installedGW.min,    max: erz.sources.windOff.installedGW.max,    step: erz.sources.windOff.installedGW.step,    baseline: h.windOffInstalledGW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
+      { key: 'biomasseInstalledGW', docId: datasetIds.erzBiomasse,   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.installedGW.min,   max: erz.sources.biomasse.installedGW.max,   step: erz.sources.biomasse.installedGW.step,   baseline: h.biomasseInstalledGW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
+      { key: 'laufwasserInstalledGW', docId: datasetIds.erzLaufwasser, label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.installedGW.min, max: erz.sources.laufwasser.installedGW.max, step: erz.sources.laufwasser.installedGW.step, baseline: h.laufwasserInstalledGW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
     ], summary: (s) => formatCapacitySummary(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW, renewableBaseline) },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
-      { key: 'kernkraftInstalledGW', label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.installedGW.min, max: erz.sources.kernkraft.installedGW.max, step: erz.sources.kernkraft.installedGW.step, baseline: h.kernkraftInstalledGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
+      { key: 'kernkraftInstalledGW', docId: datasetIds.erzKernkraft, label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.installedGW.min, max: erz.sources.kernkraft.installedGW.max, step: erz.sources.kernkraft.installedGW.step, baseline: h.kernkraftInstalledGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
     ], summary: (s) => formatCapacitySummary(s.generation.kernkraftInstalledGW, h.kernkraftInstalledGW) },
     { id: 'konventionell', title: 'Konventionell', fields: [
-      { key: 'gasInstalledGW',   label: 'Gas',   unit: 'GW', min: erz.sources.gas.installedGW.min,   max: erz.sources.gas.installedGW.max,   step: erz.sources.gas.installedGW.step,   baseline: h.gasInstalledGW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
-      { key: 'kohleInstalledGW', label: 'Kohle', unit: 'GW', min: erz.sources.kohle.installedGW.min, max: erz.sources.kohle.installedGW.max, step: erz.sources.kohle.installedGW.step, baseline: h.kohleInstalledGW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
+      { key: 'gasInstalledGW', docId: datasetIds.erzGas,   label: 'Gas',   unit: 'GW', min: erz.sources.gas.installedGW.min,   max: erz.sources.gas.installedGW.max,   step: erz.sources.gas.installedGW.step,   baseline: h.gasInstalledGW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
+      { key: 'kohleInstalledGW', docId: datasetIds.erzKohle, label: 'Kohle', unit: 'GW', min: erz.sources.kohle.installedGW.min, max: erz.sources.kohle.installedGW.max, step: erz.sources.kohle.installedGW.step, baseline: h.kohleInstalledGW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
     ], summary: (s) => formatCapacitySummary(s.generation.gasInstalledGW + s.generation.kohleInstalledGW, conventionalBaseline) },
   ];
 }
@@ -464,7 +484,7 @@ function aussenhandelGroups(ah: DataSet['aussenhandel-modell']): AussenhandelGro
 }
 
 type StorageFieldKey = keyof Scenario['storage'];
-type StorageFieldSpec = { key: StorageFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number; referenceScale?: ReferenceScale };
+type StorageFieldSpec = { key: StorageFieldKey; label: string; unit: string; min: number; max: number; step: number; baseline?: number; referenceScale?: ReferenceScale; docId?: string };
 
 type StorageGroup = {
   id: 'batterie' | 'pumpspeicher' | 'h2';
@@ -477,17 +497,17 @@ type StorageGroup = {
 function storageGroups(sp: DataSet['speicher-modell']): StorageGroup[] {
   return [
     { id: 'batterie', title: 'Batterie', subtitle: 'kurzfristig', fields: [
-      { key: 'batteriePowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.powerGW.min,   max: sp.storages.batterie.powerGW.max,   step: sp.storages.batterie.powerGW.step,   baseline: uiManifest.historisch2025.batteriePowerGW,   referenceScale: sp.storages.batterie.referenceScales?.power },
-      { key: 'batterieEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.energyGWh.min, max: sp.storages.batterie.energyGWh.max, step: sp.storages.batterie.energyGWh.step, baseline: uiManifest.historisch2025.batterieEnergyGWh, referenceScale: sp.storages.batterie.referenceScales?.energy },
+      { key: 'batteriePowerGW', docId: datasetIds.speicherBatterie,   label: 'Leistung', unit: 'GW',  min: sp.storages.batterie.powerGW.min,   max: sp.storages.batterie.powerGW.max,   step: sp.storages.batterie.powerGW.step,   baseline: uiManifest.historisch2025.batteriePowerGW,   referenceScale: sp.storages.batterie.referenceScales?.power },
+      { key: 'batterieEnergyGWh', docId: datasetIds.speicherBatterie, label: 'Energie',  unit: 'GWh', min: sp.storages.batterie.energyGWh.min, max: sp.storages.batterie.energyGWh.max, step: sp.storages.batterie.energyGWh.step, baseline: uiManifest.historisch2025.batterieEnergyGWh, referenceScale: sp.storages.batterie.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.batteriePowerGW)} GW · ${fmt0.format(s.storage.batterieEnergyGWh)} GWh` },
     { id: 'pumpspeicher', title: 'Pumpspeicher', subtitle: 'mittelfristig', fields: [
-      { key: 'pumpspeicherPowerGW',   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.powerGW.min,   max: sp.storages.pumpspeicher.powerGW.max,   step: sp.storages.pumpspeicher.powerGW.step,   baseline: uiManifest.historisch2025.pumpspeicherPowerGW,   referenceScale: sp.storages.pumpspeicher.referenceScales?.power },
-      { key: 'pumpspeicherEnergyGWh', label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.energyGWh.min, max: sp.storages.pumpspeicher.energyGWh.max, step: sp.storages.pumpspeicher.energyGWh.step, baseline: uiManifest.historisch2025.pumpspeicherEnergyGWh, referenceScale: sp.storages.pumpspeicher.referenceScales?.energy },
+      { key: 'pumpspeicherPowerGW', docId: datasetIds.speicherPumpspeicher,   label: 'Leistung', unit: 'GW',  min: sp.storages.pumpspeicher.powerGW.min,   max: sp.storages.pumpspeicher.powerGW.max,   step: sp.storages.pumpspeicher.powerGW.step,   baseline: uiManifest.historisch2025.pumpspeicherPowerGW,   referenceScale: sp.storages.pumpspeicher.referenceScales?.power },
+      { key: 'pumpspeicherEnergyGWh', docId: datasetIds.speicherPumpspeicher, label: 'Energie',  unit: 'GWh', min: sp.storages.pumpspeicher.energyGWh.min, max: sp.storages.pumpspeicher.energyGWh.max, step: sp.storages.pumpspeicher.energyGWh.step, baseline: uiManifest.historisch2025.pumpspeicherEnergyGWh, referenceScale: sp.storages.pumpspeicher.referenceScales?.energy },
     ], summary: (s) => `${s.storage.pumpspeicherPowerGW.toLocaleString('de-DE')} GW · ${fmt0.format(s.storage.pumpspeicherEnergyGWh)} GWh` },
     { id: 'h2', title: 'Wasserstoff', subtitle: 'saisonal', fields: [
-      { key: 'h2ChargePowerGW',    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.chargePowerGW.min,    max: sp.storages.h2.chargePowerGW.max,    step: sp.storages.h2.chargePowerGW.step,    baseline: uiManifest.historisch2025.h2ChargePowerGW,    referenceScale: sp.storages.h2.referenceScales?.power },
-      { key: 'h2DischargePowerGW', label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.dischargePowerGW.min, max: sp.storages.h2.dischargePowerGW.max, step: sp.storages.h2.dischargePowerGW.step, baseline: uiManifest.historisch2025.h2DischargePowerGW, referenceScale: sp.storages.h2.referenceScales?.power },
-      { key: 'h2EnergyGWh',        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.energyGWh.min,        max: sp.storages.h2.energyGWh.max,        step: sp.storages.h2.energyGWh.step,        baseline: uiManifest.historisch2025.h2EnergyGWh,        referenceScale: sp.storages.h2.referenceScales?.energy },
+      { key: 'h2ChargePowerGW', docId: datasetIds.speicherH2,    label: 'Elektrolyse',    unit: 'GW',  min: sp.storages.h2.chargePowerGW.min,    max: sp.storages.h2.chargePowerGW.max,    step: sp.storages.h2.chargePowerGW.step,    baseline: uiManifest.historisch2025.h2ChargePowerGW,    referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2DischargePowerGW', docId: datasetIds.speicherH2, label: 'Rückverstromung',unit: 'GW',  min: sp.storages.h2.dischargePowerGW.min, max: sp.storages.h2.dischargePowerGW.max, step: sp.storages.h2.dischargePowerGW.step, baseline: uiManifest.historisch2025.h2DischargePowerGW, referenceScale: sp.storages.h2.referenceScales?.power },
+      { key: 'h2EnergyGWh', docId: datasetIds.speicherH2,        label: 'Energie',        unit: 'GWh', min: sp.storages.h2.energyGWh.min,        max: sp.storages.h2.energyGWh.max,        step: sp.storages.h2.energyGWh.step,        baseline: uiManifest.historisch2025.h2EnergyGWh,        referenceScale: sp.storages.h2.referenceScales?.energy },
     ], summary: (s) => `${fmt0.format(s.storage.h2ChargePowerGW)} / ${fmt0.format(s.storage.h2DischargePowerGW)} GW · ${fmt0.format(s.storage.h2EnergyGWh)} GWh` },
   ];
 }
@@ -822,6 +842,7 @@ function SupplyGroupAccordions({
         baseline={field.baseline}
         co2eGperKWh={field.co2eGperKWh}
         referenceScale={field.referenceScale}
+        docId={field.docId}
         onValue={value => onGenerationChange(field.key, value)}
       />)}
     </GroupAccordion>)}
@@ -846,6 +867,7 @@ function SupplyGroupAccordions({
         step={field.step}
         baseline={field.baseline}
         referenceScale={field.referenceScale}
+        docId={field.docId}
         onValue={value => onStorageChange(field.key, value)}
       />)}
     </GroupAccordion>)}
@@ -944,7 +966,7 @@ function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {
   return `CO₂e: ${fmt0.format(co2eGperKWh)} g/kWh`;
 }
 
-function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, onValue }: {
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, docId, onValue }: {
   label: string;
   unit: string;
   value: number;
@@ -954,6 +976,7 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   baseline?: number;
   co2eGperKWh?: number;
   referenceScale?: ReferenceScale;
+  docId?: string;
   onValue: (value: number) => void;
 }) {
   // Lokaler Drag-State: waehrend Pointer-Drag wird nur der lokale Wert
@@ -971,9 +994,12 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
     setDragValue(null);
     onValue(raw);
   };
-  return <div className="grid gap-1 px-1 py-1.5">
+  return <div className="group grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
-      <span className="text-xs font-medium text-zinc-950 dark:text-zinc-50">{label}</span>
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-950 dark:text-zinc-50">
+        {label}
+        {docId && <InfoLink id={docId} label={`${label} im Wiki öffnen`}/>}
+      </span>
       <span className="flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500">
         <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
         <span>{unit}</span>
@@ -1178,9 +1204,9 @@ function LoadConfiguration(props: LoadConfigurationProps) {
 
   const loadPillId = matchingLoadPreset(scenario);
   const loadPills: ReadonlyArray<{ id: LoadPillId; label: string; description: string }> = [
-    { id: 'nur-2025', label: '2025', description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
-    { id: 'e100', label: '100% Elektrifizierung', description: 'Last 2025 plus alle e100-Bausteine aktiv' },
-    { id: 'custom', label: 'Manuell', description: 'Lastbausteine frei konfiguriert' },
+    { id: 'nur-2025', label: loadPillLabels['nur-2025'], description: 'Historische Last 2025 (~466 TWh) ohne zusätzliche Elektrifizierung' },
+    { id: 'e100', label: loadPillLabels.e100, description: 'Last 2025 plus alle e100-Bausteine aktiv' },
+    { id: 'custom', label: loadPillLabels.custom, description: 'Lastbausteine frei konfiguriert' },
   ];
   const loadDropdownPills: ReadonlyArray<PresetOption<LoadPillId>> = [
     { id: 'nur-2017', label: '2017', description: 'Historische Last 2017 (~507 TWh); unabhängig von Erzeugungspreset', docId: datasetIds.loadHistorical2017 },
