@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { computeHaushalt, computeKosten } from '../../app/src/ui/kosten';
 import { annualByMaterial, fuelTWhFromResult, groupSums } from '../../app/src/ui/ressourcen';
 import { e100ElectricTWh, householdElectrificationTWh } from '../../app/src/ui/ScenarioSidebar';
@@ -192,8 +192,5 @@ describe('Szenario-Prüfbericht', () => {
       ])}
       </body></html>`;
     writeFileSync(`${DIR}/report.html`, html);
-    mkdirSync('notes/szenario-pruefung-2026-06', { recursive: true });
-    writeFileSync('notes/szenario-pruefung-2026-06/report.html', html);
-    writeFileSync('notes/szenario-pruefung-2026-06/report.json', JSON.stringify(out, null, 1));
   });
 });
