@@ -6,7 +6,7 @@
   "method": {
     "title": "Referenz — Preise & Kapitalkosten",
     "short": "Zentrale Kosten-Annahmen: WACC, Brennstoff-/Importpreise, Haushalte — Eingang in die Systemkosten-Rechnung.",
-    "source": "Fraunhofer ISE Stromgestehungskosten 2024; EEX; IEA WEO 2024; BNetzA; Destatis. **Referenz-Preise-Paket.**",
+    "source": "Fraunhofer ISE Stromgestehungskosten 2024; EEX; IEA WEO 2024; BNetzA; Destatis; BDEW-Strompreisanalyse 2025. **Referenz-Preise-Paket.**",
     "sourceUrls": [
       "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
       "https://ens.dk/en/our-services/technology-catalogues",
@@ -14,14 +14,16 @@
       "https://www.eex.com/",
       "https://www.destatis.de/",
       "https://www.smard.de/page/home/topic-article/211972/213384/netzengpassmanagement-je-energietraeger",
-      "https://www.bdew.de/media/documents/BDEW_Wirtschaftliche_Analyse_von_Offshore-Wind-%C3%9Cberbauung_-_Endbericht_-_2026-03-12.pdf"
+      "https://www.bdew.de/media/documents/BDEW_Wirtschaftliche_Analyse_von_Offshore-Wind-%C3%9Cberbauung_-_Endbericht_-_2026-03-12.pdf",
+      "https://www.bdew.de/service/daten-und-grafiken/bdew-strompreisanalyse/"
     ],
     "period": "2024",
     "resolution": "Annahmen (Szenario-Spannen im Wiki)",
     "unit": "EUR, %, Anzahl",
     "description": [
       "Zentrale Preis- und Kapitalkosten-Annahmen für die Systemkosten-Rechnung der Kosten-Sektion. Realer WACC `5 %`, Erdgas `38`, Steinkohle `11,6`, Braunkohle `2,3 EUR/MWh_th`, Stromimport `89 EUR/MWh` (Day-Ahead-Jahresmittel 2025), Stromexport `60 EUR/MWh` — asymmetrisch, weil Exporte überproportional in Überschussstunden mit niedrigen bis negativen Preisen anfallen (mengengewichteter Export-Erlös liegt deutlich unter dem Jahresmittel; Abschlag ~1/3 als Heuristik, niedrige Konfidenz). Wasserstoff-Import `130 EUR/MWh_H2` (grüner H2 frei Grenze, weite Spanne ~90–210). Auf `41,1 Mio.` Haushalte à `3.000 kWh/a` bezogen. Eine CO2-Bepreisung ist bewusst nicht enthalten (rein politisch gesetzter Transfer, kein Ressourcenaufwand).",
-      "**Netzausbau.** Standardmäßig in den Systemkosten enthalten; im 2025-Bestand null (die Kupferplatte bleibt der Nullpunkt) und wächst mit dem volatilen EE-Zubau darüber hinaus: `Netzkosten = netzCapexEurPerKwAddedRE × max(0, PV+WindOn+WindOff − netzBaselineReCapacityGW)`, annuisiert über `netzLifetimeYears`. Basis 2025 `174,7 GW` (PV 102,5 + Wind on 62,8 + Wind off 9,4). Der Faktor `1.200 EUR/kW` (Lebensdauer `40 a`) orientiert sich an der mittleren Vollnetz-Investitionsschätzung für einen O45-ähnlichen Ausbau: IMK/Hans-Böckler `~651 Mrd. EUR` (Übertragung + Verteilnetz bis 2045) als Zentralanker, BNetzA-NEP `~320 Mrd. EUR` (nur Übertragung) als Untergrenze, Frontier/DIHK »Plan B« `~1,2 Bio. EUR` (all-in CAPEX+Betrieb 2025–2049, ~54.000 km ÜN + ~451.000 km VN) als oberer Rand. Beim BMWK-O45-Strom-Pfad 2045 (`PV 400 + Wind on 160 + Wind off 70 = 630 GW`, Δ `455,3 GW`) ergibt der Posten bei Aufbau bis 2050 rund `0,8 Bio. EUR` — zwischen IMK-Investition und DIHK-Vollkosten."
+      "**Netzausbau.** Standardmäßig in den Systemkosten enthalten; im 2025-Bestand null (die Kupferplatte bleibt der Nullpunkt) und wächst mit dem volatilen EE-Zubau darüber hinaus: `Netzkosten = netzCapexEurPerKwAddedRE × max(0, PV+WindOn+WindOff − netzBaselineReCapacityGW)`, annuisiert über `netzLifetimeYears`. Basis 2025 `174,7 GW` (PV 102,5 + Wind on 62,8 + Wind off 9,4). Der Faktor `1.200 EUR/kW` (Lebensdauer `40 a`) orientiert sich an der mittleren Vollnetz-Investitionsschätzung für einen O45-ähnlichen Ausbau: IMK/Hans-Böckler `~651 Mrd. EUR` (Übertragung + Verteilnetz bis 2045) als Zentralanker, BNetzA-NEP `~320 Mrd. EUR` (nur Übertragung) als Untergrenze, Frontier/DIHK »Plan B« `~1,2 Bio. EUR` (all-in CAPEX+Betrieb 2025–2049, ~54.000 km ÜN + ~451.000 km VN) als oberer Rand. Beim BMWK-O45-Strom-Pfad 2045 (`PV 400 + Wind on 160 + Wind off 70 = 630 GW`, Δ `455,3 GW`) ergibt der Posten bei Aufbau bis 2050 rund `0,8 Bio. EUR` — zwischen IMK-Investition und DIHK-Vollkosten.",
+      "**Musterhaushalt & Endkundenpreis-Brücke.** Die Haushalts-Box der Stromrechnung rechnet mit einem Musterhaushalt, dessen Verbrauch den haushaltsrelevanten Last-Reglern folgt: `3.000 kWh/a` Grundbedarf plus — wenn die Regler aktiv sind — der zusätzliche PKW-Strom (`e100-pkw`) und Wärmepumpen-Strom (`e100-heiz`) des Szenarios, jeweils geteilt durch `41,1 Mio.` Haushalte (volle Elektrifizierung: ~`+2.600 kWh` E-Auto, ~`+2.900 kWh` Wärmepumpe). Stahl, Chemie, GHD, LKW oder Flug verändern den Musterhaushalt nicht. Vom System-Durchschnitt (ab Werk) zur geschätzten Endkunden-Stromrechnung führt eine Preisbrücke auf 2025-Niveau (BDEW-Strompreisanalyse): Netzentgelte Bestandsnetz inkl. Messung `10,9 ct/kWh`, Stromsteuer + Konzessionsabgabe `3,7 ct/kWh` (2,05 + Ø ~1,66), Umlagen `2,7 ct/kWh` (KWKG 0,28 + Offshore-Netz 0,82 + §19 StromNEV 1,56), Vertrieb & Service `2,5 ct/kWh` (Setzung, da BDEW Beschaffung+Vertrieb nur gemeinsam mit 16,0 ct ausweist), darauf `19 %` Mehrwertsteuer. Die Brücke ist komplementär zum Systemposten Netzausbau: dort steckt nur der Zubau über den 2025-Bestand, das Netzentgelt hier deckt das Bestandsnetz."
     ],
     "fields": [
       {
@@ -93,6 +95,31 @@
         "name": "netzCalibratedMaxAddedReGW",
         "unit": "Zahl",
         "description": "Geeichter Bereich der Netz-Heuristik (EE-Zubau über Bestand, GW); darüber zeigt die UI einen Extrapolations-Hinweis"
+      },
+      {
+        "name": "householdNetzentgeltCtPerKWh",
+        "unit": "Zahl",
+        "description": "Netzentgelte Haushalte inkl. Messung/Messstellenbetrieb, ct/kWh (BDEW 2025: 10,9) — Bestandsnetz; der Zubau steckt im Systemposten Netzausbau"
+      },
+      {
+        "name": "householdSteuernAbgabenCtPerKWh",
+        "unit": "Zahl",
+        "description": "Stromsteuer (2,05) + Konzessionsabgabe (Ø ~1,66), ct/kWh"
+      },
+      {
+        "name": "householdUmlagenCtPerKWh",
+        "unit": "Zahl",
+        "description": "Umlagen KWKG + Offshore-Netz + §19 StromNEV, ct/kWh (2025: ~2,65)"
+      },
+      {
+        "name": "householdVertriebCtPerKWh",
+        "unit": "Zahl",
+        "description": "Vertrieb, Service & Marge, ct/kWh — Setzung (BDEW weist Beschaffung+Vertrieb nur gemeinsam aus); niedrige Konfidenz"
+      },
+      {
+        "name": "vatRate",
+        "unit": "Zahl",
+        "description": "Mehrwertsteuersatz auf alle Strompreis-Bestandteile (Dezimal)"
       }
     ],
     "caveats": [
@@ -107,7 +134,10 @@
       "Netz wird marginal ab 2025-Bestand gerechnet, die Erzeugung dagegen als Vollkosten der Zielflotte — die beiden Posten sind nicht ohne Weiteres zu einer Summe addierbar.",
       "Realer Untergrenzen-Anker: schon beim 2025-Bestand kostet Netzengpassmanagement ~3,1 Mrd EUR/a (Redispatch gesamt, davon 433 Mio EUR EE-Abregelungs-Entschädigung; BNetzA/SMARD) — Betriebskosten dieser Art sind im pauschalen Netz-Posten nur grob mit abgedeckt, in der Kupferplatte ohne Netz-Posten gar nicht.",
       "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW) belastbar, in Überbau-Extremen nur als Richtungssignal.",
-      "Die Netz-Pauschale (1.200 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch."
+      "Die Netz-Pauschale (1.200 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch.",
+      "Endkundenpreis-Brücke hält Netzentgelte, Steuern, Abgaben, Umlagen und Vertrieb konstant auf 2025-Niveau — in Ausbau-Szenarien würden reale Netzentgelte eher steigen (der Zubau-Anteil steckt stattdessen im Systemposten Netzausbau), Umlagen sind politisch beweglich.",
+      "Vertrieb & Service 2,5 ct/kWh ist eine Setzung mit niedriger Konfidenz; BDEW weist Beschaffung+Vertrieb 2025 nur als Summe (16,0 ct) aus.",
+      "Der Musterhaushalt ordnet PKW- und Wohngebäude-Heizstrom vollständig den Haushalten zu (Dienstwagen, Mietverhältnisse etc. nicht differenziert); E-Auto- und Wärmepumpen-Anteile folgen den Last-Reglern, nicht einer Bestandsprognose."
     ],
     "file": "referenz/preise/package.json"
   },
@@ -125,6 +155,11 @@
     "netzCapexEurPerKwAddedRE": 1200,
     "netzLifetimeYears": 40,
     "netzBaselineReCapacityGW": 174.7,
-    "netzCalibratedMaxAddedReGW": 700
+    "netzCalibratedMaxAddedReGW": 700,
+    "householdNetzentgeltCtPerKWh": 10.9,
+    "householdSteuernAbgabenCtPerKWh": 3.7,
+    "householdUmlagenCtPerKWh": 2.7,
+    "householdVertriebCtPerKWh": 2.5,
+    "vatRate": 0.19
   }
 }

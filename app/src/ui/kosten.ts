@@ -2,7 +2,7 @@ import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
 
-type Kosten = {
+export type Kosten = {
   capexEurPerKW?: number;
   // Getrennte Leistungs-CAPEX für Speicher mit unterschiedlichen Ein-/Ausspeise-
   // Anlagen (H₂: Elektrolyseur vs. Rückverstromungskraftwerk). Wenn gesetzt,
@@ -36,11 +36,22 @@ const GEN: Array<[string, string, keyof Scenario['generation'], keyof SimHour]> 
 
 const STORAGE: Array<[string, string, () => number, number]> = [];
 
-export type KostenTech = { key: string; label: string; capex: number; om: number; fuel: number; total: number; eurPerMWh: number | null };
+// Eingangsgrößen hinter einer Technologie-Zeile — für die aufklappbare
+// Detail-Ebene der Stromrechnung (datenexplorativ, rein additiv).
+export type KostenTechDetail = {
+  kind: 'gen' | 'storage' | 'h2import';
+  gw?: number;
+  chargeGW?: number;
+  dischargeGW?: number;
+  energyGWh?: number;
+  genTWh?: number;
+  crfValue?: number;
+  kosten?: Kosten;
+};
+export type KostenTech = { key: string; label: string; capex: number; om: number; fuel: number; total: number; eurPerMWh: number | null; detail?: KostenTechDetail };
 export type KostenResult = {
   total: number;
   perMWh: number;
-  perHousehold: number;
   breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
   importCost: number;
   exportRevenue: number;
@@ -49,7 +60,71 @@ export type KostenResult = {
   netzExtrapolated: boolean;
   addedReGW: number;
   perTech: KostenTech[];
+  // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
+  params: {
+    wacc: number;
+    h2ImportTWh: number;
+    h2ImportEurPerMWh: number;
+    importTWh: number;
+    exportTWh: number;
+    importEurPerMWh: number;
+    exportEurPerMWh: number;
+    netzEurPerKW: number;
+    netzLifetimeYears: number;
+    netzCrf: number;
+    netzBaselineGW: number;
+  };
 };
+
+// ---------------------------------------------------------------------------
+// Musterhaushalt: Verbrauch folgt den haushaltsrelevanten Last-Reglern
+// (Grundbedarf + PKW-Strom + Wärmepumpen-Strom ÷ Haushalte), Preis über die
+// Endkundenpreis-Brücke auf 2025-Niveau (BDEW) — Methodik im Wiki »preise«.
+export type HaushaltBridgeRow = { key: 'netz' | 'steuern' | 'umlagen' | 'vertrieb'; label: string; ct: number };
+export type HaushaltResult = {
+  kwh: number;
+  baseKwh: number;
+  pkwKwh: number;
+  heizKwh: number;
+  abWerkCt: number;
+  abWerkEurPerMonth: number;
+  bridge: HaushaltBridgeRow[];
+  mwstCt: number;
+  endkundeCt: number;
+  endkundeEurPerMonth: number;
+};
+
+export function computeHaushalt(k: KostenResult, pkwAddTWh: number, heizAddTWh: number): HaushaltResult {
+  const P = uiManifest.prices as Record<string, number>;
+  const households = P.households ?? 41_100_000;
+  const baseKwh = P.householdConsumptionKWhPerA ?? 3000;
+  const pkwKwh = Math.max(0, pkwAddTWh) * 1e9 / households;
+  const heizKwh = Math.max(0, heizAddTWh) * 1e9 / households;
+  const kwh = baseKwh + pkwKwh + heizKwh;
+  const abWerkCt = k.perMWh / 10;
+  const bridge: HaushaltBridgeRow[] = [
+    { key: 'netz', label: 'Netzentgelte (Bestandsnetz)', ct: P.householdNetzentgeltCtPerKWh ?? 0 },
+    { key: 'steuern', label: 'Stromsteuer & Konzession', ct: P.householdSteuernAbgabenCtPerKWh ?? 0 },
+    { key: 'umlagen', label: 'Umlagen (KWKG, Offshore, §19)', ct: P.householdUmlagenCtPerKWh ?? 0 },
+    { key: 'vertrieb', label: 'Vertrieb & Service', ct: P.householdVertriebCtPerKWh ?? 0 },
+  ];
+  const nettoCt = abWerkCt + bridge.reduce((sum, r) => sum + r.ct, 0);
+  const mwstCt = nettoCt * (P.vatRate ?? 0.19);
+  const endkundeCt = nettoCt + mwstCt;
+  const perMonth = (ct: number) => ct / 100 * kwh / 12;
+  return {
+    kwh,
+    baseKwh,
+    pkwKwh,
+    heizKwh,
+    abWerkCt,
+    abWerkEurPerMonth: perMonth(abWerkCt),
+    bridge,
+    mwstCt,
+    endkundeCt,
+    endkundeEurPerMonth: perMonth(endkundeCt),
+  };
+}
 
 export function computeKosten(scenario: Scenario, result: SimulationResult): KostenResult {
   const P = uiManifest.prices as Record<string, number>;
@@ -83,7 +158,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
     capexSum += capex; omSum += om; fuelSum += fuel;
     const total = capex + om + fuel;
-    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null });
+    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(wacc, k.lifetimeYears), kosten: k } });
   }
 
   // [key, label, Lade-GW, Entlade-GW, Energie-GWh]. Batterie/PSW haben EINE
@@ -106,13 +181,13 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
       ? (k.omFixChargeEurPerKWa ?? 0) * chargeGW * 1e6 + (k.omFixDischargeEurPerKWa ?? 0) * dischargeGW * 1e6
       : (k.omFixEurPerKWa ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
     capexSum += capex; omSum += om;
-    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null });
+    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, crfValue: crf(wacc, k.lifetimeYears), kosten: k } });
   }
 
   // Wasserstoff-Import: importierte H2-Menge × Importpreis (LHV). Eigene Zeile,
   // weil es weder heimischer Brennstoff noch Stromhandel ist.
   const h2Import = scenario.import.h2TWh * 1e6 * (P.h2ImportEurPerMWh ?? 0);
-  if (h2Import > 0) perTech.push({ key: 'h2import', label: 'Wasserstoff-Import', capex: 0, om: 0, fuel: h2Import, total: h2Import, eurPerMWh: P.h2ImportEurPerMWh ?? null });
+  if (h2Import > 0) perTech.push({ key: 'h2import', label: 'Wasserstoff-Import', capex: 0, om: 0, fuel: h2Import, total: h2Import, eurPerMWh: P.h2ImportEurPerMWh ?? null, detail: { kind: 'h2import' } });
 
   // CO₂-Bepreisung bewusst NICHT enthalten: rein politisch gesetzter Transfer,
   // kein realer Ressourcenaufwand des Systems.
@@ -139,13 +214,25 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   return {
     total,
     perMWh: total / servedMWh,
-    perHousehold: total / (P.households ?? 41_100_000),
     breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet, netz },
     importCost,
     exportRevenue,
     netzExtrapolated,
     addedReGW,
     perTech: perTech.sort((a, b) => b.total - a.total),
+    params: {
+      wacc,
+      h2ImportTWh: scenario.import.h2TWh,
+      h2ImportEurPerMWh: P.h2ImportEurPerMWh ?? 0,
+      importTWh: result.summary.importTWh,
+      exportTWh: result.summary.exportTWh,
+      importEurPerMWh: P.importEurPerMWh ?? 0,
+      exportEurPerMWh: P.exportEurPerMWh ?? 0,
+      netzEurPerKW: P.netzCapexEurPerKwAddedRE ?? 0,
+      netzLifetimeYears: P.netzLifetimeYears ?? 40,
+      netzCrf: crf(wacc, P.netzLifetimeYears ?? 40),
+      netzBaselineGW: P.netzBaselineReCapacityGW ?? 0,
+    },
   };
 }
 

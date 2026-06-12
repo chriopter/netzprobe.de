@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeKosten, crf } from '../../app/src/ui/kosten';
+import { computeHaushalt, computeKosten, crf } from '../../app/src/ui/kosten';
 import { defaultScenario, normalizeScenario } from '../../app/src/ui/scenarioPresets';
 import type { Scenario } from '../../app/src/types/scenario';
 import type { SimulationResult, SimHour } from '../../app/src/types/simulation';
@@ -332,5 +332,53 @@ describe('Kosten · D Erneuerung', () => {
       expect(overLife, id).toBeGreaterThan(1);
       expect(overLife, id).toBeLessThan(3);
     }
+  });
+});
+
+// ===========================================================================
+// E — Musterhaushalt & Endkundenpreis-Bruecke
+// ===========================================================================
+describe('Kosten · E Musterhaushalt', () => {
+  const k = computeKosten(
+    scen({ gasInstalledGW: 50 }),
+    result([hour({ loadGW: 50, gasGW: 50 })], { totalDemandTWh: 100 }),
+  );
+
+  it('E.1 Grundbedarf ohne Elektrifizierung = householdConsumptionKWhPerA', () => {
+    const hh = computeHaushalt(k, 0, 0);
+    expect(hh.kwh).toBe(prices.householdConsumptionKWhPerA);
+    expect(hh.pkwKwh).toBe(0);
+    expect(hh.heizKwh).toBe(0);
+  });
+
+  it('E.2 Sektor-TWh werden exakt auf Haushalte umgelegt', () => {
+    // pkwAddTWh so gewaehlt, dass je Haushalt exakt 1.000 kWh ankommen.
+    const pkwTWh = prices.households * 1000 / 1e9;
+    const hh = computeHaushalt(k, pkwTWh, pkwTWh / 2);
+    expect(hh.pkwKwh).toBeCloseTo(1000, 6);
+    expect(hh.heizKwh).toBeCloseTo(500, 6);
+    expect(hh.kwh).toBeCloseTo(prices.householdConsumptionKWhPerA + 1500, 6);
+  });
+
+  it('E.3 Bruecke: Endkundenpreis = (ab Werk + Bestandteile) × (1 + MwSt)', () => {
+    const hh = computeHaushalt(k, 0, 0);
+    const nettoCt = hh.abWerkCt
+      + prices.householdNetzentgeltCtPerKWh
+      + prices.householdSteuernAbgabenCtPerKWh
+      + prices.householdUmlagenCtPerKWh
+      + prices.householdVertriebCtPerKWh;
+    expect(hh.abWerkCt).toBeCloseTo(k.perMWh / 10, 9);
+    expect(hh.endkundeCt).toBeCloseTo(nettoCt * (1 + prices.vatRate), 9);
+    expect(hh.endkundeEurPerMonth).toBeCloseTo(hh.endkundeCt / 100 * hh.kwh / 12, 9);
+    expect(hh.abWerkEurPerMonth).toBeCloseTo(hh.abWerkCt / 100 * hh.kwh / 12, 9);
+  });
+
+  it('E.4 Bruecken-Bestandteile decken alle dokumentierten Preisfelder ab', () => {
+    const hh = computeHaushalt(k, 0, 0);
+    const sum = hh.bridge.reduce((acc, r) => acc + r.ct, 0);
+    expect(sum).toBeCloseTo(
+      prices.householdNetzentgeltCtPerKWh + prices.householdSteuernAbgabenCtPerKWh + prices.householdUmlagenCtPerKWh + prices.householdVertriebCtPerKWh,
+      9,
+    );
   });
 });
