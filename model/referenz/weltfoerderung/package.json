@@ -216,6 +216,15 @@
         ],
         "confidence": "mittel",
         "germanyDemandTPerYear": 60000000
+      },
+      "Wasserstoff": {
+        "label": "Wasserstoff",
+        "globalProductionTPerYear": 97000000,
+        "sourceUrls": [
+          "https://www.iea.org/reports/global-hydrogen-review-2024"
+        ],
+        "confidence": "mittel",
+        "germanyDemandTPerYear": 1700000
       }
     }
   }

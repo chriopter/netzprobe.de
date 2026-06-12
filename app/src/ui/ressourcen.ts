@@ -8,10 +8,13 @@ export const E100_SECTORS: Array<[string, string]> = [
   ['pkw', 'e100-pkw'], ['lkw', 'e100-lkw'], ['heiz', 'e100-heiz'], ['ghd', 'e100-ghd'], ['bahn', 'e100-bahn'],
 ];
 
-// Gruppen: Beton/Stahl/Alu = Bau-Massenmaterial; Brennstoff = Kohle/Erdgas;
-// "Spezial" = alle uebrigen Mineralien inkl. Uran.
+// Gruppen: Beton/Stahl/Alu = Bau-Massenmaterial; Brennstoff = Kohle/Erdgas/
+// Import-H2; "Spezial" = alle uebrigen Mineralien inkl. Uran.
 export const BULK = new Set(['Beton/Zement', 'Stahl', 'Aluminium']);
-export const FUEL = new Set(['Kohle', 'Erdgas']);
+export const FUEL = new Set(['Kohle', 'Erdgas', 'Wasserstoff']);
+
+// Import-H2 als Brennstoff-Massenstrom: 33,33 kWh/kg LHV → 30.000 t je TWh.
+const H2_TONS_PER_TWH = 1e6 / 33.33;
 
 // Brennstoff analytisch (Kapazitaet × realistische Volllaststunden) — fuer Basis UND
 // Szenario gleich gerechnet, damit das Default-Szenario sauber 1× ergibt.
@@ -74,6 +77,12 @@ export function annualByMaterial(s: Scenario, years: number, e100TWh: Record<str
       if (e.tPerGWh) addS(m, e.tPerGWh * energy * rf);
     }
   }
+  // Importierter Wasserstoff als Brennstoff-Massenstrom (t/a). Nur der Import:
+  // inlaendische Elektrolyse ist kein externer Materialfluss — ihr Strom und
+  // ihre Anlagen sind bereits oben erfasst.
+  const h2ImportTWh = s.import.h2TWh ?? 0;
+  if (h2ImportTWh > 0) addF('Wasserstoff', h2ImportTWh * H2_TONS_PER_TWH);
+
   // Elektrifizierte Last: Material je TWh zusaetzlicher elektrischer Nachfrage (Bestand).
   for (const [umKey, twhKey] of E100_SECTORS) {
     const res = (uiManifest.e100 as Record<string, any>)[umKey]?.resources as Record<string, ResourceEntry> | undefined;
