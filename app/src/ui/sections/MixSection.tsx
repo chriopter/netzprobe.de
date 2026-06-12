@@ -14,18 +14,19 @@ import {
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
-import { cx, muted } from '../ui';
-import { ChartModeToggle, ChartPanel, ComingSoonGate, statToneClass, type Stat } from '../sectionUi';
+import { cx } from '../ui';
+import { ChartModeToggle, ChartPanel, ComingSoonGate, HelpDot, HelpPanel, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
-function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, scaleMaxGW?: number): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW } : null, [hours, visibility, mode, theme, scaleMaxGW]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme), mode === 'sunburst');
-}
+// Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
+// (Standard) oder nur der Speicher-Füllstand.
+export type MixContent = 'mix' | 'kombi' | 'speicher';
 
-function useStorageChart(containerId: string, hours: SimHour[] | undefined, theme: ChartTheme, mode: ChartMode): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, theme, mode } : null, [hours, theme, mode]);
-  return useMainThreadChart(containerId, data, (d, viewport) => buildStorageChartOption(d.hours, d.theme, d.mode, viewport), mode === 'sunburst');
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, content: MixContent, scaleMaxGW?: number): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW, content } : null, [hours, visibility, mode, theme, scaleMaxGW, content]);
+  return useMainThreadChart(containerId, data, (d, viewport) => d.content === 'speicher'
+    ? buildStorageChartOption(d.hours, d.theme, d.mode, viewport)
+    : buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme, d.content === 'kombi'), mode === 'sunburst');
 }
 
 function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleGroup: (groupId: string, checked: boolean) => void }) {
@@ -89,21 +90,6 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: Mi
   </div>;
 }
 
-// Zentrale Ergebnis-Kacheln: nutzt die Kartenbreite, statt Label und Wert an
-// die Ränder zu spreizen — Titel oben, darunter die Werte nebeneinander
-// (Label klein über großem Wert).
-function KpiCard({ title, stats }: { title: string; stats: Stat[] }) {
-  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-    <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{title}</div>
-    <dl className="mt-2 grid grid-cols-2 gap-3">
-      {stats.map(stat => <div key={stat.label} className="min-w-0">
-        <dt className="truncate text-[11px] text-zinc-400 dark:text-zinc-500" title={stat.label}>{stat.label}</dt>
-        <dd className={cx('mt-0.5 whitespace-nowrap text-lg font-semibold tabular-nums', statToneClass(stat.tone))}>{stat.value}</dd>
-      </div>)}
-    </dl>
-  </div>;
-}
-
 export type MixSectionProps = {
   result: SimulationResult;
   resolvedScenario: Scenario;
@@ -111,8 +97,8 @@ export type MixSectionProps = {
   buildoutYear: string;
   chartMode: ChartMode;
   setChartMode: (mode: ChartMode) => void;
-  storageChartMode: ChartMode;
-  setStorageChartMode: (mode: ChartMode) => void;
+  mixContent: MixContent;
+  setMixContent: (content: MixContent) => void;
   mixVisibility: MixVisibility;
   setMixVisibility: Dispatch<SetStateAction<MixVisibility>>;
   isPending: boolean;
@@ -135,8 +121,8 @@ export default function MixSection(props: MixSectionProps) {
     buildoutYear,
     chartMode,
     setChartMode,
-    storageChartMode,
-    setStorageChartMode,
+    mixContent,
+    setMixContent,
     mixVisibility,
     setMixVisibility,
     isPending: parentPending,
@@ -151,10 +137,11 @@ export default function MixSection(props: MixSectionProps) {
     theme,
   } = props;
 
-  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, referenceScaleMaxGW);
-  const storagePending = useStorageChart('storage-chart', sliced, theme, storageChartMode);
-  const isPending = parentPending || mixPending || storagePending;
+  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, mixContent, referenceScaleMaxGW);
+  const isPending = parentPending || mixPending;
   const blackout = result.summary.hoursWithLoadShedding;
+  // Methodik-Text hinter dem Fragezeichen am Chart (wie in den anderen Sektionen).
+  const [helpOpen, setHelpOpen] = useState(false);
   const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
   const kostenHorizon = Math.max(1, Number(buildoutYear) - 2025);
   const kostenGesamt = kosten.total * kostenHorizon;
@@ -195,12 +182,43 @@ export default function MixSection(props: MixSectionProps) {
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-3">
     <ComingSoonGate id="hero-kosten" compact>
-      <p className="text-balance text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
+      <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
       </p>
+      <div className="mx-auto mt-5 grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-5">
+        {statGroups.flatMap(group => group.stats).map(stat => <div
+          key={stat.label}
+          className="min-w-0 rounded-lg border border-zinc-200 bg-white px-2 py-2 text-center dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          <div className="truncate text-[11px] text-zinc-400 dark:text-zinc-500" title={stat.label}>{stat.label}</div>
+          <div className={cx('mt-0.5 truncate text-base font-semibold tabular-nums', statToneClass(stat.tone))}>{stat.value}</div>
+        </div>)}
+      </div>
     </ComingSoonGate>
+    {helpOpen && <HelpPanel>
+      <p>Die Blume zeigt die <strong>Stundensimulation eines Jahres</strong>: Der Winkel ist der Jahresverlauf (Januar oben, im Uhrzeigersinn), der Radius die Leistung in GW. Über „Polar / Linie" rechts oben gibt es dieselben Daten als klassische Zeitachse.</p>
+      <ul>
+        <li><strong>Flächen</strong> — Erzeugung je Technologie, gestapelt in Einsatzreihenfolge; die <strong>schwarze Linie</strong> ist die Stromlast.</li>
+        <li><strong>Dispatch je Stunde</strong> — Erneuerbare speisen vorrangig ein; die Residuallast decken zuerst Speicher, dann regelbare Kraftwerke, zuletzt Import (rot). Bleibt eine Lücke, erscheint sie dunkelrot als „Fehlend". Überschüsse laden erst die Speicher, dann Export, der Rest wird abgeregelt.</li>
+        <li><strong>Mix + Speicher / Speicher</strong> — Füllstände von Batterie und H₂-Speicher: kombiniert als gestrichelte Linien (0–100 % des jeweiligen Speichermaximums), solo in absoluten GWh.</li>
+        <li><strong>Legende</strong> — Serien einzeln zuschaltbar; der Kreis-Pfeil setzt die eingefrorene Radius-Skala auf das aktuelle Szenario zurück.</li>
+      </ul>
+      <p>Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
+    </HelpPanel>}
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
+        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-2 sm:left-3 sm:top-3">
+          <div className="inline-flex shrink-0 rounded-md border border-zinc-200 bg-zinc-50 p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-800" aria-label="Mix oder Speicher anzeigen">
+            {([['mix', 'Mix'], ['kombi', 'Mix + Speicher'], ['speicher', 'Speicher']] as Array<[MixContent, string]>).map(([value, label]) => <button
+              key={value}
+              type="button"
+              aria-pressed={mixContent === value}
+              className={cx('rounded-[5px] px-2.5 py-1 transition', mixContent === value ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'text-zinc-500 hover:bg-white hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50')}
+              onClick={() => setMixContent(value)}
+            >{label}</button>)}
+          </div>
+          <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
+        </div>
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
           <div className="pointer-events-auto">
             <button
@@ -275,7 +293,12 @@ export default function MixSection(props: MixSectionProps) {
               </button>}
         </div>
       </div>
-      <MixLegend
+      {mixContent === 'speicher' && <div className="flex items-center justify-center gap-4 bg-white px-2 pb-3 pt-3 text-xs text-zinc-600 dark:bg-zinc-950 dark:text-zinc-300 sm:pt-4">
+        <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: '#10b981' }}/>Batterie</span>
+        <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: '#0891b2' }}/>Wasserstoff</span>
+        <span className="text-zinc-400 dark:text-zinc-500">Füllstand in GWh</span>
+      </div>}
+      {mixContent !== 'speicher' && <MixLegend
         visibility={mixVisibility}
         onToggleLeaf={(key, checked) => setMixVisibility(prev => ({ ...prev, [key]: checked }))}
         onToggleGroup={(groupId, checked) => setMixVisibility(prev => {
@@ -285,24 +308,8 @@ export default function MixSection(props: MixSectionProps) {
           for (const leaf of group.leaves) next[leaf.key] = checked;
           return next;
         })}
-      />
+      />}
     </ChartPanel>
 
-    <div className="grid gap-3 lg:grid-cols-2">
-      <div className="grid gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-1 lg:content-start">
-        {statGroups.map(group => <KpiCard key={group.title} title={group.title} stats={group.stats}/>)}
-      </div>
-      {/* Rahmenlose Abbildung (wie Periodensystem/Karte): Titelzeile ohne Panel-Chrome. */}
-      <div className="flex min-w-0 flex-col lg:order-2">
-        <div className="flex items-center justify-between gap-3 pb-2">
-          <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Speicherfüllstand</h2>
-          <div className="flex items-center gap-3">
-            <span className={cx(muted, 'text-xs')}>Batterie / H₂</span>
-            <ChartModeToggle mode={storageChartMode} onChange={setStorageChartMode}/>
-          </div>
-        </div>
-        <div id="storage-chart" className={cx('w-full', storageChartMode === 'sunburst' ? 'h-[420px] sm:h-[520px]' : 'h-[240px] lg:h-full lg:min-h-[240px] lg:flex-1')}/>
-      </div>
-    </div>
   </section>;
 }

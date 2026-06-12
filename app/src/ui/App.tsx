@@ -16,6 +16,7 @@ import type { SimulationResult } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixVisibility } from './chartOptions';
 import { ComingSoonGate, MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
 import MixSection from './sections/MixSection';
+import type { MixContent } from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
 import KostenSection from './sections/KostenSection';
@@ -140,9 +141,10 @@ function chartModeFromUrl(): ChartMode {
 }
 
 // Speicherfüllstand-Darstellung: Polar wie der Energiemix, per Toggle auf Linie.
-const defaultStorageChartMode: ChartMode = 'sunburst';
-function storageChartModeFromUrl(): ChartMode {
-  return queryParams().get('speicherChart') === 'linie' ? 'linie' : defaultStorageChartMode;
+const defaultMixContent: MixContent = 'mix';
+function mixContentFromUrl(): MixContent {
+  const value = queryParams().get('ansicht');
+  return value === 'kombi' || value === 'speicher' ? value : defaultMixContent;
 }
 
 function sidebarCollapsedFromUrl() {
@@ -712,7 +714,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   const hasLiveResultRef = useRef(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(mixVisibilityFromUrl);
   const [chartMode, setChartMode] = useState<ChartMode>(chartModeFromUrl);
-  const [storageChartMode, setStorageChartMode] = useState<ChartMode>(storageChartModeFromUrl);
+  const [mixContent, setMixContent] = useState<MixContent>(mixContentFromUrl);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(sidebarCollapsedFromUrl);
   const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
@@ -792,8 +794,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (chartMode === defaultChartMode) url.searchParams.delete('chart');
     else url.searchParams.set('chart', chartMode);
 
-    if (storageChartMode === defaultStorageChartMode) url.searchParams.delete('speicherChart');
-    else url.searchParams.set('speicherChart', storageChartMode);
+    if (mixContent === defaultMixContent) url.searchParams.delete('ansicht');
+    else url.searchParams.set('ansicht', mixContent);
 
     if (buildoutYear === defaultBuildoutYear) url.searchParams.delete('aufbau');
     else url.searchParams.set('aufbau', buildoutYear);
@@ -823,7 +825,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
     setShareUrl(url.toString());
-  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, storageChartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1012,8 +1014,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             buildoutYear={buildoutYear}
             chartMode={chartMode}
             setChartMode={setChartMode}
-            storageChartMode={storageChartMode}
-            setStorageChartMode={setStorageChartMode}
+            mixContent={mixContent}
+            setMixContent={setMixContent}
             mixVisibility={mixVisibility}
             setMixVisibility={setMixVisibility}
             isPending={isPending}

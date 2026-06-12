@@ -1,6 +1,6 @@
 import type { EChartsOption } from 'echarts';
 import type { SimHour } from '../types/simulation';
-import { fmt } from './format';
+import { fmt, fmt0 } from './format';
 
 export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'batterieDischargeGW' | 'pumpspeicherDischargeGW' | 'h2DischargeGW' | 'loadGW' | 'loadSheddingGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
@@ -288,7 +288,7 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light'): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light', withStorage = false): EChartsOption {
   const chartHours = compressHours(hours);
   const colors = chartTheme(theme);
   const leafMeta = new Map(MIX_GROUPS.flatMap(group => group.leaves).map(leaf => [leaf.key, leaf]));
@@ -298,7 +298,44 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
       const leaf = leafMeta.get(key)!;
       return areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, key)), mode);
     });
-  const coordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW, theme);
+  const baseCoordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW, theme);
+  // Speicher-Füllstand als Overlay: zweite, unsichtbare 0–100-%-Achse über
+  // derselben Winkel- bzw. Zeitachse; Linien normiert auf das jeweilige
+  // Speichermaximum des Szenarios.
+  const batData = chartHours.map(h => h.batteryGWh);
+  const h2Data = chartHours.map(h => h.h2GWh);
+  const batMax = Math.max(1e-9, ...batData);
+  const h2Max = Math.max(1e-9, ...h2Data);
+  const coordinate: EChartsOption = withStorage
+    ? (mode === 'sunburst'
+      ? (() => {
+        const c = baseCoordinate as { polar: object; angleAxis: object; radiusAxis: object };
+        return {
+          polar: [c.polar, { ...c.polar }],
+          angleAxis: [c.angleAxis, { ...c.angleAxis, polarIndex: 1, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } }],
+          radiusAxis: [c.radiusAxis, { polarIndex: 1, type: 'value', min: 0, max: 104, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } }],
+        } as EChartsOption;
+      })()
+      : (() => {
+        const c = baseCoordinate as { grid: object; xAxis: object; yAxis: object };
+        return {
+          grid: c.grid,
+          xAxis: c.xAxis,
+          yAxis: [c.yAxis, { type: 'value', min: 0, max: 104, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } }],
+        } as EChartsOption;
+      })())
+    : baseCoordinate as EChartsOption;
+  const storageFillSeries = (name: string, color: string, data: number[], max: number) => ({
+    name,
+    type: 'line' as const,
+    ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const, polarIndex: 1 } : { yAxisIndex: 1 }),
+    showSymbol: false,
+    smooth: false,
+    z: 6,
+    lineStyle: { width: 1.6, type: 'dashed' as const, color },
+    itemStyle: { color },
+    data: data.map(v => v / max * 100),
+  });
   // HTML-Tooltip via DOM-Overlay: nativ über ECharts, läuft im Main-Thread
   // und rendert mit echter Typografie + selektierbarem Text. Helfer für
   // farbige Punkte / Bold / Muted-Zeilen.
@@ -360,6 +397,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
         if (hour.exportGW > 0) lines.push(row(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`));
         if (hour.dataBoundaryResidualGW !== 0) lines.push(row(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`));
+        if (withStorage) lines.push(row(`${dot('#10b981')}Füllstand: ${bold(`${fmt0.format(hour.batteryGWh / batMax * 100)} %`)} ${muted('Batterie')} · ${bold(`${fmt0.format(hour.h2GWh / h2Max * 100)} %`)} ${muted('H₂')}`));
         if (visibility.loadGW) lines.push(row(`${dot(colors.loadDot)}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`));
         return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
       },
@@ -394,6 +432,10 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         lineStyle: { width: 2.2, color: colors.loadColor },
         data: chartHours.map((h) => h.loadGW),
       }] : []),
+      ...(withStorage ? [
+        storageFillSeries('Batterie-Füllstand', '#10b981', batData, batMax),
+        storageFillSeries('H₂-Füllstand', '#0891b2', h2Data, h2Max),
+      ] : []),
     ],
   };
 }
