@@ -275,6 +275,42 @@ describe('Kosten · C Netzausbau', () => {
     const hi = computeKosten(scen({ pvInstalledGW: 500, windOnInstalledGW: 200, windOffInstalledGW: 70 }), result([], {}));
     expect(hi.breakdown.netz).toBeGreaterThan(lo.breakdown.netz);
   });
+
+  // Lastgetriebener Term (AP03): Verteilnetz für E-Mobilität/WP/Industrie folgt
+  // dem Zuwachs der Stromlast-Spitze über die 2025-Basis — technologieneutral.
+  const lastAnnual = (peakGW: number) =>
+    prices.netzCapexEurPerKwAddedPeakLoad * Math.max(0, peakGW - prices.netzBaselinePeakLoadGW) * 1e6 * crf(prices.wacc, netz.life);
+
+  it('C.7 Last-Term: Peak ≤ 2025-Basis ⇒ 0; darüber Formel & Monotonie', () => {
+    expect(prices.netzBaselinePeakLoadGW).toBeGreaterThan(70);
+    expect(prices.netzBaselinePeakLoadGW).toBeLessThan(80);
+    const basis = computeKosten(scen({}), result([], { peakLoadGW: 75.6 }));
+    expect(basis.breakdown.netz).toBeCloseTo(0, 3);
+    const k150 = computeKosten(scen({}), result([], { peakLoadGW: 150 }));
+    expect(k150.breakdown.netz).toBeCloseTo(lastAnnual(150), -3);
+    const k300 = computeKosten(scen({}), result([], { peakLoadGW: 302.4 }));
+    expect(k300.breakdown.netz).toBeGreaterThan(k150.breakdown.netz);
+  });
+
+  it('C.8 Großkraftwerks-Szenario ohne EE-Zubau zahlt den Last-Term (kein netz=0 mehr)', () => {
+    // 100kern-artig: Peak vervierfacht, keine volatile EE — vor AP03 war netz 0.
+    const k = computeKosten(scen({ kernkraftInstalledGW: 333 }), result([], { peakLoadGW: 302.4 }));
+    expect(k.breakdown.netz).toBeCloseTo(lastAnnual(302.4), -3);
+    expect(k.breakdown.netz).toBeGreaterThan(10e9);
+    expect(k.addedPeakLoadGW).toBeCloseTo(302.4 - prices.netzBaselinePeakLoadGW, 3);
+  });
+
+  it('C.9 Eichanker bleibt: O45-EE-Zubau + Peak-Verdopplung ⇒ ~0,8 Bio € bis 2050', () => {
+    // NEP-2045B/O45-Welt ist elektrifiziert: Δ-EE 455,3 GW UND Peak ~150 GW.
+    const k = computeKosten(scen({ pvInstalledGW: 400, windOnInstalledGW: 160, windOffInstalledGW: 70 }), result([], { peakLoadGW: 150 }));
+    const total2050 = k.breakdown.netz * (2050 - 2025);
+    expect(total2050).toBeGreaterThan(0.65e12);
+    expect(total2050).toBeLessThan(0.95e12);
+    // Invest-Summe zwischen NEP (~320 Mrd, nur ÜN) und IMK (651 Mrd ÜN+VN).
+    const invest = k.breakdown.netz / crf(prices.wacc, netz.life);
+    expect(invest).toBeGreaterThan(0.32e12);
+    expect(invest).toBeLessThan(0.651e12);
+  });
 });
 
 // ===========================================================================

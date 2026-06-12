@@ -22,7 +22,7 @@
     "unit": "EUR, %, Anzahl",
     "description": [
       "Zentrale Preis- und Kapitalkosten-Annahmen für die Systemkosten-Rechnung der Kosten-Sektion. Realer WACC `5 %`, Erdgas `38`, Steinkohle `11,6`, Braunkohle `2,3 EUR/MWh_th`, Stromimport `89 EUR/MWh` (Day-Ahead-Jahresmittel 2025), Stromexport `60 EUR/MWh` — asymmetrisch, weil Exporte überproportional in Überschussstunden mit niedrigen bis negativen Preisen anfallen (mengengewichteter Export-Erlös liegt deutlich unter dem Jahresmittel; Abschlag ~1/3 als Heuristik, niedrige Konfidenz). Wasserstoff-Import `130 EUR/MWh_H2` (grüner H2 frei Grenze, weite Spanne ~90–210). Auf `41,1 Mio.` Haushalte à `3.000 kWh/a` bezogen. Eine CO2-Bepreisung ist bewusst nicht enthalten (rein politisch gesetzter Transfer, kein Ressourcenaufwand).",
-      "**Netzausbau.** Standardmäßig in den Systemkosten enthalten; im 2025-Bestand null (die Kupferplatte bleibt der Nullpunkt) und wächst mit dem volatilen EE-Zubau darüber hinaus: `Netzkosten = netzCapexEurPerKwAddedRE × max(0, PV+WindOn+WindOff − netzBaselineReCapacityGW)`, annuisiert über `netzLifetimeYears`. Basis 2025 `174,7 GW` (PV 102,5 + Wind on 62,8 + Wind off 9,4). Der Faktor `1.200 EUR/kW` (Lebensdauer `40 a`) orientiert sich an der mittleren Vollnetz-Investitionsschätzung für einen O45-ähnlichen Ausbau: IMK/Hans-Böckler `~651 Mrd. EUR` (Übertragung + Verteilnetz bis 2045) als Zentralanker, BNetzA-NEP `~320 Mrd. EUR` (nur Übertragung) als Untergrenze, Frontier/DIHK »Plan B« `~1,2 Bio. EUR` (all-in CAPEX+Betrieb 2025–2049, ~54.000 km ÜN + ~451.000 km VN) als oberer Rand. Beim BMWK-O45-Strom-Pfad 2045 (`PV 400 + Wind on 160 + Wind off 70 = 630 GW`, Δ `455,3 GW`) ergibt der Posten bei Aufbau bis 2050 rund `0,8 Bio. EUR` — zwischen IMK-Investition und DIHK-Vollkosten.",
+      "**Netzausbau.** Standardmäßig in den Systemkosten enthalten; im 2025-Bestand null (die Kupferplatte bleibt der Nullpunkt). Zwei Treiber, beide annuisiert über `netzLifetimeYears`: **(1) erzeugungsgetrieben** `netzCapexEurPerKwAddedRE × max(0, PV+WindOn+WindOff − netzBaselineReCapacityGW)` — Anschluss und Abtransport volatiler Erzeugung (Basis 2025 `174,7 GW`; `1.000 EUR/kW`); **(2) lastgetrieben** `netzCapexEurPerKwAddedPeakLoad × max(0, Peak-Last − netzBaselinePeakLoadGW)` — Verteilnetz-Verstärkung für E-Mobilität, Wärmepumpen und Industrie-Elektrifizierung, die in jedem Elektrifizierungs-Szenario anfällt, egal welche Technologie liefert (Basis `75,6 GW` = Stromlast-Spitze des referenz-2025-Laufs, konsistent mit der realen Jahreshöchstlast ~75–76 GW (SMARD-Lastzeitreihe 2025); `1.200 EUR/kW`). Die Aufteilung ist so geeicht, dass der NEP-2045B/O45-Pfad (EE-Zubau `455,3 GW`, Peak-Verdopplung auf ~`150 GW`) wie bisher ~`545 Mrd. EUR` Invest ergibt — zwischen BNetzA-NEP `~320 Mrd.` (nur Übertragung) und IMK/Hans-Böckler `651 Mrd.` (= `328` ÜN + `323` VN), unter Frontier/DIHK »Plan B« `~1,2 Bio.` (all-in). Der Last-Anteil (`~89 Mrd.`, ~28 % der IMK-Verteilnetzsumme) ist quellengestützt: Agora/RAP/Navigant 2019 weisen `54–75 Mrd. EUR` Verteilnetz-Invest 2015–2050 für alle drei Treiber aus (EE-Einspeisung, Wärmepumpen, E-Pkw); die Differenz der Szenarien — `+21 Mrd.` je `+15 Mio.` E-Pkw bei identischem EE-Pfad — ist sauber lastgetrieben (≈ `1.400 EUR` je E-Pkw, bei `~1–1,5 kW` zeitgleichem Peak-Beitrag ≈ `1.000–1.400 EUR/kW` Systemspitze). Consentec/BWP zeigen Wärmepumpen-Anschlüsse von `2–10 kW` mit ähnlicher Kostenwirkung je kW, BNetzA-§14d-Pläne melden `~207 Mrd.` Verteilnetz-Kapazitätsausbau bis 2045, ef.Ruhr/EWI schätzen bilanziell `431 Mrd.` Verteilnetz. Treiber des Last-Terms ist die Stromlast-Spitze **nach** H₂-Pool: wasserstoffgedeckte Sektoren (Stahl/Chemie/Flug/Schiff) hängen nicht am Stromverteilnetz, Elektrolyseur-Anschlüsse gelten als EE-Integrationskosten im EE-Term.",
       "**Musterhaushalt & Endkundenpreis-Brücke.** Die Haushalts-Box der Stromrechnung rechnet mit einem Musterhaushalt, dessen Verbrauch den haushaltsrelevanten Last-Reglern folgt: `3.000 kWh/a` Grundbedarf plus — wenn die Regler aktiv sind — der zusätzliche PKW-Strom (`e100-pkw`) und Wärmepumpen-Strom (`e100-heiz`) des Szenarios, jeweils geteilt durch `41,1 Mio.` Haushalte (volle Elektrifizierung: ~`+2.600 kWh` E-Auto, ~`+2.900 kWh` Wärmepumpe). Stahl, Chemie, GHD, LKW oder Flug verändern den Musterhaushalt nicht. Vom System-Durchschnitt (ab Werk) zur geschätzten Endkunden-Stromrechnung führt eine Preisbrücke auf 2025-Niveau (BDEW-Strompreisanalyse): Netzentgelte Bestandsnetz inkl. Messung `10,9 ct/kWh`, Stromsteuer + Konzessionsabgabe `3,7 ct/kWh` (2,05 + Ø ~1,66), Umlagen `2,7 ct/kWh` (KWKG 0,28 + Offshore-Netz 0,82 + §19 StromNEV 1,56), Vertrieb & Service `2,5 ct/kWh` (Setzung, da BDEW Beschaffung+Vertrieb nur gemeinsam mit 16,0 ct ausweist), darauf `19 %` Mehrwertsteuer. Die Brücke ist komplementär zum Systemposten Netzausbau: dort steckt nur der Zubau über den 2025-Bestand, das Netzentgelt hier deckt das Bestandsnetz."
     ],
     "fields": [
@@ -79,7 +79,22 @@
       {
         "name": "netzCapexEurPerKwAddedRE",
         "unit": "Zahl",
-        "description": "Netzausbau-Kosten je kW volatiler EE-Leistung über 2025-Basis, EUR/kW; Zentralanker IMK-Vollnetz, Spanne NEP (~320 Mrd) bis DIHK »Plan B« (~1,2 Bio)"
+        "description": "Erzeugungsgetriebener Netzausbau je kW volatiler EE-Leistung über 2025-Basis, EUR/kW (Übertragungsnetz inkl. Offshore-Anbindung + EE-Anschluss im Verteilnetz); von 1.200 auf 1.000 abgesenkt, seit der lastgetriebene Anteil separat ausgewiesen wird — keine Doppelzählung gegen die Gesamt-Anker IMK 651 Mrd (328 ÜN + 323 VN), NEP ~320 Mrd (nur ÜN, Untergrenze), DIHK »Plan B« ~1,2 Bio (oberer Rand)"
+      },
+      {
+        "name": "netzCapexEurPerKwAddedPeakLoad",
+        "unit": "Zahl",
+        "description": "Lastgetriebener Netzausbau (Verteilnetz für E-Mobilität, Wärmepumpen, Industrie-Elektrifizierung) je kW Spitzenlast-Zuwachs über 2025, EUR/kW. Spanne 1.000–1.500 trianguliert: Agora/RAP/Navigant 2019 (Szenario-Differenz +21 Mrd VN-Invest je +15 Mio E-Pkw bei identischem EE-Pfad ≈ 1.400 €/Pkw, bei ~1–1,5 kW zeitgleichem Peak-Beitrag ≈ 1.000–1.400 €/kW Systemspitze — Grenzableitung, kein wörtlicher Studienwert), Consentec/BWP 2025 (WP-Anschlüsse 2–10 kW, ähnliche Kostenwirkung je kW), BNetzA-§14d-Pläne ~207 Mrd VN-Kapazitätsausbau (ohne NS-Dunkelfeld), ef.Ruhr/EWI 2024 bilanziell 431 Mrd VN. Fällt in jedem Elektrifizierungs-Szenario an, egal welche Technologie liefert."
+      },
+      {
+        "name": "netzBaselinePeakLoadGW",
+        "unit": "GW",
+        "description": "Stromlast-Spitze 2025 als Nullpunkt des lastgetriebenen Netzausbaus (referenz-2025-Simulation 75,6; konsistent mit der realen Jahreshöchstlast ~75–76 GW aus der SMARD-Lastzeitreihe 2025). Muss mit dem referenz-2025-Lauf synchron bleiben, sonst bekommt der Bestand einen Phantom-Netzposten."
+      },
+      {
+        "name": "netzCalibratedMaxAddedPeakLoadGW",
+        "unit": "GW",
+        "description": "Geeichter Bereich des Last-Terms (Peak-Zuwachs über 2025); der Eich-Anker liegt bei ~75 GW Zuwachs (Verdopplung auf ~150 GW bis 2045). Darüber zeigt die UI einen Extrapolations-Hinweis."
       },
       {
         "name": "netzLifetimeYears",
@@ -129,16 +144,18 @@
       "Wasserstoff-Importpreis stark streuend (Herkunft, Transport, Jahr) — 130 EUR/MWh ist ein mittlerer Wert, Spanne ~90–210; niedrige Konfidenz.",
       "Export-Erlös 60 EUR/MWh ist eine Pauschale ohne Stundenaufloesung: in Extremszenarien mit strukturellem Dauerüberschuss (Export am 25-GW-Cap) wären reale Erlöse noch niedriger bis negativ — Exporterlöse dort als Obergrenze lesen.",
       "Einheitlicher WACC verzerrt kapitalintensive Technologien leicht.",
-      "Netzkosten standardmäßig in den Systemkosten enthalten; null im 2025-Bestand (Kupferplatte als Nullpunkt), steigend mit dem EE-Zubau darüber.",
-      "Netz-Faktor 1.200 EUR/kW ist eine grobe Pauschale ohne Spannungsebenen-Auflösung (PV→Verteilnetz vs. Wind→Übertragung nicht getrennt); niedrige Konfidenz. Anker-Spanne ~650 Mrd (IMK, reine Investition) bis ~1,2 Bio EUR (DIHK »Plan B«, all-in inkl. Betrieb).",
+      "Netzkosten standardmäßig in den Systemkosten enthalten; null im 2025-Bestand (Kupferplatte als Nullpunkt), steigend mit EE-Zubau und Spitzenlast-Zuwachs darüber.",
+      "Netz-Faktoren 1.000 (EE) + 1.200 (Last) EUR/kW sind grobe Pauschalen ohne Spannungsebenen-Auflösung; niedrige Konfidenz. Der Treiber-Split EE/Last im Verteilnetz ist nirgends offiziell publiziert — der Last-Anteil (~21–28 % der VN-Summe) ist bottom-up trianguliert (E-Pkw 45–63 + WP 15–25 + Industrie/GHD 15–30 Mrd), durch die erhaltene Gesamtanker-Eichung (IMK 651 / DIHK 1,2 Bio) aber nach oben und unten begrenzt.",
       "Netz wird marginal ab 2025-Bestand gerechnet, die Erzeugung dagegen als Vollkosten der Zielflotte — die beiden Posten sind nicht ohne Weiteres zu einer Summe addierbar.",
       "Realer Untergrenzen-Anker: schon beim 2025-Bestand kostet Netzengpassmanagement ~3,1 Mrd EUR/a (Redispatch gesamt, davon 433 Mio EUR EE-Abregelungs-Entschädigung; BNetzA/SMARD) — Betriebskosten dieser Art sind im pauschalen Netz-Posten nur grob mit abgedeckt, in der Kupferplatte ohne Netz-Posten gar nicht.",
-      "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW) belastbar, in Überbau-Extremen nur als Richtungssignal.",
-      "Die Netz-Pauschale (1.200 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch.",
+      "Strikt linear je GW; nur im geeichten Bereich (EE-Zubau Δ ≲ 700 GW, Peak-Zuwachs Δ ≲ 100 GW) belastbar, in Überbau-Extremen nur als Richtungssignal.",
+      "Die EE-Netz-Pauschale (1.000 EUR/kW) ist ein Landesmittel — Offshore-Netzanbindungen kosten real ~3.000-4.000 EUR/kW (2-GW-System annuisiert 309-485 Mio EUR/a je nach Distanz; NEP-Offshore-Netz gesamt 153-171 Mrd EUR, Frontier/BDEW-BWO 2026). Offshore-lastige Szenarien unterzeichnet der Posten daher systematisch.",
       "Endkundenpreis-Brücke hält Netzentgelte, Steuern, Abgaben, Umlagen und Vertrieb konstant auf 2025-Niveau — in Ausbau-Szenarien würden reale Netzentgelte eher steigen (der Zubau-Anteil steckt stattdessen im Systemposten Netzausbau), Umlagen sind politisch beweglich.",
       "Vertrieb & Service 2,5 ct/kWh ist eine Setzung mit niedriger Konfidenz; BDEW weist Beschaffung+Vertrieb 2025 nur als Summe (16,0 ct) aus.",
       "Der Musterhaushalt ordnet PKW- und Wohngebäude-Heizstrom vollständig den Haushalten zu (Dienstwagen, Mietverhältnisse etc. nicht differenziert); E-Auto- und Wärmepumpen-Anteile folgen den Last-Reglern, nicht einer Bestandsprognose.",
-      "Importiert wird Wasserstoff (LHV), keine fertigen PtL-Kraftstoffe: die Synthese H₂ → Kerosin/Methanol/Olefine findet bilanziell im Inland statt, ihre Energieverluste trägt der H₂-Pool H₂-seitig (implizite Synthese-η 0,61–0,89 je Sektor). Implizit kostet damit e-Kerosin ~212 €/MWh, e-MeOH/NH₃ ~161 €/MWh, der Chemie-Mix ~147 €/MWh — im PtL-Studienkorridor (Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). CAPEX/OPEX der Synthese- und DAC-Anlagen sind nicht im Kosten-Bon."
+      "Importiert wird Wasserstoff (LHV), keine fertigen PtL-Kraftstoffe: die Synthese H₂ → Kerosin/Methanol/Olefine findet bilanziell im Inland statt, ihre Energieverluste trägt der H₂-Pool H₂-seitig (implizite Synthese-η 0,61–0,89 je Sektor). Implizit kostet damit e-Kerosin ~212 €/MWh, e-MeOH/NH₃ ~161 €/MWh, der Chemie-Mix ~147 €/MWh — im PtL-Studienkorridor (Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). CAPEX/OPEX der Synthese- und DAC-Anlagen sind nicht im Kosten-Bon.",
+      "Der Last-Term ist nur bis ~100 GW Peak-Zuwachs geeicht (Anker: Verdopplung auf ~150 GW bis 2045); e100-Szenarien mit +140 bis +230 GW liegen weit darüber — Richtungssignal, keine Punktschätzung (UI-Flag).",
+      "Der Last-Term ist eine flache Pauschale je kW Systemspitze: industrielastige Spitzen (Hochspannungsanschlüsse) sind real eher günstiger je kW, haushaltslastige (Niederspannung) eher teurer; netzorientierte Steuerung nach §14a könnte den Bedarf um ~20–30 % senken (Consentec/BWP: bis zu −23 % NS-Kosten; Agora/RAP: gesteuertes Laden bis zu −33 % kumulativer VN-Invest). Großkraftwerks-Szenarien zahlen nur den Last-Term — standortspezifischer Übertragungsausbau für zentrale Erzeugung ist nicht separat bepreist, der Posten ist dort eher Untergrenze. Peak-Shaving per Batterie senkt den Term nicht (Spitze wird vor Speichern gemessen) — leicht konservativ für alle."
     ],
     "file": "referenz/preise/package.json"
   },
@@ -153,7 +170,7 @@
     "h2ImportEurPerMWh": 130,
     "households": 41100000,
     "householdConsumptionKWhPerA": 3000,
-    "netzCapexEurPerKwAddedRE": 1200,
+    "netzCapexEurPerKwAddedRE": 1000,
     "netzLifetimeYears": 40,
     "netzBaselineReCapacityGW": 174.7,
     "netzCalibratedMaxAddedReGW": 700,
@@ -161,6 +178,9 @@
     "householdSteuernAbgabenCtPerKWh": 3.7,
     "householdUmlagenCtPerKWh": 2.7,
     "householdVertriebCtPerKWh": 2.5,
-    "vatRate": 0.19
+    "vatRate": 0.19,
+    "netzCapexEurPerKwAddedPeakLoad": 1200,
+    "netzBaselinePeakLoadGW": 75.6,
+    "netzCalibratedMaxAddedPeakLoadGW": 100
   }
 }

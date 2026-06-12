@@ -89,11 +89,15 @@ const stromExportFacts = (k: KostenResult): Facts => ({
   ],
 });
 const netzFacts = (k: KostenResult): Facts => ({
-  note: 'Pauschale je kW volatiler EE-Leistung über dem 2025-Bestand, annuisiert — geeicht an Vollnetz-Schätzungen (IMK, NEP, DIHK »Plan B«); über ~700 GW Zubau nur Richtungssignal.',
+  note: 'Zwei Pauschalen, annuisiert: je kW volatiler EE-Leistung über dem 2025-Bestand (erzeugungsgetrieben) und je kW Spitzenlast-Zuwachs (lastgetrieben: E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Geeicht an Vollnetz-Schätzungen (IMK, ef.Ruhr/EWI, NEP, DIHK »Plan B«); über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur Richtungssignal.',
   wikiId: 'kern',
   facts: [
     ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n0(k.params.netzBaselineGW)} GW)`],
-    ['Pauschale', `${n0(k.params.netzEurPerKW)} €/kW`],
+    ['Pauschale EE', `${n0(k.params.netzEurPerKW)} €/kW`],
+    ['davon EE-getrieben', `${n1(k.params.netzEurPerKW * k.addedReGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
+    ['Peak-Zuwachs über Bestand', `${n0(k.addedPeakLoadGW)} GW (Basis ${n0(k.params.netzBaselinePeakGW)} GW)`],
+    ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW`],
+    ['davon lastgetrieben', `${n1(k.params.netzLastEurPerKW * k.addedPeakLoadGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
     [`Annuität (WACC ${n0(k.params.wacc * 100)} %)`, `${n1(k.params.netzCrf * 100)} %/a`],
   ],
@@ -224,7 +228,7 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
   // 2025-Basis) — auf dem Bon weglassen.
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
   const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
-  const netzHint = k.netzExtrapolated ? `Extrapoliert: EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 GW) — nur Richtungssignal.` : undefined;
+  const netzHint = k.netzExtrapolated ? `Extrapoliert: EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW bzw. Peak-Zuwachs ${Math.round(k.addedPeakLoadGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 / ~100 GW) — implizit ${(k.breakdown.netz / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
   // Kapazitätsunabhängige Posten gehören in beide Gruppierungen — nur so summieren
   // sich beide Knoten auf dieselbe SUMME.
   const sysRows = [
@@ -555,7 +559,7 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
         <li><strong>Brennstoff</strong> — Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation (Gas, Kohle, Biomasse, Kernkraft).</li>
         <li><strong>Wasserstoff-Import</strong> — importierte H₂-Menge × Importpreis (frei Grenze, LHV).</li>
         <li><strong>Strom-Import-Saldo</strong> — Stromimport minus -export zum Großhandelspreis.</li>
-        <li><strong>Netzausbau &amp; -betrieb</strong> — Pauschale 1.200 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; dort null, die 2025-Kupferplatte ist der Nullpunkt), annuisiert über 40 Jahre. Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau nur als Richtungssignal zu lesen.</li>
+        <li><strong>Netzausbau &amp; -betrieb</strong> — zwei Pauschalen, annuisiert über 40 Jahre: 1.000 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; erzeugungsgetrieben: Übertragungsnetz, EE-Anschluss) plus 1.200 €/kW je kW Spitzenlast-Zuwachs über 2025 (75,6 GW; lastgetrieben: Verteilnetz für E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Im 2025-Bestand null (Kupferplatte als Nullpunkt). Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur als Richtungssignal zu lesen.</li>
       </ul>
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
       <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«).</p>
