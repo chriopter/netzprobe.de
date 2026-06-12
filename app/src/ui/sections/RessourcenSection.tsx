@@ -55,10 +55,10 @@ const multStr = (mult: number, base: number) => base > 0
 
 // Bedarfs-Karte mit Ausklapper: zusammengeklappt der kombinierte Balken der
 // Gruppe, aufgeklappt eine Zeile mit eigenem Balken je Material.
-function MultiMaterialTiles({ title, rows, colorClass, buildoutYears, forceOpen }: { title: string; rows: MaterialRow[]; colorClass: string; buildoutYears: number; forceOpen?: boolean }) {
+function MultiMaterialTiles({ title, rows, colorClass, forceOpen }: { title: string; rows: MaterialRow[]; colorClass: string; forceOpen?: boolean }) {
   const sorted = [...rows].sort((a, b) => b.s - a.s);
-  const scen = rows.reduce((sum, r) => sum + r.s, 0) * buildoutYears;
-  const base = rows.reduce((sum, r) => sum + r.b, 0) * buildoutYears;
+  const scen = rows.reduce((sum, r) => sum + r.s, 0);
+  const base = rows.reduce((sum, r) => sum + r.b, 0);
   const mult = base > 0 ? scen / base : 0;
   return <details open={forceOpen} className="group/mat rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
     <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
@@ -69,10 +69,10 @@ function MultiMaterialTiles({ title, rows, colorClass, buildoutYears, forceOpen 
         </h4>
         <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
           {multStr(mult, base)}
-          <span className="ml-1.5 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(scen)})</span>
+          <span className="ml-1.5 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(scen)}/a)</span>
         </span>
       </div>
-      <div className="mt-3" title="Eine Kachel = Materialbedarf des deutschen Energiesystems 2025 über denselben Zeitraum."><SlotRow mult={mult} colorClass={colorClass}/></div>
+      <div className="mt-3" title="Eine Kachel = Jahresbedarf des deutschen Energiesystems 2025 (Erneuerung über Lebensdauer anteilig eingerechnet)."><SlotRow mult={mult} colorClass={colorClass}/></div>
     </summary>
     <div className="mt-3 flex flex-col gap-2.5 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
       {sorted.map(r => {
@@ -82,7 +82,7 @@ function MultiMaterialTiles({ title, rows, colorClass, buildoutYears, forceOpen 
             <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">{r.label}</span>
             <span className="whitespace-nowrap text-xs font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
               {multStr(rowMult, r.b)}
-              <span className="ml-1.5 text-[10px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(r.s * buildoutYears)})</span>
+              <span className="ml-1.5 text-[10px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(r.s)}/a)</span>
             </span>
           </div>
           <div className="mt-1"><SlotRow mult={rowMult} colorClass={colorClass}/></div>
@@ -95,22 +95,29 @@ function MultiMaterialTiles({ title, rows, colorClass, buildoutYears, forceOpen 
 // CO₂-Ausstoß als Output-Karte: gleiche Kachel-Metapher, aber Emission statt
 // Materialbedarf — bewusst abgesetzt (rote Füllung, Output-Fußnote). Anker für
 // das Vielfache ist der 2025-Replay-Messwert aus historisch-2025.
-function Co2Card({ result, buildoutYears }: { result: SimulationResult; buildoutYears: number }) {
+function Co2Card({ result, forceOpen }: { result: SimulationResult; forceOpen?: boolean }) {
   const base2025 = Number((uiManifest.historisch2025 as Record<string, unknown>).co2MtPerYear) || 0;
-  const scenMt = result.summary.co2MtPerYear * buildoutYears;
-  const baseMt = base2025 * buildoutYears;
+  const scenMt = result.summary.co2MtPerYear;
+  const baseMt = base2025;
   const mult = baseMt > 0 ? scenMt / baseMt : 0;
-  return <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-    <div className="flex items-baseline justify-between gap-4">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">CO₂-Ausstoß</h4>
-      <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
-        {multStr(mult, baseMt)}
-        <span className="ml-1.5 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(scenMt * 1e6)})</span>
-      </span>
+  return <details open={forceOpen} className="group/co2 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <div className="flex items-baseline justify-between gap-4">
+        <h4 className="flex min-w-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open/co2:rotate-90 dark:text-zinc-500"/>
+          <span className="truncate">CO₂-Stromsektor</span>
+        </h4>
+        <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
+          {multStr(mult, baseMt)}
+          <span className="ml-1.5 text-[11px] font-normal text-zinc-400 dark:text-zinc-500">({fmtMass(scenMt * 1e6)}/a)</span>
+        </span>
+      </div>
+      <div className="mt-3" title="Eine Kachel = CO₂-Jahresausstoß des deutschen Stromsystems 2025."><SlotRow mult={mult} colorClass="bg-zinc-500 dark:bg-zinc-400"/></div>
+    </summary>
+    <div className="mt-3 border-t border-zinc-100 pt-2.5 text-[11px] leading-4 text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+      Output aus der Stundensimulation. 1× = öffentliche Stromerzeugung 2025 inkl. Importen, ohne Fernwärme — nicht die deutschen Gesamtemissionen (~650 Mt); bei Elektrifizierung deckt das simulierte System zusätzliche Sektoren ab, verdrängte fossile Emissionen werden nicht gutgeschrieben.
     </div>
-    <div className="mt-3" title="Eine Kachel = CO₂-Ausstoß des deutschen Stromsystems 2025 über denselben Zeitraum."><SlotRow mult={mult} colorClass="bg-zinc-500 dark:bg-zinc-400"/></div>
-    <div className="mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">Output — Emission statt Materialbedarf, aus der Stundensimulation.</div>
-  </div>;
+  </details>;
 }
 
 // Stufige, absolut definierte Farbskala für den Anteil an der globalen
@@ -230,7 +237,7 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
       <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
     </div>
     {helpOpen && <HelpPanel>
-      <p>Die Kacheln rechts zeigen den <strong>Gesamtbedarf über den Aufbauzeitraum</strong> bis {buildoutYear}. Eine Kachel (1×) entspricht dem Materialbedarf des deutschen Energiesystems 2025 über denselben Zeitraum.</p>
+      <p>Die Kacheln rechts zeigen den <strong>jährlichen Materialbedarf</strong>. Eine Kachel (1×) entspricht dem Jahresbedarf des deutschen Energiesystems 2025; Erneuerung über Lebensdauer ist anteilig eingerechnet.</p>
       <ul>
         <li><strong>Basis (1×)</strong> — Material des Energiesystems 2025: Erzeugung, Speicher und die schon elektrische Flotte (~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn).</li>
         <li><strong>Erneuerung über Lebensdauer</strong> — Bau-Material × <code>max(1, Horizont/Lebensdauer)</code> je Technologie: Batterie 15 a, PV/Gas/H₂ 30 a, Wind/Biomasse 25 a, Kohle 35 a, Kernkraft 45 a, Pumpspeicher/Laufwasser 60 a (analog zur annuisierten Kostenseite).</li>
@@ -246,13 +253,13 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
       <p><strong>Nicht enthalten:</strong> Recycling und Netzinfrastruktur. Quellen je Technologie im Datenhandbuch (USGS, IEA, worldsteel, WNA).</p>
     </HelpPanel>}
 
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
       {view === 'grafisch' ? <PeriodicTable rows={rows}/> : <RohstoffTable rows={rows}/>}
       <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-col">
-        <MultiMaterialTiles title="Beton, Stahl & Alu" rows={rows.filter(r => r.cat === 'bulk' && (r.s > 0 || r.b > 0))} colorClass="bg-zinc-400 dark:bg-zinc-500" buildoutYears={buildoutYears} forceOpen={view === 'details'}/>
-        <MultiMaterialTiles title="Spezialmaterialien" rows={rows.filter(r => r.cat === 'spezial' && (r.s > 0 || r.b > 0))} colorClass="bg-zinc-600 dark:bg-zinc-300" buildoutYears={buildoutYears} forceOpen={view === 'details'}/>
-        <MultiMaterialTiles title="Brennstoff" rows={rows.filter(r => r.cat === 'brennstoff' && (r.s > 0 || r.b > 0))} colorClass="bg-stone-700 dark:bg-stone-400" buildoutYears={buildoutYears} forceOpen={view === 'details'}/>
-        <Co2Card result={result} buildoutYears={buildoutYears}/>
+        <MultiMaterialTiles title="Beton, Stahl & Alu" rows={rows.filter(r => r.cat === 'bulk' && (r.s > 0 || r.b > 0))} colorClass="bg-zinc-400 dark:bg-zinc-500" forceOpen={view === 'details'}/>
+        <MultiMaterialTiles title="Spezialmaterialien" rows={rows.filter(r => r.cat === 'spezial' && (r.s > 0 || r.b > 0))} colorClass="bg-zinc-600 dark:bg-zinc-300" forceOpen={view === 'details'}/>
+        <MultiMaterialTiles title="Brennstoff" rows={rows.filter(r => r.cat === 'brennstoff' && (r.s > 0 || r.b > 0))} colorClass="bg-stone-700 dark:bg-stone-400" forceOpen={view === 'details'}/>
+        <Co2Card result={result} forceOpen={view === 'details'}/>
       </div>
     </div>
   </section>;
