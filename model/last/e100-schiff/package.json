@@ -24,7 +24,7 @@
     "unit": "TWh thermisch, TWh Strom",
     "description": [
       "**Bezugsjahr 2023:** AGEB-Endenergie Küsten- und Binnenschifffahrt rund `3 TWh` thermisch; BAFA-Mineralölinfo weist `0,55 Mio. t` Heizöl schwer Inland aus, reale DE-Bunkermenge `1–3 Mio. t/a`. Global ist der Bunkerabsatz internationaler Seeschifffahrt mit `233,1 Mio. t` (`2023`) deutlich größer; deutsche Häfen tragen einen kleinen Anteil. Bereits elektrisch betrieben sind `0,3 TWh` (Landstrom Hamburg, Bremerhaven, Cuxhaven, Schiffsstrom) und Teil der historischen Last.",
-      "**Faktor:** zwei Hebel — direkte Batterie-Elektrifizierung für Binnenflotte, Hafenumschlag und Cold-Ironing nutzt den Wirkungsgradvorteil `~3` gegenüber Diesel (`~1,2 TWh` Strom für `~3 TWh` thermisch). Hochsee-Bunker wird über **e-Methanol/e-Ammoniak** ersetzt; System-η Strom → Fuel `0,50` (LHV; IEA Renewables 2024 / Wind-to-Methanol-Studien Bandbreite `50–62 %` je nach CO2-Quelle und Pfad). Mengenanker `39 TWh` thermisch ersetzbare Bunkermenge: rund `15–25 TWh` aus deutschen Hafen-Bunkern (BAFA/AGEB, Heizöl schwer Inland `0,55 Mio. t` plus Marinediesel) plus ein anteiliger Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht — denn deutsche Bunker werden weltweit verfahren, der Synthese-Strom muss nicht zwangsläufig in DE anfallen. `39 TWh ÷ 0,50 ≈ 78 TWh` PtL-Strom; Default-Zusatzlast: `~80 TWh/a`. `1 TWh` H2-Import ersetzt `2,0 TWh` inländischen Synthese-Strom.",
+      "**Faktor:** zwei Hebel — direkte Batterie-Elektrifizierung für Binnenflotte, Hafenumschlag und Cold-Ironing nutzt den Wirkungsgradvorteil `~3` gegenüber Diesel (`~1,2 TWh` Strom für `~3 TWh` thermisch). Hochsee-Bunker wird über **e-Methanol/e-Ammoniak** ersetzt; System-η Strom → Fuel `0,50` (LHV; IEA Renewables 2024 / Wind-to-Methanol-Studien Bandbreite `50–62 %` je nach CO2-Quelle und Pfad). Mengenanker `39 TWh` thermisch ersetzbare Bunkermenge: rund `15–25 TWh` aus deutschen Hafen-Bunkern (BAFA/AGEB, Heizöl schwer Inland `0,55 Mio. t` plus Marinediesel) plus ein anteiliger Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht — denn deutsche Bunker werden weltweit verfahren, der Synthese-Strom muss nicht zwangsläufig in DE anfallen. `39 TWh ÷ 0,50 ≈ 78 TWh` PtL-Strom; Default-Zusatzlast: `~80 TWh/a`. `1 TWh` Pool-/Import-H₂ ersetzt `1/0,62 ≈ 1,61 TWh` inländischen Synthese-Strom; die implizite Synthese-Effizienz H₂ → Fuel beträgt `0,50/0,62 ≈ 0,81`.",
       "**Lastform:** 24-h-Profil nahezu konstant mit leichter Mittagsdelle (`0,950` bis `1,050`, Summe `24`) — Elektrolyse-/PtL-Anlagen laufen kontinuierlich, leichte Tag-Nacht-Spreizung skizziert PV-Mitnahme im PPA-getriebenen Fahrplan. Drop-in-Kraftstoffe für lange Binnenstrecken (Rhein, Donau) sind nicht abgebildet, und der globale Bunkerabsatz von `233,1 Mio. t` (`2023`) zeigt das Größenverhältnis: der DE-Anteil ist klein, der Modellpfad zielt auf den anteiligen IMO-Beitrag."
     ],
     "overview": [
@@ -85,7 +85,7 @@
       {
         "name": "eFuelSystemEfficiency",
         "unit": "Anteil",
-        "description": "System-η Strom → fertiger e-MeOH/e-Ammoniak-Schiffsfuel (LHV). Default 0,50 (Wind-to-Methanol-Studie 2020, IEA Renewables 2024). Wird genutzt um H2-Import in Strom-Einsparung umzurechnen: 1 TWh importierter H2 ersetzt (1/0,50)=2,0 TWh inländischen Synthese-Strom."
+        "description": "System-η Strom → fertiger e-MeOH/e-Ammoniak-Schiffsfuel (LHV). Default 0,50 (Wind-to-Methanol-Studie 2020, IEA Renewables 2024). Herleitungs-Anker des Slider-Defaults (39/0,50 ≈ 78 TWh); im H₂-Pool zieht der Sektor je TWh Synthese-Strom 0,62 TWh H₂-Zwischenprodukt — 1 TWh Pool-/Import-H2 ersetzt 1/0,62 ≈ 1,61 TWh Synthese-Strom, implizite Synthese-η H2 → Fuel 0,50/0,62 ≈ 0,81 (e-MeOH/NH3 0,79–0,85, IEA)."
       },
       {
         "name": "alreadyElectricTWh",
@@ -134,11 +134,12 @@
       }
     ],
     "caveats": [
-      "PtL-Wirkungsgrad als Punktwert 50 % (strom-zu-Fuel-LHV); Literaturbandbreite 50-62 % je nach CO2-Quelle (DAC vs. Punktquelle) und Synthesepfad (Methanol vs. Ammoniak); IEA Renewables 2024 und Wind-to-Methanol-Studie 2020. Wert ist in `eFuelSystemEfficiency` festgehalten und wird vom kernmodell für die H2-Import-Substitutionslogik gelesen.",
+      "PtL-Wirkungsgrad als Punktwert 50 % (strom-zu-Fuel-LHV); Literaturbandbreite 50-62 % je nach CO2-Quelle (DAC vs. Punktquelle) und Synthesepfad (Methanol vs. Ammoniak); IEA Renewables 2024 und Wind-to-Methanol-Studie 2020. Wert ist in `eFuelSystemEfficiency` festgehalten — Herleitungs-Anker des Slider-Defaults; der H₂-Pool der Engine rechnet sektorunabhängig mit der Elektrolyse-Ratio 1/0,62.",
       "Standortabgrenzung unscharf: in deutschen Häfen gebunkerte Kraftstoffe werden weltweit verfahren, der Stromaufwand der Synthese muss nicht zwangsläufig in Deutschland anfallen. BAFA-Mineralölinfo 2023 zeigt rückläufige Bunkerprodukte (Heizöl schwer Inland 0,55 Mio. t); reale DE-Bunkermenge liegt bei 1-3 Mio. t/Jahr.",
       "Tagesprofil ist generisch flach; reale Elektrolyse-Fahrweise hängt von Strompreis und PPA-Verträgen ab, kann saisonal stark schwanken.",
       "Direktstrom-Anteil von rund 30 % der Inlandsschifffahrt ist obere Abschätzung; lange Binnenstrecken (Rhein, Donau) bleiben bei Drop-in-Kraftstoffen, Batteriegewicht/-volumen limitiert.",
-      "Bunker-Bezugsbasis ist eine Modellannahme von 39 TWh thermisch ersetzbarer Bunkermenge — sie kombiniert deutsche Hafen-Bunker (rund 15-25 TWh thermisch nach BAFA/AGEB) mit einem anteiligen Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht."
+      "Bunker-Bezugsbasis ist eine Modellannahme von 39 TWh thermisch ersetzbarer Bunkermenge — sie kombiniert deutsche Hafen-Bunker (rund 15-25 TWh thermisch nach BAFA/AGEB) mit einem anteiligen Beitrag deutscher PtL-Produktion zur internationalen IMO-Klimapflicht.",
+      "Der CO₂-Bereitstellungs- und Synthese-Direktstrom wird im H₂-Pool H₂-seitig verbucht (implizite Synthese-η 0,81): physische H₂-Tonnage leicht überzeichnet, Strombilanz korrekt."
     ],
     "file": "last/e100-schiff/data.json",
     "scripts": [

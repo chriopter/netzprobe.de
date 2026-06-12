@@ -46,7 +46,7 @@
     "reasoning": [
       "Kerosinmenge kerosineDemandMioT: BAFA Mineralölstatistik 2023 weist 9,47 Mio. t Flugturbinenkraftstoff schwer ab deutschen Flughäfen aus (Inland + international Bunker). 2024 ging der Absatz laut BAFA auf 9,02 Mio. t zurück. Vor-Corona 2019 lag bei rund 10 Mio. t; Slider-Maximum berücksichtigt Rückkehr und Wachstum.",
       "Energieinhalt kerosineEnergyTWh: Heizwert Jet A-1 (LHV) 43,1 MJ/kg = 11,97 kWh/kg ≈ 12 MWh/t (DIN, ASTM D1655, DLR Kerosene-Properties); 9,47 Mio. t × 12 MWh/t ≈ 114 TWh Endenergie thermisch.",
-      "PtL-Wirkungsgrad ptlEfficiency: 0,38 als Mittelwert Power-to-Liquid-Konversion Strom → e-Kerosin (Elektrolyse → Fischer-Tropsch oder Methanol-to-Jet inkl. DAC-CO2). Quellen: Fraunhofer ISE PtL-Studie, DECHEMA E-Fuels-White-Paper, ICCT eFuel-Analysen, Öko-Institut RESCUE. Bandbreite Literatur 30–50 % je nach Pfad und DAC-Integration; FT-typisch 35–45 %. Wert wird vom Kernmodell für die H2-Import-Substitutionslogik gelesen: 1 TWh importierter H2 ersetzt (1/0,38)=2,63 TWh inländischen PtL-Strom — Flug ist damit der Pfad mit dem höchsten Strom-Einsparungs-Hebel pro TWh H2-Import.",
+      "PtL-Wirkungsgrad ptlEfficiency: 0,38 als Mittelwert Power-to-Liquid-Konversion Strom → e-Kerosin (Elektrolyse → Fischer-Tropsch oder Methanol-to-Jet inkl. DAC-CO2). Quellen: Fraunhofer ISE PtL-Studie, DECHEMA E-Fuels-White-Paper, ICCT eFuel-Analysen, Öko-Institut RESCUE. Bandbreite Literatur 30–50 % je nach Pfad und DAC-Integration; FT-typisch 35–45 %. Der Wert ist Herleitungs-Anker des Slider-Defaults (300 = 114/0,38); die Engine liest ihn nicht mehr direkt: der H₂-Pool führt H₂ als Zwischenprodukt (Pool-Bedarf = PtL-Strom × 0,62), 1 TWh Pool-/Import-H2 ersetzt 1/0,62 ≈ 1,61 TWh PtL-Strom, und die implizite Synthese-Effizienz H2 → Kerosin beträgt 0,38/0,62 ≈ 0,61 (Fischer-Tropsch inkl. DAC 0,60–0,65, Concawe/Agora).",
       "Bereits elektrisch alreadyElectricTWh: 0 — kein nennenswerter elektrischer Flugbetrieb in DE; Flughafen-Bodenstrom ist klein und in der historischen Last 2025 enthalten.",
       "Ziel-Pfad: ReFuelEU Aviation schreibt 70 % SAF bis 2050 vor, davon 35 % synthetisch (PtL). Das Szenario modelliert den Vollumstellungs-Pfad (100 % PtL) als Obergrenze für den Strombedarf; reale Pfade mit Bio-/HEFA-Anteil liegen darunter.",
       "Stundenverteilung hourlyProfile.multipliers: 24 × 1,0 (Summe 24). PtL-Anlagen sind kontinuierlich gefahrene Industrieprozesse mit Wasserstoff- und Produktspeichern; ein Tagesgang wäre Spekulation."
@@ -90,7 +90,7 @@
       {
         "name": "ptlEfficiency",
         "unit": "Anteil",
-        "description": "Power-to-Liquid Konversionswirkungsgrad Strom → e-Kerosin (LHV). Default 0,38 (Fischer-Tropsch + DAC). Wird vom kernmodell für die H2-Import-Substitutionslogik gelesen: 1 TWh importierter H2 ersetzt (1/0,38)=2,63 TWh inländischen PtL-Strom — Flug ist der Pfad mit dem höchsten Strom-Einsparungs-Hebel pro TWh H2-Import."
+        "description": "Power-to-Liquid Konversionswirkungsgrad Strom → e-Kerosin (LHV). Default 0,38 (Fischer-Tropsch + DAC). Herleitungs-Anker des Slider-Defaults (300 TWh = 114/0,38); im H₂-Pool zieht der Sektor je TWh PtL-Strom 0,62 TWh H₂-Zwischenprodukt — 1 TWh Pool-/Import-H2 ersetzt 1/0,62 ≈ 1,61 TWh PtL-Strom, implizite Synthese-η H2 → Kerosin 0,38/0,62 ≈ 0,61 (FT inkl. DAC: 0,60–0,65)."
       },
       {
         "name": "alreadyElectricTWh",
@@ -143,7 +143,8 @@
       "PtL-Wirkungsgrad ist Literaturmittel; reale Großanlagen können um ±5 Prozentpunkte abweichen, was die Zusatzlast um rund ±40 TWh verschiebt.",
       "Mengenrisiko Vor-Corona vs. Wachstum: Slider-Maximum unterstellt Rückkehr auf rund 10 Mio. t plus moderates Wachstum; politische Nachfragedämpfung (Kerosinsteuer, Kurzstrecken-Substitution Bahn) würde den Bedarf senken.",
       "Batterie-Elektrifizierung der Kurzstrecke (Inlandsflüge unter 500 km) ist nicht separat modelliert und im PtL-Anteil mitgerechnet.",
-      "Hybrid-Pfade mit HEFA- oder Bio-SAF (kein Strombedarf, aber begrenzte Reststoffmenge) sind nicht abgebildet — ReFuelEU verlangt 70 % SAF bis 2050, davon 35 % synthetisch; Vollumstellung auf PtL ist daher Obergrenze."
+      "Hybrid-Pfade mit HEFA- oder Bio-SAF (kein Strombedarf, aber begrenzte Reststoffmenge) sind nicht abgebildet — ReFuelEU verlangt 70 % SAF bis 2050, davon 35 % synthetisch; Vollumstellung auf PtL ist daher Obergrenze.",
+      "Der DAC-/Synthese-Direktstrom der PtL-Kette (~15–20 % laut Concawe) wird im H₂-Pool H₂-seitig verbucht: die physische H₂-Tonnage des Pools ist entsprechend überzeichnet, die Strombilanz bleibt korrekt."
     ],
     "file": "last/e100-flug/data.json",
     "scripts": [

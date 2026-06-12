@@ -64,7 +64,7 @@ export type Scenario = {
    * Außenhandel-Import: Strom in GW (stündlich-konstante Obergrenze) plus
    * H2-Import in TWh/Jahr (LHV). Letzterer reduziert den inländischen Strom-
    * bedarf der H2-konsumierenden Sektoren (Stahl/Chemie/Schiff/Flug) nach
-   * Wirkungsgrad-Priorität (Flug→Schiff→Chemie→Stahl), nicht als zusätzlicher
+   * Strom-Hebel-Priorität (Chemie/Schiff/Flug je 1/0,62, Stahl 1,56 zuletzt), nicht als zusätzlicher
    * Stromfluss. Import-Emissionsfaktor liegt im aussenhandel/strom-handel-Paket.
    */
   import: {

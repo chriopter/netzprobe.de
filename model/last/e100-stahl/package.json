@@ -88,7 +88,7 @@
       {
         "name": "electrolyzerKwhPerKgH2",
         "unit": "kWh/kg H2",
-        "description": "Stromverbrauch des Elektrolyseurs (System inkl. Hilfsaggregate). Wird vom kernmodell für die H2-Import-Substitutionslogik gelesen: Stahl-System-η = 33,33/52 ≈ 0,64; 1 TWh importierter H2 ersetzt (1/0,64)=1,56 TWh inländischen DRI-Elektrolyse-Strom."
+        "description": "Stromverbrauch des Elektrolyseurs (System inkl. Hilfsaggregate). Wird vom kernmodell als Strom-Hebel des H₂-Pools gelesen: Stahl-System-η = 33,33/52 ≈ 0,64; 1 TWh Pool-/Import-H2 ersetzt (1/0,64)=1,56 TWh inländischen DRI-Elektrolyse-Strom (H₂ ist hier selbst das Endprodukt, keine Synthese-Verluste). Deckt der Pool den Stahl-H₂ aus eigener Elektrolyse, lädt er mit Pool-η 0,62 (≈53,8 kWh/kg) statt der 52 kWh/kg des Onsite-Elektrolyseurs — kleiner konservativer Aufschlag (~3 TWh bei Volldeckung)."
       },
       {
         "name": "eafMwhPerTon",
