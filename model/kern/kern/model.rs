@@ -673,14 +673,19 @@ impl StaticModel {
         // H2-Zwischenprodukt führt (Bedarf = Sektor-Strom × chargeEfficiency),
         // ist die Korrektur fast neutral — übrig bleibt nur der Stahl-Aufschlag
         // (Pool-Elektrolyse 0,62 statt Onsite 52 kWh/kg ≈ 0,641, ~+3 TWh).
+        // Speicher (Batterie/Rückverstromung/Kaverne) skalieren dagegen mit der
+        // STROMLAST (Demand minus Sektor-Elektrolyse-Strom): die Pool-Sektoren
+        // bringen ihre Flexibilität selbst mit (Audit AP04).
         let lhv = self.sector_h2_demand_twh(scenario)?;
         let strom = self.sector_h2_strom_twh(scenario)?;
         let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
         let sector_lhv_total = lhv.stahl + lhv.chemie + lhv.schiff + lhv.flug;
         let charge_eff = self.storage["h2"].charge_efficiency.max(0.1);
         let eff_demand_twh = demand_twh - sector_strom_total + sector_lhv_total / charge_eff;
+        let stromlast_twh = demand_twh - sector_strom_total;
         self.preset_100ee_with_demand(
             eff_demand_twh,
+            stromlast_twh,
             0.0,
             comp_number("historisch-2025", "exportStromGW")?,
         )
@@ -776,9 +781,13 @@ impl StaticModel {
         ))
     }
 
+    // storage_demand_twh: STROMLAST als Speicher-Treiber (Demand minus Sektor-
+    // Elektrolyse-Strom) — nur die Elektrolyse-Leistung skaliert mit demand_twh,
+    // weil sie auch das Sektor-H2 des Pools produziert (Audit AP04).
     fn preset_100ee_with_demand(
         &self,
         demand_twh: f64,
+        storage_demand_twh: f64,
         import_gw: f64,
         export_gw: f64,
     ) -> Result<(Value, Value, Value, Value), ModelError> {
@@ -787,7 +796,7 @@ impl StaticModel {
         use preset_100ee_lokal::{
             EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
             target_variable_re_twh, variable_re_gw, wind_offshore_gw,
-            pv_compensation_for_wind_offshore_cap,
+            wind_on_compensation_for_wind_offshore_cap,
             battery_power_gw, battery_energy_gwh,
             h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh,
         };
@@ -798,12 +807,14 @@ impl StaticModel {
         let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
         let target = target_variable_re_twh(demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
-        let pv_base_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
-        let pv_compensation = pv_compensation_for_wind_offshore_cap(
-            target, EE_WIND_OFF_SHARE, total_share, yield_wind_off, yield_pv,
+        let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
+        // Offshore-Cap-Shortfall wird über Wind onshore gedeckt (winter-
+        // komplementär, system-günstiger als PV; MC-Optimum, Audit AP05).
+        let wind_on_compensation = wind_on_compensation_for_wind_offshore_cap(
+            target, EE_WIND_OFF_SHARE, total_share, yield_wind_off, yield_wind_on,
         );
-        let pv_gw = pv_base_gw + pv_compensation;
-        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on);
+        let wind_on_gw =
+            variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on) + wind_on_compensation;
         let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
         Ok((
             json!({
@@ -820,13 +831,13 @@ impl StaticModel {
                 "windOffCapacityFactorMultiplier": 1.0,
             }),
             json!({
-                "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(demand_twh))?,
-                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", battery_energy_gwh(demand_twh))?,
+                "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(storage_demand_twh))?,
+                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", battery_energy_gwh(storage_demand_twh))?,
                 "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
                 "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
                 "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", h2_charge_power_gw(demand_twh))?,
-                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", h2_discharge_power_gw(demand_twh))?,
-                "h2EnergyGWh": snap_storage("h2", "energyGWh", h2_energy_gwh(demand_twh))?,
+                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", h2_discharge_power_gw(storage_demand_twh))?,
+                "h2EnergyGWh": snap_storage("h2", "energyGWh", h2_energy_gwh(storage_demand_twh))?,
             }),
             json!({
                 "stromGW": import_gw,
