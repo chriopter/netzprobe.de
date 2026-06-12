@@ -39,6 +39,7 @@ export const MATERIAL_ELEMENT: Record<string, string> = {
   Stahl: 'Fe',
   Aluminium: 'Al',
   Kohle: 'C',
+  Wasserstoff: 'H',
 };
 
 export const NON_ELEMENT_MATERIALS = ['Beton/Zement', 'Erdgas'];
