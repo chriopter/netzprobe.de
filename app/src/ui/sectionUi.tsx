@@ -55,9 +55,10 @@ export function HelpDot({ open, onToggle, label }: { open: boolean; onToggle: ()
   </button>;
 }
 
-// Hilfe-Panel unter der Kopfzeile (Inhalt des Fragezeichens).
+// Hilfe-Panel unter der Kopfzeile (Inhalt des Fragezeichens). Div statt p,
+// damit der Inhalt strukturiert sein darf (Absätze, Aufzählungen).
 export function HelpPanel({ children }: { children: ReactNode }) {
-  return <p className={cx(muted, 'rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs leading-5 dark:border-zinc-800 dark:bg-zinc-900')}>{children}</p>;
+  return <div className={cx(muted, 'rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs leading-5 dark:border-zinc-800 dark:bg-zinc-900 [&_p+p]:mt-2 [&_ul]:mt-1.5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-4 [&_ul+p]:mt-2')}>{children}</div>;
 }
 
 export function SectionHeading({ id, placeholder }: { id: MainViewId; placeholder?: boolean }) {

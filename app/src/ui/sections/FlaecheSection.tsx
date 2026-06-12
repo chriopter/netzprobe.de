@@ -587,7 +587,12 @@ export default function FlaecheSection({ scenario, theme }: { scenario: Scenario
       <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
     </div>
     {helpOpen && <HelpPanel>
-      Bei PV ist die Wirkfläche ein Flottenmix-Wert (6 km²/GW): der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig. Offshore-Wind wird blau außerhalb der Karte gezeigt. Vorfläche zählt nur DE-Inland (Energiepflanzen-Acker, Braunkohle-Tagebau); Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind ausgeklammert — methodisch konsistent.
+      <p>Der Flächenbedarf summiert je Technologie Anlagen-, Wirk- und Vorfläche aus den Paket-Kennwerten (km²/GW bzw. km²/GWh) × Slider-Wert.</p>
+      <ul>
+        <li><strong>PV-Wirkfläche</strong> — Flottenmix-Wert 6 km²/GW: der Aufdach-Anteil (~55–60 % der DE-PV) verbraucht kein Land, nur der Freiflächen-Anteil (~9 km²/GW real) zählt anteilig.</li>
+        <li><strong>Offshore-Wind</strong> — wird blau außerhalb der Karte gezeigt und zählt nicht zur Landesfläche.</li>
+        <li><strong>Vorfläche</strong> — nur DE-Inland (Energiepflanzen-Acker, Braunkohle-Tagebau). Auslands-Brennstoffketten (Uran KZ/CA, Gas NO/US/QA, PV-Modulfertigung China) sind methodisch konsistent ausgeklammert.</li>
+      </ul>
     </HelpPanel>}
     <FlaechePanel scenario={scenario} theme={theme} view={view}/>
   </section>;
