@@ -10,6 +10,7 @@ import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult,
 import { householdElectrificationTWh } from '../ScenarioSidebar';
 import type { DataSet } from '../../types/data';
 import { uiManifest } from '../uiManifest';
+import { getPackage } from '../dataCatalog';
 import { dataWikiUrl } from '../dataLinks';
 
 // Bestandteile der Systemkosten — Farben technologieneutral (Graustufen).
@@ -53,7 +54,20 @@ const Leader = ({ faint }: { faint?: boolean }) => <span aria-hidden className={
 // Tiefste Aufklapp-Ebene: die Eingangsgrößen hinter jedem Posten (Investition,
 // Lebensdauer, Annuität, Preise, Mengen) plus ein Satz Methodik — damit die
 // Rechnung bis auf Parameter-Ebene datenexplorativ bleibt.
-type Facts = { note: string; facts: Array<[string, string]>; wikiId?: string } | null;
+type Facts = { note: string; facts: Array<[string, string]>; wikiId?: string; source?: string } | null;
+
+// Herleitungs-/Quellentext eines Pakets (method.kosten.source) bzw. einer
+// preise-Felddoku — Markdown-Auszeichnung für die Klartext-Anzeige entfernen.
+const plain = (s?: string) => s?.replace(/\*\*/g, '').replace(/`/g, '');
+const kostenSource = (pkgId?: string): string | undefined => {
+  if (!pkgId) return undefined;
+  const m = getPackage(pkgId)?.method as { kosten?: { source?: string } } | undefined;
+  return plain(m?.kosten?.source);
+};
+const preiseField = (name: string): string | undefined => {
+  const m = getPackage('preise')?.method as { fields?: Array<{ name: string; description: string }> } | undefined;
+  return plain(m?.fields?.find(f => f.name === name)?.description);
+};
 
 // Technologie-Key → Modellpaket im Datenhandbuch (Keys sind dort identisch).
 const TECH_WIKI: Record<string, string> = {
@@ -69,6 +83,7 @@ const nK = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: x <
 const h2ImportFacts = (k: KostenResult): Facts => ({
   note: 'Importpreis frei Grenze (LHV) × Menge — deckt H₂-Sektorbedarf bzw. senkt die Stromlast der Elektrolyse.',
   wikiId: 'h2-handel',
+  source: preiseField('h2ImportEurPerMWh'),
   facts: [
     ['Importmenge', `${n1(k.params.h2ImportTWh)} TWh/a`],
     ['Importpreis', `${n0(k.params.h2ImportEurPerMWh)} €/MWh`],
@@ -77,6 +92,7 @@ const h2ImportFacts = (k: KostenResult): Facts => ({
 const stromImportFacts = (k: KostenResult): Facts => ({
   note: 'Zugekaufter Strom zum Großhandelspreis, Menge aus der Stundensimulation.',
   wikiId: 'strom-handel',
+  source: preiseField('importEurPerMWh'),
   facts: [
     ['Menge', `${n1(k.params.importTWh)} TWh/a`],
     ['Preis', `${n0(k.params.importEurPerMWh)} €/MWh`],
@@ -85,6 +101,7 @@ const stromImportFacts = (k: KostenResult): Facts => ({
 const stromExportFacts = (k: KostenResult): Facts => ({
   note: 'Exportierter Überschuss, gutgeschrieben zum Großhandelspreis.',
   wikiId: 'strom-handel',
+  source: preiseField('exportEurPerMWh'),
   facts: [
     ['Menge', `${n1(k.params.exportTWh)} TWh/a`],
     ['Erlös', `${n0(k.params.exportEurPerMWh)} €/MWh`],
@@ -93,6 +110,7 @@ const stromExportFacts = (k: KostenResult): Facts => ({
 const netzFacts = (k: KostenResult): Facts => ({
   note: 'Zwei Pauschalen, annuisiert: je kW volatiler EE-Leistung über dem 2025-Bestand (erzeugungsgetrieben) und je kW Spitzenlast-Zuwachs (lastgetrieben: E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Geeicht an Vollnetz-Schätzungen (IMK, ef.Ruhr/EWI, NEP, DIHK »Plan B«); über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur Richtungssignal.',
   wikiId: 'preise',
+  source: [preiseField('netzCapexEurPerKwAddedRE'), preiseField('netzCapexEurPerKwAddedPeakLoad')].filter(Boolean).join(' — '),
   facts: [
     ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n1(k.params.netzBaselineGW)} GW)`],
     ['Pauschale EE', `${n0(k.params.netzEurPerKW)} €/kW`],
@@ -117,6 +135,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
     if (d.kind === 'gen') return {
       note: 'Neubauwert der Flotte × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive laufendem Ersatz.',
       wikiId,
+      source: kostenSource(wikiId),
       facts: [
         ['Installierte Leistung', `${n1(d.gw ?? 0)} GW`],
         ['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`],
@@ -134,6 +153,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
     return {
       note: 'Leistungs- plus Speichervolumen-Capex, annuisiert über die Lebensdauer.',
       wikiId,
+      source: kostenSource(wikiId),
       facts: [
         ...power,
         ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${nK(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
@@ -155,7 +175,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
       if (ko.omVarEurPerMWh) facts.push(['Variabel', `${n1(ko.omVarEurPerMWh)} €/MWh × ${n1(d.dischargeTWh ?? 0)} TWh entladen`]);
     }
     if (!facts.length) return null;
-    return { note: 'Feste Wartung je installiertem kW plus variable Kosten je erzeugter bzw. entladener MWh.', wikiId, facts };
+    return { note: 'Feste Wartung je installiertem kW plus variable Kosten je erzeugter bzw. entladener MWh.', wikiId, source: kostenSource(wikiId), facts };
   }
   if (!ko.fuelEurPerMWhTh) return null;
   // Kernkraft-Konvention: fuelEurPerMWhTh ist dort bereits €/MWh ELEKTRISCH
@@ -167,6 +187,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
       ? 'Brennstoffpreis je MWh elektrisch (Konvention des Pakets: Wirkungsgrad bereits eingerechnet) × erzeugte Energie aus der Stundensimulation.'
       : 'Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation.',
     wikiId,
+    source: kostenSource(wikiId),
     facts: [
       ['Brennstoffpreis', `${n1(ko.fuelEurPerMWhTh)} €/MWh ${elConvention ? 'el' : 'th'}`],
       ...(elConvention ? [] : [['Wirkungsgrad', `${n0((ko.efficiency ?? 1) * 100)} %`]] as Array<[string, string]>),
@@ -189,6 +210,13 @@ const FactsBlock = ({ f }: { f: NonNullable<Facts> }) => <div className="mb-1 mt
     <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{value}</span>
   </div>)}
   <p className="pt-0.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">{f.note}</p>
+  {f.source && <details className="group/src">
+    <summary className="cursor-pointer list-none text-[11px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500 [&::-webkit-details-marker]:hidden">
+      <span aria-hidden className="mr-1"><span className="group-open/src:hidden">▸</span><span className="hidden group-open/src:inline">▾</span></span>
+      Herleitung &amp; Quellen
+    </summary>
+    <p className="mt-1 border-l border-dotted border-zinc-300 pl-2 text-[11px] leading-snug text-zinc-400 dark:border-zinc-600 dark:text-zinc-500">{f.source}</p>
+  </details>}
   {f.wikiId && <a
     href={dataWikiUrl(f.wikiId)}
     target="_blank"
