@@ -27,7 +27,8 @@ const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.D
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { pct, twh } from './format';
-import { ScenarioSidebar, electrifiedFraction, type BuildoutYear, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
+import { supplyPillLabels } from './supplyPresets';
+import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type BuildoutYear, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
@@ -771,6 +772,9 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     };
   }, []);
 
+  // Vollstaendige Szenario-URL (wie der kopierbare Link) — fuer den QR-Code
+  // auf der Stromrechnung; wird vom URL-Sync-Effekt unten aktuell gehalten.
+  const [shareUrl, setShareUrl] = useState('');
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
@@ -818,6 +822,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
+    setShareUrl(url.toString());
   }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, storageChartMode, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
@@ -1024,7 +1029,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
           <ComingSoonGate id="ressourcen"><RessourcenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} data={data}/></ComingSoonGate>
-          <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear}/></ComingSoonGate>
+          <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/></ComingSoonGate>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>

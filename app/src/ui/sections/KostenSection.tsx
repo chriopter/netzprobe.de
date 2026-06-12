@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { Info } from 'lucide-react';
+import QRCode from 'qrcode';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
-import { HelpDot, HelpPanel, SectionHeading, StatCard, ViewPill, type SectionView, type Stat } from '../sectionUi';
+import { HelpDot, HelpPanel, SectionHeading } from '../sectionUi';
 import { cx } from '../ui';
-import { fmt, fmt0 } from '../format';
-import { computeKosten, type KostenResult } from '../kosten';
+import { fmt0 } from '../format';
+import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult, type KostenTech } from '../kosten';
+import { householdElectrificationTWh } from '../ScenarioSidebar';
+import type { DataSet } from '../../types/data';
 import { uiManifest } from '../uiManifest';
+import { dataWikiUrl } from '../dataLinks';
 
 // Bestandteile der Systemkosten — Farben technologieneutral (Graustufen).
 // CO₂-Bepreisung bewusst ausgelassen: rein politisch gesetzter Transfer.
@@ -24,259 +28,524 @@ const fmtBig = (x: number) => Math.abs(x) >= 1e12
   ? `${(x / 1e12).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e12 < 10 ? 2 : 1 })} Bio €`
   : `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
 const fmtMrd = (x: number) => `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
-// Nackte Mrd-Zahl (ohne Einheit) für Tabellenspalten mit Einheit im Kopf.
-const mrd1 = (x: number) => (x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 });
 
 // Unterposten eines Bon-Postens: die Beiträge der einzelnen Technologien zu
 // dieser Kostenart (bzw. Import/Export beim Saldo). Posten unter 50 Mio €/a
 // sind Floating-Point-Staub bzw. irrelevant — weglassen.
-function subItems(k: KostenResult, key: (typeof PARTS)[number]['key']): Array<{ label: string; v: number }> {
+function subItems(k: KostenResult, key: (typeof PARTS)[number]['key']): Array<{ key: string; label: string; v: number }> {
   const per = (f: (t: KostenResult['perTech'][number]) => number, exclude?: string) => k.perTech
     .filter(t => t.key !== exclude)
-    .map(t => ({ label: t.label, v: f(t) }));
+    .map(t => ({ key: t.key, label: t.label, v: f(t) }));
   const raw = key === 'capex' ? per(t => t.capex)
     : key === 'om' ? per(t => t.om)
       : key === 'fuel' ? per(t => t.fuel, 'h2import')
-        : key === 'importNet' ? [{ label: 'Stromimport', v: k.importCost }, { label: 'Stromexport (Erlös)', v: -k.exportRevenue }]
+        : key === 'importNet' ? [{ key: 'stromimport', label: 'Stromimport', v: k.importCost }, { key: 'stromexport', label: 'Stromexport (Erlös)', v: -k.exportRevenue }]
           : [];
   return raw.filter(s => Math.abs(s.v) > 5e7).sort((a, b) => Math.abs(b.v) - Math.abs(a.v));
 }
 
-// Zackenrand unten wie bei einem abgerissenen Kassenbon (clip-path, dark-mode-sicher).
-const receiptClip = (() => {
-  const teeth = 28;
-  const points: string[] = ['0% 0%', '100% 0%'];
-  for (let i = teeth; i >= 0; i--) {
-    const x = (i / teeth * 100).toFixed(2);
-    points.push(`${x}% ${i % 2 === 0 ? '100%' : 'calc(100% - 7px)'}`);
+// Punktlinie zwischen Posten und Betrag wie auf gedruckten Rechnungen; das leere
+// Inline-Element hat seine Baseline an der Unterkante, die Linie sitzt dadurch
+// automatisch auf der Schriftlinie der Zeile.
+const Leader = ({ faint }: { faint?: boolean }) => <span aria-hidden className={cx('mx-2 min-w-4 flex-1 border-b border-dotted', faint ? 'border-zinc-200 dark:border-zinc-700' : 'border-zinc-300 dark:border-zinc-600')}/>;
+
+// ---------------------------------------------------------------------------
+// Tiefste Aufklapp-Ebene: die Eingangsgrößen hinter jedem Posten (Investition,
+// Lebensdauer, Annuität, Preise, Mengen) plus ein Satz Methodik — damit die
+// Rechnung bis auf Parameter-Ebene datenexplorativ bleibt.
+type Facts = { note: string; facts: Array<[string, string]>; wikiId?: string } | null;
+
+// Technologie-Key → Modellpaket im Datenhandbuch (Keys sind dort identisch).
+const TECH_WIKI: Record<string, string> = {
+  pv: 'pv', windon: 'windon', windoff: 'windoff', biomasse: 'biomasse', laufwasser: 'laufwasser',
+  kernkraft: 'kernkraft', gas: 'gas', kohle: 'kohle',
+  batterie: 'batterie', pumpspeicher: 'pumpspeicher', h2: 'h2', h2import: 'h2-handel',
+};
+const n0 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 0 });
+const n1 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 1 });
+
+const h2ImportFacts = (k: KostenResult): Facts => ({
+  note: 'Importpreis frei Grenze (LHV) × Menge — deckt H₂-Sektorbedarf bzw. senkt die Stromlast der Elektrolyse.',
+  wikiId: 'h2-handel',
+  facts: [
+    ['Importmenge', `${n1(k.params.h2ImportTWh)} TWh/a`],
+    ['Importpreis', `${n0(k.params.h2ImportEurPerMWh)} €/MWh`],
+  ],
+});
+const stromImportFacts = (k: KostenResult): Facts => ({
+  note: 'Zugekaufter Strom zum Großhandelspreis, Menge aus der Stundensimulation.',
+  wikiId: 'strom-handel',
+  facts: [
+    ['Menge', `${n1(k.params.importTWh)} TWh/a`],
+    ['Preis', `${n0(k.params.importEurPerMWh)} €/MWh`],
+  ],
+});
+const stromExportFacts = (k: KostenResult): Facts => ({
+  note: 'Exportierter Überschuss, gutgeschrieben zum Großhandelspreis.',
+  wikiId: 'strom-handel',
+  facts: [
+    ['Menge', `${n1(k.params.exportTWh)} TWh/a`],
+    ['Erlös', `${n0(k.params.exportEurPerMWh)} €/MWh`],
+  ],
+});
+const netzFacts = (k: KostenResult): Facts => ({
+  note: 'Pauschale je kW volatiler EE-Leistung über dem 2025-Bestand, annuisiert — geeicht an Vollnetz-Schätzungen (IMK, NEP, DIHK »Plan B«); über ~700 GW Zubau nur Richtungssignal.',
+  wikiId: 'kern',
+  facts: [
+    ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n0(k.params.netzBaselineGW)} GW)`],
+    ['Pauschale', `${n0(k.params.netzEurPerKW)} €/kW`],
+    ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
+    [`Annuität (WACC ${n0(k.params.wacc * 100)} %)`, `${n1(k.params.netzCrf * 100)} %/a`],
+  ],
+});
+
+function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult): Facts {
+  const d = t.detail;
+  if (!d) return null;
+  if (d.kind === 'h2import') return h2ImportFacts(k);
+  const ko = d.kosten;
+  if (!ko) return null;
+  const ann: [string, string] = [`Annuität (WACC ${n0(k.params.wacc * 100)} %)`, `${n1((d.crfValue ?? 0) * 100)} %/a`];
+  const wikiId = TECH_WIKI[t.key];
+  if (comp === 'capex') {
+    if (d.kind === 'gen') return {
+      note: 'Neubauwert der Flotte × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive laufendem Ersatz.',
+      wikiId,
+      facts: [
+        ['Installierte Leistung', `${n1(d.gw ?? 0)} GW`],
+        ['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`],
+        ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+        ann,
+      ],
+    };
+    const split = ko.capexChargeEurPerKW != null || ko.capexDischargeEurPerKW != null;
+    const power: Array<[string, string]> = split
+      ? [
+        ['Elektrolyseur', `${n1(d.chargeGW ?? 0)} GW × ${n0(ko.capexChargeEurPerKW ?? 0)} €/kW`],
+        ['Rückverstromung', `${n1(d.dischargeGW ?? 0)} GW × ${n0(ko.capexDischargeEurPerKW ?? 0)} €/kW`],
+      ]
+      : [['Leistung', `${n1(Math.max(d.chargeGW ?? 0, d.dischargeGW ?? 0))} GW × ${n0(ko.capexEurPerKW ?? 0)} €/kW`]];
+    return {
+      note: 'Leistungs- plus Speichervolumen-Capex, annuisiert über die Lebensdauer.',
+      wikiId,
+      facts: [
+        ...power,
+        ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${n0(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
+        ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+        ann,
+      ],
+    };
   }
-  return `polygon(${points.join(', ')})`;
-})();
+  if (comp === 'om') {
+    const facts: Array<[string, string]> = [];
+    if (d.kind === 'gen') {
+      if (ko.omFixEurPerKWa) facts.push(['Fix', `${n0(ko.omFixEurPerKWa)} €/kW·a × ${n1(d.gw ?? 0)} GW`]);
+      if (ko.omVarEurPerMWh) facts.push(['Variabel', `${n1(ko.omVarEurPerMWh)} €/MWh × ${n1(d.genTWh ?? 0)} TWh`]);
+    } else {
+      if (ko.omFixChargeEurPerKWa) facts.push(['Elektrolyseur', `${n0(ko.omFixChargeEurPerKWa)} €/kW·a × ${n1(d.chargeGW ?? 0)} GW`]);
+      if (ko.omFixDischargeEurPerKWa) facts.push(['Rückverstromung', `${n0(ko.omFixDischargeEurPerKWa)} €/kW·a × ${n1(d.dischargeGW ?? 0)} GW`]);
+      if (ko.omFixEurPerKWa) facts.push(['Fix', `${n0(ko.omFixEurPerKWa)} €/kW·a × ${n1(Math.max(d.chargeGW ?? 0, d.dischargeGW ?? 0))} GW`]);
+    }
+    if (!facts.length) return null;
+    return { note: 'Feste Wartung je installiertem kW plus variable Kosten je erzeugter MWh.', wikiId, facts };
+  }
+  if (!ko.fuelEurPerMWhTh) return null;
+  return {
+    note: 'Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation.',
+    wikiId,
+    facts: [
+      ['Brennstoffpreis', `${n1(ko.fuelEurPerMWhTh)} €/MWh th`],
+      ['Wirkungsgrad', `${n0((ko.efficiency ?? 1) * 100)} %`],
+      ['Erzeugung', `${n1(d.genTWh ?? 0)} TWh/a`],
+    ],
+  };
+}
+
+function leafFacts(k: KostenResult, techKey: string, comp: 'capex' | 'om' | 'fuel'): Facts {
+  if (techKey === 'stromimport') return stromImportFacts(k);
+  if (techKey === 'stromexport') return stromExportFacts(k);
+  const t = k.perTech.find(x => x.key === techKey);
+  return t ? compFacts(t, comp, k) : null;
+}
+
+const FactsBlock = ({ f }: { f: NonNullable<Facts> }) => <div className="mb-1 mt-1.5 space-y-1 text-xs leading-normal">
+  {f.facts.map(([label, value]) => <div key={label} className="flex items-baseline">
+    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{label}</span>
+    <Leader faint/>
+    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{value}</span>
+  </div>)}
+  <p className="pt-0.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">{f.note}</p>
+  {f.wikiId && <a
+    href={dataWikiUrl(f.wikiId)}
+    target="_blank"
+    rel="noreferrer"
+    onClick={event => event.stopPropagation()}
+    className="inline-block text-[11px] uppercase tracking-wide text-zinc-400 underline decoration-dotted underline-offset-2 transition-colors hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+  >Im Wiki nachlesen →</a>}
+</div>;
+
+// Unterposten-Zeile: aufklappbar bis auf die Parameter-Ebene, wo Daten existieren.
+const LeafRow = ({ label, value, f }: { label: string; value: string; f: Facts }) => f
+  ? <details className="group/leaf">
+    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <div className="flex items-baseline">
+        <span className="flex min-w-0 items-baseline gap-1 text-zinc-400 dark:text-zinc-500">
+          <span aria-hidden className="w-3 shrink-0"><span className="group-open/leaf:hidden">▸</span><span className="hidden group-open/leaf:inline">▾</span></span>
+          <span className="truncate">{label}</span>
+        </span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{value}</span>
+      </div>
+    </summary>
+    <div className="pl-4"><FactsBlock f={f}/></div>
+  </details>
+  : <div className="flex items-baseline">
+    <span className="min-w-0 truncate pl-4 text-zinc-400 dark:text-zinc-500">{label}</span>
+    <Leader faint/>
+    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{value}</span>
+  </div>;
+
+// Papieroptik: feines Korn plus leicht zerknuelltes Papier — beides als
+// SVG-Rauschen (feTurbulence bzw. feDiffuseLighting), sehr dezent uebergelegt.
+const PAPER_GRAIN = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.05 0'/></filter><rect width='180' height='180' filter='url(#n)'/></svg>")}")`;
+const PAPER_CRUMPLE = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='420' height='420'><filter id='c'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='5' stitchTiles='stitch'/><feDiffuseLighting lighting-color='#ffffff' surfaceScale='1.6'><feDistantLight azimuth='45' elevation='60'/></feDiffuseLighting></filter><rect width='420' height='420' filter='url(#c)'/></svg>")}")`;
 
 // Signatur-Element der Sektion: die Systemkosten als Stromrechnung — inklusive
 // der Umlage auf einen Durchschnittshaushalt (Verbrauch × Ø Systemkosten).
-function Stromrechnung({ k, buildoutYear, horizon }: { k: ReturnType<typeof computeKosten>; buildoutYear: string; horizon: number }) {
-  const P = uiManifest.prices as Record<string, number>;
-  const kwh = P.householdConsumptionKWhPerA ?? 3000;
-  const perMonth = k.perMWh * kwh / 1000 / 12;
-  const G = (x: number) => fmtBig(x * horizon);
+type HaushaltView = HaushaltResult & { kmPerYear: number; kwhPer100Km: number; heatKwhPerYear: number; cop: number };
+
+function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, shareUrl }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; buildoutYear: string; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string }) {
+  // Alle Beträge wahlweise über den Aufbauzeitraum summiert oder pro Jahr.
+  const [mode, setMode] = useState<'gesamt' | 'jahr'>('gesamt');
+  const G = (x: number) => mode === 'gesamt' ? fmtBig(x * horizon) : fmtMrd(x);
+  // Zwei Gruppierungen derselben Summe als Akkordeon: Kostenart oder Technologie.
+  const [group, setGroup] = useState<'art' | 'tech'>('art');
   // Posten unter 50 Mio €/a sind Floating-Point-Staub (z. B. Netz exakt auf der
   // 2025-Basis) — auf dem Bon weglassen.
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
-  return <div className="mx-auto w-full max-w-[560px] font-mono text-[15px] leading-relaxed">
-    <div className="border border-zinc-200 bg-white px-5 pb-7 pt-5 text-zinc-800 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200" style={{ clipPath: receiptClip }}>
-      <p className="text-center text-base font-bold uppercase tracking-[0.2em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
-      <p className="mt-0.5 text-center text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Deutschland · heute bis {buildoutYear}</p>
-      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
-      <div className="mt-3 space-y-2">
-        {items.map(p => {
-          const subs = subItems(k, p.key);
-          if (!subs.length) return <div key={p.key} className="flex items-baseline justify-between gap-3">
-            <span className="truncate pl-4 text-zinc-500 dark:text-zinc-400">{p.label}</span>
-            <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
-          </div>;
-          return <details key={p.key} className="group/it">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-              <span className="flex min-w-0 items-center gap-1 text-zinc-500 dark:text-zinc-400">
-                <ChevronRight className="h-3 w-3 shrink-0 text-zinc-400 transition-transform group-open/it:rotate-90 dark:text-zinc-500"/>
-                <span className="truncate">{p.label}</span>
-              </span>
-              <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
-            </summary>
-            <div className="mb-1 mt-1 space-y-1 pl-6 text-xs leading-normal">
-              {subs.map(s => <div key={s.label} className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-zinc-400 dark:text-zinc-500">{s.label}</span>
-                <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{G(s.v)}</span>
-              </div>)}
-            </div>
-          </details>;
-        })}
-      </div>
-      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
-      <div className="mt-3 flex items-baseline justify-between gap-3 text-lg font-bold text-zinc-950 dark:text-zinc-50">
-        <span>SUMME</span>
-        <span className="tabular-nums">{G(k.total)}</span>
-      </div>
-      <div className="mt-1 flex items-baseline justify-between gap-3 text-zinc-500 dark:text-zinc-400">
-        <span>≙ pro Jahr · {horizon} Jahre</span>
-        <span className="tabular-nums">{fmtMrd(k.total)}</span>
-      </div>
-      <div className="mt-1 flex items-baseline justify-between gap-3 text-zinc-500 dark:text-zinc-400">
-        <span>entspricht je MWh</span>
-        <span className="tabular-nums">{k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span>
-      </div>
-      <div className="mt-3 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
-      <div className="mt-3 rounded-md bg-zinc-100 px-3 py-2.5 dark:bg-zinc-800">
-        <p className="text-[11px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Haushalt mit {kwh.toLocaleString('de-DE')} kWh/a</p>
-        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-950 dark:text-zinc-50">{perMonth.toLocaleString('de-DE', { maximumFractionDigits: 0 })} € <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/ Monat</span></p>
-      </div>
-      {k.netzExtrapolated && <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
-        Netzposten extrapoliert: EE-Zubau {Math.round(k.addedReGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 GW) — nur als Richtungssignal lesen.
-      </p>}
-      <p className="mt-4 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-        Systemkosten ab Werk — ohne Netzentgelt-Detail, Steuern, Abgaben, Marge. Annahmen im Datenhandbuch.
-      </p>
-    </div>
-  </div>;
-}
-
-// Graustufen je Kostenart (technologieneutral, keine Tech-Farben): dunkel =
-// Kapital, mittel = Betrieb, stone = Brennstoff — dieselbe Brennstoff-Farbe
-// wie in der Ressourcen-Sektion.
-const COST_SHADES = [
-  { key: 'capex', label: 'Kapitalkosten', cls: 'bg-zinc-700 dark:bg-zinc-200' },
-  { key: 'om', label: 'Betrieb & Wartung', cls: 'bg-zinc-400 dark:bg-zinc-500' },
-  { key: 'fuel', label: 'Brennstoff', cls: 'bg-stone-500 dark:bg-stone-400' },
-] as const;
-
-const techRowGrid = 'grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_4rem_3.5rem] items-center gap-x-3 sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_4.5rem_4rem]';
-
-// Begleittafel zum Bon: Jahreskosten je Technologie als horizontale Graustufen-
-// Stapelbalken (Kapital / Betrieb / Brennstoff) mit Mrd €/a und €/MWh, darunter
-// die kapazitätsunabhängigen Systemposten (Netz, Strom-Import-Saldo) einfarbig.
-function TechKostenPanel({ k }: { k: KostenResult }) {
   const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
-  const system: Array<{ label: string; v: number; hint?: string; mark?: boolean }> = [
-    { label: 'Netzausbau & -betrieb', v: k.breakdown.netz, mark: k.netzExtrapolated, hint: k.netzExtrapolated ? 'Außerhalb des geeichten Bereichs der Netzkosten-Heuristik — nur Richtungssignal' : undefined },
-    { label: 'Strom-Import-Saldo', v: k.breakdown.importNet, hint: `Stromimport ${mrd1(k.importCost)} − Export-Erlös ${mrd1(k.exportRevenue)} Mrd €/a` },
-  ].filter(s => Math.abs(s.v) > 5e7);
-  const max = Math.max(1, ...techs.map(t => t.total), ...system.map(s => Math.abs(s.v)));
-  const num = 'text-right tabular-nums';
-
-  return <div className="flex min-w-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Jahreskosten je Technologie</h3>
-    <div className={cx(techRowGrid, 'mt-3 border-b border-zinc-200 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800 dark:text-zinc-500')}>
-      <span>Technologie</span>
-      <span/>
-      <span className={num}>Mrd €/a</span>
-      <span className={cx(num, 'cursor-help underline decoration-dotted decoration-zinc-300 underline-offset-2')} title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie. Speicher erzeugen nicht selbst — dort „–“.">€/MWh</span>
-    </div>
-    {techs.map(t => <div key={t.key} className={cx(techRowGrid, 'border-b border-zinc-100 py-1.5 text-sm dark:border-zinc-800')}>
-      <span className="truncate text-zinc-700 dark:text-zinc-300" title={t.label}>{t.label}</span>
-      <div className="flex h-3 items-stretch gap-px" title={`Kapital ${mrd1(t.capex)} · Betrieb ${mrd1(t.om)} · Brennstoff ${mrd1(t.fuel)} Mrd €/a`}>
-        {COST_SHADES.map(p => {
-          const w = t[p.key] / max * 100;
-          return w > 0.3 ? <span key={p.key} className={cx('rounded-[2px]', p.cls)} style={{ width: `${w}%` }}/> : null;
-        })}
-      </div>
-      <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(t.total)}</span>
-      <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>{t.eurPerMWh != null ? fmt0.format(t.eurPerMWh) : '–'}</span>
-    </div>)}
-    {system.length > 0 && <>
-      <div className="pt-3 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Systemposten</div>
-      {system.map(s => <div key={s.label} className={cx(techRowGrid, 'border-b border-zinc-100 py-1.5 text-sm dark:border-zinc-800')}>
-        <span className={cx('truncate text-zinc-700 dark:text-zinc-300', s.hint && 'cursor-help')} title={s.hint ?? s.label}>
-          {s.label}
-          {s.mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}
-        </span>
-        <div className="flex h-3 items-stretch" title={s.hint}>
-          <span
-            className={s.v >= 0 ? 'rounded-[2px] bg-zinc-300 dark:bg-zinc-600' : 'rounded-[2px] border border-zinc-400 dark:border-zinc-500'}
-            style={{ width: `${Math.abs(s.v) / max * 100}%` }}
-          />
+  const netzHint = k.netzExtrapolated ? `Extrapoliert: EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 GW) — nur Richtungssignal.` : undefined;
+  // Kapazitätsunabhängige Posten gehören in beide Gruppierungen — nur so summieren
+  // sich beide Knoten auf dieselbe SUMME.
+  const sysRows = [
+    { key: 'netz', label: 'Netzausbau & -betrieb', v: k.breakdown.netz, mark: k.netzExtrapolated },
+    { key: 'importNet', label: 'Strom-Import-Saldo', v: k.breakdown.importNet, mark: false },
+  ].filter(r => Math.abs(r.v) > 5e7);
+  // Nadeldrucker-Balken aus Blockzeichen (░) in derselben Zeile: das Label
+  // endet an einer festen Spaltenkante, ab dort wächst der Balken Richtung
+  // Betrag — alle Balken starten also auf gleicher Höhe und bleiben vergleichbar.
+  const BAR_CH = 35;
+  const maxArt = Math.max(1, ...items.map(p => Math.abs(k.breakdown[p.key])));
+  const maxTech = Math.max(1, ...techs.map(t => t.total), ...sysRows.map(r => Math.abs(r.v)));
+  const segCh = (v: number, max: number) => v > 5e7 ? Math.max(1, Math.round(v / max * BAR_CH)) : 0;
+  const pctOf = (v: number) => k.total > 0 ? <span className="ml-1.5 text-zinc-400 dark:text-zinc-500">({Math.round(v / k.total * 100)} %)</span> : null;
+  const rowGrid = 'grid grid-cols-[minmax(0,15.5rem)_minmax(0,1fr)_auto] items-baseline gap-x-2';
+  const barInline = 'select-none overflow-hidden whitespace-nowrap text-xs leading-none text-zinc-700 dark:text-zinc-300';
+  const NodeHead = ({ id, label }: { id: 'art' | 'tech'; label: string }) => (
+    <button
+      type="button"
+      onClick={() => setGroup(id)}
+      aria-expanded={group === id}
+      className={cx('flex w-full items-center gap-1.5 text-sm font-bold uppercase tracking-[0.15em] transition-colors', group === id
+        ? 'text-zinc-950 dark:text-zinc-50'
+        : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300')}
+    >
+      <span aria-hidden className="w-3.5 shrink-0">{group === id ? '▾' : '▸'}</span>{label}
+    </button>
+  );
+  // QR-Code mit der aktuellen Szenario-URL (wie der kopierbare Link oben) —
+  // synchron generiert, Module als ein SVG-Pfad.
+  const qrUrl = shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://netzprobe.de');
+  const qr = useMemo(() => {
+    const code = QRCode.create(qrUrl, { errorCorrectionLevel: 'M' });
+    const size = code.modules.size;
+    let d = '';
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (code.modules.get(r, c)) d += `M${c} ${r}h1v1h-1z`;
+    return { size, d };
+  }, [qrUrl]);
+  const [copied, setCopied] = useState(false);
+  const copyShareUrl = () => {
+    navigator.clipboard?.writeText(qrUrl).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    }).catch(() => {});
+  };
+  return <div className="w-full font-mono text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
+    <div className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: PAPER_GRAIN }}/>
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.05] dark:opacity-[0.06]" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
+      <a
+        href={dataWikiUrl('preise')}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Kosten-Annahmen im Wiki öffnen"
+        title="Kosten-Annahmen im Wiki öffnen"
+        className="absolute right-4 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+      >
+        <Info className="h-3.5 w-3.5"/>
+      </a>
+      <div className="relative flex flex-1 flex-col px-6 pb-8 pt-8 sm:px-10">
+      <p className="text-center text-lg font-bold uppercase tracking-[0.3em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
+      <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Deutschland · heute bis {buildoutYear} ({horizon} Jahre)</p>
+      <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
+      <div className="mt-4 flex justify-center">
+        <div className="flex border border-zinc-300 text-[10px] uppercase tracking-[0.15em] dark:border-zinc-600" role="tablist" aria-label="Beträge gesamt oder pro Jahr">
+          {([['gesamt', 'Gesamt'], ['jahr', 'Pro Jahr']] as const).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => setMode(m)}
+              className={cx('px-3 py-1 transition-colors', mode === m
+                ? 'bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900'
+                : 'text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300')}
+            >{label}</button>
+          ))}
         </div>
-        <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(s.v)}</span>
-        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
-      </div>)}
-    </>}
-    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-      {COST_SHADES.map(p => <span key={p.key} className="flex items-center gap-1.5">
-        <span className={cx('h-2 w-2 rounded-[2px]', p.cls)}/>{p.label}
-      </span>)}
-      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-[2px] bg-zinc-300 dark:bg-zinc-600"/>Systemposten</span>
-      <span className="ml-auto text-zinc-400 dark:text-zinc-500">Balkenlänge = Jahreskosten{k.netzExtrapolated ? ' · * extrapoliert' : ''}</span>
-    </div>
-  </div>;
-}
-
-// Details-Ansicht: dieselben Jahreskosten als Zahlentabelle mit allen
-// Komponenten-Spalten statt Stapelbalken.
-function KostenDetailTable({ k }: { k: KostenResult }) {
-  const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
-  const system: Array<{ label: string; v: number; mark?: boolean; hint?: string }> = [
-    { label: 'Netzausbau & -betrieb', v: k.breakdown.netz, mark: k.netzExtrapolated, hint: k.netzExtrapolated ? 'Außerhalb des geeichten Bereichs der Netzkosten-Heuristik — nur Richtungssignal' : undefined },
-    { label: 'Strom-Import-Saldo', v: k.breakdown.importNet, hint: `Stromimport ${mrd1(k.importCost)} − Export-Erlös ${mrd1(k.exportRevenue)} Mrd €/a` },
-  ].filter(s => Math.abs(s.v) > 5e7);
-  const grid = 'grid grid-cols-[minmax(0,1fr)_4rem_4rem_4.5rem_4.5rem_3.5rem] items-center gap-x-3';
-  const num = 'text-right tabular-nums';
-  return <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Jahreskosten je Technologie</h3>
-    <div className={cx(grid, 'mt-3 border-b border-zinc-200 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800 dark:text-zinc-500')}>
-      <span>Technologie</span>
-      <span className={num}>Kapital</span>
-      <span className={num}>Betrieb</span>
-      <span className={num}>Brennstoff</span>
-      <span className={num}>Gesamt</span>
-      <span className={cx(num, 'cursor-help underline decoration-dotted decoration-zinc-300 underline-offset-2')} title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie. Speicher erzeugen nicht selbst — dort „–“.">€/MWh</span>
-    </div>
-    {techs.map(t => <div key={t.key} className={cx(grid, 'border-b border-zinc-100 py-1.5 text-sm dark:border-zinc-800')}>
-      <span className="truncate text-zinc-700 dark:text-zinc-300" title={t.label}>{t.label}</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{t.capex > 5e7 ? mrd1(t.capex) : '–'}</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{t.om > 5e7 ? mrd1(t.om) : '–'}</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{t.fuel > 5e7 ? mrd1(t.fuel) : '–'}</span>
-      <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(t.total)}</span>
-      <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>{t.eurPerMWh != null ? fmt0.format(t.eurPerMWh) : '–'}</span>
-    </div>)}
-    {system.length > 0 && <>
-      <div className="pt-3 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Systemposten</div>
-      {system.map(s => <div key={s.label} className={cx(grid, 'border-b border-zinc-100 py-1.5 text-sm dark:border-zinc-800')}>
-        <span className={cx('truncate text-zinc-700 dark:text-zinc-300', s.hint && 'cursor-help')} title={s.hint ?? s.label}>
-          {s.label}
-          {s.mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}
+      </div>
+      <div className="mt-5 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-5">
+        <NodeHead id="art" label="Nach Kostenart"/>
+        {group === 'art' && <div className="mt-4 space-y-4">
+          {items.map(p => {
+            const subs = subItems(k, p.key);
+            const mark = p.key === 'netz' && k.netzExtrapolated;
+            const bar = '░'.repeat(segCh(Math.abs(k.breakdown[p.key]), maxArt));
+            const own = p.key === 'netz' ? netzFacts(k) : p.key === 'h2Import' ? h2ImportFacts(k) : null;
+            if (!subs.length && !own) return <div key={p.key} className={rowGrid}>
+              <span className={cx('min-w-0 truncate pl-5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', mark && 'cursor-help')} title={mark ? netzHint : undefined}>
+                {p.label}{pctOf(k.breakdown[p.key])}{mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}
+              </span>
+              <span aria-hidden className={barInline}>{bar}</span>
+              <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
+            </div>;
+            return <details key={p.key} className="group/it">
+              <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div className={rowGrid}>
+                  <span className="flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
+                      <span className="group-open/it:hidden">▸</span><span className="hidden group-open/it:inline">▾</span>
+                    </span>
+                    <span className="truncate">{p.label}{pctOf(k.breakdown[p.key])}</span>
+                  </span>
+                  <span aria-hidden className={barInline}>{bar}</span>
+                  <span className="shrink-0 tabular-nums">{G(k.breakdown[p.key])}</span>
+                </div>
+              </summary>
+              <div className="mb-1.5 mt-2 space-y-1.5 pl-5 text-[13px] leading-normal">
+                {subs.length > 0
+                  ? subs.map(s => <LeafRow key={s.key} label={s.label} value={G(s.v)} f={leafFacts(k, s.key, p.key === 'om' || p.key === 'fuel' ? p.key : 'capex')}/>)
+                  : own && <FactsBlock f={own}/>}
+              </div>
+            </details>;
+          })}
+        </div>}
+      </div>
+      <div className="mt-5 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-5">
+        <NodeHead id="tech" label="Nach Technologie"/>
+        {group === 'tech' && <div className="mt-4 space-y-4">
+          {techs.map(t => {
+            const comps = ([['capex', 'Kapitalkosten', t.capex], ['om', 'Betrieb & Wartung', t.om], ['fuel', 'Brennstoff', t.fuel]] as const).filter(([, , v]) => v > 5e7);
+            // Aufklappbar, sobald es etwas zu zeigen gibt: Kostenarten mit
+            // Parameter-Ebene oder die Gestehungskosten je erzeugter MWh.
+            const expandable = comps.length > 0 || t.eurPerMWh != null;
+            const bar = '░'.repeat(segCh(Math.max(0, t.total), maxTech));
+            const head = <div className={rowGrid}>
+              <span className="flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                {expandable
+                  ? <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
+                    <span className="group-open/tr:hidden">▸</span><span className="hidden group-open/tr:inline">▾</span>
+                  </span>
+                  : <span aria-hidden className="w-3.5 shrink-0"/>}
+                <span className="truncate">{t.label}{pctOf(t.total)}</span>
+              </span>
+              <span aria-hidden className={barInline}>{bar}</span>
+              <span className="shrink-0 tabular-nums">{G(t.total)}</span>
+            </div>;
+            if (!expandable) return <div key={t.key}>{head}</div>;
+            return <details key={t.key} className="group/tr">
+              <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                {head}
+              </summary>
+              <div className="mb-1.5 mt-2 space-y-1.5 pl-5 text-[13px] leading-normal">
+                {comps.map(([ck, label, v]) => <LeafRow key={ck} label={label} value={G(v)} f={compFacts(t, ck, k)}/>)}
+                {t.eurPerMWh != null && <div className="flex items-baseline">
+                  <span className="min-w-0 truncate pl-4 text-zinc-400 dark:text-zinc-500" title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie">≙ je erzeugter MWh</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{fmt0.format(t.eurPerMWh)} €</span>
+                </div>}
+              </div>
+            </details>;
+          })}
+          {sysRows.map(r => <details key={r.key} className="group/sr">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className={rowGrid}>
+                <span className={cx('flex min-w-0 items-baseline gap-1.5 text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400', r.mark && 'cursor-help')} title={r.mark ? netzHint : undefined}>
+                  <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
+                    <span className="group-open/sr:hidden">▸</span><span className="hidden group-open/sr:inline">▾</span>
+                  </span>
+                  <span className="truncate">{r.label}{pctOf(r.v)}{r.mark && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400" aria-hidden>*</span>}</span>
+                </span>
+                <span aria-hidden className={barInline}>{'░'.repeat(segCh(Math.abs(r.v), maxTech))}</span>
+                <span className="shrink-0 tabular-nums">{G(r.v)}</span>
+              </div>
+            </summary>
+            <div className="mb-1.5 mt-2 space-y-1.5 pl-5 text-[13px] leading-normal">
+              {r.key === 'netz'
+                ? <FactsBlock f={netzFacts(k)!}/>
+                : <>
+                  <LeafRow label="Stromimport" value={G(k.importCost)} f={stromImportFacts(k)}/>
+                  <LeafRow label="Stromexport (Erlös)" value={G(-k.exportRevenue)} f={stromExportFacts(k)}/>
+                </>}
+            </div>
+          </details>)}
+        </div>}
+      </div>
+      <div className="mt-5 border-t-4 border-double border-zinc-300 dark:border-zinc-600"/>
+      <div className="mt-5 flex items-baseline text-xl font-bold tracking-wider text-zinc-950 dark:text-zinc-50">
+        <span>SUMME</span>
+        <Leader/>
+        <span className="shrink-0 tabular-nums">{G(k.total)}</span>
+      </div>
+      <div className="mt-2.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="min-w-0 truncate">{mode === 'gesamt' ? '≙ pro Jahr' : `≙ gesamt bis ${buildoutYear}`}</span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums">{mode === 'gesamt' ? fmtMrd(k.total) : fmtBig(k.total * horizon)}</span>
+      </div>
+      <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="min-w-0 truncate">je MWh</span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums">{k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span>
+      </div>
+      <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="min-w-0 truncate">je kWh</span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums">{(k.perMWh / 10).toLocaleString('de-DE', { maximumFractionDigits: 1 })} ct</span>
+      </div>
+      <div className="mt-8 border-t-4 border-double border-zinc-300 dark:border-zinc-600"/>
+      {(() => {
+        const eur = (ct: number) => ct / 100 * hh.kwh / 12;
+        const restCt = hh.bridge.reduce((a, r) => a + r.ct, 0) + hh.mwstCt;
+        const row = 'flex items-baseline text-sm text-zinc-500 dark:text-zinc-400';
+        return <div className="mt-5">
+          <div className="flex items-baseline text-xl font-bold tracking-wider text-zinc-950 dark:text-zinc-50">
+            <span className="min-w-0 truncate">MUSTERHAUSHALT</span>
+            <Leader/>
+            <span className="shrink-0 tabular-nums">≈ {n0(hh.endkundeEurPerMonth)} € / Monat</span>
+          </div>
+          <div className="mt-3 space-y-2.5">
+            <div className={row}>
+              <span className="min-w-0 truncate pl-5">Systemkosten</span>
+              <Leader faint/>
+              <span className="shrink-0 tabular-nums">{n0(eur(hh.abWerkCt))} €</span>
+            </div>
+            <div className={row}>
+              <span className="min-w-0 truncate pl-5">Netzentgelte, Steuern & Co</span>
+              <Leader faint/>
+              <span className="shrink-0 tabular-nums">{n0(eur(restCt))} €</span>
+            </div>
+            <details className="group/hh">
+              <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div className={row}>
+                  <span className="flex min-w-0 items-baseline gap-1.5">
+                    <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/hh:hidden">▸</span><span className="hidden group-open/hh:inline">▾</span></span>
+                    <span className="truncate">Zusammensetzung Verbrauch</span>
+                  </span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums">{n0(hh.kwh)} kWh/a</span>
+                </div>
+              </summary>
+              <div className="mb-1.5 mt-2 space-y-1 pl-5 text-[13px] leading-normal">
+                <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Verbrauch</p>
+                <div className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Grundbedarf (heutiger Ø-Haushalt)</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.baseKwh)} kWh</span>
+                </div>
+                {hh.pkwKwh > 0 && <div className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">E-Auto ({n0(hh.kmPerYear)} km/a × {n1(hh.kwhPer100Km)} kWh/100 km)</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.pkwKwh)} kWh</span>
+                </div>}
+                {hh.heizKwh > 0 && <div className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Wärmepumpe ({n0(hh.heatKwhPerYear)} kWh Wärme ÷ JAZ {n1(hh.cop)})</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.heizKwh)} kWh</span>
+                </div>}
+                <p className="pt-2 text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Strompreis je kWh</p>
+                <div className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Systemkosten ab Werk (dieses Szenario)</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.abWerkCt)} ct</span>
+                </div>
+                {hh.bridge.map(r => <div key={r.key} className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{r.label}</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(r.ct)} ct</span>
+                </div>)}
+                <div className="flex items-baseline">
+                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Mehrwertsteuer 19 % (auf alle Bestandteile)</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.mwstCt)} ct</span>
+                </div>
+                <div className="flex items-baseline font-semibold">
+                  <span className="min-w-0 truncate text-zinc-500 dark:text-zinc-400">= Endkundenpreis (geschätzt)</span>
+                  <Leader faint/>
+                  <span className="shrink-0 tabular-nums text-zinc-700 dark:text-zinc-300">{n1(hh.endkundeCt)} ct</span>
+                </div>
+                <p className="pt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Nur die Systemkosten folgen den Slidern; alle übrigen Bestandteile konstant auf 2025-Niveau (BDEW). Geschätzter Endkundenpreis — folgt den Last-Reglern.</p>
+                <a
+                  href={dataWikiUrl('preise')}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={event => event.stopPropagation()}
+                  className="inline-block text-[11px] uppercase tracking-wide text-zinc-400 underline decoration-dotted underline-offset-2 transition-colors hover:text-zinc-700 dark:text-zinc-300"
+                >Im Wiki nachlesen →</a>
+              </div>
+            </details>
+          </div>
+        </div>;
+      })()}
+      <div className="mt-8 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
+      <div className="flex flex-1 items-center justify-center pb-5 pt-10">
+      <button type="button" onClick={copyShareUrl} className="block w-fit cursor-pointer" title="Szenario-Link kopieren">
+        <span className="mx-auto block w-fit rounded-sm bg-white p-1.5 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+          <svg viewBox={`0 0 ${qr.size} ${qr.size}`} className="h-24 w-24" shapeRendering="crispEdges" role="img" aria-label="QR-Code: Link zu diesem Szenario">
+            <path d={qr.d} fill="#000"/>
+          </svg>
         </span>
-        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
-        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
-        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
-        <span className={cx(num, 'font-medium text-zinc-950 dark:text-zinc-50')}>{mrd1(s.v)}</span>
-        <span className={cx(num, 'text-zinc-400 dark:text-zinc-500')}>–</span>
-      </div>)}
-    </>}
-    <div className={cx(grid, 'py-2 text-sm font-semibold')}>
-      <span className="text-zinc-950 dark:text-zinc-50">Summe</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{mrd1(k.breakdown.capex)}</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{mrd1(k.breakdown.om)}</span>
-      <span className={cx(num, 'text-zinc-500 dark:text-zinc-400')}>{mrd1(k.breakdown.fuel + k.breakdown.h2Import)}</span>
-      <span className={cx(num, 'text-zinc-950 dark:text-zinc-50')}>{mrd1(k.total)}</span>
-      <span className={num}/>
+        <span className="mt-2 block pl-[0.35em] text-center text-[10px] uppercase tracking-[0.35em] text-zinc-400 dark:text-zinc-500">{copied ? 'Link kopiert' : 'Dieses Szenario'}</span>
+      </button>
+      </div>
+      </div>
     </div>
-    <div className="mt-3 text-[11px] text-zinc-400 dark:text-zinc-500">Alle Werte Mrd €/a · Brennstoff-Spalte inkl. H₂-Import{k.netzExtrapolated ? ' · * extrapoliert' : ''}</div>
   </div>;
 }
 
-export default function KostenSection({ scenario, result, buildoutYear }: { scenario: Scenario; result: SimulationResult; buildoutYear: string }) {
+export default function KostenSection({ scenario, result, buildoutYear, supplyLabel, loadLabel, data, shareUrl }: { scenario: Scenario; result: SimulationResult; buildoutYear: string; supplyLabel: string; loadLabel: string; data: DataSet | null; shareUrl: string }) {
   const k = useMemo(() => computeKosten(scenario, result), [scenario, result]);
+  // Musterhaushalt: kWh-Anteile aus den haushaltsrelevanten Last-Reglern,
+  // Anzeige-Fakten (km, JAZ) direkt aus den e100-Paketen.
+  const hh = useMemo<HaushaltView>(() => {
+    const { pkwTWh, heizTWh } = householdElectrificationTWh(scenario, data);
+    const base = computeHaushalt(k, pkwTWh, heizTWh);
+    const P = uiManifest.prices as Record<string, number>;
+    const households = P.households ?? 41_100_000;
+    const pkw = data?.['e100-pkw'];
+    const heiz = data?.['e100-heiz'];
+    const kmPerYear = pkw ? Math.max(0, scenario.demand['e100-pkw-million-km'] - pkw.alreadyElectricMillionKm) * 1e6 / households : 0;
+    const heatKwhPerYear = heiz ? Math.max(0, scenario.demand['e100-heiz-target-heat-twh'] - heiz.alreadyElectricHeatTWh) * 1e9 / households : 0;
+    return { ...base, kmPerYear, kwhPer100Km: pkw?.kwhPer100Km ?? 0, heatKwhPerYear, cop: heiz?.seasonalCop ?? 0 };
+  }, [k, scenario, data]);
   const horizon = Math.max(1, Number(buildoutYear) - 2025);
   const [helpOpen, setHelpOpen] = useState(false);
-  // Rechte Spalte: Stapelbalken-Tafel (Grafisch) oder Zahlentabelle (Details).
-  const [view, setView] = useState<SectionView>('grafisch');
-
-  const P = uiManifest.prices as Record<string, number>;
-  const kwh = P.householdConsumptionKWhPerA ?? 3000;
-  const perMonth = k.perMWh * kwh / 1000 / 12;
-  const share = (x: number) => k.total > 0 ? `${Math.round(x / k.total * 100)} %` : '–';
-  // Laufende Bezüge = Brennstoff + H₂-Import + Stromimport-Saldo (nur wenn er
-  // netto kostet) — der Gegenpol zum gebundenen Kapital.
-  const laufend = k.breakdown.fuel + k.breakdown.h2Import + Math.max(0, k.breakdown.importNet);
-  const statGroups: Array<{ title: string; stats: Stat[] }> = [
-    { title: 'Umlage', stats: [
-      { label: 'Ø Stromkosten', value: `${fmt0.format(k.perMWh)} €/MWh`, sub: `≙ ${fmt.format(k.perMWh / 10)} ct/kWh` },
-      { label: `Haushalt, ${fmt0.format(kwh)} kWh/a`, value: `${fmt0.format(perMonth)} €/Monat` },
-    ] },
-    { title: 'Zeitraum', stats: [
-      { label: 'Pro Jahr', value: fmtMrd(k.total) },
-      { label: `Gesamt bis ${buildoutYear}`, value: fmtBig(k.total * horizon), sub: `${horizon} Jahre` },
-    ] },
-    { title: 'Kostenarten', stats: [
-      { label: 'Kapitalkosten', value: share(k.breakdown.capex), sub: `${fmtMrd(k.breakdown.capex)}/a` },
-      { label: 'Brennstoff & Importe', value: share(laufend), sub: `${fmtMrd(laufend)}/a` },
-    ] },
-  ];
 
   return <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
     <div className="flex items-center gap-2">
       <SectionHeading id="kosten"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie werden die Kosten berechnet?"/>
-      <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
     </div>
     {helpOpen && <HelpPanel>
       <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> über den Aufbauzeitraum (heute bis {buildoutYear}, {horizon} Jahre) — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Für den „Gesamt"-Wert werden die Jahreskosten mit der Anzahl Jahre multipliziert.</p>
@@ -289,17 +558,12 @@ export default function KostenSection({ scenario, result, buildoutYear }: { scen
         <li><strong>Netzausbau &amp; -betrieb</strong> — Pauschale 1.200 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; dort null, die 2025-Kupferplatte ist der Nullpunkt), annuisiert über 40 Jahre. Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau nur als Richtungssignal zu lesen.</li>
       </ul>
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
+      <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«).</p>
       <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
     </HelpPanel>}
 
-    <div className="grid gap-3 lg:grid-cols-[minmax(360px,2fr)_minmax(0,3fr)] lg:gap-6">
-      <Stromrechnung k={k} buildoutYear={buildoutYear} horizon={horizon}/>
-      <div className="flex min-w-0 flex-col gap-3">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {statGroups.map(group => <StatCard key={group.title} title={group.title} stats={group.stats}/>)}
-        </div>
-        {view === 'grafisch' ? <TechKostenPanel k={k}/> : <KostenDetailTable k={k}/>}
-      </div>
+    <div className="mx-auto mt-2 w-full max-w-[700px]">
+      <Stromrechnung k={k} hh={hh} buildoutYear={buildoutYear} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl}/>
     </div>
   </section>;
 }
