@@ -127,6 +127,11 @@
         "name": "importH2TWh",
         "unit": "TWh/a",
         "description": "H₂-Import 2025 (~0)."
+      },
+      {
+        "name": "co2MtPerYear",
+        "unit": "Mt/a",
+        "description": "CO₂-Ausstoß des 2025-Replays (Engine-Messwert) — Referenzanker für das CO₂-Vielfache der Ressourcen-Sektion."
       }
     ],
     "caveats": [
@@ -156,6 +161,7 @@
     "h2EnergyGWh": 0.1,
     "importStromGW": 13,
     "exportStromGW": 25,
-    "importH2TWh": 0
+    "importH2TWh": 0,
+    "co2MtPerYear": 167.4
   }
 }
