@@ -108,7 +108,8 @@
       "Eigener Offshore-Faktor windOff100m seit Juni 2026 — zuvor Onshore-Faktor × 1,8 (Energie grob korrekt, Lastform gleichphasig falsch).",
       "Faktor bildet Bestandsflotte 2025 ab (~2.800 VLH beobachtet, inkl. Anbindungs-Abregelung); 2045-Flottenmittel laut NEP-Orientierungswert ~3.400 VLH (70 GW → 238 TWh, wake-begrenzt) → Multiplier ~1,2; bis ~1,7 nur für einzelne optimierte ferne Flächen. Default 1,0.",
       "Ein Wetterjahr (2025, eher windschwach) und nur 9,4 GW Bestand als Datenbasis — die statistische Basis ist dünner als bei Onshore (62,8 GW).",
-      "Installierte Leistung ist Jahresmittel; Inbetriebnahmen während des Jahres nicht stundenaufgelöst."
+      "Installierte Leistung ist Jahresmittel; Inbetriebnahmen während des Jahres nicht stundenaufgelöst.",
+      "Zuordnung der Offshore-Netzanbindung: Die ISE-LCOE-Quelle schließt Netzanbindungskosten teils explizit aus (am Primärdokument unverifiziert); der System-Netzposten (preise: netzCapexEurPerKwAddedRE) beansprucht sie als Teil des EE-Terms, unterzeichnet sie aber als Landesmittel (real ~3.000–4.000 EUR/kW Anbindung, siehe preise-Caveat). Im Zweifel liegt also KEINE Doppelzählung vor, sondern eine Unterzeichnung offshore-lastiger Szenarien um grob ~3 Mrd EUR/a bei 70 GW."
     ],
     "file": "erzeugung/windoff/data.json",
     "scripts": [
@@ -134,7 +135,7 @@
       ]
     },
     "kosten": {
-      "source": "**Wind offshore inkl. Netzanbindung (Turbinen 6-15 MW, 2024, real).** CAPEX 2800 EUR/kW = Mittel der ISE-Spanne 2200-3400 (IRENA 2024 Welt 2852 USD/kW ~2640 EUR bestaetigt). ACHTUNG/Warnung der Verifikation: ISE schliesst die Netzanbindung teils explizit AUS den LCOE aus; PyPSA/DEA-Wert 2224 EUR/kW (2020) hat die Netzanbindung ABGEZOGEN und ist daher nicht direkt vergleichbar. Die Aussage 'ISE inkl. Netzanbindung 2200-3400' sollte am Primaerdokument verifiziert werden; die CAPEX-Groessenordnung ist korrekt. Fix-O&M 39 EUR/kW/a, Var-O&M 8 EUR/MWh. Lebensdauer 25 a. WACC real 6,0 % (hoeheres Risiko). LCOE ~79 EUR/MWh (Korridor 55-103). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: mittel (starke CAPEX-Streuung je Netzanbindungstiefe).",
+      "source": "**Wind offshore (Netzanbindung: siehe Caveat — Zuordnung zum Netz-Posten) (Turbinen 6-15 MW, 2024, real).** CAPEX 2800 EUR/kW = Mittel der ISE-Spanne 2200-3400 (IRENA 2024 Welt 2852 USD/kW ~2640 EUR bestaetigt). ACHTUNG/Warnung der Verifikation: ISE schliesst die Netzanbindung teils explizit AUS den LCOE aus; PyPSA/DEA-Wert 2224 EUR/kW (2020) hat die Netzanbindung ABGEZOGEN und ist daher nicht direkt vergleichbar. Die Aussage 'ISE inkl. Netzanbindung 2200-3400' sollte am Primaerdokument verifiziert werden; die CAPEX-Groessenordnung ist korrekt. Fix-O&M 39 EUR/kW/a, Var-O&M 8 EUR/MWh. Lebensdauer 25 a. WACC real 6,0 % (hoeheres Risiko). LCOE ~79 EUR/MWh (Korridor 55-103). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: mittel (starke CAPEX-Streuung je Netzanbindungstiefe).",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",

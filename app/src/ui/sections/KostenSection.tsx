@@ -20,7 +20,7 @@ const PARTS: Array<{ key: 'capex' | 'om' | 'fuel' | 'h2Import' | 'importNet' | '
   { key: 'fuel', label: 'Brennstoff' },
   { key: 'h2Import', label: 'Wasserstoff-Import' },
   { key: 'importNet', label: 'Strom-Import-Saldo' },
-  { key: 'netz', label: 'Netzausbau & -betrieb' },
+  { key: 'netz', label: 'Netzausbau' },
 ];
 
 // Gesamtbeträge über den Aufbauzeitraum: groß (Bio €), sonst Mrd €.
@@ -63,6 +63,8 @@ const TECH_WIKI: Record<string, string> = {
 };
 const n0 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 0 });
 const n1 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 1 });
+// Kleinpreise (z.B. €/kWh-Speichervolumen 0,125–0,5) nicht auf ganze Zahlen runden.
+const nK = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: x < 10 ? 3 : 0 });
 
 const h2ImportFacts = (k: KostenResult): Facts => ({
   note: 'Importpreis frei Grenze (LHV) × Menge — deckt H₂-Sektorbedarf bzw. senkt die Stromlast der Elektrolyse.',
@@ -90,12 +92,12 @@ const stromExportFacts = (k: KostenResult): Facts => ({
 });
 const netzFacts = (k: KostenResult): Facts => ({
   note: 'Zwei Pauschalen, annuisiert: je kW volatiler EE-Leistung über dem 2025-Bestand (erzeugungsgetrieben) und je kW Spitzenlast-Zuwachs (lastgetrieben: E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Geeicht an Vollnetz-Schätzungen (IMK, ef.Ruhr/EWI, NEP, DIHK »Plan B«); über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur Richtungssignal.',
-  wikiId: 'kern',
+  wikiId: 'preise',
   facts: [
-    ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n0(k.params.netzBaselineGW)} GW)`],
+    ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n1(k.params.netzBaselineGW)} GW)`],
     ['Pauschale EE', `${n0(k.params.netzEurPerKW)} €/kW`],
     ['davon EE-getrieben', `${n1(k.params.netzEurPerKW * k.addedReGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
-    ['Peak-Zuwachs über Bestand', `${n0(k.addedPeakLoadGW)} GW (Basis ${n0(k.params.netzBaselinePeakGW)} GW)`],
+    ['Peak-Zuwachs über Bestand', `${n0(k.addedPeakLoadGW)} GW (Basis ${n1(k.params.netzBaselinePeakGW)} GW)`],
     ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW`],
     ['davon lastgetrieben', `${n1(k.params.netzLastEurPerKW * k.addedPeakLoadGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
@@ -134,7 +136,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
       wikiId,
       facts: [
         ...power,
-        ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${n0(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
+        ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${nK(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
         ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
         ann,
       ],
@@ -148,18 +150,26 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
     } else {
       if (ko.omFixChargeEurPerKWa) facts.push(['Elektrolyseur', `${n0(ko.omFixChargeEurPerKWa)} €/kW·a × ${n1(d.chargeGW ?? 0)} GW`]);
       if (ko.omFixDischargeEurPerKWa) facts.push(['Rückverstromung', `${n0(ko.omFixDischargeEurPerKWa)} €/kW·a × ${n1(d.dischargeGW ?? 0)} GW`]);
-      if (ko.omFixEurPerKWa) facts.push(['Fix', `${n0(ko.omFixEurPerKWa)} €/kW·a × ${n1(Math.max(d.chargeGW ?? 0, d.dischargeGW ?? 0))} GW`]);
+      if (ko.omFixEurPerKWa) facts.push(['Fix (Leistung)', `${n0(ko.omFixEurPerKWa)} €/kW·a × ${n1(Math.max(d.chargeGW ?? 0, d.dischargeGW ?? 0))} GW`]);
+      if (ko.omEnergyEurPerKWhA) facts.push(['Fix (Energie)', `${n1(ko.omEnergyEurPerKWhA)} €/kWh·a × ${n0(d.energyGWh ?? 0)} GWh`]);
+      if (ko.omVarEurPerMWh) facts.push(['Variabel', `${n1(ko.omVarEurPerMWh)} €/MWh × ${n1(d.dischargeTWh ?? 0)} TWh entladen`]);
     }
     if (!facts.length) return null;
-    return { note: 'Feste Wartung je installiertem kW plus variable Kosten je erzeugter MWh.', wikiId, facts };
+    return { note: 'Feste Wartung je installiertem kW plus variable Kosten je erzeugter bzw. entladener MWh.', wikiId, facts };
   }
   if (!ko.fuelEurPerMWhTh) return null;
+  // Kernkraft-Konvention: fuelEurPerMWhTh ist dort bereits €/MWh ELEKTRISCH
+  // (ISE 8,0 €/MWh_th ÷ 0,35), efficiency=1 reicht ihn nur durch — keine
+  // thermische Einheit und keinen 100-%-Wirkungsgrad anzeigen.
+  const elConvention = (ko.efficiency ?? 1) === 1;
   return {
-    note: 'Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation.',
+    note: elConvention
+      ? 'Brennstoffpreis je MWh elektrisch (Konvention des Pakets: Wirkungsgrad bereits eingerechnet) × erzeugte Energie aus der Stundensimulation.'
+      : 'Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation.',
     wikiId,
     facts: [
-      ['Brennstoffpreis', `${n1(ko.fuelEurPerMWhTh)} €/MWh th`],
-      ['Wirkungsgrad', `${n0((ko.efficiency ?? 1) * 100)} %`],
+      ['Brennstoffpreis', `${n1(ko.fuelEurPerMWhTh)} €/MWh ${elConvention ? 'el' : 'th'}`],
+      ...(elConvention ? [] : [['Wirkungsgrad', `${n0((ko.efficiency ?? 1) * 100)} %`]] as Array<[string, string]>),
       ['Erzeugung', `${n1(d.genTWh ?? 0)} TWh/a`],
     ],
   };
@@ -228,12 +238,17 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
   // 2025-Basis) — auf dem Bon weglassen.
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
   const techs = k.perTech.filter(t => Math.abs(t.total) > 5e7);
-  const netzHint = k.netzExtrapolated ? `Extrapoliert: EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW bzw. Peak-Zuwachs ${Math.round(k.addedPeakLoadGW).toLocaleString('de-DE')} GW liegt über dem geeichten Bereich der Netzkosten-Heuristik (~700 / ~100 GW) — implizit ${(k.breakdown.netz / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
+  // Nur die tatsächlich überschrittenen Treiber nennen (EE > ~700 GW, Peak > ~100 GW).
+  const netzTrigger = [
+    k.addedReGW > 700 ? `EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW (geeicht bis ~700 GW)` : null,
+    k.addedPeakLoadGW > 100 ? `Peak-Zuwachs ${Math.round(k.addedPeakLoadGW).toLocaleString('de-DE')} GW (geeicht bis ~100 GW)` : null,
+  ].filter(Boolean).join(' und ');
+  const netzHint = k.netzExtrapolated ? `Extrapoliert: ${netzTrigger} liegt über dem geeichten Bereich der Netzkosten-Heuristik — implizit ${(k.breakdown.netz / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
   const exportHint = k.exportAtCap ? `Export läuft praktisch dauerhaft am Cap (~${n0(k.params.exportTWh)} TWh/a, ≥95 % der Cap-Energie) — die Erlösgutschrift ist eine Obergrenze; ob die Nachbarn den Dauerexport abnehmen, modelliert die Kupferplatte nicht.` : undefined;
   // Kapazitätsunabhängige Posten gehören in beide Gruppierungen — nur so summieren
   // sich beide Knoten auf dieselbe SUMME.
   const sysRows = [
-    { key: 'netz', label: 'Netzausbau & -betrieb', v: k.breakdown.netz, hint: netzHint },
+    { key: 'netz', label: 'Netzausbau', v: k.breakdown.netz, hint: netzHint },
     { key: 'importNet', label: 'Strom-Import-Saldo', v: k.breakdown.importNet, hint: exportHint },
   ].filter(r => Math.abs(r.v) > 5e7);
   // Nadeldrucker-Balken aus Blockzeichen (░) in derselben Zeile: das Label
@@ -378,7 +393,8 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
               <div className="mb-1.5 mt-2 space-y-1.5 pl-5 text-[13px] leading-normal">
                 {comps.map(([ck, label, v]) => <LeafRow key={ck} label={label} value={G(v)} f={compFacts(t, ck, k)}/>)}
                 {t.eurPerMWh != null && <div className="flex items-baseline">
-                  <span className="min-w-0 truncate pl-4 text-zinc-400 dark:text-zinc-500" title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie">≙ je erzeugter MWh</span>
+                  {/* H₂-Import ist €/MWh H₂ (LHV), nicht €/MWh elektrisch — Einheit ausweisen. */}
+                  <span className="min-w-0 truncate pl-4 text-zinc-400 dark:text-zinc-500" title="Jahreskosten ÷ erzeugte bzw. gelieferte Energie">{t.key === 'h2import' ? '≙ je gelieferter MWh H₂ (LHV)' : '≙ je erzeugter MWh'}</span>
                   <Leader faint/>
                   <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{fmt0.format(t.eurPerMWh)} €</span>
                 </div>}
@@ -402,8 +418,8 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
               {r.key === 'netz'
                 ? <FactsBlock f={netzFacts(k)!}/>
                 : <>
-                  <LeafRow label="Stromimport" value={G(k.importCost)} f={stromImportFacts(k)}/>
-                  <LeafRow label="Stromexport (Erlös)" value={G(-k.exportRevenue)} f={stromExportFacts(k)}/>
+                  {Math.abs(k.importCost) > 5e7 && <LeafRow label="Stromimport" value={G(k.importCost)} f={stromImportFacts(k)}/>}
+                  {Math.abs(k.exportRevenue) > 5e7 && <LeafRow label="Stromexport (Erlös)" value={G(-k.exportRevenue)} f={stromExportFacts(k)}/>}
                 </>}
             </div>
           </details>)}
@@ -561,7 +577,7 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
         <li><strong>Brennstoff</strong> — Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation (Gas, Kohle, Biomasse, Kernkraft).</li>
         <li><strong>Wasserstoff-Import</strong> — importierte H₂-Menge × Importpreis (frei Grenze, LHV).</li>
         <li><strong>Strom-Import-Saldo</strong> — Stromimport minus -export zum Großhandelspreis.</li>
-        <li><strong>Netzausbau &amp; -betrieb</strong> — zwei Pauschalen, annuisiert über 40 Jahre: 1.000 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; erzeugungsgetrieben: Übertragungsnetz, EE-Anschluss) plus 1.200 €/kW je kW Spitzenlast-Zuwachs über 2025 (75,6 GW; lastgetrieben: Verteilnetz für E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Im 2025-Bestand null (Kupferplatte als Nullpunkt). Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur als Richtungssignal zu lesen.</li>
+        <li><strong>Netzausbau</strong> — zwei Invest-Pauschalen, annuisiert über 40 Jahre (Betrieb des Bestandsnetzes steckt im Netzentgelt der Haushalts-Brücke; Betrieb des Zubaus ist nicht bepreist): 1.000 €/kW je kW volatiler EE-Leistung über dem 2025-Bestand (174,7 GW; erzeugungsgetrieben: Übertragungsnetz, EE-Anschluss) plus 1.200 €/kW je kW Spitzenlast-Zuwachs über 2025 (75,6 GW; lastgetrieben: Verteilnetz für E-Mobilität, Wärmepumpen, Industrie — fällt in jedem Elektrifizierungs-Szenario an). Im 2025-Bestand null (Kupferplatte als Nullpunkt). Geeicht an Vollnetz-Schätzungen (IMK ~651 Mrd €, NEP ~320 Mrd € nur Übertragung, Frontier/DIHK »Plan B« ~1,2 Bio € als oberer Rand); strikt linear, ohne Spannungsebenen — über ~700 GW EE-Zubau bzw. ~100 GW Peak-Zuwachs nur als Richtungssignal zu lesen.</li>
       </ul>
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
       <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«). Weil der Energieanteil kostenbasiert ab Werk gerechnet wird (statt Marktpreis + Marge), liegt das absolute Niveau ~10 % unter der realen BDEW-Rechnung — die Szenario-Vergleiche untereinander bleiben gültig.</p>

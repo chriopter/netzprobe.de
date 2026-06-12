@@ -46,7 +46,8 @@
       "Skaliert Kohle und Gas mit — kein Klimaneutralitäts-Szenario, sondern reine 2025-Hochrechnung.",
       "An Slider-Maxima wird geclippt, dadurch Mix-Verzerrung bei großen Faktoren.",
       "Lineare Skalierung ignoriert Skaleneffekte (Speicher-Sizing, Netz-Topologie).",
-      "Importemissionsfaktor bleibt Default 300 g/kWh (Nachbarmix laut aussenhandel/strom-handel) — kein H₂-Import modelliert."
+      "Importemissionsfaktor bleibt Default 300 g/kWh (Nachbarmix laut aussenhandel/strom-handel) — kein H₂-Import modelliert.",
+      "Die H₂-Sektoren (Stahl/Chemie/Schiff/Flug, ~740 TWh Elektrolysestrom ≈ 84,5 GW Flachlast) laufen hier als reine Stromlast — die Elektrolyseur-Anlagen selbst kosten im Bon nichts (~10 Mrd EUR/a CAPEX+O&M bei 1.500 EUR/kW), während die 100ee-Szenarien ihre Elektrolyse voll bezahlen. Der Kostenvergleich ist insoweit zugunsten dieses Szenarios verzerrt."
     ],
     "scripts": [
       "erzeugung/2025-skaliert/model.rs"

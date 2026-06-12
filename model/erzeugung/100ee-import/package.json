@@ -76,7 +76,7 @@
       "Geopolitisches Risiko durch H₂-Import-Abhängigkeit (MENA, Skandinavien, AUS) ist im Modell nicht abgebildet; Diversifizierung (3+ Regionen, davon eine in EU) sollte real beachtet werden. Für den Stand-alone-Stresstest `100ee-noimport` wählen.",
       "Bei e100 liegt der Brutto-Auslegungsbedarf (1 808 TWh) 40–70 % über Studien-Demand (1 100–1 270 TWh), weil Effizienz-Hebel der Sektorkopplung fehlen — siehe e100-Caveat. Simuliert wird nach H₂-Substitution eine Stromlast von 1 068 TWh.",
       "Die Presets setzen capacityFactorMultiplier 1,0 — also den Ertrag der BESTANDSFLOTTE 2025, nicht den von 2045er-Neubauten (höhere Nabenhöhen/Wirkungsgrade, kern-Wiki empfiehlt 1,2–1,5 für Neubau). Mit Neubau-Erträgen wären ~20–30 % weniger GW nötig — die ausgewiesenen Flotten sind insoweit konservative Obergrenzen.",
-      "Wind onshore 425 GW (e100) liegt über dem 2-%-Vorrangflächen-Ziel (≈7.150 km² ≈ 145–180 GW bei 20–25 MW/km²) — wie die PV-Fläche eine Machbarkeits-, keine Modellgrenze.",
+      "Wind onshore 435 GW (e100) liegt über dem 2-%-Vorrangflächen-Ziel (≈7.150 km² ≈ 145–180 GW bei 20–25 MW/km²) — wie die PV-Fläche eine Machbarkeits-, keine Modellgrenze.",
       "Die Speicher skalieren hier BEWUSST mit der effektiven Demand nach Import-Substitution, nicht mit der Stromlast wie im autark-Preset: H₂- und Strom-Import sind in diesem Preset selbst der Flex-Puffer, die Speicher entsprechend kleiner kalibriert (0,15 GW/0,8 GWh je TWh statt 0,2/1,7) — und im Audit als gesund gemessen (~80 Batterie-Vollzyklen/a, ~57 % Kavernen-Hub). Eine Umstellung auf den Stromlast-Treiber wäre reine Renormierung ohne Erkenntnisgewinn."
     ],
     "scripts": [

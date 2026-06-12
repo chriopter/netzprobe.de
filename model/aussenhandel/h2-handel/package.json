@@ -70,7 +70,7 @@
       "Pool-Cap-Überschuss fällt verlustfrei weg — bei manuell hohen Import-Slider-Werten relativ zur Pool-Kapazität wirkt die Mehrmenge nicht; die Presets deckeln den Import inzwischen auf den Sektorbedarf, im Preset-Pfad entsteht kein bezahlter Überlauf.",
       "Grüner H2 angenommen — keine Upstream-Emissionen für importierten Wasserstoff modelliert.",
       "Max-Slider 800 TWh ist weit über realistischen 2045-Szenarien (Agora ~270, Studien-Korridor 60-450 TWh) — Stresstest und Preset-Kopfraum, keine Empfehlung; ab ~300 TWh dominiert geopolitisches Klumpenrisiko.",
-      "1 TWh Import-H₂ (130 €/MWh) liefert nur 0,61–0,89 TWh Endprodukt — implizit kostet e-Kerosin ~212 €/MWh, e-MeOH/NH₃ ~161 €/MWh, der Chemie-Mix ~147 €/MWh (PtL-Studienkorridor: Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). CAPEX und Direktstrom der Synthese-/DAC-Anlagen sind H₂-seitig gelumpt, nicht separat bilanziert."
+      "1 TWh Import-H₂ (150 €/MWh, H2Global-Vertragsanker) liefert nur 0,61–0,89 TWh Endprodukt — implizit kostet e-Kerosin ~245 €/MWh, e-MeOH/NH₃ ~186 €/MWh, der Chemie-Mix ~169 €/MWh (PtL-Studienkorridor: Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). Quercheck: der reale H2Global-NH₃-Preis 193 €/MWh liegt ÜBER dem impliziten e-NH₃ von 186 — Synthese-CAPEX ist im Bon nicht bepreist. CAPEX und Direktstrom der Synthese-/DAC-Anlagen sind H₂-seitig gelumpt, nicht separat bilanziert."
     ]
   },
   "parameters": {

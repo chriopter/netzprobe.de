@@ -63,9 +63,11 @@ describe('Kosten · A Datenintegrität', () => {
       expect(k.efficiency, id).toBeLessThanOrEqual(1);
     }
   });
-  it('Speicher haben capexEurPerKWh; Pumpspeicher/H2 ≤ 1 (Einheits-Falle)', () => {
+  it('Speicher haben capexEurPerKWh; H2-Kaverne ≤ 1 (Einheits-Falle), PSW-Reservoir 20–100', () => {
     for (const id of STORAGE) expect(kostenOf(id)!.capexEurPerKWh, id).toBeGreaterThan(0);
-    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeLessThanOrEqual(1);
+    // PSW-Energiekomponente: Reservoir-Bau 20–100 €/kWh (Viswanathan/PNNL via PyPSA 71,8).
+    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeGreaterThanOrEqual(20);
+    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeLessThanOrEqual(100);
     expect(kostenOf('h2')!.capexEurPerKWh).toBeLessThanOrEqual(1);
   });
   it('method.kosten + fields-Eintrag vorhanden', () => {
@@ -110,10 +112,11 @@ describe('Kosten · 0 Realismus', () => {
       expect(k.lifetimeYears, id).toBeLessThanOrEqual(80);
     }
   });
-  it('0.2 Speicher-Energie-CAPEX: Batterie 200–350, Pumpspeicher/H2 ≤ 0,6 €/kWh', () => {
+  it('0.2 Speicher-Energie-CAPEX: Batterie 200–350, PSW 20–100, H2-Kaverne ≤ 0,6 €/kWh', () => {
     expect(kostenOf('batterie')!.capexEurPerKWh).toBeGreaterThanOrEqual(200);
     expect(kostenOf('batterie')!.capexEurPerKWh).toBeLessThanOrEqual(350);
-    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeLessThanOrEqual(0.6);
+    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeGreaterThanOrEqual(20);
+    expect(kostenOf('pumpspeicher')!.capexEurPerKWh).toBeLessThanOrEqual(100);
     expect(kostenOf('h2')!.capexEurPerKWh).toBeLessThanOrEqual(0.6);
   });
   it('0.3 zentrale Preise im Korridor', () => {

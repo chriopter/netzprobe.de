@@ -13,6 +13,7 @@ export type Kosten = {
   omFixEurPerKWa?: number;
   omFixChargeEurPerKWa?: number;
   omFixDischargeEurPerKWa?: number;
+  omEnergyEurPerKWhA?: number;
   omVarEurPerMWh?: number;
   lifetimeYears: number;
   fuelEurPerMWhTh?: number;
@@ -44,6 +45,7 @@ export type KostenTechDetail = {
   chargeGW?: number;
   dischargeGW?: number;
   energyGWh?: number;
+  dischargeTWh?: number;
   genTWh?: number;
   crfValue?: number;
   kosten?: Kosten;
@@ -143,10 +145,14 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   // Verhältnis zur Jahreslast auf echte Jahresenergie hochskaliert (selbst-
   // kalibrierend, unabhängig von der Zeitauflösung).
   const genSum: Record<string, number> = {};
+  const disSum: Record<string, number> = { batterie: 0, pumpspeicher: 0, h2: 0 };
   let loadSum = 0;
   for (const h of result.hours) {
     loadSum += h.loadGW;
     for (const [, , , hf] of GEN) genSum[hf] = (genSum[hf] ?? 0) + (h[hf] as number);
+    disSum.batterie += h.batterieDischargeGW ?? 0;
+    disSum.pumpspeicher += h.pumpspeicherDischargeGW ?? 0;
+    disSum.h2 += h.h2DischargeGW ?? 0;
   }
   // GWh je aufsummiertem GW: macht die Lastsumme = Jahreslast (TWh → GWh).
   const annualScale = loadSum > 0 ? result.summary.totalDemandTWh * 1000 / loadSum : 1;
@@ -183,11 +189,18 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
       ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
       : (k.capexEurPerKW ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
     const capex = (powerCapexEur + (k.capexEurPerKWh ?? 0) * energy * 1e6) * crf(wacc, k.lifetimeYears);
-    const om = split
+    // Variable O&M auf die tatsächlich entladene Energie (aus der Stundenreihe,
+    // jahres-skaliert) — die Speicher-Pakete dokumentieren omVarEurPerMWh.
+    // omEnergyEurPerKWhA: Energie-O&M je installierter kWh (NREL-ATB-Konvention
+    // 2,5 %/a vom Energie-CAPEX — Augmentation/Kapazitätserhalt der Batterie).
+    const dischargeMWh = (disSum[key] ?? 0) * annualScale * 1000;
+    const om = (split
       ? (k.omFixChargeEurPerKWa ?? 0) * chargeGW * 1e6 + (k.omFixDischargeEurPerKWa ?? 0) * dischargeGW * 1e6
-      : (k.omFixEurPerKWa ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
+      : (k.omFixEurPerKWa ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6)
+      + (k.omEnergyEurPerKWhA ?? 0) * energy * 1e6
+      + (k.omVarEurPerMWh ?? 0) * dischargeMWh;
     capexSum += capex; omSum += om;
-    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, crfValue: crf(wacc, k.lifetimeYears), kosten: k } });
+    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, dischargeTWh: dischargeMWh / 1e6, crfValue: crf(wacc, k.lifetimeYears), kosten: k } });
   }
 
   // Wasserstoff-Import: importierte H2-Menge × Importpreis (LHV). Eigene Zeile,

@@ -98,7 +98,8 @@
     "caveats": [
       "Baseload-Annahme bildet keine Saisonalität ab — Frühjahrshochwasser und Sommertrockenheit gleichen sich nur im Jahresmittel aus.",
       "Slider-Maximum 48 GW ist reiner Rechenhorizont; der ökologisch und genehmigungsrechtlich zubaubare Restkorridor in Deutschland liegt weit darunter und gilt als weitgehend ausgeschöpft.",
-      "Klimawandel-Effekte auf Abflussregime (Gletscherschmelze, Niederschlagsverlagerung) nicht abgebildet."
+      "Klimawandel-Effekte auf Abflussregime (Gletscherschmelze, Niederschlagsverlagerung) nicht abgebildet.",
+      "Im historischen 2025-Replay (Referenz-Szenario) speist die Laufwasser-Bon-Zeile die ungeteilte hydroMW-Spalte (26,6 TWh inkl. ~9 TWh Pumpspeicher-Erzeugung) — die ausgewiesenen €/MWh sinken dort auf ~52 statt ~73 in allen synthetischen Läufen; die Gesamtkosten sind unberührt (kapazitätsbasiert). Bereinigung hängt am ausstehenden Spalten-Split der Stundenreihe."
     ],
     "file": "erzeugung/laufwasser/data.json",
     "scripts": [
