@@ -336,6 +336,9 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
       <p className="text-center text-lg font-bold uppercase tracking-[0.3em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
       <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Deutschland · heute bis {buildoutYear} ({horizon} Jahre)</p>
       <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
+      {/* Preisstand-Hinweis: der Bon rechnet bewusst Heute-Preise — er ordnet
+          Größenordnungen und Verhältnisse ein, prognostiziert nicht 2045. */}
+      <p className="mt-1 text-center text-[11px] text-zinc-400 dark:text-zinc-500">Alle Posten zu heutigen Preisen (2024/25, ohne Lernkurven) — Orientierung für Größenordnungen und Verhältnisse, keine Prognose.</p>
       <div className="mt-4 flex justify-center">
         <div className="flex border border-zinc-300 text-[10px] uppercase tracking-[0.15em] dark:border-zinc-600" role="tablist" aria-label="Beträge gesamt oder pro Jahr">
           {([['gesamt', 'Gesamt'], ['jahr', 'Pro Jahr']] as const).map(([m, label]) => (
