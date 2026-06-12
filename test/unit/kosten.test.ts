@@ -300,6 +300,19 @@ describe('Kosten · C Netzausbau', () => {
     expect(k.addedPeakLoadGW).toBeCloseTo(302.4 - prices.netzBaselinePeakLoadGW, 3);
   });
 
+  it('C.10 exportAtCap: Flag nur bei ≥95 % der Cap-Energie (Erlös als Obergrenze)', () => {
+    const withExport = (capGW: number): Scenario => {
+      const s = scen({ kernkraftInstalledGW: 333 });
+      return { ...s, export: { ...s.export, stromGW: capGW } };
+    };
+    // 100kern-artig: 25 GW Cap, 218,9 TWh ≈ dauerhaft am Cap.
+    expect(computeKosten(withExport(25), result([], { exportTWh: 218.9 })).exportAtCap).toBe(true);
+    // Deutlich unter Cap-Energie: kein Flag.
+    expect(computeKosten(withExport(25), result([], { exportTWh: 100 })).exportAtCap).toBe(false);
+    // Kein Cap gesetzt: nie flaggen.
+    expect(computeKosten(withExport(0), result([], { exportTWh: 50 })).exportAtCap).toBe(false);
+  });
+
   it('C.9 Eichanker bleibt: O45-EE-Zubau + Peak-Verdopplung ⇒ ~0,8 Bio € bis 2050', () => {
     // NEP-2045B/O45-Welt ist elektrifiziert: Δ-EE 455,3 GW UND Peak ~150 GW.
     const k = computeKosten(scen({ pvInstalledGW: 400, windOnInstalledGW: 160, windOffInstalledGW: 70 }), result([], { peakLoadGW: 150 }));

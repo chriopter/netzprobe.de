@@ -110,7 +110,8 @@
     "caveats": [
       "Min-Last 20 % als Floor — keine Kaltstart-Restriktion modelliert; reale Anlagen brauchen 6-12 h Anfahrzeit.",
       "Emissionsfaktor 1170 g/kWh mischt Stein- und Braunkohle; Braunkohle alleine 1200-1400 g/kWh, Steinkohle 950 g/kWh.",
-      "Kohleausstiegsgesetz (2030/2038) ist im Default nicht abgebildet — Slider lässt Modell jeden Pfad simulieren."
+      "Kohleausstiegsgesetz (2030/2038) ist im Default nicht abgebildet — Slider lässt Modell jeden Pfad simulieren.",
+      "vorFlaeche 22 km²/GW (Typ 'Tagebau Braunkohle', DE) wird auf die GESAMTE Kohleflotte angewendet, obwohl nur rund die Hälfte Braunkohle ist: die DE-Tagebaufläche wird in Mischflotten-Szenarien um Faktor ~1,5–2 überzeichnet, während die Vorfläche des Steinkohle-Imports (Tagebaue/Minen in AUS/USA/COL) ganz fehlt. Flottengewichteter Split steht aus — Richtungssignal, keine Punktangabe."
     ],
     "file": "erzeugung/kohle/data.json",
     "scripts": [

@@ -47,7 +47,9 @@
       "Weltförderung ist ein Momentwert (2024/2025); Minenkapazitäten wachsen — der reale Anteil 2045 läge bei steigender Förderung niedriger.",
       "Neodym/Dysprosium als abgeleitete Anteile der SE-Gesamtförderung (niedrige Konfidenz).",
       "Recycling und Sekundärmaterial sind nicht abgebildet; gezeigt wird Primärförderung.",
-      "Kobalt-Förderschätzungen streuen in der Literatur (240–310 kt/a)."
+      "Kobalt-Förderschätzungen streuen in der Literatur (240–310 kt/a).",
+      "Silizium-Vergleichsbasis ist die GESAMTE Silizium-Produktion (8,5 Mt/a inkl. Ferrosilizium und Metallurgie-Silizium). PV braucht aber Polysilizium (Weltmarkt nur ~1,6–2 Mt/a): am relevanten Markt läge der PV-Anteil rund 4–5× höher als die ausgewiesene %-Zahl.",
+      "Wasserstoff-Vergleichsbasis 97 Mt/a (IEA) ist der GRAUE Bestandsmarkt — überwiegend captive in Raffinerien und Ammoniak-Anlagen vor Ort erzeugt, nicht gehandelt. Ein handelbarer grüner H₂-Markt dieser Größe existiert (noch) nicht; %-Welt-Angaben für H₂-Import sind reine Größenordnungs-Einordnung."
     ],
     "file": "referenz/weltfoerderung/package.json"
   },

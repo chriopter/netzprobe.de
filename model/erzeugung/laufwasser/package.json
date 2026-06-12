@@ -5,7 +5,7 @@
   "kind": "scenario",
   "method": {
     "title": "Laufwasser",
-    "short": "Installierte Laufwasserkraft-Leistung; Baseload mit Verfügbarkeit 0,63.",
+    "short": "Installierte Laufwasserkraft-Leistung; Baseload mit Verfügbarkeit 0,457 (= referenceYield 4,0 TWh/GW·a).",
     "source": "Energy-Charts installed_power 2025 (Laufwasser Deutschland); MTGermany energy-simulation-de (Verfügbarkeit, Emissionsfaktor).",
     "sourceUrls": [
       "https://api.energy-charts.info/installed_power?country=de&time_step=monthly",
@@ -17,8 +17,8 @@
     "unit": "GW, g/kWh",
     "description": [
       "**Anlagenpark:** rund `7.300` Laufwasserkraftwerke an Donau, Rhein, Main, Mosel, Inn und Alpen-Nebenflüssen mit installierter Gesamtleistung `4,8 GW` (Energy-Charts, Jahresmittel 2025) bilden den **Default**. Bestand und Standortzahl sind über Jahrzehnte stabil — der ökologisch und genehmigungsrechtlich zubaubare Restkorridor in Deutschland gilt als weitgehend ausgeschöpft. Das Slider-Maximum `48 GW` (Schritt `0,5 GW`) ist daher als reiner Rechenhorizont zu lesen.",
-      "**Einspeisecharakteristik:** das Modell bildet Laufwasser als **Baseload** ab — `supplyGW(t) = installedGW × 0,63` konstant über alle Stunden. Bei einer Verfügbarkeit von `0,63` ergibt sich ein Volllaststunden-Äquivalent von rund `5520 h/a` und beim Default-Bestand etwa `26 TWh/a` Energieertrag, in Übereinstimmung mit den realen `18–22 TWh/a` der vergangenen Jahre. Spezifische Emissionen `11 g/kWh` (Anlagenbau, Stauwehre; MTGermany / electricitymaps DE).",
-      "**Modellgrenze:** die Verfügbarkeit `0,63` ist ein **Jahresmittel** — Frühjahrshochwasser und sommerliche Niedrigwasserphasen sind glattgezogen. **Klimawandel-Effekte** auf Abflussregime (Gletscherschmelze, Niederschlagsverlagerung) und thermische Restriktionen bleiben außen vor. Pumpspeicher und Speicher-Wasserkraft sind separat modelliert; Laufwasser im engeren Sinn kennt keine Speichermöglichkeit."
+      "**Einspeisecharakteristik:** das Modell bildet Laufwasser als **Baseload** ab — `supplyGW(t) = installedGW × 0,457` konstant über alle Stunden. Die Verfügbarkeit `0,457` folgt direkt dem dokumentierten `referenceYield 4,0 TWh/GW·a` (≈ `4000 h/a`); der Default-Bestand liefert damit etwa `19 TWh/a`, mittig im realen Korridor `17,5–20,7 TWh/a` (BDEW 2022–2024). Spezifische Emissionen `11 g/kWh` (Anlagenbau, Stauwehre; MTGermany / electricitymaps DE).",
+      "**Modellgrenze:** die Verfügbarkeit `0,457` ist ein **Jahresmittel** — Frühjahrshochwasser und sommerliche Niedrigwasserphasen sind glattgezogen. **Klimawandel-Effekte** auf Abflussregime (Gletscherschmelze, Niederschlagsverlagerung) und thermische Restriktionen bleiben außen vor. Pumpspeicher und Speicher-Wasserkraft sind separat modelliert; Laufwasser im engeren Sinn kennt keine Speichermöglichkeit."
     ],
     "overview": [
       {
@@ -27,7 +27,7 @@
       },
       {
         "label": "Verteilung",
-        "value": "**Profil:** `supplyGW(t) = installedGW × 0,63` als konstanter Baseload. Keine Saisonmodulation; Frühjahrs- und Sommerunterschiede gleichen sich im Jahresmittel aus."
+        "value": "**Profil:** `supplyGW(t) = installedGW × 0,457` als konstanter Baseload. Keine Saisonmodulation; Frühjahrs- und Sommerunterschiede gleichen sich im Jahresmittel aus."
       },
       {
         "label": "Formel",
@@ -35,7 +35,7 @@
       }
     ],
     "reasoning": [
-      "Verfügbarkeit availability 0,63 — Jahresmittel der Flussdurchflussmengen über Frühjahrshochwasser und Sommerniedrigwasser; im Modell als Dauerlast supplyGW(t) = installedGW × 0,63 abgebildet.",
+      "Verfügbarkeit availability 0,457 = referenceYield 4,0 TWh/GW·a ÷ 8,76 — Jahresmittel der Flussdurchflussmengen über Frühjahrshochwasser und Sommerniedrigwasser; im Modell als Dauerlast supplyGW(t) = installedGW × 0,457 abgebildet. Der frühere Wert 0,63 war auf die hydroMW-Spalte der 2025-Stundenreihe geeicht, die auch Pumpspeicher-ERZEUGUNG enthält (Stundenmaximum 9,4 GW bei 4,8 GW installiertem Laufwasser) — physikalisch unhaltbar, Audit AP12.",
       "Emissionsfaktor 11 g/kWh laut MTGermany — Anlagenbau-Lebenszyklus."
     ],
     "fields": [
@@ -62,7 +62,7 @@
       {
         "name": "availability",
         "unit": "Anteil",
-        "description": "Jahresverfügbarkeit (0,63) — Jahresmittel der Flussdurchflussmengen."
+        "description": "Jahresverfügbarkeit (0,457 = referenceYield 4,0 TWh/GW·a ÷ 8,76) — Jahresmittel der Flussdurchflussmengen, konsistent zur realen Erzeugung 17,5–20,7 TWh/a aus ~5 GW (BDEW)."
       },
       {
         "name": "emissions",
@@ -105,7 +105,7 @@
       "erzeugung/laufwasser/model.rs"
     ],
     "flaeche": {
-      "source": "Rheinkraftwerk Iffezheim 5 km² Stauraum für 0,148 GW ≈ 34 km²/GW. Stark standortabhängig (Schwarzwald-Talsperren << Rheinstaustufen). DE-Bestand praktisch eingefroren. Cross-Check OWID/Lovering 2022 Hydro-Median: 650 ha/(TWh·a) × ~5 TWh/(GW·a) ≈ 32 km²/GW — sehr konsistent.",
+      "source": "Rheinkraftwerk Iffezheim 5 km² Stauraum für 0,148 GW ≈ 34 km²/GW. Stark standortabhängig (Schwarzwald-Talsperren << Rheinstaustufen). DE-Bestand praktisch eingefroren. Cross-Check OWID/Lovering 2022 Hydro-Median: 650 ha/(TWh·a) × 4 TWh/(GW·a) ≈ 26 km²/GW — konsistente Größenordnung.",
       "sourceUrls": [
         "https://de.wikipedia.org/wiki/Rheinkraftwerk_Iffezheim",
         "https://www.bdew.de/service/daten-und-grafiken/stromerzeugung-wasserkraft/",
@@ -132,7 +132,7 @@
   },
   "parameters": {
     "mode": "baseload",
-    "availability": 0.63,
+    "availability": 0.457,
     "emissions": {
       "co2eGperKWh": 11
     },

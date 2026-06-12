@@ -106,7 +106,10 @@
     "caveats": [
       "PV-Einspeisefaktor ist deutschlandweiter Durchschnitt; regionale Unterschiede (Süd-Nord) nicht abgebildet.",
       "Default-Wert 102,5 GW ist Jahresmittel 2025 — Zuwachs während des Jahres nicht stundenaufgelöst.",
-      "Emissionsfaktor 35 g/kWh enthält keine Recycling-Gutschrift; Lebenszyklus-Variation 15-50 g/kWh in der Literatur."
+      "Emissionsfaktor 35 g/kWh enthält keine Recycling-Gutschrift; Lebenszyklus-Variation 15-50 g/kWh in der Literatur.",
+      "Ertragsbasis-Diskrepanz: die Stundensimulation nutzt das Energy-Charts-Flottenprofil 2025 (~680–700 VLh, Einspeisung ohne Eigenverbrauch hinter dem Zähler), das Paket dokumentiert referenceYield 0,95 TWh/GWa (~950 VLh, langjähriges Bundesmittel brutto). Folge: PV-€/MWh im Kosten-Bon ist um ~20–30 % überzeichnet (bezogen auf Brutto-Ertrag wären es ~85–110 statt ~120–145 €/MWh); die Presets setzen zudem capacityFactorMultiplier 1,0 (Bestandsertrag statt 2045-Neubau) — beides konservative Setzungen zulasten der PV.",
+      "Wirkfläche 6 km²/GW ist ein Flottenmix Aufdach + Freifläche und trägt nur bis etwa zur doppelten heutigen Aufdach-Ausschöpfung (~300–400 GW); darüber dominiert Freifläche (~12 km²/GW) — bei Extremausbau (970 GW im 100ee-noimport-Preset) unterzeichnet der Mix-Faktor die Fläche um ~25–35 %.",
+      "Silizium-Intensität 3.950 t/GW (IEA) entspricht älterer Modultechnik; aktuelle Module liegen bei ~2.000–2.500 t/GW (dünnere Wafer, höhere Effizienz) — der Materialbedarf ist eher Obergrenze, Trend sinkend."
     ],
     "file": "erzeugung/pv/data.json",
     "scripts": [

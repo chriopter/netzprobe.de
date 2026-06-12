@@ -17,7 +17,7 @@
     "description": [
       "**Datengrundlage:** stündliche öffentliche Nettostromerzeugung Deutschlands 2025 aus der Energy-Charts-API (Fraunhofer ISE), aus 15-Minuten-Werten zu Stundenmitteln aggregiert. Der Datensatz umfasst `8.760` Stunden und elf Erzeugungsarten in `MW` plus den Netto-Handelssaldo mit den Nachbarländern.",
       "**Jahresgang:** die Gesamterzeugung summiert sich auf rund `424,6 TWh`, getragen von Wind Onshore (`105,1 TWh`), Kohle (`97,4 TWh`), **PV** (`70,1 TWh`), Gas (`49,5 TWh`), Biomasse (`36,1 TWh`), Wind Offshore (`26,1 TWh`) und Wasserkraft (`26,6 TWh`). Der Import-Saldo liegt bei `+34,1 TWh`, der Export bei `12,2 TWh`; netto wird Deutschland 2025 zum Stromimporteur. Erneuerbare decken zusammen rund `60 %` der inländischen Erzeugung.",
-      "**Modellgrenze:** abgebildet ist ausschließlich die öffentliche Stromerzeugung — industrielle Eigenversorgung und Kraftwerksblöcke der Chemie-, Stahl- und Papierbranche bleiben außen vor. Handelsströme erscheinen nur als stündlicher Netto-Saldo, nicht als Bruttoflüsse je Nachbarland; Pumpspeicher-Erzeugung und -Verbrauch laufen in separaten Reihen und sind hier nicht enthalten."
+      "**Modellgrenze:** abgebildet ist ausschließlich die öffentliche Stromerzeugung — industrielle Eigenversorgung und Kraftwerksblöcke der Chemie-, Stahl- und Papierbranche bleiben außen vor. Handelsströme erscheinen nur als stündlicher Netto-Saldo, nicht als Bruttoflüsse je Nachbarland; der Pumpspeicher-VERBRAUCH läuft separat und ist nicht enthalten — die Pumpspeicher-ERZEUGUNG steckt dagegen mit in der hydroMW-Spalte (Stundenmaximum 9,4 GW bei nur 4,8 GW installiertem Laufwasser; Jahressumme 26,6 TWh ≈ Laufwasser + Speicherwasser ~17–18 + Pumpspeicher-Erzeugung ~9 TWh)."
     ],
     "reasoning": [
       "Bezug aus Energy-Charts public_power API für Deutschland, 2025-01-01 bis 2026-01-01.",
@@ -83,7 +83,7 @@
       {
         "name": "hours[].hydroMW",
         "unit": "MW",
-        "description": "Wasserkraft."
+        "description": "Wasserkraft — enthält neben Laufwasser auch Speicherwasser und Pumpspeicher-Erzeugung (siehe Caveat); im Chart als 'Laufwasser' gelabelt."
       },
       {
         "name": "hours[].biomassMW",
@@ -148,7 +148,8 @@
     ],
     "caveats": [
       "Nur öffentliche Stromerzeugung; private und industrielle Eigenversorgung sind nicht vollständig enthalten.",
-      "Import und Export sind aus dem stündlichen Netto-Handelssaldo aggregiert, nicht als Bruttoflüsse je Nachbarland."
+      "Import und Export sind aus dem stündlichen Netto-Handelssaldo aggregiert, nicht als Bruttoflüsse je Nachbarland.",
+      "Die hydroMW-Spalte bündelt Laufwasser, Speicherwasser und Pumpspeicher-Erzeugung (Energy-Charts-Rohdaten); als 'Wasserkraft' im EE-Sinn sind die 26,6 TWh daher um die PSW-Ausspeisung (~9 TWh) überzeichnet. Ein Split der Reihe steht aus; die Laufwasser-availability (0,457) ist deshalb am realen Laufwasser-Ertrag geeicht, nicht an dieser Spalte (Audit AP12)."
     ],
     "file": "erzeugung/2025/data.json",
     "scripts": [

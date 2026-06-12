@@ -108,6 +108,7 @@ describe('Szenario-Prüfbericht', () => {
           eurProMWh: r1(k.perMWh),
           breakdownMrdEurProJahr: Object.fromEntries(Object.entries(k.breakdown).map(([key, value]) => [key, r1(value / 1e9)])),
           netzExtrapoliert: k.netzExtrapolated,
+          exportAmCap: k.exportAtCap,
           eeZubauUeberBasisGW: r1(k.addedReGW),
           peakZuwachsUeberBasisGW: r1(k.addedPeakLoadGW),
           perTechMrdEurProJahr: k.perTech.map(t => ({ key: t.key, total: r1(t.total / 1e9), eurPerMWh: t.eurPerMWh == null ? null : r1(t.eurPerMWh) })),
@@ -166,12 +167,14 @@ describe('Szenario-Prüfbericht', () => {
         ['Brennstoff Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.fuel], ['H₂-Import Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.h2Import],
         ['Strom-Saldo Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.importNet], ['Netzausbau Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.netz],
         ['Netz extrapoliert?', o => o.kosten.netzExtrapoliert ? `ja (EE ${o.kosten.eeZubauUeberBasisGW} / Peak ${o.kosten.peakZuwachsUeberBasisGW} GW)` : 'nein'],
+        ['Export am Cap?', o => o.kosten.exportAmCap ? 'ja (Erlös = Obergrenze)' : 'nein'],
         ['Musterhaushalt kWh/a', o => o.musterhaushalt.kwhProJahr], ['Musterhaushalt €/Monat (Endkunde)', o => o.musterhaushalt.endkundeEurProMonat],
       ])}
       ${section('Speicher (Betrieb)', [
         ['Batterie GW · GWh', o => `${o.speicherBetrieb.batterie.powerGW} · ${o.speicherBetrieb.batterie.capGWh}`],
-        ['Batterie Vollzyklen/a · Hub %', o => `${o.speicherBetrieb.batterie.vollzyklenProJahr} · ${o.speicherBetrieb.batterie.hubPct}`],
-        ['Pumpspeicher Vollzyklen/a · Hub %', o => `${o.speicherBetrieb.pumpspeicher.vollzyklenProJahr} · ${o.speicherBetrieb.pumpspeicher.hubPct}`],
+        // Hub ohne Zyklen ist nur die einmalige Erstbefüllung — als solche kennzeichnen.
+        ['Batterie Vollzyklen/a · Hub %', o => o.speicherBetrieb.batterie.vollzyklenProJahr < 0.5 && o.speicherBetrieb.batterie.hubPct > 0 ? `${o.speicherBetrieb.batterie.vollzyklenProJahr} · Erstbefüllung` : `${o.speicherBetrieb.batterie.vollzyklenProJahr} · ${o.speicherBetrieb.batterie.hubPct}`],
+        ['Pumpspeicher Vollzyklen/a · Hub %', o => o.speicherBetrieb.pumpspeicher.vollzyklenProJahr < 0.5 && o.speicherBetrieb.pumpspeicher.hubPct > 0 ? `${o.speicherBetrieb.pumpspeicher.vollzyklenProJahr} · Erstbefüllung` : `${o.speicherBetrieb.pumpspeicher.vollzyklenProJahr} · ${o.speicherBetrieb.pumpspeicher.hubPct}`],
         ['H₂ GW · GWh', o => `${o.speicherBetrieb.h2.powerGW} · ${o.speicherBetrieb.h2.capGWh}`],
         ['H₂ Vollzyklen/a · Hub %', o => `${o.speicherBetrieb.h2.vollzyklenProJahr} · ${o.speicherBetrieb.h2.hubPct}`],
         ['H₂ entladen TWh/a', o => o.speicherBetrieb.h2.entladenTWh],
