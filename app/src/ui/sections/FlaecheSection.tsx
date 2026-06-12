@@ -227,7 +227,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
       map: 'deutschland',
       roam: false,
       aspectScale: 0.75,
-      layoutCenter: ['50%', '50%'],
+      layoutCenter: ['57%', '50%'],
       layoutSize: '92%',
       itemStyle: {
         areaColor: dark ? '#27272a' : '#f4f4f5',
@@ -253,6 +253,17 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         symbol: 'circle',
         symbolSize: totalSymbolSize,
         data: [{ name: 'Flächenbedarf', value: [10.45, 51.15, totalKm2] }],
+        label: {
+          show: totalKm2 > 0,
+          position: totalSymbolSize >= 76 ? 'inside' : 'bottom',
+          formatter: totalSymbolSize >= 76
+            ? `${(totalKm2 / DEUTSCHLAND_KM2 * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %\n${fmtKm2(totalKm2)} km²`
+            : `${fmtKm2(totalKm2)} km²`,
+          color: totalSymbolSize >= 76 ? '#ffffff' : (dark ? '#86efac' : '#15803d'),
+          fontSize: totalSymbolSize >= 76 ? 13 : 11,
+          fontWeight: 600,
+          lineHeight: 17,
+        },
         itemStyle: {
           color: '#16a34a',
           opacity: 0.76,
@@ -279,11 +290,12 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         data: [{ name: 'Wirkfläche Offshore', value: [7.6, 54.15, offshoreWirkungKm2] }],
         label: {
           show: true,
-          formatter: 'Offshore',
+          formatter: `Offshore\n${fmtKm2(offshoreWirkungKm2)} km²`,
           position: 'top',
           color: dark ? '#7dd3fc' : '#0369a1',
           fontSize: 11,
           fontWeight: 600,
+          lineHeight: 14,
         },
         itemStyle: {
           color: '#0284c7',
@@ -309,6 +321,15 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         symbolSize: vorSymbolSize,
         clip: false,
         data: [{ name: 'Vorfläche', value: [12.15, 51.15, vorFlaecheKm2] }],
+        label: {
+          show: true,
+          formatter: `Vorfläche\n${fmtKm2(vorFlaecheKm2)} km²`,
+          position: 'bottom',
+          color: dark ? '#fcd34d' : '#b45309',
+          fontSize: 11,
+          fontWeight: 600,
+          lineHeight: 14,
+        },
         itemStyle: {
           color: '#f59e0b',
           opacity: 0.78,
@@ -464,10 +485,29 @@ function FlaecheMap({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, 
 
 function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme }: { anlageKm2: number; wirkungKm2: number; offshoreWirkungKm2: number; vorFlaecheKm2: number; fmtKm2: (value: number) => string; theme: ChartTheme }) {
   useFlaecheMapChart('flaeche-map', anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheKm2, fmtKm2, theme);
-  // Rahmenlose Abbildung ohne Binnen-Überschrift (analog Periodensystem der
-  // Ressourcen-Sektion): Summe und km² stehen in der Stat-Karte rechts daneben.
-  // Die Geo-Projektion skaliert mit dem Container (layoutSize 92 % von min(w,h)).
-  return <div id="flaeche-map" className="h-[540px] w-full"/>;
+  const sumKm2 = anlageKm2 + wirkungKm2 + offshoreWirkungKm2 + vorFlaecheKm2;
+  const sumPct = sumKm2 / DEUTSCHLAND_KM2 * 100;
+  const legend: Array<{ color: string; label: string; km2: number }> = [
+    { color: '#dc2626', label: 'Anlagenfläche', km2: anlageKm2 },
+    { color: '#16a34a', label: 'Wirkfläche', km2: wirkungKm2 },
+    ...(offshoreWirkungKm2 > 0 ? [{ color: '#0284c7', label: 'Wirkfläche Offshore', km2: offshoreWirkungKm2 }] : []),
+    ...(vorFlaecheKm2 > 0 ? [{ color: '#f59e0b', label: 'Vorfläche', km2: vorFlaecheKm2 }] : []),
+  ];
+  // Rahmenlose Abbildung (analog Periodensystem): kompakte Typen-Legende in der
+  // sonst leeren Karten-Ecke, Details stehen in den Karten rechts daneben.
+  return <div className="relative min-w-0">
+    <div id="flaeche-map" className="h-[540px] w-full"/>
+    <div className="pointer-events-none absolute left-1 top-4 space-y-1.5 text-[11px] leading-4">
+      {legend.map(item => <div key={item.label} className="flex items-baseline gap-1.5">
+        <span aria-hidden className="h-2 w-2 shrink-0 self-center rounded-full" style={{ background: item.color }}/>
+        <span className="text-zinc-500 dark:text-zinc-400">{item.label}</span>
+        <span className="font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{fmtKm2(item.km2)} km²</span>
+      </div>)}
+      <div className="pt-0.5 text-zinc-400 dark:text-zinc-500">
+        Σ {fmtKm2(sumKm2)} km² · {sumPct.toLocaleString('de-DE', { maximumFractionDigits: sumPct < 1 ? 2 : 1 })} % von DE
+      </div>
+    </div>
+  </div>;
 }
 
 // Flächentypen-Panel rechts neben der Karte: Kennzahl + Kurzerklärung je Typ,
