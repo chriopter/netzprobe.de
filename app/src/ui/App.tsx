@@ -1186,17 +1186,32 @@ function useActiveSection(setMainView: (v: MainViewId) => void) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const ids: MainViewId[] = ['mix', 'flaeche', 'ressourcen', 'kosten'];
-    // Trigger-Linie bei 20 % der Viewport-Höhe. Aktive Sektion = letzte,
-    // deren Top oberhalb dieser Linie liegt — also sobald die Überschrift
-    // einer neuen Sektion ins oberste Fünftel scrollt, springt das Menü.
+    // Scroll-Spy nach sichtbarem Anteil: aktiv ist die Sektion, die gerade
+    // die größte sichtbare Höhe im Viewport einnimmt — nicht die, deren
+    // Überschrift zuletzt eine Trigger-Linie passiert hat. Das markiert
+    // intuitiv „was hauptsächlich im Bild ist" und funktioniert auch für
+    // kurze Schluss-Sektionen.
     const compute = () => {
-      const triggerY = window.innerHeight * 0.2;
+      const vh = window.innerHeight;
+      // Am Seitenende gewinnt immer die letzte Sektion — selbst wenn sie
+      // kürzer als die halbe Viewport-Höhe ist.
+      const docHeight = document.documentElement.scrollHeight;
+      const scrollBottom = window.scrollY + vh;
+      if (docHeight > vh + 8 && docHeight - scrollBottom < 8) {
+        setMainView(ids[ids.length - 1]);
+        return;
+      }
       let active: MainViewId = ids[0];
+      let bestVisible = -1;
       for (const id of ids) {
         const el = document.getElementById(`section-${id}`);
         if (!el) continue;
-        if (el.getBoundingClientRect().top <= triggerY) active = id;
-        else break;
+        const rect = el.getBoundingClientRect();
+        const visible = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
+        if (visible > bestVisible) {
+          bestVisible = visible;
+          active = id;
+        }
       }
       setMainView(active);
     };
