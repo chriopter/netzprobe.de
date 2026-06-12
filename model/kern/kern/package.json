@@ -44,7 +44,7 @@
       "Capacity-Factor-Multiplier (pvCapacityFactorMultiplier, windOnCapacityFactorMultiplier, windOffCapacityFactorMultiplier) skalieren den historischen einspeisefaktor-2025-Realwert auf eine fiktive Neubau-Flotte. Default 1.0 (heutige DE-Flotte: PV ~702 kWh/kWp, Wind onshore ~1600 VLH, Wind offshore ~2800 VLH — seit dem Faktor-Split je eigener beobachteter Faktor windOn100m/windOff100m). Empfohlen für 2045-Szenarien: PV 1.5 (bifazial+Tracker → ~1100 kWh/kWp), Wind onshore 1.4 (4-6 MW Klasse → ~2400 VLH), Wind offshore 1.2 (70-GW-Flottenmittel 2045 ~3400 VLH laut NEP-Orientierungswert 238 TWh, wake-begrenzt; bis 1.7 für einzelne ferne Flächen). Pro Stunde wird auf Math.min(1, …) gecapt (kein Output über Nameplate).",
       "Mismatch = Sockel − Last. Bei Überschuss: Speicher laden → Export → Curtailment der RE in fester Reihenfolge → Notfall-Reduktion von Min-Last fossil → Biomasse/Laufwasser.",
       "Bei Unterdeckung: Speicher entladen → Gas + Kohle gemeinsam hochfahren im Verhältnis rampUpRatio (2:1 Default) bis maxAvailable → flexibler Import bis Cap → Rest als loadSheddingGW. Heimische Regelbare vor Import, weil das Modell keine Preise kennt (Versorgungssicherheits-Logik).",
-      "CO₂ je Stunde: Σ supply_q × emissions.co2eGperKWh_q + import × Nachbarmix. Jahreswert dividiert durch Strom-Nachfrage = g/kWh.",
+      "CO₂ je Stunde: Σ supply_q × emissions.co2eGperKWh_q + import × Nachbarmix. Geothermie/Müll/Öl/Sonstige tragen keinen Faktor (Lücke ~15–20 g/kWh im Referenzjahr); H₂-Import ist als grüner H₂ ohne CO₂-Faktor bilanziert — anders als Strom-Import. Jahreswert dividiert durch die versorgte Nachfrage (Stromlast − Lastabwurf + strom-äquivalent vom H₂-Pool gedeckte Sektoren + Export) = g/kWh — gleicher Service im Nenner über alle Szenarien; Erzeugung+Import als Nenner würde internen Speicher-Ladestrom mitzählen. Die Faktoren sind überwiegend Lebenszyklus-Werte (PV/Wind/Wasser/Kernkraft nach UNECE/IPCC — deshalb nicht 0); Kohle/Biomasse ohne volle Vorkette, siehe Technologie-Pakete.",
       "Jahreskennzahlen: Last, Import, Export, Curtailment, Lastabwurf, Erneuerbarenanteil, CO₂ Mt/Jahr und g/kWh, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, Peak Load, monatliche Erzeugung."
     ],
     "fields": [
@@ -136,7 +136,7 @@
       "Jahressumme: Last, Erneuerbarenanteil, Curtailment, Import, Export, Lastabwurf, CO₂ Mt und g/kWh, Peak-Last, Stunden mit Lastabwurf, Stunden mit > 50 % Curtailment, monatliche Erzeugung."
     ],
     "notes": [
-      "Default-Lauf reproduziert 2025 etwa 466 TWh Last, 55 % EE, 76 TWh Brutto-Import, 332 g/kWh CO₂.",
+      "Default-Lauf reproduziert 2025 etwa 466 TWh Last, 57 % EE, 54 TWh Strom-Import, 350 g/kWh CO₂ (je kWh versorgter Nachfrage, inkl. Lebenszyklus).",
       "Reihenfolge bei Überschuss: Speicher laden → Export → Curtailment RE → Min-Last fossil reduzieren.",
       "Reihenfolge bei Unterdeckung: Speicher entladen → Gas+Kohle hochfahren (2:1) → Import bis Cap → Lastabwurf.",
       "Min-Last gas/kohle werden als Floor erzwungen — auch bei hoher RE laufen ~9 GW fossil. Senkt Default-Export gegenüber Realität.",

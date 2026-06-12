@@ -157,7 +157,7 @@ describe('Szenario-Prüfbericht', () => {
         ['Peak GW', o => o.system.peakLoadGW], ['Fehlend TWh / h', o => `${o.system.fehlendTWh} / ${o.system.fehlendStunden}`],
         ['Import / Export TWh', o => `${o.system.importTWh} / ${o.system.exportTWh}`], ['H₂-Import TWh', o => o.importExport.h2ImportTWh],
         ['EE-Anteil %', o => o.system.eeAnteilPct], ['Abregelung TWh', o => o.system.abregelungTWh],
-        ['CO₂ g/kWh · Mt/a', o => `${o.system.co2GproKWh} · ${o.system.co2MtProJahr}`],
+        ['CO₂ g/kWh (Lebenszyklus) · Mt/a', o => `${o.system.co2GproKWh} · ${o.system.co2MtProJahr}`],
       ])}
       ${section('Kosten', [
         ['Mrd €/a', o => o.kosten.gesamtMrdEurProJahr], ['Gesamt bis 2045 Mrd €', o => o.kosten.gesamtBis2045MrdEur], ['€/MWh (System)', o => o.kosten.eurProMWh],
