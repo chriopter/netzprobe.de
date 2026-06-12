@@ -15,7 +15,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, ComingSoonGate, HelpDot, HelpPanel, statToneClass, type Stat } from '../sectionUi';
+import { ChartModeToggle, ChartPanel, ComingSoonGate, HelpDot, HelpPanel, SegmentPill, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
@@ -142,6 +142,8 @@ export default function MixSection(props: MixSectionProps) {
   const blackout = result.summary.hoursWithLoadShedding;
   // Methodik-Text hinter dem Fragezeichen am Chart (wie in den anderen Sektionen).
   const [helpOpen, setHelpOpen] = useState(false);
+  // Kennzahlen-Kacheln hinter einem Sub-Satz verstecken (Disclosure wie überall).
+  const [kpisOpen, setKpisOpen] = useState(false);
   const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
   const kostenHorizon = Math.max(1, Number(buildoutYear) - 2025);
   const kostenGesamt = kosten.total * kostenHorizon;
@@ -180,45 +182,64 @@ export default function MixSection(props: MixSectionProps) {
     ] },
   ];
 
-  return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-3">
+  return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
     <ComingSoonGate id="hero-kosten" compact>
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
       </p>
-      <div className="mx-auto mt-5 grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-5">
-        {statGroups.flatMap(group => group.stats).map(stat => <div
-          key={stat.label}
-          className="min-w-0 rounded-lg border border-zinc-200 bg-white px-2 py-2 text-center dark:border-zinc-800 dark:bg-zinc-950"
+      <button
+        type="button"
+        aria-expanded={kpisOpen}
+        onClick={() => setKpisOpen(open => !open)}
+        className="group/kpi mx-auto mt-3 flex max-w-4xl items-baseline justify-center gap-1.5 text-balance text-center text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+      >
+        <span>
+          Mit <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{twh(s.totalDemandTWh)}</strong> Jahreslast,{' '}
+          <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{pct(s.renewableSharePct)}</strong> EE-Anteil,{' '}
+          <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{fmt0.format(s.co2GperKWh)} g/kWh</strong> CO₂ und{' '}
+          <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{twh(s.importTWh)}</strong> Stromimport.
+        </span>
+        <ChevronRight aria-hidden className={cx('h-4 w-4 shrink-0 self-center text-zinc-400 transition-transform dark:text-zinc-500', kpisOpen && 'rotate-90')}/>
+      </button>
+      {kpisOpen && <div className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {statGroups.map(group => <div
+          key={group.title}
+          className="min-w-0 rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950"
         >
-          <div className="truncate text-[11px] text-zinc-400 dark:text-zinc-500" title={stat.label}>{stat.label}</div>
-          <div className={cx('mt-0.5 truncate text-base font-semibold tabular-nums', statToneClass(stat.tone))}>{stat.value}</div>
+          <dl className="space-y-1.5">
+            {group.stats.map(stat => <div key={stat.label} className="flex items-baseline justify-between gap-2">
+              <dt className="truncate text-xs text-zinc-600 dark:text-zinc-300" title={stat.label}>{stat.label}</dt>
+              <dd className={cx('whitespace-nowrap text-base font-semibold tabular-nums', statToneClass(stat.tone))}>{stat.value}</dd>
+            </div>)}
+          </dl>
         </div>)}
-      </div>
+      </div>}
     </ComingSoonGate>
-    {helpOpen && <HelpPanel>
-      <p>Die Blume zeigt die <strong>Stundensimulation eines Jahres</strong>: Der Winkel ist der Jahresverlauf (Januar oben, im Uhrzeigersinn), der Radius die Leistung in GW. Über „Polar / Linie" rechts oben gibt es dieselben Daten als klassische Zeitachse.</p>
-      <ul>
-        <li><strong>Flächen</strong> — Erzeugung je Technologie, gestapelt in Einsatzreihenfolge; die <strong>schwarze Linie</strong> ist die Stromlast.</li>
-        <li><strong>Dispatch je Stunde</strong> — Erneuerbare speisen vorrangig ein; die Residuallast decken zuerst Speicher, dann regelbare Kraftwerke, zuletzt Import (rot). Bleibt eine Lücke, erscheint sie dunkelrot als „Fehlend". Überschüsse laden erst die Speicher, dann Export, der Rest wird abgeregelt.</li>
-        <li><strong>Mix + Speicher / Speicher</strong> — Füllstände von Batterie und H₂-Speicher: kombiniert als gestrichelte Linien (0–100 % des jeweiligen Speichermaximums), solo in absoluten GWh.</li>
-        <li><strong>Legende</strong> — Serien einzeln zuschaltbar; der Kreis-Pfeil setzt die eingefrorene Radius-Skala auf das aktuelle Szenario zurück.</li>
-      </ul>
-      <p>Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
-    </HelpPanel>}
+    <div className="mb-2 mt-5 border-t border-zinc-200 dark:border-zinc-800"/>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
         <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-2 sm:left-3 sm:top-3">
-          <div className="inline-flex shrink-0 rounded-md border border-zinc-200 bg-zinc-50 p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-800" aria-label="Mix oder Speicher anzeigen">
-            {([['mix', 'Mix'], ['kombi', 'Mix + Speicher'], ['speicher', 'Speicher']] as Array<[MixContent, string]>).map(([value, label]) => <button
-              key={value}
-              type="button"
-              aria-pressed={mixContent === value}
-              className={cx('rounded-[5px] px-2.5 py-1 transition', mixContent === value ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'text-zinc-500 hover:bg-white hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50')}
-              onClick={() => setMixContent(value)}
-            >{label}</button>)}
-          </div>
+          <SegmentPill
+            value={mixContent}
+            options={[{ id: 'mix', label: 'Mix' }, { id: 'kombi', label: 'Mix + Speicher' }, { id: 'speicher', label: 'Speicher' }] as const}
+            onChange={setMixContent}
+            ariaLabel="Mix oder Speicher anzeigen"
+          />
           <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
         </div>
+        {/* Aufklapp-Hilfe als Overlay unter dem Fragezeichen — verschiebt das Layout nicht. */}
+        {helpOpen && <div className="absolute left-2 top-12 z-20 max-h-[calc(100%-3.5rem)] w-[min(38rem,calc(100%-1rem))] overflow-auto rounded-lg shadow-lg sm:left-3">
+          <HelpPanel>
+          <p>Die Blume zeigt die <strong>Stundensimulation eines Jahres</strong>: Der Winkel ist der Jahresverlauf (Januar oben, im Uhrzeigersinn), der Radius die Leistung in GW. Über „Polar / Linie" rechts oben gibt es dieselben Daten als klassische Zeitachse.</p>
+          <ul>
+          <li><strong>Flächen</strong> — Erzeugung je Technologie, gestapelt in Einsatzreihenfolge; die <strong>schwarze Linie</strong> ist die Stromlast.</li>
+          <li><strong>Dispatch je Stunde</strong> — Erneuerbare speisen vorrangig ein; die Residuallast decken zuerst Speicher, dann regelbare Kraftwerke, zuletzt Import (rot). Bleibt eine Lücke, erscheint sie dunkelrot als „Fehlend". Überschüsse laden erst die Speicher, dann Export, der Rest wird abgeregelt.</li>
+          <li><strong>Mix + Speicher / Speicher</strong> — Füllstände von Batterie und H₂-Speicher: kombiniert als gestrichelte Linien (0–100 % des jeweiligen Speichermaximums), solo in absoluten GWh.</li>
+          <li><strong>Legende</strong> — Serien einzeln zuschaltbar; der Kreis-Pfeil setzt die eingefrorene Radius-Skala auf das aktuelle Szenario zurück.</li>
+          </ul>
+          <p>Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
+          </HelpPanel>
+        </div>}
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
           <div className="pointer-events-auto">
             <button
