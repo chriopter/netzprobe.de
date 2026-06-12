@@ -28,9 +28,9 @@ pub const EE_WIND_OFF_SHARE: f64 = 0.30;
 // Der Agora-Wert 1.15-1.20 gilt nur MIT Import; ohne Import zu knapp (frühere Messung:
 // 499 h Lastabwurf bei 1.15). Lasttest nach dem LHV-konsistenten H2-Pool (Laden 0.62,
 // Entladen 0.55, Roundtrip 0.34), Wetter-/Lastjahr 2025: 0 h Lastabwurf bei heutiger
-// Last (×1.0/×0.90; bei ×0.85 bleibt heute ~7.7 TWh Lücke — bestand schon vor
-// Rekalibrierung und Laufwasser-Korrektur) und bei e100 robust bis Windjahr
-// ×0.85. Preis der Autarkie: bei e100 werden 387 TWh abgeregelt (~17 %).
+// Last und bei e100, robust bis Windjahr ×0.85 (Heute-Lücke geschlossen seit
+// der korrekten Baseline-Produktion; Doppel-Stress ×0.85+PV0.9: heute ~0.2 TWh).
+// Preis der Autarkie: bei e100 werden 416 TWh abgeregelt (~18 %).
 pub const EE_CUSHION: f64 = 1.30;
 // Speicher-Treiber ist die STROMLAST (Demand minus Sektor-Elektrolyse-Strom),
 // nicht die effektive Demand: die H2-Pool-Sektoren bringen ihre Flexibilität
@@ -41,8 +41,13 @@ pub const EE_CUSHION: f64 = 1.30;
 // der effektiven Demand überbaute Kaverne/Rückverstromung/Batterie bei e100
 // um ~40-70 % (Audit AP04); Treiber-Wahl physikalisch begründet, MC kann sie
 // bei fixer Last allein nicht belegen (n=2 Stützstellen).
-// Batterie: 0.34 GW/TWh-Last + 1.7 GWh/TWh-Last (C-Rate 5h).
-pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.34;
+// Batterie: 0.20 GW/TWh-Last + 1.7 GWh/TWh-Last (entkoppelte C-Rate ~8,5 h):
+// die LEISTUNG ist auf den Stress-Abruf ausgelegt (max ~167 GW im Doppel-
+// Stress Wind x0,85 + PV x0,9; 0,20 x Last = 215 GW = ~30 % Marge) — die alte
+// 5h-Kopplung (360 GW) lag beim Doppelten des je gemessenen Abrufs; Abregelung
+// und Export aendern sich durch die Entkopplung nicht (H2-Elektrolyse nimmt
+// die Spitzen auf). Spart ~2,7 Mrd EUR/a (Audit-Nachzuegler).
+pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.20;
 pub const EE_BATTERY_ENERGY_PER_TWH: f64 = 1.7;
 // H2 Charge 0.24 GW je TWh EFFEKTIVER Demand (einziger eff-Treiber: die
 //   Elektrolyse produziert auch das Sektor-H2 des Pools).
@@ -76,13 +81,19 @@ pub fn annual_yield_twh_per_gw(factors: &[f64]) -> f64 {
     factors.iter().sum::<f64>() / 1000.0
 }
 
+// Abgezogen wird die TATSÄCHLICHE Jahresproduktion der Baselines
+// (GW × 8,76 × availability), nicht die Nennleistungs-Energie — sonst
+// unterbaut das Preset die variable EE um die Differenz (~29 TWh bei
+// Bio 0,86 / Laufwasser 0,457), nur kaschiert vom Cushion (Audit-Nachzügler).
 pub fn target_variable_re_twh(
     demand_twh: f64,
     biomasse_default_installed_gw: f64,
+    biomasse_availability: f64,
     laufwasser_default_installed_gw: f64,
+    laufwasser_availability: f64,
 ) -> f64 {
-    let baseline_bio_twh = biomasse_default_installed_gw * 8.76;
-    let baseline_hydro_twh = laufwasser_default_installed_gw * 8.76;
+    let baseline_bio_twh = biomasse_default_installed_gw * 8.76 * biomasse_availability;
+    let baseline_hydro_twh = laufwasser_default_installed_gw * 8.76 * laufwasser_availability;
     (demand_twh * EE_CUSHION - baseline_bio_twh - baseline_hydro_twh).max(0.0)
 }
 
@@ -143,8 +154,8 @@ mod tests {
 
     #[test]
     fn computes_storage_rules_for_466_twh() {
-        // Batterie 0.34 × 466 = 158.44 GW, 1.7 × 466 = 792.2 GWh (Treiber: Stromlast)
-        assert!((battery_power_gw(466.0) - 158.44).abs() < 1e-9);
+        // Batterie 0.20 × 466 = 93.2 GW, 1.7 × 466 = 792.2 GWh (Treiber: Stromlast)
+        assert!((battery_power_gw(466.0) - 93.2).abs() < 1e-9);
         assert!((battery_energy_gwh(466.0) - 792.2).abs() < 1e-9);
         // H2-Energie 0.11 × 466 × 1000 = 51_260 GWh = 51.26 TWh
         assert!((h2_energy_gwh(466.0) - 51_260.0).abs() < 1e-9);

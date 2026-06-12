@@ -69,13 +69,17 @@ pub fn snap(value: f64, min: f64, max: f64, step: f64) -> f64 {
     clamp(stepped, min, max)
 }
 
+// Abgezogen wird die TATSÄCHLICHE Jahresproduktion der Baselines
+// (GW × 8,76 × availability) — siehe Kommentar im lokal-Preset.
 pub fn target_variable_re_twh(
     demand_twh: f64,
     biomasse_default_installed_gw: f64,
+    biomasse_availability: f64,
     laufwasser_default_installed_gw: f64,
+    laufwasser_availability: f64,
 ) -> f64 {
-    let baseline_bio_twh = biomasse_default_installed_gw * 8.76;
-    let baseline_hydro_twh = laufwasser_default_installed_gw * 8.76;
+    let baseline_bio_twh = biomasse_default_installed_gw * 8.76 * biomasse_availability;
+    let baseline_hydro_twh = laufwasser_default_installed_gw * 8.76 * laufwasser_availability;
     (demand_twh * EE_CUSHION - baseline_bio_twh - baseline_hydro_twh).max(0.0)
 }
 
