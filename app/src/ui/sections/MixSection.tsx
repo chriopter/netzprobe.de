@@ -161,8 +161,11 @@ export default function MixSection(props: MixSectionProps) {
   const s = result.summary;
   const statGroups: Array<{ title: string; stats: Stat[] }> = [
     { title: 'Last', stats: [
-      { label: 'Jahreslast', value: twh(s.totalDemandTWh) },
+      { label: 'Stromlast', value: twh(s.totalDemandTWh) },
       { label: 'Peak-Last', value: `${fmt0.format(s.peakLoadGW)} GW` },
+      // Sektoren, die der H₂-Pool strom-äquivalent deckt (Stahl/Chemie/Schiff/
+      // Flug): zählen zur Last-Karte der Sidebar, nicht zur Stromlast.
+      ...((s.h2PoolStromReductionTWh ?? 0) > 0.05 ? [{ label: 'via H₂-Pool', value: `+${twh(s.h2PoolStromReductionTWh ?? 0)}` }] : []),
     ] },
     { title: 'Versorgung', stats: [
       { label: 'Fehlend', value: twh(s.loadSheddingTWh), tone: s.loadSheddingTWh > 0.1 ? 'kritisch' : 'stabil' },
@@ -194,7 +197,7 @@ export default function MixSection(props: MixSectionProps) {
         className="group/kpi mx-auto mt-3 flex max-w-4xl items-baseline justify-center gap-1.5 text-balance text-center text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       >
         <span>
-          Mit <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{twh(s.totalDemandTWh)}</strong> Jahreslast,{' '}
+          Mit <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{twh(s.totalDemandTWh + (s.h2PoolStromReductionTWh ?? 0))}</strong> Jahreslast,{' '}
           <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{pct(s.renewableSharePct)}</strong> EE-Anteil,{' '}
           <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{fmt0.format(s.co2GperKWh)} g/kWh</strong> CO₂ und{' '}
           <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{twh(s.importTWh)}</strong> Stromimport.
@@ -237,7 +240,7 @@ export default function MixSection(props: MixSectionProps) {
           <li><strong>Mix + Speicher / Speicher</strong> — Füllstände von Batterie und H₂-Speicher: kombiniert als gestrichelte Linien (0–100 % des jeweiligen Speichermaximums), solo in absoluten GWh.</li>
           <li><strong>Legende</strong> — Serien einzeln zuschaltbar; der Kreis-Pfeil setzt die eingefrorene Radius-Skala auf das aktuelle Szenario zurück.</li>
           </ul>
-          <p>Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
+          <p>Die <strong>Stromlast</strong> kann unter der Last-Summe der Sidebar liegen: Sektoren wie Stahl, Chemie, Schiff und Flug deckt das System über den H₂-Pool (Elektrolyse bzw. Import) — sie zählen zur Sektor-Nachfrage, tauchen aber nicht als Stromlast auf („via H₂-Pool" in der Last-Kachel). Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
           </HelpPanel>
         </div>}
         <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
