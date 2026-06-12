@@ -132,6 +132,21 @@
         "name": "co2MtPerYear",
         "unit": "Mt/a",
         "description": "CO₂-Ausstoß des 2025-Replays (Engine-Messwert) — Referenzanker für das CO₂-Vielfache der Ressourcen-Sektion."
+      },
+      {
+        "name": "gasGenerationTWh",
+        "unit": "Zahl",
+        "description": "Ist-Erzeugung Gas 2025 in TWh (Summe der eigenen Energy-Charts-Stundenreihe erzeugung/2025/hours.json) — 1×-Anker für den dispatch-basierten Brennstoffbedarf der Ressourcen-Sektion"
+      },
+      {
+        "name": "kohleGenerationTWh",
+        "unit": "Zahl",
+        "description": "Ist-Erzeugung Kohle 2025 in TWh (Summe Stundenreihe) — 1×-Anker Brennstoffbedarf"
+      },
+      {
+        "name": "kernkraftGenerationTWh",
+        "unit": "Zahl",
+        "description": "Ist-Erzeugung Kernkraft 2025 in TWh (0 — Ausstieg vollzogen) — 1×-Anker Brennstoffbedarf"
       }
     ],
     "caveats": [
@@ -162,6 +177,9 @@
     "importStromGW": 13,
     "exportStromGW": 25,
     "importH2TWh": 0,
-    "co2MtPerYear": 167.4
+    "co2MtPerYear": 167.4,
+    "gasGenerationTWh": 49.5,
+    "kohleGenerationTWh": 97.4,
+    "kernkraftGenerationTWh": 0
   }
 }

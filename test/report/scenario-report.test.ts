@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { computeHaushalt, computeKosten } from '../../app/src/ui/kosten';
-import { annualByMaterial, groupSums } from '../../app/src/ui/ressourcen';
+import { annualByMaterial, fuelTWhFromResult, groupSums } from '../../app/src/ui/ressourcen';
 import { e100ElectricTWh, householdElectrificationTWh } from '../../app/src/ui/ScenarioSidebar';
 import { flaecheRows } from '../../app/src/ui/sections/FlaecheSection';
 import type { Scenario } from '../../app/src/types/scenario';
@@ -73,7 +73,7 @@ describe('Szenario-Prüfbericht', () => {
       const hh = computeHaushalt(k, pkwTWh, heizTWh);
 
       const e100TWh = e100ElectricTWh(resolved, data);
-      const annual = annualByMaterial(resolved, HORIZON_YEARS, e100TWh);
+      const annual = annualByMaterial(resolved, HORIZON_YEARS, e100TWh, fuelTWhFromResult(result));
       const groups = groupSums(annual);
 
       const rows = flaecheRows(resolved);
