@@ -207,7 +207,7 @@ const LeafRow = ({ label, value, f }: { label: string; value: string; f: Facts }
 
 // Papieroptik: feines Korn plus leicht zerknuelltes Papier — beides als
 // SVG-Rauschen (feTurbulence bzw. feDiffuseLighting), sehr dezent uebergelegt.
-const PAPER_GRAIN = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.05 0'/></filter><rect width='180' height='180' filter='url(#n)'/></svg>")}")`;
+const PAPER_GRAIN = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.09 0'/></filter><rect width='180' height='180' filter='url(#n)'/></svg>")}")`;
 const PAPER_CRUMPLE = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='420' height='420'><filter id='c'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='5' stitchTiles='stitch'/><feDiffuseLighting lighting-color='#ffffff' surfaceScale='1.6'><feDistantLight azimuth='45' elevation='60'/></feDiffuseLighting></filter><rect width='420' height='420' filter='url(#c)'/></svg>")}")`;
 
 // Signatur-Element der Sektion: die Systemkosten als Stromrechnung — inklusive
@@ -272,8 +272,8 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
   };
   return <div className="w-full font-mono text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
     <div className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: PAPER_GRAIN }}/>
-      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.05] dark:opacity-[0.06]" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
+      <div aria-hidden className="pointer-events-none absolute inset-0 mix-blend-multiply dark:mix-blend-screen" style={{ backgroundImage: PAPER_GRAIN }}/>
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.175] mix-blend-multiply dark:opacity-[0.06] dark:mix-blend-normal" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
       <a
         href={dataWikiUrl('preise')}
         target="_blank"
