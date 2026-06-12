@@ -55,10 +55,11 @@ export type KostenResult = {
   breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
   importCost: number;
   exportRevenue: number;
-  // Netz-Heuristik außerhalb des geeichten Bereichs (EE-Zubau > ~700 GW über
-  // Bestand): Posten nur als Richtungssignal lesen.
+  // Netz-Heuristik außerhalb des geeichten Bereichs (EE-Zubau > ~700 GW bzw.
+  // Peak-Zuwachs > ~100 GW über Bestand): Posten nur als Richtungssignal lesen.
   netzExtrapolated: boolean;
   addedReGW: number;
+  addedPeakLoadGW: number;
   perTech: KostenTech[];
   // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
   params: {
@@ -70,9 +71,11 @@ export type KostenResult = {
     importEurPerMWh: number;
     exportEurPerMWh: number;
     netzEurPerKW: number;
+    netzLastEurPerKW: number;
     netzLifetimeYears: number;
     netzCrf: number;
     netzBaselineGW: number;
+    netzBaselinePeakGW: number;
   };
 };
 
@@ -195,13 +198,24 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   const exportRevenue = result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
   const importNet = importCost - exportRevenue;
 
-  // Netzausbau: gekoppelt an volatilen EE-Zubau über den 2025-Bestand hinaus,
-  // annuisiert wie CAPEX. Null im 2025-Bestand (Kupferplatte als Nullpunkt),
-  // wächst mit dem EE-Ausbau. Faktor an Vollnetz-Schätzungen (IMK/NEP/DIHK) geeicht.
+  // Netzausbau, zwei Treiber: (1) erzeugungsgetrieben am volatilen EE-Zubau
+  // über den 2025-Bestand (Übertragungsnetz + EE-Anschluss im Verteilnetz),
+  // (2) lastgetrieben am Zuwachs der Stromlast-Spitze (Verteilnetz für
+  // E-Mobilität/Wärmepumpen/Industrie — fällt in jedem Elektrifizierungs-
+  // Szenario an, egal welche Technologie liefert). Beide annuisiert wie CAPEX;
+  // null im 2025-Bestand (Kupferplatte als Nullpunkt). Treiber des Last-Terms
+  // ist die Spitze NACH H₂-Pool (Pool-Sektoren hängen nicht am Verteilnetz,
+  // Elektrolyse zählt zum EE-Term). Aufteilung an IMK/ef.Ruhr geeicht — die
+  // Summe beim O45-Anker bleibt ~545 Mrd € Invest (siehe Wiki »preise«).
   const reGW = scenario.generation.pvInstalledGW + scenario.generation.windOnInstalledGW + scenario.generation.windOffInstalledGW;
   const addedReGW = Math.max(0, reGW - (P.netzBaselineReCapacityGW ?? 0));
-  const netz = (P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW * 1e6 * crf(wacc, P.netzLifetimeYears ?? 40);
-  const netzExtrapolated = addedReGW > (P.netzCalibratedMaxAddedReGW ?? 700);
+  const addedPeakLoadGW = Math.max(0, (result.summary.peakLoadGW ?? 0) - (P.netzBaselinePeakLoadGW ?? 0));
+  const netzCrfValue = crf(wacc, P.netzLifetimeYears ?? 40);
+  const netzEE = (P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW * 1e6 * netzCrfValue;
+  const netzLast = (P.netzCapexEurPerKwAddedPeakLoad ?? 0) * addedPeakLoadGW * 1e6 * netzCrfValue;
+  const netz = netzEE + netzLast;
+  const netzExtrapolated = addedReGW > (P.netzCalibratedMaxAddedReGW ?? 700)
+    || addedPeakLoadGW > (P.netzCalibratedMaxAddedPeakLoadGW ?? 100);
 
   const total = capexSum + omSum + fuelSum + h2Import + importNet + netz;
 
@@ -219,6 +233,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     exportRevenue,
     netzExtrapolated,
     addedReGW,
+    addedPeakLoadGW,
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
       wacc,
@@ -229,9 +244,11 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
       importEurPerMWh: P.importEurPerMWh ?? 0,
       exportEurPerMWh: P.exportEurPerMWh ?? 0,
       netzEurPerKW: P.netzCapexEurPerKwAddedRE ?? 0,
+      netzLastEurPerKW: P.netzCapexEurPerKwAddedPeakLoad ?? 0,
       netzLifetimeYears: P.netzLifetimeYears ?? 40,
-      netzCrf: crf(wacc, P.netzLifetimeYears ?? 40),
+      netzCrf: netzCrfValue,
       netzBaselineGW: P.netzBaselineReCapacityGW ?? 0,
+      netzBaselinePeakGW: P.netzBaselinePeakLoadGW ?? 0,
     },
   };
 }

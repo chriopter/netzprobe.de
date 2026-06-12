@@ -109,6 +109,7 @@ describe('Szenario-Prüfbericht', () => {
           breakdownMrdEurProJahr: Object.fromEntries(Object.entries(k.breakdown).map(([key, value]) => [key, r1(value / 1e9)])),
           netzExtrapoliert: k.netzExtrapolated,
           eeZubauUeberBasisGW: r1(k.addedReGW),
+          peakZuwachsUeberBasisGW: r1(k.addedPeakLoadGW),
           perTechMrdEurProJahr: k.perTech.map(t => ({ key: t.key, total: r1(t.total / 1e9), eurPerMWh: t.eurPerMWh == null ? null : r1(t.eurPerMWh) })),
         },
         musterhaushalt: {
@@ -164,7 +165,7 @@ describe('Szenario-Prüfbericht', () => {
         ['Kapital Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.capex], ['Betrieb Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.om],
         ['Brennstoff Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.fuel], ['H₂-Import Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.h2Import],
         ['Strom-Saldo Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.importNet], ['Netzausbau Mrd €/a', o => o.kosten.breakdownMrdEurProJahr.netz],
-        ['Netz extrapoliert?', o => o.kosten.netzExtrapoliert ? `ja (${o.kosten.eeZubauUeberBasisGW} GW)` : 'nein'],
+        ['Netz extrapoliert?', o => o.kosten.netzExtrapoliert ? `ja (EE ${o.kosten.eeZubauUeberBasisGW} / Peak ${o.kosten.peakZuwachsUeberBasisGW} GW)` : 'nein'],
         ['Musterhaushalt kWh/a', o => o.musterhaushalt.kwhProJahr], ['Musterhaushalt €/Monat (Endkunde)', o => o.musterhaushalt.endkundeEurProMonat],
       ])}
       ${section('Speicher (Betrieb)', [
