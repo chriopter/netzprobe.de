@@ -733,7 +733,13 @@ impl StaticModel {
         // auslegen (vorher Doppelzählung: voller Elektrolyse-Strom + Import).
         let eff_demand_twh = demand_twh - strom_reduction_twh(h2_import_base, &sectors);
         let target =
-            target_variable_re_twh(eff_demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
+            target_variable_re_twh(
+                eff_demand_twh,
+                biomasse_baseline_gw,
+                self.generation["biomasse"].availability,
+                laufwasser_baseline_gw,
+                self.generation["laufwasser"].availability,
+            );
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
         let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
         let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on);
@@ -805,7 +811,13 @@ impl StaticModel {
         let yield_wind_off = self.annual_yield_twh_per_gw("windoff").max(0.1);
         let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
         let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
-        let target = target_variable_re_twh(demand_twh, biomasse_baseline_gw, laufwasser_baseline_gw);
+        let target = target_variable_re_twh(
+            demand_twh,
+            biomasse_baseline_gw,
+            self.generation["biomasse"].availability,
+            laufwasser_baseline_gw,
+            self.generation["laufwasser"].availability,
+        );
         let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
         let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
         // Offshore-Cap-Shortfall wird über Wind onshore gedeckt (winter-
