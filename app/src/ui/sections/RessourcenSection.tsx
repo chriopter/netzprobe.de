@@ -243,7 +243,7 @@ export default function RessourcenSection({ scenario, result, buildoutYear, data
       <ul>
         <li><strong>Basis (1×)</strong> — Material des Energiesystems 2025: Erzeugung, Speicher und die schon elektrische Flotte (~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn).</li>
         <li><strong>Erneuerung über Lebensdauer</strong> — Bau-Material × <code>max(1, Horizont/Lebensdauer)</code> je Technologie: Batterie 15 a, PV/Gas/H₂ 30 a, Wind/Biomasse 25 a, Kohle 35 a, Kernkraft 45 a, Pumpspeicher/Laufwasser 60 a (analog zur annuisierten Kostenseite).</li>
-        <li><strong>Elektrifizierte Last</strong> — nur das Antriebs-/Aggregat-Delta je TWh Zusatznachfrage (E-Pkw/-Lkw, Wärmepumpen, Bahn); Schiff, Flug, Industriewärme, Stahl und Chemie sind noch nicht enthalten.</li>
+        <li><strong>Elektrifizierte Last</strong> — das Antriebs-/Aggregat-Delta je TWh Zusatznachfrage (E-Pkw/-Lkw, Wärmepumpen, Bahn), ebenfalls erneuerungs-aware: E-Pkw/Wärmepumpen 18 a, E-Lkw 12 a, Bahn-Oberleitung 40 a. Schiff, Flug, Industriewärme, Stahl und Chemie sind noch nicht enthalten.</li>
         <li><strong>Brennstoff</strong> — Kohle, Erdgas und Uran aus der <em>simulierten Erzeugung</em> der Stundensimulation (t je TWh × dispatchte TWh; 1× = Ist-Erzeugung 2025); importierter Wasserstoff als Massenstrom (33,33 kWh/kg LHV). Inlands-Elektrolyse zählt nicht doppelt — ihr Strom und ihre Anlagen sind bereits erfasst.</li>
       </ul>
       <p>Die <strong>Details je Rohstoff</strong> bleiben auf Jahresbasis (dimensionsrein gegenüber der Jahresproduktion):</p>

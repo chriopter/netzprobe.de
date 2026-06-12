@@ -145,6 +145,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
+      },
+      {
+        "name": "materialLifetimeYears",
+        "unit": "Jahre",
+        "description": "Material-Lebensdauer des Waermepumpen-Bestands, Jahre. VDI 2067 Blatt 1: rechnerische Nutzungsdauer 18-20 a; BWP 15-20 a Betriebsdauer; Fraunhofer-ISE-Feldmessungen >15 a. Konfidenz mittel-hoch."
       }
     ],
     "caveats": [
@@ -2452,6 +2457,7 @@
         "tPerTWh": 2200,
         "confidence": "niedrig"
       }
-    }
+    },
+    "materialLifetimeYears": 18
   }
 }

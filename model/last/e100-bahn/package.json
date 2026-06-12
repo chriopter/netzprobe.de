@@ -124,6 +124,11 @@
         "name": "resources",
         "unit": "Objekt",
         "description": "Elektrifizierungs-Material je TWh zusätzlicher elektrischer Nachfrage: t/TWh (Bestand, Antriebs-/Aggregat-Delta). Quellen und Herleitung in method.ressourcen."
+      },
+      {
+        "name": "materialLifetimeYears",
+        "unit": "Jahre",
+        "description": "Material-Lebensdauer der Bahn-Elektrifizierung (Oberleitung: Fahrdraht 30-50 a, Maste/Fundamente 60-80 a; UIC/DB-AfA ~50 a), stahlgewichtet >=40 a. Bei allen waehlbaren Horizonten (<=35 a) bleibt der Erneuerungsfaktor 1 — dokumentiert die Annahme, aendert die Rechnung nicht. Konfidenz hoch."
       }
     ],
     "caveats": [
@@ -209,6 +214,7 @@
         "tPerTWh": 500,
         "confidence": "niedrig"
       }
-    }
+    },
+    "materialLifetimeYears": 40
   }
 }
