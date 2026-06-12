@@ -92,7 +92,7 @@ pub fn wind_offshore_gw(target_twh: f64, share: f64, total_share: f64, yield_win
 
 // Wenn Wind off gecappt: Energie-Shortfall in TWh Strom, der kompensiert werden
 // muss — bevorzugt über zusätzlichen H2-Import (Demand-Substitution in den
-// Sektoren, solange dort Headroom ist), Rest über PV wie im lokal-Preset.
+// Sektoren, solange dort Headroom ist), Rest über PV (das lokal-Preset kompensiert dagegen via WindOn).
 pub fn wind_offshore_shortfall_twh(
     target_twh: f64,
     share_wind_off: f64,
