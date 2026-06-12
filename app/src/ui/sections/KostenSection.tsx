@@ -436,11 +436,38 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
         <Leader faint/>
         <span className="shrink-0 tabular-nums">{mode === 'gesamt' ? fmtMrd(k.total) : fmtBig(k.total * horizon)}</span>
       </div>
-      <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+      {/* je-MWh aufklappbar: dieselbe Kostenarten-Zerlegung wie der Bon, nur
+          durch die versorgte Nachfrage geteilt — was davon ist Kraftwerk,
+          was Netz, was Brennstoff. */}
+      {k.perMWh > 0 ? <details className="group/mwh">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="flex min-w-0 items-baseline gap-1.5">
+              <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
+                <span className="group-open/mwh:hidden">▸</span><span className="hidden group-open/mwh:inline">▾</span>
+              </span>
+              <span className="truncate">je MWh</span>
+            </span>
+            <Leader faint/>
+            <span className="shrink-0 tabular-nums">{k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span>
+          </div>
+        </summary>
+        <div className="mb-1 mt-1.5 space-y-1 pl-5 text-xs leading-normal">
+          {PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7).map(p => {
+            const servedMWh = k.total / k.perMWh;
+            return <div key={p.key} className="flex items-baseline">
+              <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{p.label}</span>
+              <Leader faint/>
+              <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(k.breakdown[p.key] / servedMWh)} €</span>
+            </div>;
+          })}
+          <p className="pt-0.5 text-zinc-400 dark:text-zinc-500">Nenner: versorgte Nachfrage {n0(k.total / k.perMWh / 1e6)} TWh/a (Stromlast + H₂-Pool-Äquivalent).</p>
+        </div>
+      </details> : <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
         <span className="min-w-0 truncate">je MWh</span>
         <Leader faint/>
         <span className="shrink-0 tabular-nums">{k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span>
-      </div>
+      </div>}
       <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
         <span className="min-w-0 truncate">je kWh</span>
         <Leader faint/>
