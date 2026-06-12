@@ -15,7 +15,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, ComingSoonGate, HelpDot, HelpPanel, SegmentPill, statToneClass, type Stat } from '../sectionUi';
+import { ChartModeToggle, ChartPanel, HelpDot, HelpPanel, SegmentPill, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
@@ -188,7 +188,6 @@ export default function MixSection(props: MixSectionProps) {
   ];
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
-    <ComingSoonGate id="hero-kosten" compact>
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
       </p>
@@ -219,7 +218,6 @@ export default function MixSection(props: MixSectionProps) {
           </dl>
         </div>)}
       </div>}
-    </ComingSoonGate>
     <div className="mb-2 mt-5 border-t border-zinc-200 dark:border-zinc-800"/>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">

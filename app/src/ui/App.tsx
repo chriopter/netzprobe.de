@@ -14,7 +14,7 @@ import type { DataSet } from '../types/data';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixVisibility } from './chartOptions';
-import { ComingSoonGate, MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
+import { MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
 import MixSection from './sections/MixSection';
 import type { MixContent } from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
@@ -1030,8 +1030,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <ComingSoonGate id="ressourcen"><RessourcenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} data={data}/></ComingSoonGate>
-          <ComingSoonGate id="kosten"><KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/></ComingSoonGate>
+          <RessourcenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} data={data}/>
+          <KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
