@@ -256,7 +256,7 @@ const PAPER_CRUMPLE = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns=
 // der Umlage auf einen Durchschnittshaushalt (Verbrauch × Ø Systemkosten).
 type HaushaltView = HaushaltResult & { kmPerYear: number; kwhPer100Km: number; heatKwhPerYear: number; cop: number };
 
-function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, shareUrl }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; buildoutYear: string; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string }) {
+function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, shareUrl, sheddingTWh, sheddingPct, co2Mt }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; buildoutYear: string; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string; sheddingTWh: number; sheddingPct: number; co2Mt: number }) {
   // Alle Beträge wahlweise über den Aufbauzeitraum summiert oder pro Jahr.
   const [mode, setMode] = useState<'gesamt' | 'jahr'>('gesamt');
   const G = (x: number) => mode === 'gesamt' ? fmtBig(x * horizon) : fmtMrd(x);
@@ -498,6 +498,14 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
           <Leader faint/>
           <span className="shrink-0 tabular-nums">{fmtSum(k.perMWh)}</span>
         </div>)}
+      {/* Kleingedrucktes (Befunde der Extrem-Szenario-Pruefung): unversorgte Last
+          und unbepreistes CO2 duerfen den Preis nicht stillschweigend druecken. */}
+      {sheddingTWh > 1 && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+        ⚠ {n0(sheddingTWh)} TWh/a ({n1(sheddingPct)} % der Nachfrage) bleiben unversorgt — bepreist ist nur die gelieferte Energie; der Wert entgangener Last ist nicht bilanziert.
+      </p>}
+      <p className="mt-3 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+        CO₂ unbepreist (Konvention): {n0(co2Mt)} Mt/a — bei 80 €/t ETS wären das +{n1(co2Mt * 80 / 1000)} Mrd €/a.
+      </p>
       <div className="mt-8 border-t-4 border-double border-zinc-300 dark:border-zinc-600"/>
       {(() => {
         const eur = (ct: number) => ct / 100 * hh.kwh / 12;
@@ -634,11 +642,11 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
       <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«). Weil der Energieanteil kostenbasiert ab Werk gerechnet wird (statt Marktpreis + Marge), liegt das absolute Niveau ~10 % unter der realen BDEW-Rechnung — die Szenario-Vergleiche untereinander bleiben gültig.</p>
       <p>Der <strong>Gesamt-bis-Schalter</strong> multipliziert die Jahres-Systemkosten mit dem Aufbauhorizont — das sind Vollkosten des gesamten Stromsystems, nicht die »Mehrinvestitionen« aus Energiewende-Studien (die nur die Differenz zu einem Referenzpfad zählen). Die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (~70–90 Mrd €/a Heizöl, Erdgas, Kraftstoffe).</p>
-      <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
+      <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand — die Rechnung weist die Auslassung je Szenario im Kleingedruckten aus, bewertet zu 80 €/t ETS) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
     </HelpPanel>}
 
     <div className="mx-auto mt-2 w-full max-w-[700px]">
-      <Stromrechnung k={k} hh={hh} buildoutYear={buildoutYear} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl}/>
+      <Stromrechnung k={k} hh={hh} buildoutYear={buildoutYear} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl} sheddingTWh={result.summary.loadSheddingTWh} sheddingPct={100 * result.summary.loadSheddingTWh / Math.max(1, result.summary.totalDemandTWh + (result.summary.h2PoolStromReductionTWh ?? 0))} co2Mt={result.summary.co2MtPerYear}/>
     </div>
   </section>;
 }
