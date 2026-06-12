@@ -109,7 +109,7 @@
       "Faktor bildet Bestandsflotte 2025 ab (~2.800 VLH beobachtet, inkl. Anbindungs-Abregelung); 2045-Flottenmittel laut NEP-Orientierungswert ~3.400 VLH (70 GW → 238 TWh, wake-begrenzt) → Multiplier ~1,2; bis ~1,7 nur für einzelne optimierte ferne Flächen. Default 1,0.",
       "Ein Wetterjahr (2025, eher windschwach) und nur 9,4 GW Bestand als Datenbasis — die statistische Basis ist dünner als bei Onshore (62,8 GW).",
       "Installierte Leistung ist Jahresmittel; Inbetriebnahmen während des Jahres nicht stundenaufgelöst.",
-      "Zuordnung der Offshore-Netzanbindung: Die ISE-LCOE-Quelle schließt Netzanbindungskosten teils explizit aus (am Primärdokument unverifiziert); der System-Netzposten (preise: netzCapexEurPerKwAddedRE) beansprucht sie als Teil des EE-Terms, unterzeichnet sie aber als Landesmittel (real ~3.000–4.000 EUR/kW Anbindung, siehe preise-Caveat). Im Zweifel liegt also KEINE Doppelzählung vor, sondern eine Unterzeichnung offshore-lastiger Szenarien um grob ~3 Mrd EUR/a bei 70 GW."
+      "Zuordnung der Offshore-Netzanbindung: Die ISE-LCOE-Quelle schließt Netzanbindungskosten teils explizit aus (am Primärdokument unverifiziert); der System-Netzposten (preise: netzCapexEurPerKwAddedRE) beansprucht sie als Teil des EE-Terms, unterzeichnet sie aber als Landesmittel (real ~3.000–4.000 EUR/kW Anbindung, siehe preise-Caveat). Im Zweifel liegt also KEINE Doppelzählung vor, sondern eine Unterzeichnung offshore-lastiger Szenarien um grob ~5–10 Mrd EUR/a bei 70 GW (Differenz 2.000–3.000 EUR/kW Anbindung × 70 GW, annuisiert mit CRF 40 a; NEP-Offshore-Netz 153–171 Mrd Invest gesamt)."
     ],
     "file": "erzeugung/windoff/data.json",
     "scripts": [

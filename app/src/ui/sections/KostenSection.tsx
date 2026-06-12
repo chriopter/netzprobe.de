@@ -63,7 +63,7 @@ const TECH_WIKI: Record<string, string> = {
 };
 const n0 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 0 });
 const n1 = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 1 });
-// Kleinpreise (z.B. €/kWh-Speichervolumen 0,125–0,5) nicht auf ganze Zahlen runden.
+// Kleinpreise (z.B. H₂-Kavernen-Volumen 0,5 €/kWh) nicht auf ganze Zahlen runden.
 const nK = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: x < 10 ? 3 : 0 });
 
 const h2ImportFacts = (k: KostenResult): Facts => ({

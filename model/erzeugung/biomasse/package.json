@@ -133,7 +133,7 @@
       ]
     },
     "kosten": {
-      "source": "**Feste Biomasse / Holz-HKW (>=500 kWel, KWK, 2024, real).** CAPEX 4600 EUR/kW = Mittel der ISE-Spanne feste Biomasse 3473-5788. Fix-O&M 185 EUR/kW/a (ISE-Methode 4 % von CAPEX/a; Spanne 139-232). Var-O&M ~6 EUR/MWh (ISE 4 EUR/MWh + PyPSA solid-biomass-CHP 6,1). Brennstoff frei Kraftwerk 24 EUR/MWh_th (Hackschnitzel/Waldrestholz 35 % Feuchte, ~2,4 ct/kWh_th). El. Wirkungsgrad 0,35 (ISE nicht explizit; PyPSA biomass 0,468 / solid-biomass-CHP 0,27 el bei KWK) -> Brennstoffkostenanteil ~69 EUR/MWh_el. Lebensdauer 25 a. Hinweis: Biogas (500 kWel) abweichend (CAPEX 2894-5788, Substrat 87,5 EUR/MWh_th). Quellen: Fraunhofer ISE 2024; PyPSA technology-data. Konfidenz: mittel.",
+      "source": "**Feste Biomasse / Holz-HKW (>=500 kWel, KWK, 2024, real).** CAPEX 4600 EUR/kW = Mittel der ISE-Spanne feste Biomasse 3473-5788. Fix-O&M 185 EUR/kW/a (ISE-Methode 4 % von CAPEX/a; Spanne 139-232). Var-O&M ~6 EUR/MWh (ISE 4 EUR/MWh + PyPSA solid-biomass-CHP 6,1). Brennstoff frei Kraftwerk 60 EUR/MWh_th als FLOTTEN-Blend (siehe Caveat: ~2/3 Biogas-Substrat 87,5, ~20 % Hackschnitzel 24-37, ~13 % biogener Abfall ~0 EUR/MWh_th; erzeugungsgewichtet und eta-korrigiert 52-62). El. Wirkungsgrad 0,35 (ISE nicht explizit; PyPSA biomass 0,468 / solid-biomass-CHP 0,27 el bei KWK) -> Brennstoffkostenanteil ~171 EUR/MWh_el (Bon-Zeile ~245 EUR/MWh, ISE-Biogas-Band 202-325). Lebensdauer 25 a. Quellen: Fraunhofer ISE 2024; PyPSA technology-data. Konfidenz: mittel.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
