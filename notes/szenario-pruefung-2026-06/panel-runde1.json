@@ -1,0 +1,652 @@
+{
+ "reviews": [
+  {
+   "experte": "kosten",
+   "label": "Energieökonom (CAPEX/OPEX)",
+   "satisfied": true,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "kosten/netz (100kern-lastfolgend, 2025-skaliert)",
+     "befund": "Lastgetriebener Netzausbau fehlt in Nicht-EE-Szenarien: 100kern hat netz=0 Mrd €/a, obwohl die Peak-Last von 75,6 auf 302,4 GW steigt (333 GW Kernkraft, vierfache Spitzenlast über dem heutigen Netz); 2025-skaliert bekommt nur 35,4 Mrd €/a über den EE-Zubau-Proxy. Die Eich-Anker (IMK ~651 Mrd, DIHK ~1,2 Bio) enthalten aber erheblichen lastgetriebenen Verteilnetzausbau (E-Mobilität, Wärmepumpen), der in JEDEM e100-Szenario anfällt. Das verzerrt den Szenarienvergleich zugunsten 100kern um grob 10-40 Mrd €/a (~5-15% des Szenariototals von 231,6 Mrd).",
+     "beleg": "report: 100kern kosten.breakdown.netz=0 bei peakLoadGW 302,4; Formel in model/referenz/preise/package.json: Netzkosten = 1200 €/kW × max(0, PV+WindOn+WindOff − 174,7 GW) — rein EE-getrieben. Caveats decken die Marginal-Logik ('Kupferplatte als Nullpunkt'), aber nicht die Last-Asymmetrie zwischen Szenarien.",
+     "empfehlung": "Entweder einen lastgetriebenen Netz-Term (z.B. €/kW Peak-Last-Zuwachs) ergänzen oder in den Caveats/der UI explizit ausweisen, dass netz=0 im Kernkraft-Szenario den Vergleich verzerrt."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kosten/perTech pv (alle Szenarien)",
+     "befund": "PV-Ertragsbasis im Bericht ~683 VLH (Referenz 2025: 8,5 Mrd €/a ÷ 121,4 €/MWh ≈ 70 TWh aus 102,5 GW) — konsistent mit dem Einspeisefaktoren-Paket (~700 VLH), aber im Widerspruch zum PV-Paket selbst (referenceYield 0,95 TWh/GWa als DE-Bundesmittel, +39%). Energy-Charts public_power exkludiert PV-Eigenverbrauch und enthält Abregelung; reales Flottenmittel ~850-1000 kWh/kWp. Folge: PV-€/MWh um ~20-30% überzeichnet (121-146 statt ~85-110), propagiert in die 1480-GW-PV-Auslegung und damit in die 548 Mrd des 100ee-noimport.",
+     "beleg": "model/erzeugung/einspeisefaktoren-2025/package.json ('PV ~700 h', Caveat 'Faktoren unterschätzen mögliche Erzeugung') vs. model/erzeugung/pv/package.json (referenceYield.twhPerGWa 0,95, ISE-Quelle); Rechenweg: perTech.total ÷ eurPerMWh.",
+     "empfehlung": "PV-Faktor auf Bruttoerzeugung inkl. Eigenverbrauch normieren oder die Diskrepanz 0,68 vs. 0,95 TWh/GWa zwischen den Paketen auflösen und im Kosten-Caveat nennen."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kosten/100ee-noimport (batterie)",
+     "befund": "Batterie ist mit 101,2 Mrd €/a der zweitgrößte Posten (3300 GWh × 280 €/kWh + 660 GW × 150 €/kW, 15a Annuität — rechnerisch exakt reproduzierbar). 280 €/kWh ohne Lernkurve über den 20-Jahre-Aufbauhorizont liegt am oberen Rand heutiger Großspeicher-Systempreise (~200-300 €/kWh, 2024/25, stark fallend; Pack-Preise bereits <100 $/kWh). Der Posten ist eher Obergrenze, Spielraum ~20-40% nach unten (Konfidenz der Studienspanne: mittel).",
+     "beleg": "model/speicher/batterie/package.json: capexEurPerKWh 280, capexEurPerKW 150, lifetimeYears 15; Rechenweg: (660×0,15 + 3300×0,28) Mrd × Annuität(15a, 5%)=0,0963 → 98,6 + OM 2,6 + var 0,2 ≈ 101,2 ✓.",
+     "empfehlung": "Lernkurven-Caveat im Batterie-Paket ergänzen oder Spanne ausweisen; in batterielastigen Szenarien dominiert dieser Parameter die Differenz zwischen den 100ee-Varianten."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/netz Extrapolation (100ee-noimport, 100ee-import)",
+     "befund": "Netz-Hochskalierung ist ehrlich geflaggt: netzExtrapoliert=true bei eeZubauUeberBasisGW 1890,3 bzw. 1060,3 (> 700 GW Eichgrenze); Rechnung exakt formelkonform (1890,3 GW × 1200 €/kW × Annuität 40a = 132,2 Mrd €/a ✓). Implizit stecken im noimport-Fall aber 2,27 Bio € Netz-Capex — das 3,5-fache des IMK-Ankers, 2,7-fach über dem Eichbereich linear extrapoliert. Wiki deklariert das korrekt als 'nur Richtungssignal'; zusätzlich ist die dokumentierte Offshore-Unterzeichnung (70 GW à real 3000-4000 statt 1200 €/kW, ~+9 Mrd €/a) in beiden 100ee-Szenarien wirksam.",
+     "beleg": "model/referenz/preise/package.json: netzCalibratedMaxAddedReGW 700, Caveats 'Strikt linear je GW' und Offshore-Pauschalen-Caveat; report: netzExtrapoliert true, netz 132,2/74,2 Mrd €/a — beide nachgerechnet konsistent.",
+     "empfehlung": "Keine Änderung nötig; ggf. im UI-Hinweis die implizite Gesamtsumme (Bio €) neben dem Flag anzeigen."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/100kern-lastfolgend (fuel)",
+     "befund": "Kernbrennstoff 22,9 €/MWh_el liegt am oberen Rand der Literatur (Brennstoffkreislauf inkl. Anreicherung und Entsorgung typ. ~10-19 €/MWh_el; nach den Uran-/Anreicherungspreisanstiegen seit 2022 oberes Ende vertretbar — Konfidenz der Studienwerte: mittel). Bei 2027 TWh Erzeugung bewegen 5 €/MWh bereits ~10 Mrd €/a (~4% des Szenariototals). Rechnerisch konsistent: 23 × 2026,8 TWh = 46,6 Mrd ✓; Capex 333 GW × 8000 €/kW × Annuität(45a) = 149,9 ≈ 150,4 ✓.",
+     "beleg": "model/referenz/preise/package.json: uraniumEurPerMWhEl 22,9; model/erzeugung/kernkraft/package.json: fuelEurPerMWhTh 23, capexEurPerKW 8000; report breakdown fuel 46,6.",
+     "empfehlung": "Quellenherleitung für 22,9 €/MWh_el (inkl./exkl. Rückbau- und Endlagerprovision) im Wiki dokumentieren."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/perTech laufwasser",
+     "befund": "Implizite Laufwasser-Erzeugung 26,7 TWh (1,4 Mrd €/a ÷ 52,5 €/MWh, 4,8 GW → 63% Kapazitätsfaktor) liegt ~30-50% über dem DE-Ist (~16-20 TWh/a Laufwasser). Kostenwirkung minimal (Posten 1,4 Mrd), aber das ausgewiesene €/MWh ist dadurch zu günstig (realistisch eher ~70-80 €/MWh).",
+     "beleg": "Rechenweg perTech.total ÷ eurPerMWh; model/erzeugung/laufwasser/package.json: 4000 €/kW, 80 €/kWa, 60a → 1,40 Mrd ✓; DE-Statistik Laufwasser ~17-19 TWh (Konfidenz mittel)."
+    }
+   ],
+   "zusammenfassung": "Die Kostenrechnung ist intern vollständig konsistent: alle perTech-Posten, Breakdowns und Totale aller 5 Szenarien reproduzieren auf <1% aus den Wiki-Parametern (WACC 5%, Paket-Capex/OM/Fuel, Import 89/Export 60/H2 130 €/MWh), die Netzformel (1200 €/kW × Δ-EE über 174,7 GW, 40a) stimmt exakt, und die Extrapolation über den 700-GW-Eichbereich ist in beiden 100ee-Szenarien ehrlich mit netzExtrapoliert=true geflaggt. Die 548,1 Mrd €/a für 100ee-noimport sind als Autarkie-Stresstest erklärbar (PV 122,9 + Batterie 101,2 + Netz 132,2 + H2 89,5 Mrd dominieren), eher Obergrenze wegen konservativem Batterie-Capex und schwachem PV-Wetterjahr als Profilbasis; Referenz 2025 mit 46,5 Mrd €/a (99,7 €/MWh Vollkosten) ist plausibel. Härtester Befund: Nicht-EE-Szenarien tragen keinerlei lastgetriebenen Netzausbau (100kern: netz=0 bei vervierfachter Peak-Last), obwohl die Eich-Anker IMK/DIHK lastgetriebenen Verteilnetzausbau enthalten — das verzerrt den Szenarienvergleich zugunsten Kernkraft und ist von den Wiki-Caveats nicht abgedeckt."
+  },
+  {
+   "experte": "speicher",
+   "label": "Speicher-/Flexibilitätsexperte",
+   "satisfied": false,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "speicher/h2 @ 100ee-noimport",
+     "befund": "H2-Kaverne mit 180 TWh massiv überdimensioniert: SoC-Minimum liegt bei 102,8 TWh, d.h. 57 % der Kapazität (103 TWh) werden im gesamten Jahr nie angefasst (Hub nur 42,9 %, Vollzyklen 0,1). Der tatsächlich genutzte Hub von ~77 TWh entspricht fast exakt dem Studienkorridor für den deutschen H2-Speicherbedarf 2045 (~70–80 TWh, z.B. INES/Agora KNDE; heutiges umrüstbares Kavernen-Arbeitsgas ~32 TWh). Bei capexEurPerKWh 0,5 €/kWh bindet die tote Kapazität ~50 Mrd. € Invest ohne Nutzen.",
+     "beleg": "report.json speicherBetrieb.h2 (socMinGWh 102834, capGWh 180000, hubPct 42.9, vollzyklenProJahr 0.1); model/speicher/h2/package.json (kosten.capexEurPerKWh 0.5; Caveat nennt ~500 TWh DEEP.KBB-Potenzial als Obergrenze, aber Bedarfsstudien liegen bei 70–100 TWh); Studienwerte aus Fachwissen (Konfidenz mittel-hoch).",
+     "empfehlung": "Preset h2EnergyGWh für 100ee-noimport von 180.000 auf ~80.000–100.000 GWh senken; Hub steigt dann auf ~100 %, Vollzyklen auf ~0,3 — konsistent mit Saisonalspeicher-Rolle."
+    },
+    {
+     "severity": "hoch",
+     "bereich": "speicher/h2 @ 100ee-noimport (Rückverstromung)",
+     "befund": "245 GW H2-Rückverstromungsleistung übersteigt die Spitzenlast des Szenarios (217,9 GW) — zusätzlich stehen 660 GW Batterie und 9,4 GW PSW bereit. Die Rückverstromung liefert nur 23,1 TWh/a, also ~94 Volllaststunden. Bei capexDischargeEurPerKW 1.100 €/kW sind das ~270 Mrd. € Invest für fast ungenutzte Leistung; Studien sehen 40–80 GW H2-ready-Kraftwerke für DE 2045. Erklärt mit, warum H2 im Szenario 89,5 Mrd. €/a kostet.",
+     "beleg": "report.json: h2DischargePowerGW 245 vs. system.peakLoadGW 217,9; entladenTWh 23,11 → 23.110 GWh / 245 GW = 94 VLh; model/speicher/h2/package.json kosten.capexDischargeEurPerKW 1100, omFixDischargeEurPerKWa 22; perTechMrdEurProJahr h2 = 89,5.",
+     "empfehlung": "Rückverstromungsleistung auf Größenordnung der maximalen Residuallast-Lücke nach Batterie-Dispatch dimensionieren (vermutlich 80–150 GW); Sweep über discharge-GW würde das Kostenoptimum zeigen."
+    },
+    {
+     "severity": "hoch",
+     "bereich": "speicher/batterie @ 100ee-noimport",
+     "befund": "Batterie-Preset 3.300 GWh / 660 GW erreicht nur 31,5 Vollzyklen/a — unter der 50-Zyklen-Schwelle, also klar überdimensioniert (wirtschaftlich sinnvoll wären 150–300 Zyklen). Kosten 101,2 Mrd. €/a für 103,8 TWh Entladung ≈ 975 €/MWh durchgeleitete Energie. Systemstudien (Fraunhofer ISE, Agora KNDE2045) sehen für DE 2045 stationäre Batteriespeicher in der Größenordnung 100–300 GWh, Faktor ~10 kleiner. Zum Vergleich: das Import-Szenario kommt mit 950 GWh auf gesunde 94,2 Zyklen.",
+     "beleg": "report.json speicherBetrieb.batterie (vollzyklenProJahr 31.5, entladenTWh 103.84) und perTechMrdEurProJahr batterie = 101,2; model/speicher/batterie/package.json (Default 10 GW/25 GWh als 2025-Bestand); Studienkorridor aus Fachwissen (Konfidenz mittel).",
+     "empfehlung": "Preset prüfen: Batterie verkleinern (z.B. 1.000–1.500 GWh) und Rest der Lücke über H2-Hub abdecken; oder im Bericht ausweisen, dass das noimport-Preset bewusst nicht kostenoptimiert ist."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "speicher/pumpspeicher @ referenz-2025",
+     "befund": "Pumpspeicher entlädt nur 0,09 TWh/a (2,1 Vollzyklen) — reale deutsche PSW erzeugen ~8–10 TWh/a Turbinenstrom (~150–200 äquivalente Zyklen auf 45 GWh). Faktor ~100 Abweichung: Der Greedy-Residuallast-Dispatch kennt keine Marktarbitrage, und Priorität 1 der Batterie schluckt den gesamten Tageshub, bevor PSW (Priorität 2) drankommt. Im Modellrahmen konsistent, gegen die Realität des Referenzjahres aber grob daneben.",
+     "beleg": "report.json speicherBetrieb.pumpspeicher (entladenTWh 0.09, vollzyklenProJahr 2.1); model/speicher/pumpspeicher/package.json dispatchPriority 2, model/speicher/batterie/package.json dispatchPriority 1; reale PSW-Erzeugung ~8–10 TWh/a aus Fachwissen (Konfidenz hoch).",
+     "empfehlung": "Caveat im pumpspeicher-Paket ergänzen: \"Modell bildet keine Marktarbitrage ab; reale PSW-Erzeugung (~10 TWh/a) wird im Referenzszenario um Faktor ~100 unterschätzt\" — sonst wirkt der Referenz-Bericht wie ein Bug."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "speicher/batterie @ referenz-2025",
+     "befund": "86,5 Vollzyklen/a sind kalendarisch und technisch unkritisch (weit unter Li-Ion-Limit 250–350/a), aber gegenüber realem Betrieb deutscher Großspeicher (~1 Zyklus/Tag aus Spotmarkt-Arbitrage + Regelleistung, also 250–350 äquivalente Vollzyklen) um Faktor 3–4 zu niedrig — gleiche Ursache wie beim PSW: kein Preis-/Markt-Dispatch, nur physische Residuallast bei 56,7 % EE-Anteil. Als Modellartefakt akzeptabel, da Wiki den Greedy-Dispatch transparent dokumentiert.",
+     "beleg": "report.json speicherBetrieb.batterie referenz-2025 (vollzyklenProJahr 86.5, entladenTWh 2.16 = 86,4 × 25 GWh, intern konsistent); model/speicher/batterie/package.json description (Greedy-Regel, \"Regelleistung und Spotmarkt-Arbitrage\" nur als Auslegungs-, nicht Dispatch-Begründung).",
+     "empfehlung": "Optional im Batterie-Caveat ergänzen, dass die Modell-Zyklenzahl im Referenzfall unter der realen Marktnutzung liegt."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "speicher/pumpspeicher @ 100kern-lastfolgend",
+     "befund": "Anzeige-Inkonsistenz: hubPct 83,3 % und socMin 7,5 GWh suggerieren aktive Nutzung, aber entladenTWh = 0 und Vollzyklen = 0. Erklärung: lastfolgende Kernkraft erzeugt nie ein Defizit, der PSW lädt sich einmalig voll (socMin 7,5 ≈ 9,4 GW × η 0,8 = 7,52 GWh nach der ersten Stunde, falls Messung ab Stunde 1) und bleibt dann voll. Der ausgewiesene Hub misst also die einmalige Erstbefüllung, keine zyklische Nutzung.",
+     "beleg": "report.json speicherBetrieb.pumpspeicher @ 100kern (socMinGWh 7.5, hubPct 83.3, vollzyklenProJahr 0, entladenTWh 0); model/speicher/pumpspeicher/package.json initialStateOfChargeFraction 0, roundtripEfficiency 0.8 → 9,4 × 0,8 = 7,52.",
+     "empfehlung": "hubPct-Kennzahl bei vollzyklenProJahr ≈ 0 ausblenden oder als \"Erstbefüllung\" kennzeichnen."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "speicher/h2 @ 100ee-noimport (Elektrolyse/Pool-Kontext)",
+     "befund": "Elektrolyse 495 GW ist intern konsistent (~782 TWh H2-Output bei ~2.500 VLh), wird aber vom H2-Pool-Bedarf 740 TWh/a getrieben — der hängt am noch offenen Chemie-Default (685 vs. 440 TWh, dokumentierte Debatte mit Rollback-Empfehlung auf 440). Ein Rollback würde Elektrolyse-, Batterie- und Kavernenbedarf des noimport-Presets spürbar senken; die drei Speicher-Befunde oben wären dann neu zu dimensionieren.",
+     "beleg": "report.json system.h2PoolTWh 740.4, h2ChargePowerGW 495; notes/chemie-szenario-440-vs-685.md (projektinterne Debatte, laut Memory Rollback auf 440 empfohlen).",
+     "empfehlung": "Speicher-Presets erst nach Entscheidung der Chemie-Default-Frage final kalibrieren."
+    }
+   ],
+   "zusammenfassung": "Die Betriebszahlen sind intern konsistent (Vollzyklen = Entladung/Kapazität stimmt in allen fünf Szenarien) und die Defaults (Batterie 10 GW/25 GWh, PSW 9,4 GW/45 GWh) decken sich mit dem Wiki. Das Szenario 100ee-import ist speicherseitig gesund (Batterie 94 Zyklen/a, H2 0,5 Zyklen bei 80 % Hub). Das Preset 100ee-noimport ist dagegen massiv überdimensioniert: 57 % der 180-TWh-Kaverne werden nie genutzt (genutzter Hub ~77 TWh entspricht dem Studienkorridor), die 245 GW Rückverstromung übersteigen die Spitzenlast bei nur 94 VLh, und 3.300 GWh Batterie erreichen nur 31,5 Zyklen — zusammen ~190 Mrd. €/a Speicherkosten, was den Kostenvergleich des Szenarios verzerrt. Referenz-2025 unterschätzt zudem die reale Speichernutzung (Batterie 86,5 statt ~250–350 Zyklen, PSW 0,09 statt ~10 TWh/a), weil der Greedy-Dispatch keine Marktarbitrage kennt — dokumentierte Modellgrenze, sollte aber als Caveat explizit werden."
+  },
+  {
+   "experte": "ressourcen",
+   "label": "Rohstoffanalyst",
+   "satisfied": false,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "ressourcen/brennstoff/2025-skaliert",
+     "befund": "Erdgas-Massenstrom um ~51% unterschätzt: Report weist 31,5 Mt/a aus (analytisch 140 GW × 1500 VLH = 210 TWh × 150.000 t/TWh), die Simulation dispatcht aber 430,2 TWh Gas (≈3.073 VLH) → konsumbasiert ~64,5 Mt/a. Welt-Anteil wäre ~2,1% statt 1,0%, vs. DE-Gesamtverbrauch (60 Mt) ~108% statt 52%. Die VLH-Kalibrierung (Kommentar in ressourcen.ts: 'damit das Default-Szenario sauber 1× ergibt') passt nur für Referenz 2025 (dort Gas 49,5 TWh simuliert vs. 53,3 analytisch, +7,6% ok; Kohle 97,4 vs. 93, ok), bricht aber bei verändertem Dispatch.",
+     "beleg": "app/src/ui/ressourcen.ts (VLH = {kohle: 3000, gas: 1500, kernkraft: 7500}); model/erzeugung/gas/package.json (Erdgas 150.000 t/TWh, plausibel: 72 kt/TWh_th bei 50 MJ/kg LHV, η≈48%); Summe gasGW aus /tmp/claude-1000/np/report/result-2025-skaliert.json = 430,2 TWh; Kohle dagegen ok (379 TWh simuliert vs. 360 analytisch, −5%).",
+     "empfehlung": "Brennstoffmassen aus der simulierten Erzeugung (Σ TWh je Tech aus result.hours) statt aus fixen VLH rechnen; die Kalibrier-Eigenschaft des Referenzszenarios bleibt dabei automatisch erhalten."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "ressourcen/uran/100kern-lastfolgend",
+     "befund": "Uran 62.438 t/a (= 103,7% der Weltförderung von 60.213 t) beruht auf 333 GW × 7500 VLH = 2.497,5 TWh; die lastfolgende Simulation erzeugt aber nur 2.026,9 TWh (597,5 TWh abgeregelt = nicht erzeugt = kein Brennstoffverbrauch). Burnup-basiert wären es ~50.700 t/a ≈ 84% der Weltförderung — die symbolträchtige Aussage '>100% der Welt-Uranförderung' hängt also an der analytischen VLH-Annahme (+23% über Toleranz). Gegenläufig: Erstkern-Beladungen beim Aufbau von 333 GW (~500–900 t Natururan/GW, über 20 a ≈ 8–13 kt/a, Konfidenz niedrig) sind nicht modelliert und würden einen Teil kompensieren. Positiv: Uran erscheint korrekt ausschließlich im Kernkraft-Szenario (0 t in allen anderen); Intensität 25 t/TWh ist WNA-konform (≈67 kt für ≈2.700 TWh Weltflotte).",
+     "beleg": "model/erzeugung/kernkraft/package.json (Uran 25 t/TWh, confidence hoch); model/referenz/weltfoerderung (Uran 60.213 t/a, WNA); result-100kern-lastfolgend.json: kernkraftGW-Summe 2.026,9 TWh, curtailmentTWh 597,5; Rechenweg 333×7,5×25 = 62.437,5 ✓ reproduziert.",
+     "empfehlung": "Auch Uran konsumbasiert aus simulierten TWh rechnen; Erstkern-Effekt ggf. als Caveat im Kernkraft-Wiki dokumentieren."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "ressourcen/e100-bestand (Renewal)",
+     "befund": "Inkonsistente Erneuerungslogik: Grid-Batterien erhalten den Renewal-Faktor max(1, 20a/15a) = 1,33, die e100-Sektorbestände (Pkw/Lkw/Wärmepumpen) werden in annualByMaterial ohne Renewal-Faktor als Bestand/20a annualisiert. EV-Batterien/Fahrzeuge halten aber nur ~12–15 a, d.h. im 20-a-Horizont wäre Faktor ~1,3–1,5 fällig. Folge: Pkw-getriebene Mengen (Li 12,7 kt/a, Co 12,7 kt/a, Ni 58 kt/a, Cu 129 kt/a im noimport-Szenario) ~30–50% unterschätzt; Lithium gesamt 36,7 kt/a (15,3% Weltförderung) läge eher bei ~42–44 kt/a (~18%). Die Einzelintensitäten selbst sind plausibel (z.B. ~5,9 kg Li, ~60 kg Cu, ~0,4 kg Nd pro Pkw bei 42,9 Mio. Fahrzeugen).",
+     "beleg": "app/src/ui/ressourcen.ts Z. 86–95: addS ohne rf für E100_SECTORS, vs. Z. 69–79 mit rf für Speicher; model/last/e100-pkw/package.json (Li 2700, Cu 27300, Ni 12300 t/TWh); model/speicher/batterie/package.json (lifetimeYears 15, Li 97 t/GWh ≈ LFP-üblich 90–110 g/kWh).",
+     "empfehlung": "Renewal-Faktor auch auf e100-Bestände anwenden (Pkw/Lkw ~13–15 a, Wärmepumpe ~18–20 a) oder die Auslassung als Caveat dokumentieren."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "ressourcen/pv-silizium",
+     "befund": "Zwei gegenläufige Verzerrungen: PV-Siliziumintensität 3.950 t/GW entspricht dem IEA-Wert von ~2021; moderne Module liegen bei ~2.000–2.500 t/GW (Überzeichnung ~1,6×). Gleichzeitig wird der Bedarf (293 kt/a im noimport-Szenario, 3,4%) gegen die gesamte Siliziumproduktion (8,5 Mt inkl. Ferrosilizium) gestellt — der relevante Engpass ist Polysilizium (~1,6–2 Mt/a weltweit), dort wären es ~15–18% (Unterzeichnung des Anteils). Netto etwa neutral, aber beide Vereinfachungen sind nicht als Caveat dokumentiert. Konfidenz der Studienwerte: mittel.",
+     "beleg": "model/erzeugung/pv/package.json (Silizium 3950 t/GW, confidence mittel); model/referenz/weltfoerderung (Silizium 8,5 Mt/a, USGS = Si-Gehalt aller Qualitäten); Rechenweg 1480 GW × 3950/20 = 292,3 kt/a ✓.",
+     "empfehlung": "Caveat im PV- oder Weltförderungs-Wiki ergänzen (Polysilizium-Markt vs. Gesamt-Si; Intensitätstrend sinkend)."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "ressourcen/h2-import",
+     "befund": "H2-Massenstrom rechnerisch exakt korrekt: 360,2 TWh × 30.003 t/TWh (LHV 33,33 kWh/kg) = 10.808.413 t ✓, im Report auf das Tonne genau reproduziert; als Brennstoffgruppe korrekt einsortiert. Einordnungs-Schwäche: Der Vergleich '11,1% der Weltproduktion' nutzt die 97 Mt/a IEA-Gesamtproduktion, die fast vollständig graue, captive Eigenproduktion (Raffinerien/Ammoniak) ist — ein handelbarer grüner H2-Markt dieser Größe existiert nicht; der Anteilsvergleich wirkt dadurch wohlwollender als die reale Beschaffungsherausforderung.",
+     "beleg": "app/src/ui/ressourcen.ts (H2_TONS_PER_TWH = 1e6/33.33); model/referenz/weltfoerderung (Wasserstoff 97 Mt/a, IEA Global Hydrogen Review, confidence mittel); report.json 100ee-import: Wasserstoff 10.808.413 t, brennstoff-Gruppe 10.808.413 ✓.",
+     "empfehlung": "Caveat: 97 Mt sind grauer Bestandsmarkt, kein verfügbares Handelsvolumen für Importe."
+    }
+   ],
+   "zusammenfassung": "Die interne Konsistenz ist exzellent: alle 18 Rohstoff-Jahresbedarfe in allen 5 Szenarien sowie die Gruppensummen (bulk/spezial/brennstoff) ließen sich aus den Wiki-Parametern (tPerGW/tPerGWh/tPerTWh, Lifetimes, Renewal-Logik, e100-Umrechnungen) auf <0,5% exakt reproduzieren; die Weltförderungswerte decken sich mit USGS 2025/WNA/IEA (Li 240 kt, Co 290 kt, Cu 23 Mt, Ag 25 kt, U 60 kt), und Lithium (15,3% Welt), Kupfer (2,2%), Silizium (3,4%) sind im noimport-Szenario größenordnungsmäßig plausibel; Uran erscheint korrekt nur im Kernkraft-Szenario und der H2-Importmassenstrom (10,81 Mt = 360,2 TWh × 30.003 t/TWh) stimmt exakt. Nicht erfüllt ist die ±10%-Toleranz bei den Brennstoffen, weil fixe Volllaststunden statt simulierter Erzeugung verwendet werden: Uran im Kernkraft-Szenario +23% überzeichnet (103,7% statt ~84% der Weltförderung — die Headline '>100%' ist ein Artefakt, teils durch unmodellierte Erstkerne kompensiert) und Erdgas im 2025-skaliert-Szenario ~51% unterschätzt (31,5 statt ~64,5 Mt/a bei 430 statt 210 TWh Gasdispatch). Zudem fehlt der Renewal-Faktor bei den e100-Beständen (EV-Lithium/Kobalt im Steady-State ~30–50% unterschätzt), während Grid-Batterien ihn erhalten."
+  },
+  {
+   "experte": "flaeche",
+   "label": "Raumplaner",
+   "satisfied": true,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "flaeche/windon (betrifft 100ee-noimport, 100ee-import)",
+     "befund": "Kategorie-Label und Wert widersprechen sich: model/erzeugung/windon anlagenFlaeche.wirkungKm2PerGW=1 mit kategorie='Vorrangfläche'. Echte Vorrang-/Eignungsgebietsdichte liegt bei ~20-25 MW/km² (WindBG-2%-Ziel: ~7.150 km² für 115-160 GW = 45-62 km²/GW). 1 km²/GW ist eine Direktflächen-Konvention (Fundament, Kranstellfläche, Wege), keine Vorrangfläche. Folge: 515 GW Onshore erscheinen im Bericht als 515 km²; unter Vorrangflächen-Accounting wären es ~20.000-26.000 km² (5,8-7,2 % der Landesfläche) — die Szenariosumme von 21.146 km² würde sich mehr als verdoppeln und das Ranking gegen 2025-skaliert (31.581 km²) umkehren. Genau die im Auftrag genannte Auffälligkeit hängt an dieser Accounting-Wahl.",
+     "beleg": "model/erzeugung/windon/package.json parameters.anlagenFlaeche {anlageKm2PerGW:0.5, wirkungKm2PerGW:1, kategorie:'Vorrangfläche'}; Rechenweg 515 GW × 1 km²/GW = 515 km² (im Bericht enthalten, verifiziert); Literatur: WindBG 2%-Flächenziel, BWE/UBA-Dichte 20-25 MW/km² in Vorranggebieten (Konfidenz hoch)",
+     "empfehlung": "Entweder kategorie in 'direkte Inanspruchnahme' umbenennen und im Wiki/UI klarstellen, dass Wind-Vorrangfläche bewusst nicht gezählt wird (Fläche bleibt landwirtschaftlich nutzbar — methodisch vertretbar, aber explizit machen), oder zusätzliche Kennzahl 'Planungsfläche' ausweisen."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "flaeche/2025-skaliert (kohle vorFlaeche)",
+     "befund": "vorFlaeche kohle 22 km²/GW mit typ='Tagebau Braunkohle', land='DE' wird auf die gesamte Kohleflotte angewendet, also auch auf Steinkohle mit Importkohle. Referenz 2025: 31 GW × 22 = 682 km² DE-Tagebau, real sind nur ~15-16 GW Braunkohle (aktive Tagebau-Betriebsflächen ~300-500 km², Hambach 44, Garzweiler ~33, Inden 17, Lausitz/Mitteldeutschland Rest) — DE-Inland um grob Faktor 1,5-2 überzeichnet, Steinkohle-Vorfläche (Ausland AU/US/CO) fehlt dafür ganz. In 2025-skaliert skaliert das auf 2.640 km² 'DE-Tagebau' für 120 GW Mischflotte.",
+     "beleg": "model/erzeugung/kohle/package.json parameters.vorFlaeche {km2PerGW:22, typ:'Tagebau Braunkohle', land:'DE'}; Rechenweg 31×22=682 bzw. 120×22=2.640 (Bericht-konsistent); Braunkohle/Steinkohle-Split aus kohle method.description ('Stein- und Braunkohle ... Mix'); reale Tagebauflächen Konfidenz mittel",
+     "empfehlung": "vorFlaeche nach Braun-/Steinkohle splitten oder km²/GW als flottengewichteten Mix mit DE/Ausland-Aufteilung dokumentieren."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "flaeche/pv (betrifft 100ee-noimport)",
+     "befund": "PV wirkungKm2PerGW=6 ('Flottenmix Aufdach + Freifläche', d.h. ~50 % Aufdach bei ~12 km²/GW Freifläche) wird konstant bis 1.480 GW extrapoliert. Aufdach-Potenzial liegt je nach Studie bei ~300-1.000 GW; bei 1.480 GW müsste der Freiflächenanteil deutlich steigen. Beispiel: 500 GW Aufdach + 980 GW Freifläche × 12 km²/GW = ~11.800 km² statt der berichteten 8.880 km² — Unterschätzung ~25-35 % im Extremszenario. Für 100ee-import (790 GW) ist der Mix-Ansatz noch haltbar.",
+     "beleg": "model/erzeugung/pv/package.json parameters.anlagenFlaeche {wirkungKm2PerGW:6, kategorie:'Flottenmix Aufdach + Freifläche'}; Rechenweg 1.480×6=8.880 km² (Bericht-konsistent); Freiflächen-PV-Bedarf 1,0-1,4 ha/MWp (Literaturkonvention, Konfidenz hoch), Aufdach-Potenzialspanne Konfidenz mittel",
+     "empfehlung": "Caveat im PV-Paket ergänzen: Flottenmix-Flächenfaktor gilt nur bis ~2x heutiger Aufdach-Potenzialausschöpfung; jenseits davon Freiflächen-Faktor verwenden."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "flaeche/2025-skaliert (biomasse vorFlaeche)",
+     "befund": "Die 31.581 km² sind intern voll konsistent und wiki-gedeckt: Vorfläche 25.440 km² = Biomasse 19 GW × 1.200 km²/GW (22.800) + Kohle 120 GW × 22 (2.640) — die Vermutung des Auftrags bestätigt sich. Plausibilität: 22.800 km² Energiepflanzen = 6,4 % der Landesfläche / ~14 % der Ackerfläche bei 19 GW. Energiespezifisch eher unterschätzt: Modell 1.200/4,8 = 250 km²/TWh·a vs. real ~300-450 km²/TWh (FNR: ~13.000-14.000 km² Biogas-Energiepflanzen für ~28-33 TWh Strom). Richtung und Größenordnung stimmen, der wahre Wert läge eher noch höher.",
+     "beleg": "model/erzeugung/biomasse/package.json parameters.vorFlaeche {km2PerGW:1200} und referenceYield 4,8 TWh/GW·a; Rechenweg 19×1200+120×22=25.440 = Berichtswert exakt; FNR-Anbauflächen Konfidenz mittel",
+     "empfehlung": "Keine Korrektur nötig; ggf. Caveat, dass 1.200 km²/GW als DE-Mix-Wert beim Hochskalieren konservativ (untere Kante) ist."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "flaeche/100kern-lastfolgend",
+     "befund": "736 km² sind rechnerisch korrekt (333 GW × 0,7 Anlage + 333 × 1,5 Wirkung + Pumpspeicher ≈ 736) und als direkte Standortfläche plausibel (~2,2 km²/GW; Literatur 1-3 km²/GW Kraftwerksgelände). Die Uran-Vorfläche 333 × 5 = 1.665 km² (Ausland KZ/CA/NE) ist methodisch konsistent ausgeschlossen — die UI dokumentiert die Regel explizit ('PV-Modulfertigung China zählt auch nicht'). Anmerkung: 5 km²/GW Uranbergbau ist eher obere Kante (In-situ-Leaching deutlich kleiner), und die eigentliche Raumrestriktion bei 333 GW (~200+ Blöcke) wäre Kühlwasser-/Standortverfügbarkeit an Flüssen/Küsten, nicht Fläche — das bildet das Flächen-Accounting nicht ab und behauptet es auch nicht.",
+     "beleg": "model/erzeugung/kernkraft/package.json parameters.anlagenFlaeche {0.7/1.5} und vorFlaeche {5.0, land:'Ausland'}; app/src/ui/sections/FlaecheSection.tsx Zeile 440 (Ausland-Ausschluss dokumentiert); Rechenweg verifiziert",
+     "empfehlung": "Optional: Caveat zur Standort-/Kühlwasserfrage bei extremen Kernkraft-Kapazitäten."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "flaeche/windoff + speicher (Konsistenz-Bestätigung)",
+     "befund": "Offshore 75 km²/GW (13,3 MW/km²) deckt sich mit der im windoff-Wiki genannten N-10-Dichte (13,7 MW/km²); 70 GW → 5.250 km² AWZ plausibel gegen BSH-FEP. Die zunächst unerklärten +206 km² Inland-Wirkfläche in 100ee-noimport sind H2-Speicher (495 GW × 0,05 + 180.000 GWh × 0,001 = 204,75 km²) plus Batterie/Pumpspeicher — alle 5 Szenarien reproduzieren sich aus den Wiki-Parametern auf <1 %.",
+     "beleg": "model/speicher/h2/package.json anlagenFlaeche {wirkungKm2PerGW:0.05, wirkungKm2PerGWh:0.001}; Nachrechnung aller summeKm2-Werte (8.032 / 21.146 / 16.716 / 31.581 / 736) gegen Parameter, Abweichung <1 %"
+    }
+   ],
+   "zusammenfassung": "Der Bericht ist gegen die Wiki-Parameter vollständig konsistent: alle fünf summeKm2-Werte reproduzieren sich aus anlagenFlaeche/vorFlaeche der Pakete auf unter 1 %, inklusive Speicher-Beiträgen und der Ausland-Vorflächen-Regel (Uran, Gas, Importkohle ausgeschlossen — in der UI explizit dokumentiert). Die Auffälligkeit 2025-skaliert (31.581 km²) ist erklärt und wiki-gedeckt: 22.800 km² Biomasse-Anbaufläche plus 2.640 km² Tagebau dominieren. Hauptbefund ist ein Labeling-/Methodikproblem bei Wind Onshore: wirkungKm2PerGW=1 trägt die Kategorie 'Vorrangfläche', ist aber eine Direktflächen-Konvention — echte Vorrangflächen für 515 GW lägen bei ~20.000-26.000 km², was den Szenariovergleich (EE kleiner als 2025-skaliert) umkehren würde. Daneben überzeichnet die pauschale Braunkohle-Tagebau-Vorfläche auf der Mischflotte das DE-Inland, und der konstante PV-Flottenmix-Faktor unterschätzt bei 1.480 GW die Freifläche."
+  },
+  {
+   "experte": "last",
+   "label": "Lastmodellierer",
+   "satisfied": true,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "mittel",
+     "bereich": "musterhaushalt/endkundenpreis",
+     "befund": "Referenz-2025-Endkundenpreis 35,4 ct/kWh bzw. 88,6 €/Monat liegt ~12-13 % unter dem realen Niveau (BDEW Strompreisanalyse ~40-41 ct/kWh; bei 3.000 kWh ≈ 100-103 €/Monat) — außerhalb der ±10%-Toleranz. Die Brücke selbst rechnet intern exakt: (9,97 ct System + 10,9 Netz + 3,7 Steuern + 2,7 Umlagen + 2,5 Vertrieb) × 1,19 = 35,4 ct. Ursache: Energie+Vertrieb im Modell ~12,5 ct (kostenbasiert) vs. BDEW Beschaffung+Vertrieb 16,0 ct (Markt+Marge). Da alle Szenario-€/Monat-Werte auf dieser Brücke aufsetzen, sind absolute Niveaus systematisch ~10 % zu niedrig; Szenario-Vergleiche untereinander bleiben gültig.",
+     "beleg": "model/referenz/preise/package.json (Brückenkomponenten, Vertrieb 2,5 ct als dokumentierte 'Setzung', BDEW-Hinweis 16,0 ct Beschaffung+Vertrieb steht dort selbst); Rechenweg 46,5 Mrd€/465,8 TWh = 99,7 €/MWh = 9,97 ct; BDEW-Vergleichswert ~40-41 ct (Konfidenz mittel, Größenordnung sicher).",
+     "empfehlung": "Entweder Vertriebs-/Beschaffungsmarge so kalibrieren, dass die Referenz bei ~100 €/Monat landet, oder die bewusste Abweichung (kostenbasiert ab Werk statt Marktpreis) als Caveat in der Haushalts-Box ausweisen."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "musterhaushalt/wiki-text",
+     "befund": "Wiki-Text in referenz/preise nennt für Voll-Elektrifizierung '~+2.600 kWh E-Auto, ~+2.900 kWh Wärmepumpe' (Summe 8.500). Aus den aktuellen Parametern ergibt sich aber +2.200 kWh EV (90,4 TWh Pkw-Zusatz / 41,1 Mio HH) und +3.540 kWh WP (145,5 TWh Heiz-Zusatz / 41,1 Mio HH) = 8.740 kWh — exakt der Reportwert. Gesamtsumme weicht nur +2,8 % ab, aber der Komponenten-Split im Text ist veraltet (EV −15 %, WP +22 %).",
+     "beleg": "model/referenz/preise/package.json (description 'Musterhaushalt & Endkundenpreis-Brücke') vs. model/last/e100-pkw/package.json ((472.200−20.000) Mio km × 20 kWh/100km = 90,4 TWh) und e100-heiz ((530−50)/3,3 = 145,5 TWh); Report musterhaushalt.kwhProJahr = 8.740.",
+     "empfehlung": "Die beiden Beispielzahlen im preise-Wiki auf 2.200/3.540 aktualisieren."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "system/h2-pool-asymmetrie",
+     "befund": "Die 740,4 TWh Sektor-Elektrolysestrom werden nur in den EE-Szenarien als flexibler H2-Pool behandelt (Stromlast 1.068 TWh, Peak 217,9 GW); in 2025-skaliert und 100kern laufen sie als starre Flachlast von 84,5 GW mit (Peak 302,4 = 217,9 + 84,5 GW, exakt nachrechenbar). Im Kern-Szenario treibt das die Auslegung auf 333 GW und 597,5 TWh Lastfolge-Drosselung — mit flexibler Elektrolyse (wie im EE-Fall) wäre die nötige Kapazität deutlich kleiner und die Drosselung könnte H2 produzieren. Das Kern-Wiki dokumentiert 'kein H2-Speicher' zwar als bewusste Setzung, benennt aber nicht, dass die fehlende Elektrolyse-Flexibilität das Szenario gegenüber den EE-Varianten methodisch benachteiligt.",
+     "beleg": "Report: 100kern peakLoadGW 302,4 / abregelungTWh 597,5 vs. 100ee peakLoadGW 217,9; model/erzeugung/100kern-lastfolgend/package.json ('Kein H₂-Speicher (keine Saisonalität nötig)', 333 GW, Peak ~302 GW — alle Werte stimmen mit Report überein) vs. model/erzeugung/100ee-noimport/package.json (H2-Pool-Substitution auf 1.068 TWh dokumentiert).",
+     "empfehlung": "Im 100kern-Caveat ergänzen, dass flexible Sektor-Elektrolyse (analog EE-Pool) den Peak auf ~218 GW und damit Kapazitäts- und Drosselungsbedarf erheblich senken würde — oder den H2-Pool szenarioübergreifend einheitlich aktivieren."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "system/sektornachfrage-einordnung",
+     "befund": "Sektor-Nachfrage 1.807,9 TWh liegt 40-100 % über dem Studienkorridor 2045 (BMWK LFS T45 / Agora KN2045: ~900-1.300 TWh inkl. H2-Strom). Das ist kein Fehler, sondern der dokumentierte Obergrenzen-Anker (keine Effizienzgewinne, keine PtL/H2-Importe): zieht man die in Studien üblichen Importmengen ab (Flug-PtL 300 + Schiff-eFuel 78 + Groß teil Chemie-H2), landet man bei ~1.100-1.250 TWh — im Korridor. Die Aufteilung ist intern exakt: H2-Pool 740,4 = Flug 300 + Schiff 78 + Chemie 275 + Stahl 87,4 TWh Elektrolysestrom; LHV-Äquivalent 360,25 TWh deckt sich mit h2ImportTWh 360,2 im Import-Szenario; Stromlast 1.067,5 = 1.807,9 − 740,4. Alle zehn Sektor-Defaults reproduzieren die Wiki-Zahlen auf die Kommastelle (Verkehr 549,4 / Wärme 201,2 / Industrie 591,5 + Basis 465,8). Chemie nutzt 440 TWh (C4C-Update-2024), konsistent mit der dokumentierten Rollback-Empfehlung.",
+     "beleg": "model/last/e100/package.json (1.342 + 466 ≈ 1.808, Caveat 'ohne Effizienzgewinne, ohne Importe'); model/erzeugung/100ee-noimport/package.json reconciliert selbst gegen Studien-Demand 1.100-1.270 TWh; Rechenwege aus e100-pkw/lkw/bahn/schiff/flug/heiz/ghd/industrie-waerme/stahl/chemie-Parametern.",
+     "empfehlung": "Keine Änderung nötig; Einordnung ist im Wiki bereits sauber dokumentiert."
+    }
+   ],
+   "zusammenfassung": "Das Lastmodell ist intern bemerkenswert konsistent: alle zehn Sektor-Defaults reproduzieren die Wiki-Zahlen exakt (1.807,9 TWh = 465,8 Basis + 549,4 Verkehr + 201,2 Wärme + 591,5 Industrie), die Aufteilung Stromlast 1.067,6 / H2-Pool 740,4 TWh rechnet sich aus den Sektor-Parametern auf die Kommastelle nach (LHV 360 TWh deckt sich mit dem H2-Import), und der Peak 217,9 GW ist bei inflexiblen WP-/BEV-Lasten plausibel (Peak/Mittel 1,79 vs. 1,42 heute; Studien mit DSM liegen bei ~130-160 GW für ~1.000 TWh). Die 1.808 TWh liegen bewusst und dokumentiert über dem Studienkorridor 900-1.300 TWh (kein Import, keine Effizienz). Zwei echte Befunde: der Referenz-Endkundenpreis 88,6 €/Monat liegt ~12 % unter dem realen BDEW-Niveau (~100-103 €), und die H2-Pool-Flexibilität wird asymmetrisch nur den EE-Szenarien gewährt (Peak 302 statt 218 GW im Kern-/Skaliert-Fall); dazu ein veralteter EV/WP-Split im preise-Wiki-Text."
+  },
+  {
+   "experte": "studien",
+   "label": "Szenario-Vergleicher (Agora/BMWK/Ariadne)",
+   "satisfied": false,
+   "confidence": "mittel",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "kern/h2-pool + 100ee-Szenarien",
+     "befund": "PtL-/Synthese-Verluste werden im H2-Pool verworfen: Die Sektorpakete definieren e-Kerosin mit ptlEfficiency 0,38 (300 TWh Strom für 114 TWh Kerosin), Schiff 0,50, Chemie 0,55, Stahl ~0,64. Die Engine rechnet den Sektor-Strom (740,4 TWh, = h2PoolTWh im Report) in Final-Fuel-LHV um (360 TWh) und produziert diesen dann mit reiner Elektrolyse-Effizienz 0,62 → nur ~581 TWh Strom. Effektiv bedient das System 1.649 statt 1.808 TWh (−159 TWh, −8,8 %); die EE-Flotten (Rechnung: 1.480×0,702 + 515×1,6 + 70×2,8 ≈ 2.059 TWh ≈ 1,3×1.649 − Bio/Hydro) und Kosten beider 100ee-Szenarien sind entsprechend ~9-10 % zu klein. Zudem ersetzt der H2-Import (130 €/MWh = grüner H2) im 100ee-import de facto Kerosin/Methanol, deren PtL-Importpreis eher 180-250 €/MWh läge — h2Import-Kosten (46,8 Mrd €/a) damit unterschätzt.",
+     "beleg": "model/kern/kern/model.rs: sector_strom_per_h2 (flug = 1/ptlEfficiency 0,38) und preset_100ee_noimport (eff_demand = demand − sector_strom + sector_lhv/0,62); model/last/e100-flug/package.json (ptlEfficiency 0.38), e100-schiff (eFuelSystemEfficiency 0.5), e100-chemie (h2SystemEfficiency 0.55); Report: stromlast 1.067,6 = 1.807,9 − 740,4.",
+     "empfehlung": "Entweder Pool-Bedarf als H2-Zwischenprodukt rechnen (Kerosin 114 TWh → ~150 TWh H2 + DAC/Synthese-Strom als Direktlast) oder sektorspezifische strom_per_h2-Hebel auch beim Pool-Charging verwenden; Wiki (kern, 100ee-*) entsprechend korrigieren."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "erzeugung/100ee-noimport, 100ee-import",
+     "befund": "Wind onshore 515 GW (autark) bzw. 375 GW (import) überschreitet das DE-Flächenpotenzial deutlich: 2 %-Flächenziel entspricht je nach Studie ~200-250 GW (BWE/UBA-Potenzialstudien); 515 GW bräuchte ~4 % der Landesfläche. Das Wiki diskutiert nur die PV-Fläche (2,5 % bei 1.480 GW), nicht die Onshore-Machbarkeit. Zusätzlich setzen die Presets capacityFactorMultiplier 1,0 (Bestandsflotte: PV 702 kWh/kWp, onshore 1.600 VLh), obwohl das kern-Wiki für 2045-Szenarien 1,5/1,4/1,2 empfiehlt — mit Neubau-Erträgen wären ~30 % weniger GW nötig. Konservatives Design, aber im Preset-Wiki nicht ausgewiesen.",
+     "beleg": "model/kern/kern/model.rs preset_100ee_import: \"pvCapacityFactorMultiplier\": 1.0; model/kern/kern/package.json (Empfehlung 1.5/1.4/1.2); model/erzeugung/100ee-noimport/package.json (nur PV-Flächen-Caveat); Studienwert 2 %-Fläche ≈ 200-250 GW onshore (Konfidenz mittel).",
+     "empfehlung": "Onshore-Flächen-Caveat analog zum PV-Caveat ergänzen und die Multiplier-1,0-Entscheidung (Bestandsertrag statt 2045-Neubau) im Preset-Wiki dokumentieren."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "erzeugung/kernkraft + 100kern-lastfolgend",
+     "befund": "Brennstoffkosten Kernkraft 23 €/MWh_el (fuelEurPerMWhTh 23 bei efficiency 1; preise.uraniumEurPerMWhEl 22,9) liegen ~2× über der üblichen Spanne (WNA/NEA Front-to-Back inkl. Entsorgung ~9-13 €/MWh, auch nach den Uran-/SWU-Preisanstiegen 2023-25). Wirkung: fuel 46,6 Mrd €/a im 100kern-Szenario, ~+12 €/MWh auf die 120,4 €/MWh. Alle übrigen 100kern-Zahlen reproduzieren die Wiki-Formeln exakt: 333 GW = 1.808×1,40/7,6; capex 150,4 Mrd = 333 GW × 8.000 €/kW × CRF(45a, 5 %); Drosselung 597,5 TWh / Export 218,9 TWh wie im Wiki (598/219) dokumentiert — der Stresstest-Anker ist konsistent und als unrealistisch ausgewiesen.",
+     "beleg": "model/erzeugung/kernkraft/package.json kosten.fuelEurPerMWhTh=23; model/referenz/preise/package.json uraniumEurPerMWhEl=22.9; WNA-Brennstoffzyklus ~9-13 €/MWh (Konfidenz mittel); Nachrechnung CRF 0,05626 × 2,664 Bio € = 149,9 Mrd ✓.",
+     "empfehlung": "Brennstoffkosten-Quelle prüfen/belegen oder auf ~10-15 €/MWh senken; falls deutsche Entsorgungskosten eingepreist sind, dies im Wiki ausweisen."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "referenz-2025 / kern (Außenhandel)",
+     "befund": "Referenz 2025: Export 12,2 TWh vs Wiki-Claim \"Default-Export sinkt auf ~3 TWh/a\" — der Wiki-Text ist veraltet bzw. inkonsistent zum Report. Nettoimport 41,8 TWh (54 − 12,2) vs real 2025 ~25-30 TWh netto — der dokumentierte Kupferplatten-/Min-Last-Effekt (kein preisgetriebener Handel) überzeichnet den Importsaldo um ~40-60 % und treibt importNet 4,1 Mrd €/a. EE-Anteil 56,7 % (real ~54-56 %) und CO2-Intensität 349,8 g/kWh (UBA ~350-380 g) sind dagegen im Toleranzband.",
+     "beleg": "model/kern/kern/package.json Modellgrenze (\"Default-Export sinkt auf ~3 TWh/a, real ~54 TWh/a\") vs Report referenz-2025 exportTWh 12,2 / importTWh 54; reale Handelsbilanz 2024/25 netto ~25-30 TWh (Konfidenz mittel).",
+     "empfehlung": "Wiki-Zahl im kern-Paket aktualisieren (12 statt 3 TWh) und den Netto-Bias der Handelsbilanz als Caveat quantifizieren."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten (Studienvergleich, alle Szenarien)",
+     "befund": "gesamtBis2045 = Jahreskosten × 20 (z.B. 548,1 → 10.961 Mrd autark, 341,7 → 6.834 Mrd import) sind annualisierte VOLLKOSTEN (capex-Annuität + O&M + Brennstoff + Netz + H2-Import), nicht \"Mehrinvestitionen\" — nicht direkt mit den Studien-1-2 Bio € (Agora/BMWK/dena: zusätzliche Investitionen bis 2045) vergleichbar. Zudem deckt die Referenz (46,5 Mrd €/a) nur 466 TWh Strom, während die e100-Szenarien die gesamte Endenergie (1.808 TWh) tragen; heutige fossile Brennstoffimporte (~70-90 Mrd €/a) fehlen in der Vergleichsbasis. Die fairere Kennzahl eurProMWh (99,7 → 189 import) ist plausibel, mit konservativem Bias durch Elektrolyse-Capex 1.500 €/kW und Batterie 280 €/kWh (2045-Studienannahmen: ~300-700 €/kW bzw. 100-200 €/kWh). Interne Arithmetik stimmt überall: Batterie 101,2 / H2 89,5 / Netz 132,2 Mrd €/a exakt aus Wiki-Parametern reproduzierbar, H2-Import 360,2×130 = 46,8 ✓, ×20-Summen ✓.",
+     "beleg": "model/referenz/preise/package.json (netzCapexEurPerKwAddedRE 1200, h2ImportEurPerMWh 130, wacc 0.05); model/speicher/h2 (1500/1100 €/kW, 0,5 €/kWh Kaverne), batterie (150/280); Nachrechnungen CRF-basiert; Studien-Mehrinvestitionen 1-2 Bio € (Konfidenz hoch als Größenordnung).",
+     "empfehlung": "Im UI/Wiki klarstellen, dass gesamtBis2045 Systemvollkosten × Horizont sind und die Referenz keine fossilen Endenergie-Kosten der nicht-elektrifizierten Sektoren enthält."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "Szenario-Design vs Studien (Kapazitäten, CO2)",
+     "befund": "Die großen Abweichungen zu Studien sind dokumentiertes Modell-Design, keine Fehler: PV 1.480 GW (autark) bzw. 790 GW (import) vs Studien 300-500 GW folgt aus e100-Demand 1.808 TWh (Studien 1.000-1.300 TWh, da mit Effizienzgewinnen und E-Fuel-Import), erzwungener Autarkie, Offshore-Cap 70 GW und Bestandsflotten-Erträgen; das Wiki markiert dies explizit als Stresstest \"ohne Bezug zu realen Bauraten\". H2-Import 360 TWh liegt im Studienkorridor (BMWK T45 300-450, dena 458). CO2-Werte enthalten Lebenszyklus-Emissionen (Kernkraft 12 g/kWh, daher 100ee-Szenarien 37-49 Mt statt Studien-\"0\" und Referenz 167,4 Mt vs real direkt ~150-160 Mt) — konsistent, sollte aber als Lifecycle-Bilanz gekennzeichnet sein. 2025-skaliert reproduziert f=3,88 exakt (PV 400, Kohle 120, Gas 140 GW) und 706 Mt CO2 sind intern stimmig.",
+     "beleg": "model/erzeugung/100ee-noimport/package.json (Stresstest-Caveat), 100kern-lastfolgend/package.json (Anker-Caveat), 2025-skaliert/package.json (f-Formel); Nachrechnung 102,5×3,88=397,7→400 ✓; Studienwerte aus Wissen (Konfidenz hoch für Größenordnungen).",
+     "empfehlung": "CO2-Kennzahl im Report als \"inkl. Lebenszyklus\" labeln, um Scheinwiderspruch zu Studien-Nullzielen zu vermeiden."
+    }
+   ],
+   "zusammenfassung": "Der Bericht ist intern bemerkenswert konsistent: praktisch alle Kosten-, Kapazitäts- und Dispatch-Zahlen lassen sich exakt aus den Wiki-Parametern reproduzieren (Kernkraft-Capex, Batterie/H2/Netz-Annuitäten, Skalierungsfaktor 3,88, 100kern-Drosselung/Export), und die Riesen-Abweichungen zu Agora/BMWK/Ariadne (1.480 GW PV, 1.808 TWh Demand, 11 Bio € autark) sind dokumentiertes Stresstest-Design, kein Rechenfehler. Ein harter Befund bleibt: Der H2-Pool behandelt e-Kerosin/e-Fuels als reines H2 mit Elektrolyse-η 0,62 statt der sektoral dokumentierten PtL-Ketten (0,38-0,55) — dadurch fehlen ~159 TWh/a (~9 %) Strombedarf und die 100ee-Flotten/Kosten sind systematisch zu klein, im Widerspruch zu den eigenen Sektor-Wiki-Paketen. Daneben kleinere Punkte: Kernkraft-Brennstoffkosten ~2× über Branchenspanne, veralteter Export-Wert im kern-Wiki, fehlender Onshore-Flächen-Caveat bei 515 GW Wind."
+  },
+  {
+   "experte": "wiki",
+   "label": "Wiki-Konsistenzprüfer",
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "ressourcen/100kern-lastfolgend (Uran)",
+     "befund": "Bericht weist 62.438 t Natururan/a aus; das Wiki-Caveat von kern/100kern nennt explizit ~50.700 t/a (25 t/TWh × ~2.027 TWh dispatchte Erzeugung inkl. Export) — Bericht liegt +23 % darüber. Die Berichts-Zahl entspricht exakt 333 GW × 7,5 TWh/GW × 25 t/TWh = 62.438 t, also Nameplate-Potenzial statt tatsächlicher Erzeugung (bei Lastfolge wird gedrosselter Output nicht verfeuert). Zudem intern inkonsistent: die Brennstoffkosten (46,6 Mrd EUR / 22,9 EUR/MWh) implizieren ~2.035 TWh dispatch-basiert. Folge-Widerspruch: Wiki behauptet '~84 % der Welt-Uranförderung 2024 (60.213 t)' — mit der Berichts-Zahl wären es ~104 %, also MEHR als die gesamte Weltförderung. Nebenbefund: Ressourcen-Rechnung nutzt 7,5 TWh/GW, Wiki dokumentiert referenceYield 7,6.",
+     "beleg": "model/erzeugung/100kern-lastfolgend/package.json caveats ('Voll-e100 … ~50.700 t Natururan/a ≈ 84 % der Welt-Uranförderung'); Rechenweg: 62.438/25 = 2.497,5 TWh = 333×7,5; dispatched = 1.807,9+218,9 = 2.026,8 TWh ×25 = 50.670 t; fuel 46,6e9/22,9 = 2.035 TWh",
+     "empfehlung": "Uran-Jahresbedarf auf dispatchte Erzeugung (Last+Export, ~2.027 TWh) umstellen → ~50.700 t, konsistent mit Brennstoffkosten und Wiki-Caveat; alternativ Wiki-Caveat auf Nameplate-Logik umschreiben (nicht empfohlen, physikalisch falsch bei Lastfolge)."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kern/kern (Default-Lauf-Kennzahlen veraltet)",
+     "befund": "Wiki-notes behaupten 'Default-Lauf reproduziert 2025 etwa … 76 TWh Brutto-Import'; Bericht Referenz 2025: 54 TWh Import (−29 %). Wiki-Modellgrenze/Caveat behauptet 'Default-Export sinkt auf ~3 TWh/a (real ~54 TWh/a)'; Bericht: 12,2 TWh Export (Faktor 4 daneben). CO₂ 332 g/kWh (Wiki) vs. 349,8 (Bericht, +5 %, innerhalb Toleranz) und EE 55 vs. 56,7 % sind ok — die Handelszahlen sind klar veraltete Text-Claims.",
+     "beleg": "model/kern/kern/package.json parameters.notes[0] und method.description[2]/caveats[0] vs. report referenz-2025 (importTWh 54, exportTWh 12.2)",
+     "empfehlung": "Default-Lauf-Kennzahlen im kern-Wiki auf den aktuellen Stand nachziehen (54 TWh Import, ~12 TWh Export) — die Argumentation 'Min-Last-Floor drückt Export unter real ~54 TWh' bleibt gültig, nur die Zahl stimmt nicht mehr."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kern/kern (CO₂-Intensitäts-Definition)",
+     "befund": "Wiki dokumentiert 'Jahreswert dividiert durch Strom-Nachfrage = g/kWh'. Der Bericht reproduziert das nur in 2 von 5 Szenarien: implizite Nenner (Mt/g) sind referenz 478,6 TWh (≈ Last 465,8 + Export), 100kern 2.025 TWh (≈ Last + Export), 2025-skaliert 1.828 TWh (≈ Last) — aber 100ee-noimport 1.767 TWh und 100ee-import 1.343 TWh entsprechen WEDER der Stromlast (1.067,6 → erwartet 46,2 statt 27,9 g/kWh, Faktor 1,65) NOCH der Sektornachfrage (1.807,9). Die ausgewiesene CO₂-Intensität der EE-Szenarien ist mit der dokumentierten Formel nicht nachvollziehbar; Szenarien sind untereinander nicht mit gleichem Nenner vergleichbar.",
+     "beleg": "model/kern/kern/package.json method.reasoning ('CO₂ … Jahreswert dividiert durch Strom-Nachfrage'); Rechenweg: 49,3 Mt / 27,9 g/kWh = 1.767 TWh ≠ 1.067,6 (stromlastTWh) ≠ 1.807,9 (sektorNachfrageTWh)",
+     "empfehlung": "Nenner vereinheitlichen (z. B. konsequent Stromnachfrage oder Last+Export) und im Wiki exakt dokumentieren; sonst sind g/kWh-Vergleiche zwischen Szenarien irreführend."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "versorgung/100ee-noimport (H₂-Rückverstromungs-VLh-Claim)",
+     "befund": "Wiki-reasoning behauptet 'Rückverstromung deckt Winter-Spitzen ~500–1.500 VLh'. Bericht: 23,11 TWh entladen über 245 GW = 94 VLh — Faktor 5–16 unter dem Claim. Auch der Elektrolyse-Claim '3.000–4.000 VLh Sommer-Befüllung' wird knapp verfehlt (~2.550 VLh implizit). Im Import-Szenario passt es besser (96,4 TWh / 220 GW = 438 VLh, nahe 500). Die 245 GW Rückverstromung im Autarkie-Fall sind für 23 TWh Jahresarbeit massiv überdimensioniert — oder der Wiki-Text beschreibt eine Auslegung, die der Lasttest nicht bestätigt.",
+     "beleg": "model/erzeugung/100ee-noimport/package.json method.reasoning ('Rückverstromung deckt Winter-Spitzen ~500–1.500 VLh') vs. report 100ee-noimport speicherBetrieb.h2 (entladenTWh 23,11; h2DischargePowerGW 245)",
+     "empfehlung": "VLh-Angabe im reasoning streichen oder auf den Lasttest-Befund korrigieren (~100 VLh; Kapazität ist Peak-, nicht Energie-getrieben — das wäre die ehrliche Begründung)."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "speicher/h2 + versorgung/100ee-noimport (Kavernen-Auslastung)",
+     "befund": "Die als 'Lasttest-validiert' bezeichnete Kaverne (0,11 × eff. Demand = 180 TWh) wird im Autarkie-Fall nur zu 43 % genutzt: SoC-Minimum 102,8 TWh → 103 TWh tote Kapazität, effektiver Hub 77 TWh. Das Wiki nennt selbst Fraunhofer-ISE-Stand-alone-Minimum ~130 TWh als Anker; der Bericht zeigt, dass real nur ~77 TWh gebraucht würden — das Sizing ist deutlich über Bedarf, was CAPEX (h2-Posten 89,5 Mrd EUR/a) mit aufbläht. Kein Widerspruch zum Caveat ('liegt über Studien-Median'), aber der 'validiert'-Anspruch ist nur als 'reicht aus', nicht als 'nötig' gedeckt.",
+     "beleg": "model/erzeugung/100ee-noimport/package.json overview 'Speicher-Sizing (Lasttest-validiert)' vs. report 100ee-noimport speicherBetrieb.h2 (socMinGWh 102.834, hubPct 42,9)",
+     "empfehlung": "Im Wiki klarstellen, dass 0,11 eine Obergrenze mit Wetterjahr-Reserve ist und der genutzte Hub im 2025-Wetterjahr ~77 TWh beträgt; optional Sizing senken."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/100kern-lastfolgend (Export-Erlös am Dauer-Cap)",
+     "befund": "100kern exportiert 218,9 TWh = exakt 25 GW × 8.760 h, d. h. der Export läuft das GANZE Jahr am Cap. Die Erlösgutschrift −13,1 Mrd EUR/a (60 EUR/MWh) ist laut referenz/preise-Caveat selbst nur Obergrenze ('in Extremszenarien mit strukturellem Dauerüberschuss … real niedriger bis negativ'). Ohne diese Gutschrift läge das Szenario bei ~245 statt 231,6 Mrd EUR/a (+6 %). Wiki-Caveats decken das ab, aber der Bericht macht die Annahme nicht sichtbar.",
+     "beleg": "Rechenweg 25 GW × 8,76 = 219 TWh ≈ exportTWh 218,9; model/referenz/preise/package.json caveats ('Export-Erlös … als Obergrenze lesen'); kern-Caveat nennt Export-Erlös 60 EUR/MWh explizit",
+     "empfehlung": "Im Bericht/UI für Szenarien mit Export dauerhaft am Cap einen Hinweis analog zu netzExtrapoliert setzen."
+    }
+   ],
+   "satisfied": false,
+   "zusammenfassung": "Die Kern-Claims der Wiki-Texte werden vom Bericht fast durchgängig exakt bestätigt: 100ee-noimport (1.480 GW PV, 660 GW/3.300 GWh Batterie, 495/245 GW Elektrolyse/Rückverstromung, 180 TWh Kaverne, 356 TWh Abregelung, 548 Mrd EUR/a), 100ee-import (360 TWh H₂-Import, 13,4 GW Strom-Cap, 180 GW/950 GWh, 68 TWh Abregelung, 342 Mrd), 100kern (333 GW, 598 TWh Drosselung, 219 TWh Export, 232 Mrd, 128 EUR/MWh) und 2025-skaliert (f≈3,88 sauber auf alle Slider angewandt) stimmen auf ±1–3 %. Drei Punkte reißen aber die Toleranz: der Uran-Jahresbedarf im Bericht (62.438 t) widerspricht dem eigenen Wiki-Caveat (~50.700 t, +23 %) und kippt dessen Kernaussage von '84 % der Weltförderung' auf ~104 %; die Default-Lauf-Handelszahlen im kern-Wiki (76 TWh Import, ~3 TWh Export) sind gegenüber dem Bericht (54/12,2 TWh) veraltet; und die dokumentierte g/kWh-Formel ('CO₂/Strom-Nachfrage') reproduziert die EE-Szenarien nicht (erwartet 46,2 vs. ausgewiesen 27,9 g/kWh bei 100ee-noimport). Daher trotz insgesamt hoher Konsistenz nicht voll bestanden."
+  },
+  {
+   "experte": "optimum",
+   "label": "Kostenoptimierungs-Reviewer",
+   "satisfied": false,
+   "confidence": "hoch",
+   "findings": [
+    {
+     "severity": "hoch",
+     "bereich": "kosten/100ee-noimport (MC-Sampling-Raum)",
+     "befund": "Der Offshore-Sampling-Bereich WindOff×[1.0,1.6] (70-112 GW) verletzt den im Wiki dokumentierten Hard Cap von 70 GW (BSH FEP / WindSeeG, 'physisches Maximum DE-AWZ'). Alle 8 Top-Mixe liegen bei 71-109 GW; der Headline-Optimum-Mix (#229) nutzt 100 GW = +43% über dem Cap. Der publizierte 'optimale Mix' ist nach den eigenen Modellannahmen physisch nicht baubar.",
+     "beleg": "model/erzeugung/100ee-noimport/package.json (overview 'Hard Cap Wind offshore: 70 GW'); /tmp/claude-1000/np/mc_optimum.py Zeile 81 (rnd.uniform(1.0, 1.6)); mc-summary.json top8. Cap-naher Kandidat #239 (windoff 71) kostet 433,6 statt 423,7 Mrd — Einsparung sinkt von 23% auf ~21%.",
+     "empfehlung": "WindOff im Re-Run fix auf 70 GW setzen (keine Sampling-Dimension); Energie-Shortfall über WindOn-Sampling abdecken."
+    },
+    {
+     "severity": "hoch",
+     "bereich": "kosten/100ee-noimport (Robustheits-Constraint)",
+     "befund": "Der MC-Constraint prüft nur 0 h Fehlstrom im Wetterjahr 2025, nicht das dokumentierte Preset-Kriterium 'robust bis Windjahr ×0,85'. Nachgerechnet: Top-2 (#237) und Top-3 (#239) fallen bei Windjahr ×0,90 mit 110 bzw. 82-169 TWh Fehlstrom katastrophal durch (1175/1615 h), weil sie mit 0 TWh Abregelung exakt auf Kante genäht sind. Der Headline-Mix #229 ist mit 368 TWh Abregelungs-Puffer quasi-robust (2 h, <0,01 TWh bei ×0,85), verfehlt das strikte 0-h-Kriterium aber knapp. Das Preset selbst besteht ×0,85 mit 0 h. Windlastige Mixe sind systematisch windjahr-sensitiver — ohne Stress-Constraint überschätzt das MC das Einsparpotenzial.",
+     "beleg": "Eigene Re-Simulation mit target/release/simulate, windOn/OffCapacityFactorMultiplier 0,90/0,85: s237 ×0,90 → 110,5 TWh shed; s239 ×0,90 → 110 TWh... (1175 h); s125 ×0,90 → 82,4 TWh; s229 ×0,85 → 2 h / ~0 TWh; Preset-Flotte (custom mode) ×0,85 → 0 h. Wiki-Kriterium: model/erzeugung/100ee-noimport/package.json caveats ('robust bis Windjahr ×0,85').",
+     "empfehlung": "Constraint im Re-Run erweitern: 0 h bei ×1,0 UND ×0,85 Windjahr. Kandidaten mit curt≈0 sind Artefakte des fehlenden Stress-Tests und sollten verworfen werden."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kosten/100ee-noimport (Export-Bug im MC-Harness)",
+     "befund": "Die behauptete Kostenfunktion 'minus Exporterlös 60 EUR/MWh' greift de facto nie: alle 260 Samples haben export_twh=0,0, weil mc_optimum.py die Samples aus der szen-Datei baut (export.stromGW=0; der Export-Cap 25 GW wird erst von der Preset-Auflösung gesetzt) und scen['export'] nie korrigiert. Der Basis-Anker bekommt dagegen 45,5 TWh × 60 EUR = 2,7 Mrd gutgeschrieben — systematischer Bias GEGEN die Samples (konservativ für den Befund, ~0,5-0,7%).",
+     "beleg": "Reproduziert: /tmp/claude-1000/np/mc_optimum.py Zeilen 27+90-93 (base_raw=szen-100ee-noimport.json mit export.stromGW=0, kein export-Update); Re-Run #229 mit export.stromGW=25 → 51,3 TWh Export → korrigierte Kosten 420,6 statt 423,7 Mrd. awk über mc-samples.csv: 0 von 260 Samples mit export>0.",
+     "empfehlung": "Im Re-Run scen['export']={'stromGW':25.0} aus dem resolved-Preset übernehmen."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "kosten/netz (Extrapolation und Technologie-Flatrate)",
+     "befund": "~36% der ausgewiesenen Einsparung (44,9 von 125,5 Mrd EUR/a) stammen allein aus dem Netz-Term: Preset 1890 GW addedRE → 132,2 Mrd, Optimum 1248 GW → 87,3 Mrd. Beide liegen weit über der dokumentierten Eichgrenze von 700 GW (netzExtrapoliert=true im Report). Zudem bepreist die Flatrate 1200 EUR/kW PV und Wind identisch pro kW: bei PV-Flotten-VLS 702 h ergibt das ~100 EUR/MWh Netzaufschlag vs. ~44 EUR/MWh für WindOn (1596 h) — strukturelle Benachteiligung von PV, obwohl real eher Nord-Süd-Wind das Übertragungsnetz treibt und PV+Batterie verteilnetznäher ist. Ohne Netz-Delta bleibt die Einsparung trotzdem ~80 Mrd EUR/a (~15%) — Richtung des Befunds robust, Größenordnung netzmodellabhängig.",
+     "beleg": "app/src/ui/kosten.ts Zeilen 201-204 (flat EUR/kW über alle RE); model/referenz/preise/package.json (netzCapexEurPerKwAddedRE 1200, netzCalibratedMaxAddedReGW 700); report.json 100ee-noimport netz=132,2, netzExtrapoliert=true; eigene Nachrechnung Optimum #229: 1248,3 GW × 1200 EUR/kW × crf(5%,40a)=0,0583 → 87,3 Mrd.",
+     "empfehlung": "Einsparpotenzial als Spanne kommunizieren (mit/ohne Netz-Delta); mittelfristig Netz-Heuristik nach Technologie differenzieren oder zumindest den Extrapolations-Vorbehalt in den Befundtext aufnehmen."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/100ee-noimport (Kostenfunktion-Validierung)",
+     "befund": "Die Python-Replikation der Kostenfunktion ist sauber validiert (549,2 vs. 548,1 Mrd EUR/a am Basis-Preset, 0,2% Abweichung) und nutzt exakt die Wiki-Parameter (PV 1000 EUR/kW/30a, WindOn 1600/25a, Batterie 280 EUR/kWh+150 EUR/kW/15a, H2 1500/1100 EUR/kW + 0,5 EUR/kWh/30a, WACC 5%). Die dokumentierte Abweichung (OM-var auf Potenzial- statt eingespeiste VLS) wirkt gegen windlastige Mixe (omVar 7-8 EUR/MWh nur bei Wind, PV ohne omVar) und ist damit korrekt als konservativ deklariert. Batterie-C-Rate (5h) und H2-Charge:Discharge (2:1) werden beim Sampling konsistent mitskaliert.",
+     "beleg": "Vergleich mc_optimum.py kosten_eur() gegen app/src/ui/kosten.ts computeKosten() und model/*/package.json kosten-Blöcke; eigene Nachrechnung Optimum #229 ergibt ~427 Mrd (vs. 423,7 berichtet, innerhalb Rundung/VLS-Schätzung)."
+    },
+    {
+     "severity": "niedrig",
+     "bereich": "kosten/100ee-noimport (Sampling-Dichte)",
+     "befund": "260 uniforme Zufallssamples in 6 Dimensionen ohne lokale Verfeinerung finden das Optimum nur approximativ; das wahre Minimum dürfte einige Mrd tiefer liegen. Die Top-8 clustern aber eng (PV 260-620, WindOn 650-1040 GW, Batterie 1500-4100 GWh) und kein Top-Kandidat klebt an einer Sampling-Grenze (außer WindOff, siehe Cap-Befund) — die Richtung des Befunds ist robust.",
+     "beleg": "mc-samples.csv (202/260 zulässig, verifiziert); Sampling-Grenzen aus mc_optimum.py Zeilen 79-89 vs. top8-Werte in mc-summary.json."
+    },
+    {
+     "severity": "mittel",
+     "bereich": "erzeugung/100ee-noimport (Preset-Empfehlung und Nebenwirkungen)",
+     "befund": "Der Befund 'weniger PV / mehr Wind' stellt im Kern nur die im Wiki selbst dokumentierte Saisonal-Optimalität wieder her: Das Wiki zitiert Heide et al. 'Wind 70% / PV 30%', aber die PV-Kompensationsregel des Offshore-Caps treibt das realisierte e100-Preset auf ~50% PV-Energieanteil (1039 von 2058 TWh Potenzial) — interner Widerspruch zwischen dokumentiertem Mix-Ziel und realisierter Flotte. Nebenwirkungen der Verschiebung auf ~900 GW WindOn: (a) Vorrangfläche skaliert von 5760 km² (515 GW, 1,6% DE-Fläche) auf ~10 100 km² (~2,8%) — deutlich über dem 2%-Flächenziel, Akzeptanz/Genehmigung wird zur bindenden Restriktion; (b) 14× Bestand 2025 (62,8 GW) in 20 Jahren = ~43 GW/a netto, ~12× der historischen Rekord-Baurate — wie beim Preset gilt 'Stresstest, kein Pfad'; (c) im Gegenzug sinkt PV-Wirkfläche von 8880 auf ~2400 km². Realistisches Einsparpotenzial nach Korrektur aller drei Methodikmängel: ~100-120 Mrd EUR/a (18-22%), konservativ ohne Netz-Delta ~80 Mrd (15%) — nicht die berichteten 23% mit dem Cap-verletzenden Mix.",
+     "beleg": "model/erzeugung/100ee-noimport/package.json (Heide 70/30, PV-Kompensationsregel, 2%-Vorranggebiete-Caveat); report.json flaeche.vorflaecheInlandKm2=5760; eigene VLS-Rechnung aus result-100ee-noimport.json (PV 702 h, WindOn 1596 h, WindOff 2809 h); Cap-konformes #239: 433,6 Mrd, korrigiert um Export-Bug und Robustheits-Marge ~425-435 Mrd.",
+     "empfehlung": "Preset nicht 1:1 auf den MC-Mix setzen, sondern die Kompensationsregel ändern (Offshore-Cap-Shortfall künftig über WindOn statt PV decken) und die Mix-Anteile Richtung PV 20-25% / WindOn 45-50% / WindOff cap-begrenzt schieben; anschließend Cushion und Speicher-Sizing neu lasttest-kalibrieren (inkl. Windjahr ×0,85). Den Flächen-Caveat von PV (2,5% DE) auf Wind-Vorrangfläche (~2,8% DE) umschreiben."
+    }
+   ],
+   "zusammenfassung": "Der MC-Befund 'Preset nicht kostenoptimal, Optimum verschiebt von PV zu Wind onshore' ist in der Richtung methodisch belastbar (validierte Kostenfunktion mit 0,2% Abweichung, volle Stundensimulation als Constraint, konservativer omVar-Bias) und deckt zudem einen internen Widerspruch des Presets auf (realisiert ~50% PV-Energieanteil trotz dokumentiertem Heide-Ziel Wind 70/PV 30). Der publizierte optimale Mix und die 23%-Einsparung sind aber so nicht übernehmbar: das Offshore-Sampling verletzt den eigenen 70-GW-Hard-Cap, der Robustheits-Constraint (Windjahr ×0,85) fehlt — zwei der drei billigsten Mixe fallen bei ×0,90 mit über 80 TWh Fehlstrom durch — und ein Harness-Bug (Export-Cap 0 statt 25 GW) lässt den behaupteten Exporterlös in allen 260 Samples leerlaufen. Zudem stammen ~36% der Einsparung aus der weit über ihren Eichbereich extrapolierten, technologie-flachen Netzpauschale. Realistisches Einsparpotenzial nach Korrektur: ~100-120 Mrd EUR/a (18-22%), ohne Netz-Delta ~80 Mrd (15%); empfohlen ist ein Re-Run mit WindOff fix 70 GW, Export-Cap 25 GW und ×0,85-Stress-Constraint, danach Preset-Anpassung über die Kompensationsregel (WindOn statt PV) statt 1:1-Übernahme des MC-Mixes."
+  }
+ ],
+ "synthese": {
+  "gesamturteil": "Das Panel ist gespalten: 4 von 8 Experten (speicher, ressourcen, studien/wiki, optimum) sind nicht zufrieden, 4 (kosten, flaeche, last, ressourcen-intern) bestätigen. Einhellig positiv: Die interne Konsistenz ist exzellent — praktisch alle Kosten-, Kapazitäts-, Flächen- und Rohstoffzahlen aller 5 Szenarien reproduzieren sich aus den Wiki-Parametern auf <1%, die Stresstest-Natur der Extremszenarien ist dokumentiert. Die harten Befunde liegen fast ausschließlich im Produkt (MODELL), nicht in der Prüfung: (1) der H2-Pool verwirft PtL-Verluste und unterschlägt ~159 TWh/a Strombedarf in beiden 100ee-Szenarien, (2) Brennstoffmengen werden aus fixen VLH statt simuliertem Dispatch gerechnet — die Headline '>100% der Welt-Uranförderung' ist ein Artefakt (real ~84%) und Erdgas in 2025-skaliert um 51% unterschätzt, (3) die Netzkosten-Heuristik kennt keinen lastgetriebenen Ausbau und verzerrt den Vergleich um 10-40 Mrd €/a zugunsten 100kern, (4) das noimport-Speicher-Preset bindet ~190 Mrd €/a in massiv überdimensionierter Kapazität. Der einzige echte REPORT-Fehler ist die MC-Kostenoptimierung: deren publizierter 'optimaler Mix' verletzt den eigenen 70-GW-Offshore-Cap, besteht den Windjahr-Stresstest nicht und braucht einen Re-Run — die Richtung (weniger PV, mehr Wind onshore, Einsparung eher 15-22% statt 23%) bleibt aber belastbar. Der Rest sind Caveat- und Doku-Nachzieher.",
+  "panelZufrieden": false,
+  "arbeitspakete": [
+   {
+    "titel": "H2-Pool verwirft PtL-/Synthese-Verluste — Strombedarf der 100ee-Szenarien ~9% zu klein",
+    "severity": "hoch",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import"
+    ],
+    "beschreibung": "Die Engine rechnet den Sektor-Elektrolysestrom (740,4 TWh) in Final-Fuel-LHV (360 TWh) um und produziert diesen mit reiner Elektrolyse-Effizienz 0,62 — die in den eigenen Sektorpaketen dokumentierten PtL-Ketten (Flug ptlEfficiency 0,38, Schiff 0,50, Chemie 0,55, Stahl 0,64) werden ignoriert. Effektiv bedient das System nur 1.649 statt 1.808 TWh (−159 TWh, −8,8%); EE-Flotten und Kosten beider 100ee-Szenarien sind systematisch ~9-10% zu klein. Zusätzlich ersetzt der H2-Import (130 €/MWh, grüner H2) de facto Kerosin/Methanol mit PtL-Importpreisen von eher 180-250 €/MWh — die 46,8 Mrd €/a Importkosten sind unterschätzt.",
+    "schritte": [
+     "In model/kern/kern/model.rs (preset_100ee_*): Pool-Bedarf als H2-Zwischenprodukt rechnen (z.B. Kerosin 114 TWh → ~150 TWh H2 + DAC/Synthese-Strom als Direktlast) oder die sektorspezifischen strom_per_h2-Hebel auch beim Pool-Charging anwenden",
+     "h2ImportEurPerMWh nach Produkt (H2 vs. PtL-Fuels) differenzieren oder als Caveat ausweisen",
+     "Wiki-Pakete kern und 100ee-noimport/-import nachziehen",
+     "Anschließend EE-Flotten, Speicher-Sizing und Kosten beider 100ee-Szenarien neu kalibrieren (hängt mit Speicher- und MC-Paketen zusammen)"
+    ]
+   },
+   {
+    "titel": "Brennstoffmengen aus fixen Volllaststunden statt simuliertem Dispatch (Uran-Headline kippt, Erdgas −51%)",
+    "severity": "hoch",
+    "typ": "MODELL",
+    "szenarien": [
+     "100kern-lastfolgend",
+     "2025-skaliert"
+    ],
+    "beschreibung": "app/src/ui/ressourcen.ts rechnet Brennstoffmassen mit fixen VLH (Kohle 3000, Gas 1500, Kernkraft 7500), die nur das Referenzszenario kalibrieren. Folge 1: Uran im Kernkraft-Szenario 62.438 t/a (Nameplate 333 GW × 7,5 TWh/GW) statt dispatch-basiert ~50.700 t/a (+23%) — die symbolträchtige Aussage '103,7% der Welt-Uranförderung' ist ein Artefakt (real ~84%) und widerspricht dem eigenen Wiki-Caveat sowie den Brennstoffkosten (46,6 Mrd / 22,9 €/MWh ≈ 2.035 TWh). Folge 2: Erdgas in 2025-skaliert 31,5 statt ~64,5 Mt/a (−51%), weil die Simulation 430,2 statt 210 TWh Gas dispatcht.",
+    "schritte": [
+     "Brennstoffmassen aus der simulierten Erzeugung (Σ TWh je Tech aus result.hours) statt fixer VLH rechnen — die Kalibrierung des Referenzszenarios bleibt dabei automatisch erhalten",
+     "Uran konsumbasiert auf dispatchte Erzeugung (Last + Export ≈ 2.027 TWh) umstellen; VLH-Inkonsistenz 7,5 vs. referenceYield 7,6 bereinigen",
+     "Erstkern-Beladungen beim Flottenaufbau (~8-13 kt/a über 20a) als Caveat im Kernkraft-Wiki dokumentieren"
+    ]
+   },
+   {
+    "titel": "Netzkosten-Heuristik: lastgetriebener Ausbau fehlt, technologie-flache Pauschale, Extrapolation",
+    "severity": "hoch",
+    "typ": "MODELL",
+    "szenarien": [
+     "100kern-lastfolgend",
+     "2025-skaliert",
+     "100ee-noimport",
+     "100ee-import"
+    ],
+    "beschreibung": "Die Netzformel (1200 €/kW × EE-Zubau über 174,7 GW) ist rein EE-getrieben: 100kern bekommt netz=0 Mrd €/a, obwohl die Peak-Last von 75,6 auf 302,4 GW vervierfacht — die Eich-Anker (IMK ~651 Mrd, DIHK ~1,2 Bio) enthalten aber lastgetriebenen Verteilnetzausbau (E-Mobilität, Wärmepumpen), der in jedem e100-Szenario anfällt. Das verzerrt den Vergleich um grob 10-40 Mrd €/a zugunsten Kernkraft. Zudem bepreist die Flatrate PV (~100 €/MWh Netzaufschlag bei 702 VLh) und Wind (~44 €/MWh) identisch pro kW, und beide 100ee-Szenarien liegen mit 1.890 bzw. 1.060 GW weit über der 700-GW-Eichgrenze (korrekt geflaggt, implizit 2,27 Bio € Netz-Capex im noimport-Fall).",
+    "schritte": [
+     "Lastgetriebenen Netz-Term (€/kW Peak-Last-Zuwachs) ergänzen — oder in Caveats/UI explizit ausweisen, dass netz=0 im Kernkraft-Szenario den Vergleich verzerrt",
+     "Netz-Heuristik mittelfristig nach Technologie differenzieren (PV+Batterie verteilnetznah vs. Nord-Süd-Wind)",
+     "Im UI bei netzExtrapoliert=true die implizite Gesamtsumme (Bio €) neben dem Flag anzeigen"
+    ]
+   },
+   {
+    "titel": "Speicher-Preset 100ee-noimport massiv überdimensioniert (~190 Mrd €/a gebunden)",
+    "severity": "hoch",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport"
+    ],
+    "beschreibung": "Drei Komponenten gleichzeitig über Bedarf: Die 180-TWh-Kaverne wird zu 57% nie angefasst (SoC-Minimum 102,8 TWh, genutzter Hub ~77 TWh = exakt der Studienkorridor 70-80 TWh; ~50 Mrd € toter Invest); 245 GW Rückverstromung übersteigen die Spitzenlast (217,9 GW) bei nur 94 VLh (~270 Mrd € Invest) — der Wiki-Claim '500-1.500 VLh' wird um Faktor 5-16 verfehlt; 3.300 GWh Batterie erreichen nur 31,5 Vollzyklen (~975 €/MWh durchgeleitete Energie, 101,2 Mrd €/a). Zusammen ~190 Mrd €/a Speicherkosten, die den Kostenvergleich des Szenarios verzerren; zum Vergleich ist 100ee-import speicherseitig gesund (94,2 Zyklen, 80% Hub).",
+    "schritte": [
+     "h2EnergyGWh von 180.000 auf ~80.000-100.000 senken; Rückverstromung auf die maximale Residuallast-Lücke nach Batterie-Dispatch dimensionieren (~80-150 GW); Batterie Richtung 1.000-1.500 GWh prüfen",
+     "Wiki korrigieren: VLh-Claim im reasoning streichen/anpassen, 'Lasttest-validiert' als 'reicht aus' (Obergrenze mit Wetterjahr-Reserve), nicht 'nötig' kennzeichnen",
+     "Final erst nach Entscheidung der Chemie-Default-Frage (440 vs. 685 TWh, Rollback auf 440 empfohlen) und nach der PtL-Korrektur kalibrieren — beide ändern den H2-Pool-Bedarf",
+     "Alternativ im Bericht ausweisen, dass das noimport-Preset bewusst nicht kostenoptimiert ist"
+    ]
+   },
+   {
+    "titel": "MC-Kostenoptimierung: Offshore-Cap verletzt, Windjahr-Stresstest fehlt, Export-Bug im Harness",
+    "severity": "hoch",
+    "typ": "REPORT",
+    "szenarien": [
+     "100ee-noimport"
+    ],
+    "beschreibung": "Der publizierte 'optimale Mix' (23% Einsparung) ist so nicht übernehmbar: Das Sampling erlaubt WindOff×[1,0-1,6] und der Headline-Mix nutzt 100 GW Offshore — +43% über dem im Wiki dokumentierten Hard Cap von 70 GW (BSH FEP). Der Robustheits-Constraint 'Windjahr ×0,85' fehlt: Zwei der drei billigsten Mixe fallen bereits bei ×0,90 mit 80-110 TWh Fehlstrom durch. Zudem greift der Export-Erlös in 0 von 260 Samples (export.stromGW=0 statt 25 im Harness), und ~36% der Einsparung (44,9 von 125,5 Mrd €/a) stammen aus der weit über den Eichbereich extrapolierten Netzpauschale. Die Richtung (weniger PV, mehr Wind onshore — stellt das eigene Heide-70/30-Ziel wieder her) ist belastbar; realistisch sind ~100-120 Mrd €/a (18-22%), ohne Netz-Delta ~80 Mrd (15%).",
+    "schritte": [
+     "Re-Run: WindOff fix 70 GW (keine Sampling-Dimension), scen['export']={'stromGW':25} setzen, Constraint 0 h Fehlstrom bei Windjahr ×1,0 UND ×0,85; Kandidaten mit Abregelung ≈ 0 als Auf-Kante-Artefakte verwerfen",
+     "Einsparpotenzial als Spanne mit/ohne Netz-Delta kommunizieren",
+     "Preset nicht 1:1 auf den MC-Mix setzen, sondern die Kompensationsregel ändern (Offshore-Cap-Shortfall über WindOn statt PV decken) und danach Cushion/Speicher neu lasttest-kalibrieren",
+     "Bei Verschiebung auf ~900 GW WindOn die Folgewirkungen ausweisen (Vorrangfläche ~2,8% statt 1,6% DE-Fläche, ~43 GW/a Baurate)"
+    ]
+   },
+   {
+    "titel": "Wind-Onshore-Flächen: 'Vorrangfläche'-Label falsch, Potenzial-Caveat fehlt",
+    "severity": "hoch",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import"
+    ],
+    "beschreibung": "windon trägt wirkungKm2PerGW=1 mit kategorie='Vorrangfläche' — das ist aber eine Direktflächen-Konvention (Fundament, Kranstellfläche); echte Vorrang-/Eignungsgebietsdichte liegt bei 20-25 MW/km² (~45-62 km²/GW). 515 GW erscheinen so als 515 km², unter Vorrangflächen-Accounting wären es ~20.000-26.000 km² (5,8-7,2% der Landesfläche) — das würde die Szenariosumme verdoppeln und das Flächen-Ranking gegen 2025-skaliert (31.581 km²) umkehren. Zudem überschreiten 515 GW das 2%-Flächenpotenzial (~200-250 GW) deutlich; das Wiki diskutiert nur die PV-Fläche, nicht die Onshore-Machbarkeit.",
+    "schritte": [
+     "kategorie in 'direkte Inanspruchnahme' umbenennen und im Wiki/UI klarstellen, dass Wind-Vorrangfläche bewusst nicht gezählt wird (landwirtschaftlich weiter nutzbar) — oder zusätzliche Kennzahl 'Planungsfläche' ausweisen",
+     "Onshore-Flächen-/Machbarkeits-Caveat analog zum PV-Caveat in den 100ee-Preset-Wikis ergänzen"
+    ]
+   },
+   {
+    "titel": "Renewal-Faktor fehlt bei e100-Beständen (EV-Rohstoffe 30-50% unterschätzt)",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import",
+     "100kern-lastfolgend",
+     "2025-skaliert"
+    ],
+    "beschreibung": "Inkonsistente Erneuerungslogik in ressourcen.ts: Grid-Batterien erhalten den Renewal-Faktor max(1, 20a/15a)=1,33, die e100-Sektorbestände (Pkw/Lkw/Wärmepumpen) werden ohne Faktor als Bestand/20a annualisiert, obwohl EV-Batterien nur ~12-15a halten. Pkw-getriebene Mengen (Li 12,7, Co 12,7, Ni 58, Cu 129 kt/a im noimport-Fall) sind dadurch ~30-50% unterschätzt; Lithium gesamt läge bei ~42-44 statt 36,7 kt/a (~18% statt 15,3% der Weltförderung).",
+    "schritte": [
+     "Renewal-Faktor auch auf E100_SECTORS anwenden (app/src/ui/ressourcen.ts Z. 86-95; Pkw/Lkw ~13-15a, WP ~18-20a) — oder die Auslassung als Caveat dokumentieren"
+    ]
+   },
+   {
+    "titel": "H2-Pool-Flexibilität asymmetrisch: Nicht-EE-Szenarien tragen starre 84,5-GW-Flachlast",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "100kern-lastfolgend",
+     "2025-skaliert"
+    ],
+    "beschreibung": "Die 740,4 TWh Sektor-Elektrolysestrom laufen nur in den EE-Szenarien als flexibler H2-Pool (Peak 217,9 GW); in 100kern und 2025-skaliert als starre Flachlast von 84,5 GW (Peak 302,4 GW). Im Kern-Szenario treibt das die Auslegung auf 333 GW und 597,5 TWh Lastfolge-Drosselung — mit flexibler Elektrolyse wäre die nötige Kapazität deutlich kleiner. Das Kern-Wiki dokumentiert 'kein H2-Speicher' als Setzung, benennt aber die methodische Benachteiligung gegenüber den EE-Varianten nicht. Wirkt gegenläufig zur Netz-Verzerrung (Paket Netzkosten), hebt sie aber nicht sauber auf.",
+    "schritte": [
+     "H2-Pool szenarioübergreifend einheitlich aktivieren — oder im 100kern-Caveat ergänzen, dass flexible Sektor-Elektrolyse den Peak auf ~218 GW senken würde"
+    ]
+   },
+   {
+    "titel": "PV-Ertragsbasis inkonsistent: 683 VLH (Flotte 2025) vs. 0,95 TWh/GWa (PV-Paket), Multiplier 1,0",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import",
+     "referenz-2025",
+     "2025-skaliert"
+    ],
+    "beschreibung": "Die Simulation nutzt ~683-702 VLH PV (Energy-Charts-Profil exkl. Eigenverbrauch, inkl. Abregelung), das PV-Paket dokumentiert aber referenceYield 0,95 TWh/GWa (+39%); reales Flottenmittel ~850-1000 kWh/kWp. Folge: PV-€/MWh um ~20-30% überzeichnet (121-146 statt ~85-110), propagiert in die 1.480-GW-Auslegung und die 548 Mrd des noimport-Szenarios. Zudem setzen die 2045-Presets capacityFactorMultiplier 1,0 (Bestand), obwohl das kern-Wiki 1,5/1,4/1,2 für Neubau empfiehlt — mit Neubau-Erträgen wären ~30% weniger GW nötig. Konservatives Design, aber nicht ausgewiesen.",
+    "schritte": [
+     "Diskrepanz zwischen model/erzeugung/einspeisefaktoren-2025 und model/erzeugung/pv auflösen (auf Bruttoerzeugung inkl. Eigenverbrauch normieren) oder im Kosten-Caveat nennen",
+     "Die Multiplier-1,0-Entscheidung (Bestandsertrag statt 2045-Neubau) im Preset-Wiki dokumentieren"
+    ]
+   },
+   {
+    "titel": "Flächenfaktor-Pauschalen: Kohle-Tagebau auf Mischflotte, PV-Flottenmix bei Extremausbau",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "2025-skaliert",
+     "100ee-noimport"
+    ],
+    "beschreibung": "vorFlaeche kohle (22 km²/GW, typ 'Tagebau Braunkohle', land DE) wird auf die gesamte Kohleflotte angewendet, obwohl nur ~half Braunkohle ist — DE-Inland um Faktor 1,5-2 überzeichnet (2.640 km² 'DE-Tagebau' für 120 GW Mischflotte in 2025-skaliert), Steinkohle-Vorfläche im Ausland fehlt dafür ganz. PV wirkungKm2PerGW=6 ('Flottenmix Aufdach+Freifläche') wird konstant bis 1.480 GW extrapoliert, obwohl das Aufdach-Potenzial (~300-1.000 GW) den Mix dann nicht mehr trägt — Unterschätzung ~25-35% (~11.800 statt 8.880 km²). Biomasse (22.800 km² bei 19 GW) ist dagegen konsistent und eher untere Kante.",
+    "schritte": [
+     "Kohle-vorFlaeche nach Braun-/Steinkohle splitten oder als flottengewichteten DE/Ausland-Mix dokumentieren",
+     "PV-Caveat ergänzen: Flottenmix-Faktor gilt nur bis ~2× heutiger Aufdach-Ausschöpfung, darüber Freiflächen-Faktor (~12 km²/GW)"
+    ]
+   },
+   {
+    "titel": "CO2-Kennzahl: Nenner zwischen Szenarien inkonsistent, Lifecycle-Anteil ungelabelt",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import",
+     "referenz-2025",
+     "100kern-lastfolgend",
+     "2025-skaliert"
+    ],
+    "beschreibung": "Die dokumentierte Formel ('CO2 / Strom-Nachfrage') reproduziert nur 2 von 5 Szenarien: Die impliziten Nenner sind referenz 478,6 TWh (Last+Export), 100kern 2.025 TWh, 2025-skaliert 1.828 TWh — aber 100ee-noimport 1.767 TWh entspricht weder Stromlast (1.067,6 → erwartet 46,2 statt 27,9 g/kWh, Faktor 1,65) noch Sektornachfrage (1.807,9). g/kWh-Vergleiche zwischen Szenarien sind so irreführend. Zudem enthalten die Werte Lebenszyklus-Emissionen (Kernkraft 12 g/kWh, 100ee 37-49 Mt statt Studien-'0'), ohne dass dies gekennzeichnet ist.",
+    "schritte": [
+     "Nenner vereinheitlichen (konsequent Stromnachfrage oder Last+Export) und im kern-Wiki exakt dokumentieren",
+     "CO2-Kennzahl im Report/UI als 'inkl. Lebenszyklus' labeln"
+    ]
+   },
+   {
+    "titel": "Kostenparameter am Rand der Literaturspanne (Batterie-Capex, Kernbrennstoff, Laufwasser)",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import",
+     "100kern-lastfolgend",
+     "referenz-2025"
+    ],
+    "beschreibung": "Drei Preisannahmen verdienen Quellen-/Spannenarbeit: Batterie 280 €/kWh ohne Lernkurve über den 20a-Horizont ist obere Kante (heute ~200-300 €/kWh, stark fallend) — bei 101,2 Mrd €/a zweitgrößter Posten des noimport-Szenarios, Spielraum 20-40% nach unten. Kernbrennstoff 22,9 €/MWh_el liegt ~2× über der WNA/NEA-Spanne (9-13, nach Preisanstiegen oberes Ende 15-19 vertretbar) — wirkt mit ~+12 €/MWh auf die 120,4 €/MWh des Kern-Szenarios (fuel 46,6 Mrd €/a). Laufwasser impliziert 26,7 TWh bei 4,8 GW (63% CF) statt real ~17-19 TWh — €/MWh zu günstig ausgewiesen (52,5 statt ~70-80), Kostenwirkung minimal.",
+    "schritte": [
+     "Lernkurven-Caveat bzw. Spanne im Batterie-Paket ergänzen — der Parameter dominiert die Differenz zwischen den 100ee-Varianten",
+     "Quellenherleitung für 22,9 €/MWh_el dokumentieren (inkl./exkl. Rückbau- und Endlagerprovision) oder Richtung 10-15 €/MWh korrigieren",
+     "Laufwasser-Ertragsbasis auf reale ~17-19 TWh kalibrieren"
+    ]
+   },
+   {
+    "titel": "Referenz-Dispatch ohne Marktarbitrage unterschätzt reale Speichernutzung drastisch",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "referenz-2025"
+    ],
+    "beschreibung": "Der Greedy-Residuallast-Dispatch kennt keine Spotmarkt-Arbitrage: Pumpspeicher entladen 0,09 statt real ~8-10 TWh/a (Faktor ~100, weil Batterie mit Priorität 1 den Tageshub schluckt), Batterien fahren 86,5 statt real ~250-350 äquivalente Vollzyklen. Im Modellrahmen konsistent und der Greedy-Dispatch ist dokumentiert, aber der Referenz-Bericht wirkt ohne Hinweis wie ein Bug.",
+    "schritte": [
+     "Caveat im pumpspeicher-Paket: 'Modell bildet keine Marktarbitrage ab; reale PSW-Erzeugung (~10 TWh/a) wird im Referenzszenario um Faktor ~100 unterschätzt'",
+     "Analogen Hinweis im Batterie-Caveat ergänzen"
+    ]
+   },
+   {
+    "titel": "Endkundenpreis-Brücke ~12% unter realem BDEW-Niveau",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "referenz-2025",
+     "100ee-noimport",
+     "100ee-import",
+     "100kern-lastfolgend",
+     "2025-skaliert"
+    ],
+    "beschreibung": "Der Referenz-Endkundenpreis (35,4 ct/kWh, 88,6 €/Monat) liegt ~12-13% unter BDEW (~40-41 ct, ~100-103 €/Monat bei 3.000 kWh) — außerhalb der ±10%-Toleranz. Die Brücke rechnet intern exakt; Ursache ist Energie+Vertrieb kostenbasiert ~12,5 ct vs. BDEW Beschaffung+Vertrieb 16,0 ct (Markt+Marge). Da alle Szenario-€/Monat-Werte aufsetzen, sind die absoluten Niveaus systematisch ~10% zu niedrig; die Szenario-Vergleiche untereinander bleiben gültig.",
+    "schritte": [
+     "Vertriebs-/Beschaffungsmarge so kalibrieren, dass die Referenz bei ~100 €/Monat landet — oder die bewusste Abweichung (kostenbasiert ab Werk statt Marktpreis) als Caveat in der Haushalts-Box ausweisen"
+    ]
+   },
+   {
+    "titel": "Wiki-/Anzeige-Nachzieher: veraltete Handelszahlen, EV/WP-Split, Export-am-Cap-Hinweis, hubPct",
+    "severity": "mittel",
+    "typ": "MODELL",
+    "szenarien": [
+     "referenz-2025",
+     "100kern-lastfolgend"
+    ],
+    "beschreibung": "Mehrere Text-/Anzeige-Inkonsistenzen ohne Rechenfehler dahinter: Das kern-Wiki nennt für den Default-Lauf 76 TWh Import / ~3 TWh Export, der Bericht zeigt 54 / 12,2 TWh (zudem Nettoimport 41,8 vs. real ~25-30 TWh als bekannter Kupferplatten-Bias). Der preise-Wiki-Text nennt +2.600/+2.900 kWh für EV/WP, aus den Parametern folgen 2.200/3.540. 100kern exportiert exakt 25 GW × 8.760 h = 218,9 TWh dauerhaft am Cap — die Erlösgutschrift von −13,1 Mrd €/a (Obergrenze laut eigenem Caveat, ohne sie ~245 statt 231,6 Mrd) ist im Bericht nicht sichtbar. Beim PSW in 100kern suggeriert hubPct 83,3% Nutzung, obwohl Vollzyklen=0 (einmalige Erstbefüllung).",
+    "schritte": [
+     "kern-Wiki-Kennzahlen auf 54/12,2 TWh aktualisieren und den Netto-Bias der Handelsbilanz als Caveat quantifizieren",
+     "EV/WP-Beispielzahlen im preise-Wiki auf 2.200/3.540 korrigieren",
+     "Bericht/UI: Hinweis-Flag analog netzExtrapoliert, wenn Export dauerhaft am Cap läuft",
+     "hubPct bei Vollzyklen ≈ 0 ausblenden oder als 'Erstbefüllung' kennzeichnen"
+    ]
+   },
+   {
+    "titel": "Einordnungs-Caveats: Polysilizium-Markt, grauer H2-Bestandsmarkt, gesamtBis2045-Label, Kernkraft-Standorte",
+    "severity": "niedrig",
+    "typ": "MODELL",
+    "szenarien": [
+     "100ee-noimport",
+     "100ee-import",
+     "100kern-lastfolgend"
+    ],
+    "beschreibung": "Bündel korrekt gerechneter, aber missverständlich eingeordneter Kennzahlen: PV-Silizium wird mit veralteter Intensität (3.950 statt ~2.000-2.500 t/GW) gegen die Gesamt-Si-Produktion (8,5 Mt inkl. Ferrosilizium) gestellt — am relevanten Polysilizium-Markt (~1,6-2 Mt/a) wären es ~15-18% statt 3,4% (netto etwa neutral, aber undokumentiert). Die H2-Import-Einordnung '11,1% der Weltproduktion' nutzt 97 Mt grauen, captive Bestandsmarkt — ein handelbarer grüner Markt dieser Größe existiert nicht. gesamtBis2045 (z.B. 10.961 Mrd autark) sind Vollkosten × 20, nicht mit Studien-'Mehrinvestitionen' (1-2 Bio €) vergleichbar; die Referenz enthält zudem keine fossilen Endenergiekosten (~70-90 Mrd €/a). Bei 333 GW Kernkraft wäre Kühlwasser/Standortverfügbarkeit die bindende Restriktion, nicht Fläche.",
+    "schritte": [
+     "Caveats in pv-/weltfoerderung-Wiki (Polysilizium vs. Gesamt-Si, sinkender Intensitätstrend) und beim H2-Importvergleich ergänzen",
+     "Im UI/Wiki klarstellen, dass gesamtBis2045 Systemvollkosten × Horizont sind und die Referenzbasis keine fossilen Kosten der nicht-elektrifizierten Sektoren enthält",
+     "Optionaler Caveat zur Standort-/Kühlwasserfrage bei extremen Kernkraft-Kapazitäten"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,52 @@
+{
+ "runde2": [
+  {
+   "experte": "speicher",
+   "satisfied": true,
+   "begruendung": "MC v2 setzt alle meine Runde-1-Forderungen sauber um: Offshore fix 70 GW (in allen 200 Samples verifiziert), Export-Cap 25 GW im Harness korrigiert, Schwachwind-Constraint ×0,85 korrekt auf On- und Offshore angewandt (126 zulässig / 94 robust aus der Roh-CSV reproduziert), Elektrolyse- und Rückverstromungs-Capex skalieren mit, Top-Kandidaten sind keine Auf-Kante-Artefakte (210–445 TWh Abregelung). Das robuste Optimum 114 TWh H2 / 194 GW Rückverstromung ist richtungskonsistent mit meiner Empfehlung — 194 GW liegt nun unter der Spitzenlast (217,9 GW) und löst den Kernbefund; dass es leicht über meinen statischen Ranges (80–100 TWh / 80–150 GW) liegt, ist die korrekte Folge des Wetterjahr-Constraints, den meine Analyse nicht enthielt. Alle meine Befunde sind vollständig und richtig gruppiert erfasst: H2-Überdimensionierung, Rückverstromung>Peak, Batterie-Zyklen und VLh-Claim in AP04 (MODELL), Markt-Arbitrage-Caveat in AP13, hubPct/Erstbefüllung in AP15, MC-Korrekturen in AP05 (REPORT, umgesetzt).",
+   "fehlend": [
+    "AP04-Zielwerte harmonisieren: Die Bullet-Ranges (H2 80-100 TWh, Rückverstromung 80-150 GW, Batterie 1.000-1.500 GWh) stammen aus meiner statischen Ein-Wetterjahr-Analyse; eine wörtliche Umsetzung fiele beim eigenen ×0,85-Schwachwind-Test durch. Die robusten MC-v2-Werte (~110-115 TWh, ~190-200 GW, ~1.600 GWh) sollten als Zielkorridor in AP04 übernommen werden.",
+    "Minor, in mc-summary.json notieren: Lade-/Entladeleistung sind im Sampling fest gekoppelt (Ratio 495/245) und Batterie fest auf 5 h E/P — das Optimum der Elektrolyseleistung ist damit unerkundet; das wahre Optimum könnte noch etwas günstiger liegen.",
+    "Minor: mc-summary.json selbst nennt nicht, dass das Optimum konditional auf dem unkorrigierten Bedarfsmodell (vor AP01-PtL-Korrektur, +159 TWh, und Chemie 440) steht — die Abhängigkeit ist aber in AP04/AP05 korrekt dokumentiert."
+   ]
+  },
+  {
+   "experte": "ressourcen",
+   "satisfied": true,
+   "begruendung": "Alle fünf Rohstoff-Befunde aus Runde 1 sind vollständig und zahlengetreu in den Arbeitspaketen erfasst: Brennstoff-aus-Dispatch (Gas −51 %, Uran +23 %) in AP02, Renewal-Faktor e100 in AP07, Polysilizium- und H2-Bestandsmarkt-Caveats in AP16. Die Uran-Headline-Korrektur ist korrekt beschrieben — 62.438 t/a als VLH-Artefakt, dispatch-basiert ~50.700 t/a = 84 % der Weltförderung (rechnerisch verifiziert: 2.026,9 TWh × 25 t/TWh / 60.213 t), inkl. Erstkern-Caveat und Brennstoffkosten-Quercheck. Die MC-v2-Korrekturen (Offshore fix 70 GW, Export-Cap 25 GW, Schwachwind ×0,85, Top-8 alle robust mit substanzieller Abregelung) sind methodisch sauber; −24 % reproduziert sich aus 417,4/549,2. Dass die MODELL-Pakete bewusst nicht umgesetzt sind, ist als Produktentscheidung sauber dokumentiert.",
+   "fehlend": [
+    "Minor: mc-summary v2 nennt die Einsparung nur als Punktwert (−24 %); die in AP05 geforderte Spanne mit/ohne Netz-Delta (~36 % der Einsparung aus extrapolierter Netzpauschale) fehlt im Befundtext — als offener Punkt in AP05 aber erfasst",
+    "Minor: Falls das Preset später Richtung MC-Mix verschoben wird (PV ~670 / WindOn ~790-900 GW), ändern sich auch die Rohstoffprofile (weniger Si/Ag, mehr Nd/Cu/Stahl für Wind) — könnte als Folgewirkung in AP05 mit aufgeführt werden, blockiert aber nichts"
+   ]
+  },
+  {
+   "experte": "studien",
+   "satisfied": true,
+   "begruendung": "Alle sechs Runde-1-Befunde des Szenario-Vergleichs sind sauber und richtig gruppiert erfasst: PtL-Verluste/Importpreis in AP01, Onshore-Potenzial und Multiplier-Doku in AP06/AP09, Kernbrennstoffpreis in AP12, Export-Wiki/Handelsbias in AP15, gesamtBis2045-Einordnung in AP16, CO2-Lifecycle-Label in AP11 (korrekt mit dem Nenner-Befund zusammengelegt). Der MC-v2-Re-Run setzt alle drei AP05-Korrekturen nachweislich um: WindOff fix 70 GW in allen Top-Kandidaten, Export 25 GW aktiv (Basis 549,2 = computeKosten 548,1 + 0,2 % Validierungstoleranz, faire Vergleichsbasis), Schwachwind-Constraint bestanden, keine Abregelung-≈-0-Artefakte. Die Beschreibung des v2-Ergebnisses ist fair: Sie behauptet keine Studienkonvergenz — PV ~670 GW nähert sich dem Studienkorridor (300-500 GW), WindOn ~790+ GW entfernt sich aber weiter von Studienwerten (~115-250 GW), und genau diese Folgewirkungen (Fläche ~2,8 %, ~43 GW/a Baurate) stehen als offene Punkte in AP05/AP06. Dass die −24 % weiterhin den extrapolierten Netz-Anteil enthalten und die Abhängigkeit vom PtL-Fix (AP01) eine spätere Rekalibrierung erfordert, ist in AP05 (\"Spanne mit/ohne Netz-Delta\") bzw. AP01 (letzte Checkbox) korrekt als offen dokumentiert — bewusste Nicht-Umsetzung, kein Erfassungsfehler.",
+   "fehlend": [
+    "Nur Randnotiz, nicht wesentlich: Der Elektrolyse-Capex 1.500 €/kW (Studien 2045: ~300-700 €/kW) aus meinem Niedrig-Befund zur eurProMWh-Einordnung taucht in AP12 nicht explizit auf (dort nur Batterie/Kernbrennstoff/Laufwasser) — könnte als vierter Spannen-Punkt in AP12 ergänzt werden.",
+    "Kosmetik in mc-summary.json: Der Befundtext könnte die Netz-Delta-Spanne (AP05, Checkbox 2) gleich mitnennen, damit die −24 % nicht ohne diesen Vorbehalt zitiert werden."
+   ]
+  },
+  {
+   "experte": "wiki",
+   "satisfied": true,
+   "begruendung": "Alle sechs Befunde meiner Runde-1-Prüfung sind korrekt und vollständig in den Arbeitspaketen erfasst: Uran-Nameplate-Artefakt in AP02 (inkl. VLH 7,5 vs. 7,6), kern-Handelszahlen 76/3 vs. 54/12,2 TWh und Export-am-Cap-Hinweis in AP15, CO2-Nenner-Inkonsistenz in AP11, VLh-Claim 500-1.500 und 'Lasttest-validiert'-Formulierung in AP04; auch die EV/WP-Beispielwerte (2.600/2.900 vs. 2.200/3.540) sind in AP15 abgedeckt. Die MC-v2-Zusammenfassung setzt exakt die drei in AP05 geforderten Korrekturen um (Offshore fix 70 GW, export.stromGW=25, Schwachwind-Constraint ×0,85) und ist intern konsistent (417,4/549,2 = -24,0 %, alle Kandidaten bei 70 GW Offshore, Abregelung 210-445 TWh ohne Auf-Kante-Artefakte). Die Gruppierung MODELL vs. REPORT ist sauber: meine Wiki-Text-Befunde betreffen das Produkt, nicht den Prüfbericht, und sind als bewusst offene MODELL-Pakete korrekt dokumentiert.",
+   "fehlend": [
+    "Kleinigkeit, kein Blocker: Der v2-Befund kommuniziert -24 % als Punktwert; die in AP05 geforderte Spanne mit/ohne Netz-Delta (Runde 1: ~36 % der Einsparung aus extrapolierter Netzpauschale) ist im mc-summary.json noch nicht ausgewiesen — als offene Checkbox in AP05 aber erfasst.",
+    "Kleinigkeit: Das Gesamturteil in arbeitspakete.md nennt noch 'Einsparung eher 15-22 % statt 23 %', während MC v2 -24 % bestätigt — der Text stammt erkennbar von vor dem Re-Run und sollte bei Gelegenheit nachgezogen werden."
+   ]
+  },
+  {
+   "experte": "optimum",
+   "satisfied": true,
+   "begruendung": "Alle drei Runde-1-Befunde sind im v2-Re-Run methodisch korrekt umgesetzt: WindOff fix 70 GW (gegen BSH-FEP-Cap im Wiki verifiziert), export.stromGW=25 entspricht exakt dem noimport-Preset (historisch-2025 exportStromGW=25) und gilt für Basis UND Kandidaten gleichermaßen (Basis 549,2 ≈ App-Wert 548), Schwachwind-Constraint ×0,85 ist als Zulässigkeitsbedingung aktiv (94/200 robust, Top-8 alle shed_h_schwach=0). Die Top-Kandidaten liegen im Sampling-Inneren mit 210–445 TWh Abregelung — keine Auf-Kante-Artefakte; dass −24 % über meiner Schätzung 18–22 % liegt, erklärt der nun korrekt gutgeschriebene Exporterlös. AP05 erfasst meine Kritik vollständig (Re-Run-Spezifikation, Netz-Delta-Spanne, Kompensationsregel WindOn statt PV, Folgewirkungen ~900 GW WindOn), die Preset-Übernahme ist korrekt als 'nicht 1:1' formuliert und das Speicher-Downsizing liegt sauber im MODELL-AP04 inkl. Abhängigkeiten (PtL/AP01, Chemie-Default).",
+   "fehlend": [
+    "Der v2-Befundsatz kommuniziert −24 % ohne die in AP05 geforderte Spanne mit/ohne Netz-Delta: Basis (2.065 GW EE) und Optimum (1.529 GW) liegen beide weit über der 700-GW-Eichgrenze, das Delta ~536 GW × 1.200 €/kW trägt weiter signifikant zur Einsparung bei — offene AP05-Checkbox, muss vor Publikation der Headline umgesetzt werden",
+    "AP05 sollte die Abhängigkeit des MC-Optimums von AP01 explizit verlinken: die PtL-Korrektur (+159 TWh Strombedarf) verschiebt das Optimum, der Re-Run-Mix ist nach AP01-Entscheidung neu zu rechnen (in AP04 genannt, in AP05 nur implizit über 'Cushion/Speicher neu kalibrieren')",
+    "Kosmetisch: die Preset-Rebalancing-Bullets (Kompensationsregel WindOn statt PV) sind MODELL-Entscheidungen innerhalb des REPORT-gelabelten AP05 — inhaltlich vollständig, aber bei strikter MODELL/REPORT-Trennung ggf. als eigener MODELL-Punkt markieren"
+   ]
+  }
+ ],
+ "alleZufrieden": true
+}

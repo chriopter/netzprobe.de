@@ -12,7 +12,7 @@ import { HelpDot, HelpPanel, SectionHeading, StatCard, ViewPill, type SectionVie
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
-type FlaecheRow = {
+export type FlaecheRow = {
   id: string;
   label: string;
   gw: number;
@@ -29,7 +29,7 @@ type FlaecheRow = {
   kategorie?: string;
 };
 
-function flaecheRows(scenario: Scenario): FlaecheRow[] {
+export function flaecheRows(scenario: Scenario): FlaecheRow[] {
   // Holt jeweils anlagenFlaeche + vorFlaeche + referenceYield aus dem Paket und
   // multipliziert mit dem aktuellen Slider-Wert. Speicher kombinieren GW/GWh-Term.
   const getF = (id: string) => (uiManifest.generation as Record<string, any>)[id]?.anlagenFlaeche ?? {};
