@@ -92,7 +92,7 @@
       {
         "name": "kosten",
         "unit": "Objekt",
-        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten."
+        "description": "Kostenparameter: CAPEX (EUR/kW, Speicher zus. EUR/kWh), Fix-/Var-O&M, Lebensdauer, Brennstoff (EUR/MWh_th) + Wirkungsgrad. Quellen in method.kosten. omEnergyEurPerKWhA (7 EUR/kWh*a) ist das Energie-O&M nach NREL-ATB-Konvention (2,5 %/a vom Energie-CAPEX, inkl. Augmentation); zusammen mit omFix 4 EUR/kW*a ergibt ein 4h-System die NREL-~32 EUR/kW*a."
       }
     ],
     "caveats": [
@@ -101,7 +101,7 @@
       "Keine Mindest-SoC oder DoD-Restriktionen — Batterie kann zwischen 0 und Max schwingen.",
       "Reale Batterien degradieren mit Zyklenzahl; Modell ignoriert Alterung.",
       "Der Greedy-Residuallast-Dispatch kennt keine Spotmarkt-Arbitrage: im Referenzszenario fahren Batterien ~85 äquivalente Vollzyklen/a statt real ~250–350 (Großspeicher im Day-Ahead-/Intraday-Handel). Die ausgewiesene Zyklenzahl misst nur den bilanzgetriebenen Einsatz, nicht den Markteinsatz.",
-      "CAPEX 280 EUR/kWh ist ein heutiger (2024/25) europäischer Turnkey-Großspeicherpreis ohne Lernkurve (NREL ATB Pack ~283 USD; BNEF: Europa ~275, USA 236, China ~101 USD/kWh). Der Markt fällt schnell: Netzspeicher sind zu ~95 % LFP, Pack-Preise fielen 2024/25 auf ~70–110 USD/kWh, Studienpfade sehen ~100–200 EUR/kWh System für 2030–2045. Im 100ee-noimport-Szenario ist die Batterie (~1.800 GWh, ~52 Mrd EUR/a) der größte Speicher-Einzelposten und viertgrößte Posten insgesamt — jede −100 EUR/kWh senkt den Bon um ~17 Mrd EUR/a. 280 ist die konservative Heute-Obergrenze; Gegenrisiken: Zellersatz innerhalb der 15-a-Lebensdauer, Lithium-Zyklen, EU-Lokalisierungsaufschläge."
+      "CAPEX 280 EUR/kWh ist ein heutiger (2024/25) europäischer Turnkey-Großspeicherpreis ohne Lernkurve (NREL ATB Pack ~283 USD; BNEF: Europa ~275, USA 236, China ~101 USD/kWh). Der Markt fällt schnell: Netzspeicher sind zu ~95 % LFP, Pack-Preise fielen 2024/25 auf ~70–110 USD/kWh, Studienpfade sehen ~100–200 EUR/kWh System für 2030–2045. Im 100ee-noimport-Szenario ist die Batterie (~1.800 GWh, ~65 Mrd EUR/a inkl. Energie-O&M) der zweitgrößte Speicherposten (nach dem H₂-System ~77 Mrd) und viertgrößte Posten insgesamt — jede −100 EUR/kWh senkt den Bon um ~17 Mrd EUR/a CAPEX plus ~4,5 Mrd O&M. 280 ist die konservative Heute-Obergrenze; Gegenrisiken: Zellersatz innerhalb der 15-a-Lebensdauer, Lithium-Zyklen, EU-Lokalisierungsaufschläge."
     ],
     "file": "speicher/batterie/data.json",
     "scripts": [
@@ -128,7 +128,7 @@
       ]
     },
     "kosten": {
-      "source": "**Batterie (Li-Ion Netzspeicher, Leistung und Energie getrennt).** Energiekomponente 280 EUR/kWh nutzbar (Grossspeicher 2024-25; NREL ATB 2024 Pack ~283 USD/kWh ~260 EUR; ISE-Heimspeicher hoeher 400-1000, Projektion 2045 180-700; Spanne 180-700). Leistungskomponente (PCS/Wechselrichter) 150 EUR/kW (DEA/PyPSA/NREL-BOS 130-160). Wirkungsgrad (RTE) 0,90 (ISE). Lebensdauer 15 a (ISE), danach Zellersatz. WARNUNG (Verifikation): Fix-O&M 4 EUR/kW/a ist nur fuer die reine Leistungskomponente plausibel; NREL ATB setzt ~2,5 % von Gesamt-CAPEX/a an, was bei mehrstuendigen Systemen (Energie dominiert) deutlich hoeher liegt (4h-System ~32 EUR/kW/a). Var-O&M ~1,5 EUR/MWh. CAPEX streut stark je Quelle/Jahr und brutto/netto-Kapazitaet. Quellen: Fraunhofer ISE 2024; NREL ATB 2024; PyPSA. Konfidenz: mittel.",
+      "source": "**Batterie (Li-Ion Netzspeicher, Leistung und Energie getrennt).** Energiekomponente 280 EUR/kWh nutzbar (Grossspeicher 2024-25; NREL ATB 2024 Pack ~283 USD/kWh ~260 EUR; ISE-Heimspeicher hoeher 400-1000, Projektion 2045 180-700; Spanne 180-700). Leistungskomponente (PCS/Wechselrichter) 150 EUR/kW (DEA/PyPSA/NREL-BOS 130-160). Wirkungsgrad (RTE) 0,90 (ISE-Quellenangabe; die Simulation rechnet mit roundtripEfficiency 0,80 — unterer Rand inkl. Trafo-/Klimatisierungsverlusten, siehe Parameter). Lebensdauer 15 a (ISE), danach Zellersatz. O&M nach NREL-ATB-Konvention 2,5 % vom Gesamt-CAPEX/a, auf die Komponenten aufgeteilt: Fix 4 EUR/kW/a Leistung (2,5 % x 150, leicht konservativ) + omEnergy 7 EUR/kWh/a Energie (2,5 % x 280; deckt Augmentation/Kapazitaetserhalt ueber die 15-a-Lebensdauer, NREL setzt VOM=0). Quercheck 4h-System: 4 + 4x7 = 32 EUR/kW/a = exakt der NREL-Anker; DEA/PyPSA laegen mit <1 EUR/kW/a weit darunter (Degradation dort anders verbucht) — nach Repo-Prinzip konservativ NREL. Var-O&M ~1,5 EUR/MWh auf die Entladung. CAPEX streut stark je Quelle/Jahr und brutto/netto-Kapazitaet. Quellen: Fraunhofer ISE 2024; NREL ATB 2024; PyPSA. Konfidenz: mittel.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
@@ -231,7 +231,8 @@
       "omFixEurPerKWa": 4,
       "omVarEurPerMWh": 1.5,
       "lifetimeYears": 15,
-      "efficiency": 0.9
+      "efficiency": 0.9,
+      "omEnergyEurPerKWhA": 7
     }
   }
 }

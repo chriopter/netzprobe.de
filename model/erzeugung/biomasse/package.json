@@ -103,7 +103,8 @@
     "caveats": [
       "Biomasse-Emissionsfaktor 230 g/kWh ist Direkt-Emission; Lebenszyklus-Bilanz (Anbau, Transport, Landnutzung) deutlich höher.",
       "Verfügbarkeit 0,86 trifft den Korridor realer Biogas- und Holz-HKW (85–90 %), bildet Wartungsfenster aber nicht stundenscharf ab.",
-      "Biomasse ist im Modell nicht als regelbare Last konfigurierbar — Baseload-Annahme entspricht der zunehmend flexiblen Realfahrweise (Direktvermarktung, Spitzenlast-Erweiterungen) nicht."
+      "Biomasse ist im Modell nicht als regelbare Last konfigurierbar — Baseload-Annahme entspricht der zunehmend flexiblen Realfahrweise (Direktvermarktung, Spitzenlast-Erweiterungen) nicht.",
+      "Brennstoffpreis 60 EUR/MWh_th ist ein FLOTTEN-Blend (Abschlusspanel-Korrektur, vorher 24 = nur Holzhackschnitzel): die reale Stromflotte ist zu ~2/3 Biogas (ISE-Substratkosten ~88 EUR/MWh_th; PyPSA 78,8), ~20 % Holz-HKW (24–37) und ~13 % biogener Abfall (~0, Gate Fees) — erzeugungsgewichtet und auf den Modell-Wirkungsgrad 0,35 zurückgerechnet ~52–62, konservativ 60. Wirkung: +3,7 Mrd EUR/a in Szenarien mit 4,8-GW-Bestand, +14,7 Mrd in 2025-skaliert (143 TWh). Marginaler ZUBAU über den Bestand hinaus wäre eher Festbrennstoff (24–37 EUR/MWh_th) — der Blend bepreist die heutige Bestandsflotte; der resultierende Biomasse-Bon (~245 EUR/MWh) liegt mitten im ISE-Biogas-LCOE-Band 202–325."
     ],
     "file": "erzeugung/biomasse/data.json",
     "scripts": [
@@ -206,7 +207,7 @@
       "omFixEurPerKWa": 185,
       "omVarEurPerMWh": 6,
       "lifetimeYears": 25,
-      "fuelEurPerMWhTh": 24,
+      "fuelEurPerMWhTh": 60,
       "efficiency": 0.35
     }
   }
