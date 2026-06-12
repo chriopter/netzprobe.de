@@ -170,15 +170,38 @@ export function ComingSoonGate({ id, children, compact }: { id: string; children
   </div>;
 }
 
-export function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
-  const modes: Array<[ChartMode, string]> = [['sunburst', 'Polar'], ['linie', 'Linie']];
-  return <div className="inline-flex shrink-0 rounded-md border border-zinc-200 bg-zinc-50 p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-800" aria-label="Diagrammform wählen">
-    {modes.map(([value, label]) => <button
-      key={value}
+export function SegmentPill<T extends string>({ value, options, onChange, ariaLabel }: { value: T; options: ReadonlyArray<{ id: T; label: string }>; onChange: (value: T) => void; ariaLabel: string }) {
+  const activeIndex = Math.max(0, options.findIndex(option => option.id === value));
+  return <div
+    className="relative grid overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none dark:border-zinc-700 dark:bg-zinc-900"
+    style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    role="tablist"
+    aria-label={ariaLabel}
+  >
+    <span
+      aria-hidden="true"
+      className="absolute bottom-0.5 left-0.5 top-0.5 rounded-full bg-zinc-950 transition-transform duration-200 ease-out dark:bg-zinc-50"
+      style={{ width: `calc((100% - 4px) / ${options.length})`, transform: `translateX(${activeIndex * 100}%)` }}
+    />
+    {options.map(option => <button
+      key={option.id}
       type="button"
-      aria-pressed={mode === value}
-      className={cx('rounded-[5px] px-2.5 py-1 transition', mode === value ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950' : 'text-zinc-500 hover:bg-white hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50')}
-      onClick={() => onChange(value)}
-    >{label}</button>)}
+      role="tab"
+      aria-selected={value === option.id}
+      onClick={() => onChange(option.id)}
+      className={cx(
+        'relative z-10 whitespace-nowrap rounded-full px-3 py-1.5 text-center transition-colors duration-200',
+        value === option.id ? 'text-white dark:text-zinc-950' : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
+      )}
+    >{option.label}</button>)}
   </div>;
+}
+
+export function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
+  return <SegmentPill
+    value={mode}
+    options={[{ id: 'sunburst', label: 'Polar' }, { id: 'linie', label: 'Linie' }] as const}
+    onChange={onChange}
+    ariaLabel="Diagrammform wählen"
+  />;
 }
