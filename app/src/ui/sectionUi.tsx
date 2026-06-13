@@ -135,7 +135,7 @@ export function PlaceholderGlass({ children }: { children: ReactNode }) {
 export function SegmentPill<T extends string>({ value, options, onChange, ariaLabel }: { value: T; options: ReadonlyArray<{ id: T; label: string }>; onChange: (value: T) => void; ariaLabel: string }) {
   const activeIndex = Math.max(0, options.findIndex(option => option.id === value));
   return <div
-    className="relative grid overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none dark:border-zinc-700 dark:bg-zinc-900"
+    className="relative grid overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[12px] font-medium leading-none sm:text-[13px] dark:border-zinc-700 dark:bg-zinc-900"
     style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     role="tablist"
     aria-label={ariaLabel}
@@ -152,7 +152,7 @@ export function SegmentPill<T extends string>({ value, options, onChange, ariaLa
       aria-selected={value === option.id}
       onClick={() => onChange(option.id)}
       className={cx(
-        'relative z-10 whitespace-nowrap rounded-full px-3 py-1.5 text-center transition-colors duration-200',
+        'relative z-10 whitespace-nowrap rounded-full px-2 py-1.5 text-center transition-colors duration-200 sm:px-3',
         value === option.id ? 'text-white dark:text-zinc-950' : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
       )}
     >{option.label}</button>)}
