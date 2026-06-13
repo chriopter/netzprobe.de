@@ -13,6 +13,12 @@ import { ELEMENTS, MATERIAL_ELEMENT } from '../periodicElements';
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
+// Süße Lupe als Hover-Cursor übers Periodensystem: durchsichtiges Glas
+// (fill=none), weißer Halo + dunkle Kontur für Sichtbarkeit auf hell und
+// dunkel. Hotspot in der Glasmitte (11 11); Fallback zoom-in.
+const LUPE_SVG = "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g fill='none' stroke-linecap='round'><g stroke='white' stroke-width='3.5' opacity='0.85'><circle cx='11' cy='11' r='7.5'/><line x1='16.2' y1='16.2' x2='23' y2='23'/></g><g stroke='#27272a' stroke-width='1.7'><circle cx='11' cy='11' r='7.5'/><line x1='16.2' y1='16.2' x2='23' y2='23'/></g></g></svg>";
+const LUPE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(LUPE_SVG)}") 11 11, zoom-in`;
+
 const catColor = (m: string) => FUEL.has(m) ? 'bg-stone-700 dark:bg-stone-400' : BULK.has(m) ? 'bg-zinc-400 dark:bg-zinc-500' : 'bg-zinc-600 dark:bg-zinc-300';
 
 const fmtMass = (t: number) => t >= 1e6
@@ -157,8 +163,8 @@ function PeriodicTable({ rows }: { rows: MaterialRow[] }) {
           >{el.symbol}</div>;
           return <div
             key={el.symbol}
-            className={cx('group/el relative flex aspect-square cursor-help flex-col items-center justify-center rounded-[4px] leading-none shadow-sm ring-1 ring-inset', stepFor(hit.pct).cls)}
-            style={{ gridRow: el.row, gridColumn: el.col }}
+            className={cx('group/el relative flex aspect-square flex-col items-center justify-center rounded-[4px] leading-none shadow-sm ring-1 ring-inset', stepFor(hit.pct).cls)}
+            style={{ gridRow: el.row, gridColumn: el.col, cursor: LUPE_CURSOR }}
           >
             <span className="text-[10px] font-bold sm:text-xs">{el.symbol}</span>
             {/* Badge nur, wenn die Kacheln breit genug sind — gemessen an der
@@ -240,6 +246,7 @@ export default function RessourcenSection({ scenario, result, periodYears, data 
     </div>
     {helpOpen && <HelpPanel>
       <p>Die Kacheln rechts zeigen den <strong>jährlichen Materialbedarf</strong>. Eine Kachel (1×) entspricht dem Jahresbedarf des deutschen Energiesystems 2025; Erneuerung über Lebensdauer ist anteilig eingerechnet.</p>
+      <p>Die Vielfachen wirken hoch, weil das Szenario Deutschlands <strong>gesamten</strong> Energiebedarf elektrisch deckt — Erzeugung, Speicher und Netze für Strom, Wärme, Verkehr und Industrie zusammen, nicht nur den heutigen Stromverbrauch. Vollelektrifizierung ist rund das 3–4-Fache der heutigen Stromnachfrage.</p>
       <ul>
         <li><strong>Basis (1×)</strong> — Material des Energiesystems 2025: Erzeugung, Speicher und die schon elektrische Flotte (~2 Mio. E-Pkw, Wärmepumpen-Bestand, elektrifizierte Bahn).</li>
         <li><strong>Erneuerung über Lebensdauer</strong> — Bau-Material × <code>max(1, Horizont/Lebensdauer)</code> je Technologie: Batterie 15 a, PV/Gas/H₂ 30 a, Wind/Biomasse 25 a, Kohle 35 a, Kernkraft 45 a, Pumpspeicher/Laufwasser 60 a (analog zur annuisierten Kostenseite).</li>
@@ -262,6 +269,7 @@ export default function RessourcenSection({ scenario, result, periodYears, data 
         <MultiMaterialTiles title="Spezialmaterialien" rows={rows.filter(r => r.cat === 'spezial' && (r.s > 0 || r.b > 0))} colorClass="bg-zinc-600 dark:bg-zinc-300" forceOpen={view === 'details'}/>
         <MultiMaterialTiles title="Brennstoff" rows={rows.filter(r => r.cat === 'brennstoff' && (r.s > 0 || r.b > 0))} colorClass="bg-stone-700 dark:bg-stone-400" forceOpen={view === 'details'}/>
         <Co2Card result={result} forceOpen={view === 'details'}/>
+        <p className="text-[11px] leading-snug text-zinc-400 sm:col-span-2 lg:col-span-1 dark:text-zinc-500">Vielfache vom <strong className="font-semibold text-zinc-500 dark:text-zinc-400">Gesamtbedarf Deutschlands</strong>, nicht nur vom heutigen Stromverbrauch.</p>
       </div>
     </div>
   </section>;
