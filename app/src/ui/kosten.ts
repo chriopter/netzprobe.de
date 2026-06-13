@@ -57,6 +57,7 @@ export type KostenResult = {
   // Einmalige Bauinvestition (Neubauwert ohne Annuisierung) und die jährlichen
   // laufenden Kosten (O&M, Brennstoff, Handel) — für die Aufbau-pro-Jahr-Sicht.
   investEur: number;
+  investParts: { erzeugung: number; speicher: number; netz: number };
   operatingEur: number;
   breakdown: { capex: number; om: number; fuel: number; h2Import: number; importNet: number; netz: number };
   importCost: number;
@@ -168,6 +169,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   // Anlagenlebensdauer verteilt) ist das die Stock-Größe „was kostet es, die
   // Flotte einmal hinzustellen"; daraus die Aufbau-pro-Jahr-Annuität (UI).
   let investEur = 0;
+  let investErzeugung = 0, investSpeicher = 0;
 
   for (const [key, label, gwField, hf] of GEN) {
     const k = genPkg[key]?.kosten;
@@ -175,7 +177,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
     const capexLump = (k.capexEurPerKW ?? 0) * gw * 1e6;
-    investEur += capexLump;
+    investEur += capexLump; investErzeugung += capexLump;
     const capex = capexLump * crf(wacc, k.lifetimeYears);
     const om = (k.omFixEurPerKWa ?? 0) * gw * 1e6 + (k.omVarEurPerMWh ?? 0) * genMWh;
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
@@ -200,7 +202,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
       ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
       : (k.capexEurPerKW ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
     const capexLump = powerCapexEur + (k.capexEurPerKWh ?? 0) * energy * 1e6;
-    investEur += capexLump;
+    investEur += capexLump; investSpeicher += capexLump;
     const capex = capexLump * crf(wacc, k.lifetimeYears);
     // Variable O&M auf die tatsächlich entladene Energie (aus der Stundenreihe,
     // jahres-skaliert) — die Speicher-Pakete dokumentieren omVarEurPerMWh.
@@ -264,6 +266,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     // Einmalige Bauinvestition (Neubauwert ohne Annuisierung) für die
     // Aufbau-pro-Jahr-Sicht; laufende Kosten = total minus annuisierte CAPEX.
     investEur,
+    investParts: { erzeugung: investErzeugung, speicher: investSpeicher, netz: netzLumpEur },
     operatingEur: omSum + fuelSum + h2Import + importNet,
     breakdown: { capex: capexSum, om: omSum, fuel: fuelSum, h2Import, importNet, netz },
     importCost,
