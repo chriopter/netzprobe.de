@@ -13,6 +13,8 @@ mod preset_100ee_lokal;
 mod preset_100ee_import;
 #[path = "../../erzeugung/100kern-lastfolgend/model.rs"]
 mod preset_100kern;
+#[path = "../../erzeugung/100h2-import/model.rs"]
+mod preset_100h2_import;
 
 pub use api::ApiView;
 pub use error::ModelError;
@@ -609,6 +611,7 @@ impl StaticModel {
             "100ee-noimport" => self.preset_100ee_noimport(demand_twh, scenario),
             "100ee-import" => self.preset_100ee_import(demand_twh, scenario),
             "100kern-lastfolgend" => preset_100kern::apply(self, demand_twh),
+            "100h2-import" => self.preset_100h2_import(demand_twh, scenario),
             "2025-skaliert" => self.preset_2025_scaled(demand_twh),
             _ => Err(ModelError::Unsupported {
                 message: format!("Unbekanntes supplyPreset: {preset}"),
@@ -780,6 +783,69 @@ impl StaticModel {
                 "stromGW": strom_import_gw_cap(eff_demand_twh),
                 "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
                 "h2TWh": h2_import_total,
+            }),
+            json!({
+                "stromGW": comp_number("historisch-2025", "exportStromGW")?,
+            }),
+        ))
+    }
+
+    // Preset "100% H2-Import": keine heimische Erzeugung, die gesamte Stromlast
+    // wird aus importiertem H₂ rückverstromt; der Sektor-Pool zieht direkt aus
+    // demselben Import. Sizing-Konstanten im Modul model/erzeugung/100h2-import.
+    fn preset_100h2_import(
+        &self,
+        demand_twh: f64,
+        scenario: &Value,
+    ) -> Result<(Value, Value, Value, Value), ModelError> {
+        use preset_100h2_import::{
+            cavern_energy_gwh, discharge_power_gw, import_h2_lhv_twh,
+            STROM_IMPORT_EMISSION_G_PER_KWH,
+        };
+        let discharge_eff = self.storage["h2"].discharge_efficiency.max(0.1);
+        // Sektor-H₂ (LHV) deckt der Import direkt; die zu deckende Stromlast ist
+        // Demand minus Sektor-Elektrolyse-Strom (diese Sektoren ziehen H₂ statt Strom).
+        let lhv = self.sector_h2_demand_twh(scenario)?;
+        let sector_lhv_total = lhv.stahl + lhv.chemie + lhv.schiff + lhv.flug;
+        let strom = self.sector_h2_strom_twh(scenario)?;
+        let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
+        let stromlast_twh = (demand_twh - sector_strom_total).max(0.0);
+        // Spitzen-Stromlast nach (konstanter) Pool-Reduktion → Rückverstromungs-Leistung.
+        let pool_reduction_gw =
+            self.h2_pool_strom_reduction_gw(self.total_sector_h2_demand_gw(scenario)?, scenario)?;
+        let frame = self.hours_for(scenario)?;
+        let mut peak_gw = 0.0_f64;
+        for row in frame.iter() {
+            peak_gw = peak_gw.max(self.demand_gw(row, scenario, pool_reduction_gw)?);
+        }
+        let import_lhv = import_h2_lhv_twh(stromlast_twh, sector_lhv_total, discharge_eff);
+        Ok((
+            json!({
+                "pvInstalledGW": 0.0,
+                "windOnInstalledGW": 0.0,
+                "windOffInstalledGW": 0.0,
+                "kernkraftInstalledGW": 0.0,
+                "biomasseInstalledGW": 0.0,
+                "laufwasserInstalledGW": 0.0,
+                "gasInstalledGW": 0.0,
+                "kohleInstalledGW": 0.0,
+                "pvCapacityFactorMultiplier": 1.0,
+                "windOnCapacityFactorMultiplier": 1.0,
+                "windOffCapacityFactorMultiplier": 1.0,
+            }),
+            json!({
+                "batteriePowerGW": 0.0,
+                "batterieEnergyGWh": 0.0,
+                "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
+                "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
+                "h2ChargePowerGW": 0.0,
+                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", discharge_power_gw(peak_gw))?,
+                "h2EnergyGWh": snap_storage("h2", "energyGWh", cavern_energy_gwh(stromlast_twh, discharge_eff))?,
+            }),
+            json!({
+                "stromGW": 0.0,
+                "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
+                "h2TWh": import_lhv,
             }),
             json!({
                 "stromGW": comp_number("historisch-2025", "exportStromGW")?,

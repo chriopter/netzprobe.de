@@ -612,7 +612,7 @@ function ErzeugungSection({
     .filter((p): p is NonNullable<typeof p> => !!p);
   const supplyDropdownGroups: ReadonlyArray<PresetOptionGroup<SupplyPillId>> = [
     { title: 'Fix', presets: pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'historical-2017' || p.id === 'custom') },
-    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '100ee-import' || p.id === '100kern-lastfolgend' || p.id === '2025-skaliert') },
+    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '100ee-import' || p.id === '100kern-lastfolgend' || p.id === '100h2-import' || p.id === '2025-skaliert') },
   ];
 
   const generationTotalGW = scenario.generation.pvInstalledGW

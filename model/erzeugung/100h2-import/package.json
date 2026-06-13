@@ -1,0 +1,53 @@
+{
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "100h2-import",
+  "domain": "erzeugung",
+  "kind": "composition",
+  "method": {
+    "title": "100% H₂-Import",
+    "short": "Gedanken-Anker: keine heimische Erzeugung — die gesamte Stromlast wird aus importiertem Wasserstoff rückverstromt; die stofflichen H₂-Sektoren ziehen direkt aus demselben Import.",
+    "source": "Konstruiertes Stresstest-Preset analog 100ee-noimport / 100kern-lastfolgend. Kein veröffentlichter 100%-H₂-Import-DE-Studienpfad existiert; Importpreis 210 EUR/MWh frei Grenze (H2-LHV, heutiger Liefer-Mittelwert aus H2Global/BNEF/HYDRIX), Wirkungsgrade aus dem H₂-Speicherpaket (Rückverstromung 0,55), Importmengen-Kalibrierung per Engine-Sweep (kein Lastabwurf bei exaktem Jahresbedarf + 0,20-Kaverne).",
+    "sourceUrls": [
+      "https://www.h2global.de/",
+      "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
+      "https://www.iea.org/reports/the-future-of-hydrogen"
+    ],
+    "period": "laufend",
+    "resolution": "stündlich",
+    "unit": "GW, GWh, TWh",
+    "description": [
+      "**Komposition:** ALLE heimischen Erzeuger (`PV`, `Wind on/off`, `Kernkraft`, `Biomasse`, `Laufwasser`, `Gas`, `Kohle`) auf 0, keine Batterie. Der importierte Wasserstoff (flacher Jahreszufluss `h2TWh / 8760`) füllt die Kaverne; die Rückverstromungs-Turbinen (`dischargeEfficiency 0,55`) decken daraus die Stromlast. Der stoffliche H₂-Pool (Stahl/Chemie/Schiff/Flug) wird direkt aus demselben Import gedeckt. Pumpspeicher bleibt 2025-Bestand (9,4 GW / 45 GWh).",
+      "**Auslegung (Konstanten im Preset-Modul):** Rückverstromung = Spitzen-Stromlast × 1,05; Import (LHV) = Sektor-H₂ direkt + Stromlast / 0,55, × 1,02 Marge; Kaverne = 0,20 × Jahres-Stromlast, in H₂-LHV. Bei Voll-e100 (Demand `1.808 TWh`, Stromlast nach Pool `~1.068 TWh`, Peak `218 GW`) ergibt das `230 GW` Rückverstromung, `390 TWh` LHV-Kaverne und `~2.450 TWh` H₂-Import pro Jahr — bei `0` Lastabwurf.",
+      "**Anwendungsfall:** zeigt die Importabhängigkeits-Grenze. Die Kosten liegen bei `~561 Mrd EUR/a` (`~310 EUR/MWh`), davon `~515 Mrd` (92 %) reiner H₂-Import (Preis 210 EUR/MWh, heutiger Liefer-Mittelwert) — die einmalige heimische Bauinvestition ist mit `~0,6 Bio EUR` winzig (nur Rückverstromung + Kaverne + Netz). Die Kosten kippen fast 1:1 mit dem Importpreis (bei 150 EUR/MWh `~414`, bei 250 `~660 Mrd/a`).",
+      "**Engine-Vereinfachung:** der Import läuft als KONSTANTER Zufluss übers Jahr — reale Importe ließen sich saisonal einplanen (mehr im Winter). Hier puffert die Kaverne den Sommer-Winter-Versatz; deshalb die großzügige `390-TWh`-LHV-Kaverne (innerhalb des Slider-Maximums 1.500 TWh, aber nahe dem deutschen Kavernen-Oberanker ~500 TWh). Mit kleinerer Kaverne entstünde Sommer-Überlauf (bezahlter, ungenutzter H₂) und Winter-Lastabwurf."
+    ],
+    "overview": [
+      {
+        "label": "Erzeugungs-Mix",
+        "value": "**Kein heimischer Park.** Alle Erzeuger auf 0; die Last kommt zu 100 % aus rückverstromtem Importwasserstoff."
+      },
+      {
+        "label": "Import",
+        "value": "**~2.450 TWh H₂/Jahr** (LHV, frei Grenze) bei Voll-e100 — fast die heutige globale H₂-Jahresproduktion (~3.150 TWh). Grüner H₂ angenommen (25 g/kWh inkl. Transport)."
+      },
+      {
+        "label": "Rückverstromung",
+        "value": "**230 GW** H₂-Turbinen (dischargeEfficiency 0,55), deckt die Spitzen-Stromlast direkt. Der 45-%-Rückverstromungsverlust ist der Grund, warum ~2,4× so viel H₂-Energie importiert wie Strom geliefert wird."
+      },
+      {
+        "label": "Speicher",
+        "value": "**Kaverne 390 TWh LHV** als Saisonpuffer (flacher Import vs. saisonale Last). **Batterie/Elektrolyse: 0** — es wird importiert, nicht heimisch elektrolysiert. Pumpspeicher 2025-Bestand."
+      }
+    ],
+    "caveats": [
+      "Physisch/geopolitisch unrealistisch: ~2.450 TWh H₂-Import/Jahr entspricht ~78 % der heutigen globalen H₂-Produktion und voller Importabhängigkeit für die gesamte Stromversorgung — als Gedankenexperiment zu lesen, nicht als Pfad.",
+      "Kosten fast vollständig (~92 %) im Importpreis (210 EUR/MWh, heutiger Liefer-Mittelwert): extrem sensitiv, ohne Lernkurve gerechnet. Rückbau-/Entsorgungs- und Transportinfrastruktur (Schiffe, Pipelines, Ammoniak-Cracker) sind nicht separat bepreist.",
+      "Flacher Jahres-Importzufluss ist eine Engine-Vereinfachung; saisonale Importplanung würde die nötige Kaverne (390 TWh LHV ≈ deutscher Kavernen-Oberanker) deutlich senken.",
+      "CO₂ = 0 unterstellt grünen Import; blauer/grauer H₂ würde Emissionen hinzufügen. Strom-Import-Cap auf 0 — keine Netz-Stromhilfe, alles über H₂."
+    ],
+    "scripts": [
+      "erzeugung/100h2-import/model.rs"
+    ]
+  },
+  "parameters": {}
+}
