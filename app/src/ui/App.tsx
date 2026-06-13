@@ -29,7 +29,7 @@ import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { pct, twh } from './format';
 import { supplyPillLabels } from './supplyPresets';
-import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type BuildoutYear, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
+import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
@@ -40,7 +40,7 @@ const defaultCustomStart = '2025-01-01';
 const defaultCustomEnd = '2025-12-31';
 const defaultChartMode: ChartMode = 'sunburst';
 const defaultPeriodPreset: PeriodPreset = 'year';
-const defaultBuildoutYear: BuildoutYear = '2045';
+const defaultPeriodYears: CostPeriod = '30';
 const defaultOpenSections = '';
 const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false };
 const themeStorageKey = 'theme';
@@ -126,9 +126,9 @@ function periodPresetFromUrl(): PeriodPreset {
   return value === '21d' || value === '90d' || value === 'custom' || value === 'year' ? value : defaultPeriodPreset;
 }
 
-function buildoutYearFromUrl(): BuildoutYear {
-  const value = queryParams().get('aufbau');
-  return value === '2035' || value === '2040' || value === '2045' || value === '2050' || value === '2060' ? value : defaultBuildoutYear;
+function periodYearsFromUrl(): CostPeriod {
+  const value = queryParams().get('jahre');
+  return value === '20' || value === '30' || value === '40' ? value : defaultPeriodYears;
 }
 
 function dateFromUrl(name: string, fallback: string) {
@@ -707,7 +707,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
   const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
-  const [buildoutYear, setBuildoutYear] = useState<BuildoutYear>(buildoutYearFromUrl);
+  const [periodYears, setPeriodYears] = useState<CostPeriod>(periodYearsFromUrl);
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   // Build-Time pre-computed default als sofortiger Erst-Render. Wird beim ersten
   // Worker-Ergebnis (Slider-Drag) durch live-Rechnung ersetzt.
@@ -797,8 +797,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (mixContent === defaultMixContent) url.searchParams.delete('ansicht');
     else url.searchParams.set('ansicht', mixContent);
 
-    if (buildoutYear === defaultBuildoutYear) url.searchParams.delete('aufbau');
-    else url.searchParams.set('aufbau', buildoutYear);
+    if (periodYears === defaultPeriodYears) url.searchParams.delete('jahre');
+    else url.searchParams.set('jahre', periodYears);
 
     url.searchParams.delete('view');
     if (mainViewFromPath(appPath(url))) url.pathname = pathForMainView(mainView);
@@ -825,7 +825,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
     setShareUrl(url.toString());
-  }, [scenario, periodPreset, customStart, customEnd, buildoutYear, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenario, periodPreset, customStart, customEnd, periodYears, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1011,7 +1011,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             result={result}
             resolvedScenario={resolvedScenario}
             electrifiedPct={electrifiedFraction(resolvedScenario, data)}
-            buildoutYear={buildoutYear}
+            periodYears={periodYears}
             chartMode={chartMode}
             setChartMode={setChartMode}
             mixContent={mixContent}
@@ -1030,8 +1030,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             theme={theme}
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
-          <RessourcenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} data={data}/>
-          <KostenSection scenario={resolvedScenario} result={result} buildoutYear={buildoutYear} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
+          <RessourcenSection scenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
+          <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
@@ -1048,7 +1048,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
         periodPreset={periodPreset}
         customStart={customStart}
         customEnd={customEnd}
-        buildoutYear={buildoutYear}
+        periodYears={periodYears}
         collapsed={sidebarCollapsed}
         openSectors={openSectors}
         expandedRow={expandedRow}
@@ -1063,7 +1063,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
         onCollapsedChange={setSidebarCollapsed}
         onOpenSectorsChange={setOpenSectors}
         onExpandedRowChange={setExpandedRow}
-        onBuildoutYear={setBuildoutYear}
+        onPeriodYears={setPeriodYears}
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}

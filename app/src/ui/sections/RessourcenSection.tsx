@@ -210,8 +210,8 @@ function RohstoffTable({ rows }: { rows: MaterialRow[] }) {
     </dl>;
 }
 
-export default function RessourcenSection({ scenario, result, buildoutYear, data }: { scenario: Scenario; result: SimulationResult; buildoutYear: string; data: DataSet | null }) {
-  const buildoutYears = Math.max(1, Number(buildoutYear) - 2025);
+export default function RessourcenSection({ scenario, result, periodYears, data }: { scenario: Scenario; result: SimulationResult; periodYears: string; data: DataSet | null }) {
+  const buildoutYears = Math.max(1, Number(periodYears));
   // Methodik-Text hinter dem Fragezeichen neben der Überschrift.
   const [helpOpen, setHelpOpen] = useState(false);
   // Linke Spalte: Periodensystem (Grafisch) oder Rohstoff-Tabelle (Details).

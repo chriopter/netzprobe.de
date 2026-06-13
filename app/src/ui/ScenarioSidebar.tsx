@@ -27,7 +27,7 @@ import type { DataSet, ReferenceScale } from '../types/data';
 import type { Scenario } from '../types/scenario';
 
 export type PeriodPreset = '21d' | '90d' | 'year' | 'custom';
-export type BuildoutYear = '2035' | '2040' | '2045' | '2050' | '2060';
+export type CostPeriod = '20' | '30' | '40';
 type LoadPresetState = Pick<Scenario, 'demand' | 'loadYear'>;
 export type LoadPillId = 'nur-2025' | 'nur-2017' | 'e100' | 'custom';
 
@@ -85,7 +85,7 @@ type ScenarioSidebarProps = {
   periodPreset: PeriodPreset;
   customStart: string;
   customEnd: string;
-  buildoutYear: BuildoutYear;
+  periodYears: CostPeriod;
   collapsed: boolean;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
@@ -93,7 +93,7 @@ type ScenarioSidebarProps = {
   onCollapsedChange: (collapsed: boolean) => void;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
-  onBuildoutYear: (year: BuildoutYear) => void;
+  onPeriodYears: (years: CostPeriod) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -211,12 +211,12 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   periodPreset,
   customStart,
   customEnd,
-  buildoutYear,
+  periodYears,
   collapsed,
   openSectors,
   expandedRow,
   actionBar = null,
-  onBuildoutYear,
+  onPeriodYears,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -318,8 +318,8 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           customStart={customStart}
           customEnd={customEnd}
           loadYear={scenario.loadYear}
-          buildoutYear={buildoutYear}
-          onBuildoutYear={onBuildoutYear}
+          periodYears={periodYears}
+          onPeriodYears={onPeriodYears}
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
@@ -1358,8 +1358,8 @@ function PeriodControl({
   customStart,
   customEnd,
   loadYear,
-  buildoutYear,
-  onBuildoutYear,
+  periodYears,
+  onPeriodYears,
   onPreset,
   onStart,
   onEnd,
@@ -1371,8 +1371,8 @@ function PeriodControl({
   customStart: string;
   customEnd: string;
   loadYear: 2025 | 2017;
-  buildoutYear: BuildoutYear;
-  onBuildoutYear: (year: BuildoutYear) => void;
+  periodYears: CostPeriod;
+  onPeriodYears: (years: CostPeriod) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -1408,21 +1408,19 @@ function PeriodControl({
         </div>}
       </div>
       <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Zeitraum Systemaufbau</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Kostenzeitraum</span>
         <div className="flex flex-wrap gap-1.5">
-          <PresetPillRow presets={buildoutYearPills} activeId={buildoutYear} onSelect={onBuildoutYear}/>
+          <PresetPillRow presets={costPeriodPills} activeId={periodYears} onSelect={onPeriodYears}/>
         </div>
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Aufbau bis {buildoutYear} — annualisiert Material- und Investitionsbedarf (Ressourcen, Kosten)</span>
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Gesamtkosten = Jahresmiete × {periodYears} Jahre (WACC steckt in der Jahresmiete); steuert auch die Material-Erneuerung der Ressourcen</span>
       </div>
   </SidebarCard>;
 }
 
-const buildoutYearPills: ReadonlyArray<PresetOption<BuildoutYear>> = [
-  { id: '2035', label: '2035', description: 'Systemaufbau bis 2035' },
-  { id: '2040', label: '2040', description: 'Systemaufbau bis 2040' },
-  { id: '2045', label: '2045', description: 'Systemaufbau bis 2045' },
-  { id: '2050', label: '2050', description: 'Systemaufbau bis 2050' },
-  { id: '2060', label: '2060', description: 'Systemaufbau bis 2060' },
+const costPeriodPills: ReadonlyArray<PresetOption<CostPeriod>> = [
+  { id: '20', label: '20 J', description: 'Gesamtkosten über 20 Jahre' },
+  { id: '30', label: '30 J', description: 'Gesamtkosten über 30 Jahre' },
+  { id: '40', label: '40 J', description: 'Gesamtkosten über 40 Jahre' },
 ];
 
 const periodPills: ReadonlyArray<{ id: PeriodPreset; label: string; description: string }> = [

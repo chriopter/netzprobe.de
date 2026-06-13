@@ -94,7 +94,7 @@ export type MixSectionProps = {
   result: SimulationResult;
   resolvedScenario: Scenario;
   electrifiedPct: number | null;
-  buildoutYear: string;
+  periodYears: string;
   chartMode: ChartMode;
   setChartMode: (mode: ChartMode) => void;
   mixContent: MixContent;
@@ -118,7 +118,7 @@ export default function MixSection(props: MixSectionProps) {
     result,
     resolvedScenario,
     electrifiedPct,
-    buildoutYear,
+    periodYears,
     chartMode,
     setChartMode,
     mixContent,
@@ -145,7 +145,7 @@ export default function MixSection(props: MixSectionProps) {
   // Kennzahlen-Kacheln hinter einem Sub-Satz verstecken (Disclosure wie überall).
   const [kpisOpen, setKpisOpen] = useState(false);
   const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
-  const kostenHorizon = Math.max(1, Number(buildoutYear) - 2025);
+  const kostenHorizon = Math.max(1, Number(periodYears));
   const kostenGesamt = kosten.total * kostenHorizon;
   const kostenStr = Math.abs(kostenGesamt) >= 1e12
     ? `${(kostenGesamt / 1e12).toLocaleString('de-DE', { maximumFractionDigits: kostenGesamt / 1e12 < 10 ? 1 : 0 })} Bio €`
@@ -189,7 +189,7 @@ export default function MixSection(props: MixSectionProps) {
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
-        <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> bis {buildoutYear}.
+        <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedPct != null ? `${fmt0.format(electrifiedPct * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> über {periodYears} Jahre.
       </p>
       <button
         type="button"
