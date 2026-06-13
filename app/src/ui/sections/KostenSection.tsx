@@ -31,6 +31,8 @@ const fmtBig = (x: number) => Math.abs(x) >= 999.5e9
   ? `${(x / 1e12).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e12 < 10 ? 2 : 1 })} Bio €`
   : `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
 const fmtMrd = (x: number) => `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
+// Einwohner Deutschland (~83,5 Mio., 2025) für die volkswirtschaftliche Pro-Kopf-Last.
+const BUNDESBUERGER = 83_500_000;
 
 // Unterposten eines Bon-Postens: die Beiträge der einzelnen Technologien zu
 // dieser Kostenart (bzw. Import/Export beim Saldo). Posten unter 50 Mio €/a
@@ -265,6 +267,8 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
   // dem Kostenzeitraum (Jahresmiete × Jahre = Vollkosten inkl. Ersatz/Finanz.).
   const [scope, setScope] = useState<'jahr' | 'gesamt'>('gesamt');
   const mult = scope === 'gesamt' ? horizon : 1;
+  // je-Einheit-Anzeige: Default kWh, Inline-Umschalter auf MWh.
+  const [unit, setUnit] = useState<'kwh' | 'mwh'>('kwh');
   // Mode-bewusster Geldformatierer: skaliert den Betrag und schaltet ab 1 Bio €
   // automatisch von »Mrd« auf »Bio« um. Intensitäten (je MWh/kWh, €/MWh
   // Gestehung) und die einmalige Bauinvestition laufen NICHT über G.
@@ -469,24 +473,78 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
         <Leader/>
         <span className="shrink-0 tabular-nums">{G(k.total)}</span>
       </div>
-      {/* je-MWh / je-kWh aufklappbar: dieselbe Kostenarten-Zerlegung wie der
-          Bon, nur durch die versorgte Nachfrage geteilt — was davon ist
-          Kraftwerk, was Netz, was Brennstoff. */}
-      {([
-        ['mwh', 'je MWh', (v: number) => `${v.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`, (v: number) => `${n1(v)} €`],
-        ['kwh', 'je kWh', (v: number) => `${(v / 10).toLocaleString('de-DE', { maximumFractionDigits: 1 })} ct`, (v: number) => `${(v / 10).toLocaleString('de-DE', { maximumFractionDigits: 2 })} ct`],
-      ] as Array<[string, string, (v: number) => string, (v: number) => string]>).map(([id, label, fmtSum, fmtPart]) =>
-        k.perMWh > 0 ? <details key={id} className="group/unit">
+      {/* Volkswirtschaftliche Pro-Kopf-Last, folgt dem Schalter (gesamt oder pro Jahr). */}
+      <div className="mt-1.5 flex items-baseline text-base font-bold text-zinc-800 dark:text-zinc-100">
+        <span className="min-w-0 truncate">pro Bundesbürger</span>
+        <Leader/>
+        <span className="shrink-0 tabular-nums">{n0(k.total * mult / BUNDESBUERGER)} €</span>
+      </div>
+      {/* Gegensicht-Aggregat (aufklappbar): die jeweils ANDERE Skala mit Kostenart-Zerlegung. */}
+      <div className="mt-3 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700"/>
+      <details className="group/agg">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <div className="flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="flex min-w-0 items-baseline gap-1.5">
+              <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/agg:hidden">▸</span><span className="hidden group-open/agg:inline">▾</span></span>
+              <span className="truncate">{scope === 'gesamt' ? 'Ø pro Jahr (levelized)' : `Gesamt über ${horizon} Jahre`}</span>
+            </span>
+            <Leader faint/>
+            <span className="shrink-0 tabular-nums">{scope === 'gesamt' ? fmtMrd(k.total) : fmtBig(gesamt)}</span>
+          </div>
+        </summary>
+        <div className="mb-1 mt-1.5 space-y-1 pl-5 text-xs leading-normal">
+          {PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7).map(p =>
+            <div key={p.key} className="flex items-baseline">
+              <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{p.label}</span>
+              <Leader faint/>
+              <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{fmtBig(k.breakdown[p.key] * (scope === 'gesamt' ? 1 : horizon))}</span>
+            </div>)}
+        </div>
+      </details>
+      {/* Einmalige Bauinvestition (aufklappbar): Neubauwert, zeitraum-unabhängig. */}
+      <details className="group/inv mt-1.5">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <div className="flex items-baseline text-sm text-zinc-400 dark:text-zinc-500">
+            <span className="flex min-w-0 items-baseline gap-1.5">
+              <span aria-hidden className="w-3.5 shrink-0"><span className="group-open/inv:hidden">▸</span><span className="hidden group-open/inv:inline">▾</span></span>
+              <span className="truncate">einmalige Bauinvestition (Neubauwert, einmalig)</span>
+            </span>
+            <Leader faint/>
+            <span className="shrink-0 tabular-nums">{fmtBig(k.investEur)}</span>
+          </div>
+        </summary>
+        <div className="mb-1 mt-1.5 space-y-1 pl-5 text-xs leading-normal">
+          {([['Erzeugung', k.investParts.erzeugung], ['Speicher', k.investParts.speicher], ['Netz', k.investParts.netz]] as const).filter(([, v]) => Math.abs(v) > 5e7).map(([label, v]) =>
+            <div key={label} className="flex items-baseline">
+              <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{label}</span>
+              <Leader faint/>
+              <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{fmtBig(v)}</span>
+            </div>)}
+          <p className="pt-0.5 text-zinc-400 dark:text-zinc-500">Neubauwert der Zielflotte ohne Annuisierung — skaliert nicht mit dem Zeitraum.</p>
+        </div>
+      </details>
+      {/* je-Einheit (aufklappbar): EINE Zeile, Default kWh, Inline-Umschalter MWh/kWh. */}
+      {(() => {
+        const unitSum = unit === 'mwh' ? `${k.perMWh.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €` : `${(k.perMWh / 10).toLocaleString('de-DE', { maximumFractionDigits: 1 })} ct`;
+        const unitPart = (v: number) => unit === 'mwh' ? `${n1(v)} €` : `${(v / 10).toLocaleString('de-DE', { maximumFractionDigits: 2 })} ct`;
+        const toggle = <span className="ml-1 inline-flex border border-zinc-300 text-[9px] uppercase leading-none tracking-[0.1em] dark:border-zinc-600" role="group" aria-label="Einheit kWh oder MWh">
+          {([['kwh', 'kWh'], ['mwh', 'MWh']] as const).map(([u, lab]) => (
+            <button key={u} type="button" aria-pressed={unit === u}
+              onClick={e => { e.preventDefault(); e.stopPropagation(); setUnit(u); }}
+              className={cx('px-1.5 py-0.5 transition-colors', unit === u ? 'bg-zinc-700 text-zinc-50 dark:bg-zinc-200 dark:text-zinc-900' : 'text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300')}
+            >{lab}</button>
+          ))}
+        </span>;
+        return k.perMWh > 0 ? <details className="group/unit mt-1.5">
           <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
               <span className="flex min-w-0 items-baseline gap-1.5">
-                <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500">
-                  <span className="group-open/unit:hidden">▸</span><span className="hidden group-open/unit:inline">▾</span>
-                </span>
-                <span className="truncate">{label}</span>
+                <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/unit:hidden">▸</span><span className="hidden group-open/unit:inline">▾</span></span>
+                <span className="truncate">je {unit === 'mwh' ? 'MWh' : 'kWh'}</span>
+                {toggle}
               </span>
               <Leader faint/>
-              <span className="shrink-0 tabular-nums">{fmtSum(k.perMWh)}</span>
+              <span className="shrink-0 tabular-nums">{unitSum}</span>
             </div>
           </summary>
           <div className="mb-1 mt-1.5 space-y-1 pl-5 text-xs leading-normal">
@@ -494,46 +552,29 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
               <div key={p.key} className="flex items-baseline">
                 <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{p.label}</span>
                 <Leader faint/>
-                <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{fmtPart(k.breakdown[p.key] / (k.total / k.perMWh))}</span>
+                <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{unitPart(k.breakdown[p.key] / (k.total / k.perMWh))}</span>
               </div>)}
             <p className="pt-0.5 text-zinc-400 dark:text-zinc-500">Nenner: versorgte Nachfrage {n0(k.total / k.perMWh / 1e6)} TWh/a (Stromlast + H₂-Pool-Äquivalent).</p>
           </div>
-        </details> : <div key={id} className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
-          <span className="min-w-0 truncate">{label}</span>
+        </details> : <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="flex min-w-0 items-baseline gap-1.5"><span className="truncate">je {unit === 'mwh' ? 'MWh' : 'kWh'}</span>{toggle}</span>
           <Leader faint/>
-          <span className="shrink-0 tabular-nums">{fmtSum(k.perMWh)}</span>
-        </div>)}
-      {/* Unter der Summe: die jeweils ANDERE Aggregat-Sicht (Schalter oben
-          bestimmt die Haupt-Sicht), die einmalige Bauinvestition (zeitraum-
-          unabhängig — skaliert NICHT mit) und die Herleitung. */}
-      <div className="mt-3 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700"/>
-      <div className="flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
-        <span className="min-w-0 truncate">{scope === 'gesamt' ? 'Ø pro Jahr (levelized)' : `Gesamt über ${horizon} Jahre`}</span>
-        <Leader faint/>
-        <span className="shrink-0 tabular-nums">{scope === 'gesamt' ? fmtMrd(k.total) : fmtBig(gesamt)}</span>
-      </div>
-      <div className="mt-1.5 flex items-baseline text-sm text-zinc-400 dark:text-zinc-500">
-        <span className="min-w-0 truncate">einmalige Bauinvestition (Neubauwert, einmalig)</span>
-        <Leader faint/>
-        <span className="shrink-0 tabular-nums">{fmtBig(k.investEur)}</span>
-      </div>
-      <details className="group/gk mt-1.5">
+          <span className="shrink-0 tabular-nums">{unitSum}</span>
+        </div>;
+      })()}
+      <details className="group/gk mt-3">
         <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
           <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.15em] text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300">
             <span aria-hidden className="w-3 shrink-0"><span className="group-open/gk:hidden">▸</span><span className="hidden group-open/gk:inline">▾</span></span>
             Wie wird gerechnet?
           </span>
         </summary>
-        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert, realer WACC 5 %, plus Betrieb); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je MWh/kWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
+        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert, realer WACC 5 %, plus Betrieb); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je kWh/MWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
+        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500"><strong>CO₂ unbepreist (Konvention):</strong> {n0(co2Mt)} Mt/a — bei 80 €/t ETS wären das +{n1(co2Mt * 80 / 1000)} Mrd €/a. CO₂ ist ein politisch gesetzter Transfer, kein Ressourcenaufwand des Systems, und daher bewusst nicht in der Summe.</p>
       </details>
-      {/* Kleingedrucktes (Befunde der Extrem-Szenario-Pruefung): unversorgte Last
-          und unbepreistes CO2 duerfen den Preis nicht stillschweigend druecken. */}
       {sheddingTWh > 1 && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
         ⚠ {n0(sheddingTWh)} TWh/a ({n1(sheddingPct)} % der Nachfrage) bleiben unversorgt — bepreist ist nur die gelieferte Energie; der Wert entgangener Last ist nicht bilanziert.
       </p>}
-      <p className="mt-3 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-        CO₂ unbepreist (Konvention): {n0(co2Mt)} Mt/a — bei 80 €/t ETS wären das +{n1(co2Mt * 80 / 1000)} Mrd €/a.
-      </p>
       <div className="mt-8 border-t-4 border-double border-zinc-300 dark:border-zinc-600"/>
       {(() => {
         const eur = (ct: number) => ct / 100 * hh.kwh / 12;
