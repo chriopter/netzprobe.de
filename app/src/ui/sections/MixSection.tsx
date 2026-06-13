@@ -221,7 +221,7 @@ export default function MixSection(props: MixSectionProps) {
     <div className="mb-2 mt-5 border-t border-zinc-200 dark:border-zinc-800"/>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
-        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-2 sm:left-3 sm:top-3">
+        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-1.5 sm:left-3 sm:top-3 sm:gap-2">
           <SegmentPill
             value={mixContent}
             options={[{ id: 'mix', label: 'Mix' }, { id: 'kombi', label: 'Mix + Speicher' }, { id: 'speicher', label: 'Speicher' }] as const}
@@ -243,7 +243,7 @@ export default function MixSection(props: MixSectionProps) {
           <p>Die <strong>Stromlast</strong> kann unter der Last-Summe der Sidebar liegen: Sektoren wie Stahl, Chemie, Schiff und Flug deckt das System über den H₂-Pool (Elektrolyse bzw. Import) — sie zählen zur Sektor-Nachfrage, tauchen aber nicht als Stromlast auf („via H₂-Pool" in der Last-Kachel). Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
           </HelpPanel>
         </div>}
-        <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1.5 sm:right-3 sm:top-3">
+        <div className="pointer-events-none absolute bottom-2 right-2 z-10 flex items-center gap-1.5 sm:bottom-auto sm:right-3 sm:top-3">
           <div className="pointer-events-auto">
             <button
               type="button"

@@ -1249,10 +1249,12 @@ function scrollToSection(id: MainViewId) {
 
 function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label }));
+  // Kurzlabels nur auf Mobile, damit die vier Tabs neben dem fixierten Theme-Knopf passen.
+  const shortLabel: Record<MainViewId, string> = { mix: 'Mix', flaeche: 'Fläche', ressourcen: 'Stoffe', kosten: 'Kosten' };
   const activeIndex = tabs.findIndex(tab => tab.id === active);
-  return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3">
+  return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 pr-12 sm:top-3 sm:pr-0">
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
-    <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid shrink-0 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[13px] font-medium leading-none shadow-sm dark:border-zinc-700 dark:bg-zinc-900" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+    <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid min-w-0 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[12px] font-medium leading-none shadow-sm sm:text-[13px] dark:border-zinc-700 dark:bg-zinc-900" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
       <span
         aria-hidden="true"
         className="absolute bottom-0.5 left-0.5 top-0.5 rounded-full bg-zinc-950 transition-transform duration-200 ease-out dark:bg-zinc-50"
@@ -1266,12 +1268,12 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
           aria-current={isActive ? 'page' : undefined}
           onClick={() => { onChange(tab.id); scrollToSection(tab.id); }}
           className={cx(
-            'relative z-10 rounded-full px-3 py-1.5 transition-colors duration-200',
+            'relative z-10 truncate rounded-full px-2.5 py-1.5 transition-colors duration-200 sm:px-3',
             isActive
               ? 'text-white dark:text-zinc-950'
               : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
           )}
-        >{tab.label}</button>;
+        ><span className="sm:hidden">{shortLabel[tab.id]}</span><span className="hidden sm:inline">{tab.label}</span></button>;
       })}
     </nav>
   </div>;
