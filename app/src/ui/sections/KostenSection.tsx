@@ -520,76 +520,104 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
             <span className="shrink-0 tabular-nums">≈ {n0(hh.endkundeEurPerMonth)} € / Monat</span>
           </div>
           <div className="mt-3 space-y-2.5">
-            <div className={row}>
-              <span className="min-w-0 truncate pl-5">Systemkosten</span>
-              <Leader faint/>
-              <span className="shrink-0 tabular-nums">{n0(eur(hh.abWerkCt))} €</span>
+              <details className="group/hh">
+                <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <div className={row}>
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/hh:hidden">▸</span><span className="hidden group-open/hh:inline">▾</span></span>
+                      <span className="truncate">Zusammensetzung Verbrauch</span>
+                    </span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums">{n0(hh.kwh)} kWh/a</span>
+                  </div>
+                </summary>
+                <div className="mb-1.5 mt-2 space-y-1 pl-5 text-[13px] leading-normal">
+                  <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Grundbedarf (heutiger Ø-Haushalt)</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.baseKwh)} kWh</span>
+                  </div>
+                  {hh.pkwKwh > 0 && <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">E-Auto ({n0(hh.kmPerYear)} km/a × {n1(hh.kwhPer100Km)} kWh/100 km)</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.pkwKwh)} kWh</span>
+                  </div>}
+                  {hh.heizKwh > 0 && <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Wärmepumpe ({n0(hh.heatKwhPerYear)} kWh Wärme ÷ JAZ {n1(hh.cop)})</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.heizKwh)} kWh</span>
+                  </div>}
+                </div>
+              </details>
+              <details className="group/kwh">
+                <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <div className={row}>
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/kwh:hidden">▸</span><span className="hidden group-open/kwh:inline">▾</span></span>
+                      <span className="truncate">Zusammensetzung kWh</span>
+                    </span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums">{n1(hh.endkundeCt)} ct/kWh</span>
+                  </div>
+                </summary>
+                <div className="mb-1.5 mt-2 space-y-1 pl-5 text-[13px] leading-normal">
+                  <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Systemkosten</p>
+                  <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Systemkosten ab Werk (dieses Szenario)</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.abWerkCt)} ct</span>
+                  </div>
+                  <p className="pt-2 text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Netzentgelte, Steuern &amp; Co</p>
+                  {hh.bridge.map(r => <div key={r.key} className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{r.label}</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(r.ct)} ct</span>
+                  </div>)}
+                  <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Mehrwertsteuer 19 % (auf alle Bestandteile)</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.mwstCt)} ct</span>
+                  </div>
+                  <div className="flex items-baseline border-t border-dashed border-zinc-200 pt-1.5 font-semibold dark:border-zinc-700">
+                    <span className="min-w-0 truncate text-zinc-500 dark:text-zinc-400">= Endkundenpreis (geschätzt)</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-700 dark:text-zinc-300">{n1(hh.endkundeCt)} ct</span>
+                  </div>
+                  <p className="pt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Nur die Systemkosten folgen den Slidern; alle übrigen Bestandteile konstant auf 2025-Niveau (BDEW). Geschätzter Endkundenpreis — folgt den Last-Reglern.</p>
+                  <a
+                    href={dataWikiUrl('preise')}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={event => event.stopPropagation()}
+                    className="inline-block text-[11px] uppercase tracking-wide text-zinc-400 underline decoration-dotted underline-offset-2 transition-colors hover:text-zinc-700 dark:text-zinc-300"
+                  >Im Wiki nachlesen →</a>
+                </div>
+              </details>
+              <details className="group/mon">
+                <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <div className={row}>
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/mon:hidden">▸</span><span className="hidden group-open/mon:inline">▾</span></span>
+                      <span className="truncate">Monatliche Kosten</span>
+                    </span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums">{n0(hh.endkundeEurPerMonth)} €</span>
+                  </div>
+                </summary>
+                <div className="mb-1.5 mt-2 space-y-1 pl-5 text-[13px] leading-normal">
+                  <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Systemkosten</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(eur(hh.abWerkCt))} €</span>
+                  </div>
+                  <div className="flex items-baseline">
+                    <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Netzentgelte, Steuern &amp; Co</span>
+                    <Leader faint/>
+                    <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(eur(restCt))} €</span>
+                  </div>
+                </div>
+              </details>
             </div>
-            <div className={row}>
-              <span className="min-w-0 truncate pl-5">Netzentgelte, Steuern & Co</span>
-              <Leader faint/>
-              <span className="shrink-0 tabular-nums">{n0(eur(restCt))} €</span>
-            </div>
-            <details className="group/hh">
-              <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                <div className={row}>
-                  <span className="flex min-w-0 items-baseline gap-1.5">
-                    <span aria-hidden className="w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500"><span className="group-open/hh:hidden">▸</span><span className="hidden group-open/hh:inline">▾</span></span>
-                    <span className="truncate">Zusammensetzung Verbrauch</span>
-                  </span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums">{n0(hh.kwh)} kWh/a</span>
-                </div>
-              </summary>
-              <div className="mb-1.5 mt-2 space-y-1 pl-5 text-[13px] leading-normal">
-                <p className="text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Verbrauch</p>
-                <div className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Grundbedarf (heutiger Ø-Haushalt)</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.baseKwh)} kWh</span>
-                </div>
-                {hh.pkwKwh > 0 && <div className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">E-Auto ({n0(hh.kmPerYear)} km/a × {n1(hh.kwhPer100Km)} kWh/100 km)</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.pkwKwh)} kWh</span>
-                </div>}
-                {hh.heizKwh > 0 && <div className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Wärmepumpe ({n0(hh.heatKwhPerYear)} kWh Wärme ÷ JAZ {n1(hh.cop)})</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n0(hh.heizKwh)} kWh</span>
-                </div>}
-                <p className="pt-2 text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Strompreis je kWh</p>
-                <div className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Systemkosten ab Werk (dieses Szenario)</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.abWerkCt)} ct</span>
-                </div>
-                {hh.bridge.map(r => <div key={r.key} className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">{r.label}</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(r.ct)} ct</span>
-                </div>)}
-                <div className="flex items-baseline">
-                  <span className="min-w-0 truncate text-zinc-400 dark:text-zinc-500">Mehrwertsteuer 19 % (auf alle Bestandteile)</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">{n1(hh.mwstCt)} ct</span>
-                </div>
-                <div className="flex items-baseline font-semibold">
-                  <span className="min-w-0 truncate text-zinc-500 dark:text-zinc-400">= Endkundenpreis (geschätzt)</span>
-                  <Leader faint/>
-                  <span className="shrink-0 tabular-nums text-zinc-700 dark:text-zinc-300">{n1(hh.endkundeCt)} ct</span>
-                </div>
-                <p className="pt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Nur die Systemkosten folgen den Slidern; alle übrigen Bestandteile konstant auf 2025-Niveau (BDEW). Geschätzter Endkundenpreis — folgt den Last-Reglern.</p>
-                <a
-                  href={dataWikiUrl('preise')}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={event => event.stopPropagation()}
-                  className="inline-block text-[11px] uppercase tracking-wide text-zinc-400 underline decoration-dotted underline-offset-2 transition-colors hover:text-zinc-700 dark:text-zinc-300"
-                >Im Wiki nachlesen →</a>
-              </div>
-            </details>
-          </div>
         </div>;
       })()}
       <div className="mt-8 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
