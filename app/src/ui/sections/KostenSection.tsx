@@ -25,7 +25,9 @@ const PARTS: Array<{ key: 'capex' | 'om' | 'fuel' | 'h2Import' | 'importNet' | '
 ];
 
 // Gesamtbeträge über den Aufbauzeitraum: groß (Bio €), sonst Mrd €.
-const fmtBig = (x: number) => Math.abs(x) >= 1e12
+// Schwelle knapp unter 1e12: Werte, die auf 1.000 Mrd runden würden, als
+// »1 Bio €« zeigen statt »1.000 Mrd €« (sonst sichtbar in der Gesamt-Sicht).
+const fmtBig = (x: number) => Math.abs(x) >= 999.5e9
   ? `${(x / 1e12).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e12 < 10 ? 2 : 1 })} Bio €`
   : `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
 const fmtMrd = (x: number) => `${(x / 1e9).toLocaleString('de-DE', { maximumFractionDigits: Math.abs(x) / 1e9 < 10 ? 1 : 0 })} Mrd €`;
@@ -256,22 +258,21 @@ const PAPER_CRUMPLE = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns=
 // der Umlage auf einen Durchschnittshaushalt (Verbrauch × Ø Systemkosten).
 type HaushaltView = HaushaltResult & { kmPerYear: number; kwhPer100Km: number; heatKwhPerYear: number; cop: number };
 
-function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, shareUrl, sheddingTWh, sheddingPct, co2Mt }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; buildoutYear: string; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string; sheddingTWh: number; sheddingPct: number; co2Mt: number }) {
-  // Bon-Beträge sind Jahreskosten (levelized: CAPEX über die Anlagenlebensdauer
-  // annuisiert). Einmalige Bauinvestition und Aufbau-pro-Jahr stehen separat in
-  // der SUMME-Fußzeile — NICHT „pro Jahr × Jahre", das wäre irreführend (die
-  // Annuität amortisiert die Baukosten bereits über die Lebensdauer).
-  const G = fmtMrd;
-  // Gesamtkosten bis X (undiskontiert): einmalige Bauinvestition + Betrieb über
-  // den Aufbauhorizont. Pro Jahr = das ÷ Jahre (= Bauinvestition/Jahre +
-  // Betrieb) — die intuitive „100 Mrd ÷ 20 Jahre"-Sicht; die zinsbehaftete
-  // Annuisierung über die Anlagenlebensdauer steckt in der levelized SUMME.
-  const gesamtBisX = k.investEur + k.operatingEur * horizon;
-  const aufbauProJahr = gesamtBisX / horizon;
+function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, sheddingTWh, sheddingPct, co2Mt }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string; sheddingTWh: number; sheddingPct: number; co2Mt: number }) {
+  // Master-Schalter pro Jahr / Gesamt: skaliert ALLE Bon-Posten (Kostenart,
+  // Technologie, SUMME) — »pro Jahr« zeigt die levelized Jahresmiete (CAPEX über
+  // die Anlagenlebensdauer annuisiert, inkl. WACC), »Gesamt« multipliziert mit
+  // dem Kostenzeitraum (Jahresmiete × Jahre = Vollkosten inkl. Ersatz/Finanz.).
+  const [scope, setScope] = useState<'jahr' | 'gesamt'>('gesamt');
+  const mult = scope === 'gesamt' ? horizon : 1;
+  // Mode-bewusster Geldformatierer: skaliert den Betrag und schaltet ab 1 Bio €
+  // automatisch von »Mrd« auf »Bio« um. Intensitäten (je MWh/kWh, €/MWh
+  // Gestehung) und die einmalige Bauinvestition laufen NICHT über G.
+  const G = (v: number) => fmtBig(v * mult);
+  // Gesamtkosten über den Zeitraum = levelized Jahresmiete × Jahre (undiskontiert).
+  const gesamt = k.total * horizon;
   // Zwei Gruppierungen derselben Summe als Akkordeon: Kostenart oder Technologie.
   const [group, setGroup] = useState<'art' | 'tech'>('art');
-  // Aufbau-Block: Gesamtkosten bis X (Bio €) oder dieselbe Größe pro Jahr.
-  const [aufbauMode, setAufbauMode] = useState<'gesamt' | 'jahr'>('gesamt');
   // Posten unter 50 Mio €/a sind Floating-Point-Staub (z. B. Netz exakt auf der
   // 2025-Basis) — auf dem Bon weglassen.
   const items = PARTS.filter(p => Math.abs(k.breakdown[p.key]) > 5e7);
@@ -346,8 +347,21 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
       <p className="text-center text-lg font-bold uppercase tracking-[0.3em] text-zinc-950 dark:text-zinc-50">Stromrechnung</p>
       {/* Preisstand-Hinweis in der Kopfzeile: der Bon rechnet bewusst Heute-
           Preise — er ordnet Verhältnisse ein, prognostiziert nicht 2045. */}
-      <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Heute bis {buildoutYear} ({horizon} Jahre) · Heutige Preise ohne Lernkurven</p>
+      <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Kostenzeitraum {horizon} Jahre · Heutige Preise ohne Lernkurven</p>
       <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
+      {/* Master-Schalter: skaliert den GANZEN Bon (jede Kostenart, jede
+          Technologie, SUMME) wahlweise pro Jahr oder über den Kostenzeitraum. */}
+      <div className="mt-4 flex justify-center">
+        <div className="flex border border-zinc-300 text-[10px] uppercase tracking-[0.15em] dark:border-zinc-600" role="group" aria-label="Beträge pro Jahr oder über den Kostenzeitraum">
+          {([['jahr', 'pro Jahr'], ['gesamt', `Gesamt · ${horizon} J`]] as const).map(([m, label]) => (
+            <button key={m} type="button" aria-pressed={scope === m} onClick={() => setScope(m)}
+              className={cx('px-3 py-1 transition-colors', scope === m
+                ? 'bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900'
+                : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200')}
+            >{label}</button>
+          ))}
+        </div>
+      </div>
       <div className="mt-5 border-t border-dashed border-zinc-300 dark:border-zinc-600"/>
       <div className="mt-5">
         <NodeHead id="art" label="Nach Kostenart"/>
@@ -451,9 +465,9 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
       </div>
       <div className="mt-5 border-t-4 border-double border-zinc-300 dark:border-zinc-600"/>
       <div className="mt-5 flex items-baseline text-xl font-bold tracking-wider text-zinc-950 dark:text-zinc-50">
-        <span>SUMME · pro Jahr</span>
+        <span>SUMME · {scope === 'gesamt' ? `${horizon} Jahre` : 'pro Jahr'}</span>
         <Leader/>
-        <span className="shrink-0 tabular-nums">{fmtMrd(k.total)}</span>
+        <span className="shrink-0 tabular-nums">{G(k.total)}</span>
       </div>
       {/* je-MWh / je-kWh aufklappbar: dieselbe Kostenarten-Zerlegung wie der
           Bon, nur durch die versorgte Nachfrage geteilt — was davon ist
@@ -489,46 +503,29 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
           <Leader faint/>
           <span className="shrink-0 tabular-nums">{fmtSum(k.perMWh)}</span>
         </div>)}
-      {/* Aufbau-Sicht (undiskontiert, Bau einmal): Gesamtkosten bis X =
-          einmalige Bauinvestition + Betrieb × Jahre; der Schalter zeigt
-          dieselben drei Posten wahlweise pro Jahr (alles ÷ Jahre). Die
-          levelized Jahresmiete oben ist der Szenario-Vergleichspreis. */}
-      {(() => {
-        const perYear = aufbauMode === 'jahr';
-        const F = perYear ? fmtMrd : fmtBig;
-        const div = perYear ? horizon : 1;
-        return <>
-          <div className="mt-3 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700"/>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">Aufbau bis {buildoutYear}</span>
-            <div className="flex border border-zinc-300 text-[10px] uppercase tracking-[0.15em] dark:border-zinc-600" role="tablist" aria-label="Gesamtkosten oder pro Jahr">
-              {([['gesamt', 'Gesamt'], ['jahr', 'Pro Jahr']] as const).map(([m, label]) => (
-                <button key={m} type="button" role="tab" aria-selected={aufbauMode === m} onClick={() => setAufbauMode(m)}
-                  className={cx('px-2.5 py-0.5 transition-colors', aufbauMode === m
-                    ? 'bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900'
-                    : 'text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300')}
-                >{label}</button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
-            <span className="min-w-0 truncate">{perYear ? `Bauinvestition ÷ ${horizon} Jahre` : 'Einmalige Bauinvestition'}</span>
-            <Leader faint/>
-            <span className="shrink-0 tabular-nums">{F(k.investEur / div)}</span>
-          </div>
-          <div className="mt-1.5 flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
-            <span className="min-w-0 truncate">{perYear ? '+ Betrieb pro Jahr' : `+ Betrieb über ${horizon} Jahre`}</span>
-            <Leader faint/>
-            <span className="shrink-0 tabular-nums">{F(k.operatingEur * (perYear ? 1 : horizon))}</span>
-          </div>
-          <div className="mt-1.5 flex items-baseline text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            <span className="min-w-0 truncate">= {perYear ? 'Pro Jahr im Aufbau' : `Gesamtkosten bis ${buildoutYear}`}</span>
-            <Leader/>
-            <span className="shrink-0 tabular-nums">{F(perYear ? aufbauProJahr : gesamtBisX)}</span>
-          </div>
-          <p className="mt-2 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Bauinvestition (Erzeugung + Speicher + Netz) plus Betrieb über den Aufbauhorizont, undiskontiert — die volkswirtschaftlichen Gesamtkosten, um die Flotte bis {buildoutYear} zu bauen und zu betreiben. Bewusst <em>nicht</em> „Jahresmiete × Jahre" (das würde die schon amortisierten Baukosten doppelt zählen). Finanzierung und der Ersatz kurzlebiger Anlagen (Batterie 15 a) über lange Horizonte stecken in der levelized »SUMME pro Jahr« oben.</p>
-        </>;
-      })()}
+      {/* Unter der Summe: die jeweils ANDERE Aggregat-Sicht (Schalter oben
+          bestimmt die Haupt-Sicht), die einmalige Bauinvestition (zeitraum-
+          unabhängig — skaliert NICHT mit) und die Herleitung. */}
+      <div className="mt-3 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700"/>
+      <div className="flex items-baseline text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="min-w-0 truncate">{scope === 'gesamt' ? 'Ø pro Jahr (levelized)' : `Gesamt über ${horizon} Jahre`}</span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums">{scope === 'gesamt' ? fmtMrd(k.total) : fmtBig(gesamt)}</span>
+      </div>
+      <div className="mt-1.5 flex items-baseline text-sm text-zinc-400 dark:text-zinc-500">
+        <span className="min-w-0 truncate">einmalige Bauinvestition (Neubauwert, einmalig)</span>
+        <Leader faint/>
+        <span className="shrink-0 tabular-nums">{fmtBig(k.investEur)}</span>
+      </div>
+      <details className="group/gk mt-1.5">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.15em] text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300">
+            <span aria-hidden className="w-3 shrink-0"><span className="group-open/gk:hidden">▸</span><span className="hidden group-open/gk:inline">▾</span></span>
+            Wie wird gerechnet?
+          </span>
+        </summary>
+        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert, realer WACC 5 %, plus Betrieb); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je MWh/kWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
+      </details>
       {/* Kleingedrucktes (Befunde der Extrem-Szenario-Pruefung): unversorgte Last
           und unbepreistes CO2 duerfen den Preis nicht stillschweigend druecken. */}
       {sheddingTWh > 1 && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
@@ -665,7 +662,7 @@ function Stromrechnung({ k, hh, buildoutYear, horizon, supplyLabel, loadLabel, s
   </div>;
 }
 
-export default function KostenSection({ scenario, result, buildoutYear, supplyLabel, loadLabel, data, shareUrl }: { scenario: Scenario; result: SimulationResult; buildoutYear: string; supplyLabel: string; loadLabel: string; data: DataSet | null; shareUrl: string }) {
+export default function KostenSection({ scenario, result, periodYears, supplyLabel, loadLabel, data, shareUrl }: { scenario: Scenario; result: SimulationResult; periodYears: string; supplyLabel: string; loadLabel: string; data: DataSet | null; shareUrl: string }) {
   const k = useMemo(() => computeKosten(scenario, result), [scenario, result]);
   // Musterhaushalt: kWh-Anteile aus den haushaltsrelevanten Last-Reglern,
   // Anzeige-Fakten (km, JAZ) direkt aus den e100-Paketen.
@@ -680,7 +677,7 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
     const heatKwhPerYear = heiz ? Math.max(0, scenario.demand['e100-heiz-target-heat-twh'] - heiz.alreadyElectricHeatTWh) * 1e9 / households : 0;
     return { ...base, kmPerYear, kwhPer100Km: pkw?.kwhPer100Km ?? 0, heatKwhPerYear, cop: heiz?.seasonalCop ?? 0 };
   }, [k, scenario, data]);
-  const horizon = Math.max(1, Number(buildoutYear) - 2025);
+  const horizon = Math.max(1, Number(periodYears));
   const [helpOpen, setHelpOpen] = useState(false);
 
   return <section id="section-kosten" className="flex flex-col gap-3 scroll-mt-14 border-t border-zinc-200 pt-10 dark:border-zinc-800">
@@ -689,7 +686,7 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie werden die Kosten berechnet?"/>
     </div>
     {helpOpen && <HelpPanel>
-      <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME pro Jahr</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. Diese Zahl ist horizont-unabhängig und der faire Vergleich zwischen Szenarien.</p>
+      <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. In der Sicht <strong>pro Jahr</strong> ist diese Zahl horizont-unabhängig und der faire Vergleich zwischen Szenarien; der Schalter oben am Bon stellt wahlweise auf <strong>Gesamt</strong> um und multipliziert dann jeden Posten mit dem Kostenzeitraum.</p>
       <ul>
         <li><strong>Kapitalkosten (annuisiert)</strong> — Baukosten der <em>gesamten</em> Flotte, mit dem Kapitalwiedergewinnungsfaktor über die Lebensdauer umgelegt (realer WACC 5 %): die jährlichen Kapitalkosten des Anlagenbestands inklusive Ersatz auslaufender Anlagen, nicht die Mehrinvestition gegenüber heute — auch das heutige System bindet so dauerhaft Kapital.</li>
         <li><strong>Betrieb &amp; Wartung</strong> — feste (€/kW·a) plus variable (€/MWh) Kosten.</li>
@@ -700,12 +697,12 @@ export default function KostenSection({ scenario, result, buildoutYear, supplyLa
       </ul>
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
       <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«). Weil der Energieanteil kostenbasiert ab Werk gerechnet wird (statt Marktpreis + Marge), liegt das absolute Niveau ~10 % unter der realen BDEW-Rechnung — die Szenario-Vergleiche untereinander bleiben gültig.</p>
-      <p>Die <strong>Aufbau-Sicht</strong> unter der Summe rechnet die Gesamtkosten ehrlich: <strong>einmalige Bauinvestition</strong> (Neubauwert der ganzen Zielflotte — Erzeugung + Speicher + Netz, ohne Annuisierung; über alle Aufbaujahre ~konstant) <strong>+ Betrieb × Jahre</strong> ergibt die <strong>Gesamtkosten bis {buildoutYear}</strong>, und ÷ Jahre die volkswirtschaftliche Jahresbelastung. Alles undiskontiert (Finanzierung steckt in der levelized Jahresmiete oben). Bewusst <em>nicht</em> gerechnet wird „Jahresmiete × Jahre" — das würde die über die Anlagenlebensdauer schon amortisierten Baukosten ein zweites Mal aufsummieren. Zwei Vereinfachungen: Die Bauinvestition zählt einmal — der Ersatz kurzlebiger Anlagen (Batterie 15 a) über lange Horizonte steckt in der levelized Jahresmiete, nicht hier; und es sind Vollkosten des Stromsystems, nicht die »Mehrinvestitionen« aus Energiewende-Studien (Differenz zu einem Referenzpfad). Die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (~70–90 Mrd €/a).</p>
+      <p>In der <strong>Gesamt</strong>-Sicht (Schalter oben) zeigt jeder Posten die levelized Jahresmiete × <strong>Kostenzeitraum</strong> (Regler in der Seitenleiste, 20/30/40 Jahre). Weil die Jahresmiete die Baukosten über die Anlagenlebensdauer annuisiert — inklusive realem WACC 5 % und dem Ersatz kurzlebiger Anlagen (eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut, was die Annuität automatisch abbildet) —, ist die Summe über den Zeitraum die ehrlichen Vollkosten inklusive Finanzierung und Ersatz. Nachrichtlich steht die <strong>einmalige Bauinvestition</strong> daneben: der reine Neubauwert der gesamten Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung) — die Größenordnung des Anschubs, nicht die Gesamtkosten. Es sind Vollkosten des Stromsystems, nicht die »Mehrinvestitionen« aus Energiewende-Studien (Differenz zu einem Referenzpfad); die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (~70–90 Mrd €/a).</p>
       <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand — die Rechnung weist die Auslassung je Szenario im Kleingedruckten aus, bewertet zu 80 €/t ETS) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
     </HelpPanel>}
 
     <div className="mx-auto mt-2 w-full max-w-[700px]">
-      <Stromrechnung k={k} hh={hh} buildoutYear={buildoutYear} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl} sheddingTWh={result.summary.loadSheddingTWh} sheddingPct={100 * result.summary.loadSheddingTWh / Math.max(1, result.summary.totalDemandTWh + (result.summary.h2PoolStromReductionTWh ?? 0))} co2Mt={result.summary.co2MtPerYear}/>
+      <Stromrechnung k={k} hh={hh} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl} sheddingTWh={result.summary.loadSheddingTWh} sheddingPct={100 * result.summary.loadSheddingTWh / Math.max(1, result.summary.totalDemandTWh + (result.summary.h2PoolStromReductionTWh ?? 0))} co2Mt={result.summary.co2MtPerYear}/>
     </div>
   </section>;
 }
