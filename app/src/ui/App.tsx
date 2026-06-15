@@ -20,6 +20,7 @@ import type { MixContent } from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
 import KostenSection from './sections/KostenSection';
+import DatensatzSection from './sections/DatensatzSection';
 // DataFileViewer bleibt lazy — Spezial-Route, selten genutzt. Wiki und
 // Changelog werden statisch importiert, damit der Tab-Wechsel kein
 // Suspense-Flash mehr erzeugt (Sidebar bleibt sichtbar, Layout stabil).
@@ -1067,6 +1068,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
           <RessourcenSection scenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
           <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
+          {/* Eigene Sektion, bewusst NICHT in MAIN_VIEW_LABELS/den MainViewTabs verlinkt. */}
+          <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
