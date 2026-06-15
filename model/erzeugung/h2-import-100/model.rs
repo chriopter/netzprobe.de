@@ -1,4 +1,4 @@
-// Preset "100% H2-Import" — Source-of-Truth.
+// Preset "H₂-Import 100%" (h2-import-100) — Source-of-Truth.
 //
 // Anwendungsfall: Gedanken-Anker, kein realistischer Pfad. Die GESAMTE Last wird
 // aus importiertem Wasserstoff rückverstromt — keine heimische Erzeugung, keine
@@ -34,7 +34,7 @@ pub const IMPORT_MARGIN: f64 = 1.02;
 // Rückverstromungs-Wirkungsgrad in H₂-LHV umgerechnet. Großzügig, weil bei
 // flachem Import der gesamte Sommer-Winter-Versatz hier gepuffert werden muss.
 pub const CAVERN_FRACTION_OF_STROMLAST: f64 = 0.20;
-// Grüner H₂-Import inkl. Transport, konsistent mit dem 100ee-import-Preset.
+// Grüner H₂-Import inkl. Transport, konsistent mit dem ee-85-h2-15-Preset.
 pub const STROM_IMPORT_EMISSION_G_PER_KWH: f64 = 25.0;
 
 // H₂-Import (LHV, TWh): Sektor-Pool direkt + Stromlast über die Rückverstromung,

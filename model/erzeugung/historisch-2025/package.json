@@ -12,7 +12,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Historisch 2025",
+    "title": "2025",
     "short": "Setzt alle Versorgungs-Slider auf die 2025-Defaults; keine Auto-Skalierung an die Last.",
     "source": "Energy-Charts 2025 (installierte Leistung, Bestand Speicher).",
     "sourceUrls": [

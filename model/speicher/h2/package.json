@@ -120,7 +120,7 @@
       "Default praktisch null — bis Slider hochgesetzt, ist H₂ in der Simulation inaktiv.",
       "Slider-Maximum 1.500 TWh deckt Stresstests ab; realistischer Anker `~500 TWh` entspricht potenziellem deutschen Kavernen-Volumen (DEEP.KBB).",
       "Verdichtungs- und Kavernenverluste stecken pauschal im Lade-Wirkungsgrad `0,62`; der Verdichtungsstrom erscheint nicht als separate Stromlast.",
-      "Elektrolyse-CAPEX 1.500 EUR/kW ist ein heutiger (2024/25) Systemwert am UNTEREN Rand europäischer Vollkosten (EU Hydrogen Observatory 2025: AEL ~2.075, PEM ~2.200 EUR/kW; westliche Anlagen installiert ~2.300–2.550 USD/kW; China-Systeme exportiert 1.500–2.400 USD/kW) — wie alle Kostenparameter ohne Lernkurve. Studienpfade 2045 sehen 300–700 EUR/kW: im 100ee-noimport-Szenario (435 GW, ~53 Mrd EUR/a Elektrolyse-Anteil) fiele der Posten damit auf rund 11–31 Mrd EUR/a (je nachdem, ob O&M mitskaliert) — neben der Batterie der größte Lernkurven-Hebel. Stack-Ersatz (~80.000 h) ist über die 30-a-Lebensdauer nur pauschal abgedeckt."
+      "Elektrolyse-CAPEX 1.500 EUR/kW ist ein heutiger (2024/25) Systemwert am UNTEREN Rand europäischer Vollkosten (EU Hydrogen Observatory 2025: AEL ~2.075, PEM ~2.200 EUR/kW; westliche Anlagen installiert ~2.300–2.550 USD/kW; China-Systeme exportiert 1.500–2.400 USD/kW) — wie alle Kostenparameter ohne Lernkurve. Studienpfade 2045 sehen 300–700 EUR/kW: im ee-100-Szenario (435 GW, ~53 Mrd EUR/a Elektrolyse-Anteil) fiele der Posten damit auf rund 11–31 Mrd EUR/a (je nachdem, ob O&M mitskaliert) — neben der Batterie der größte Lernkurven-Hebel. Stack-Ersatz (~80.000 h) ist über die 30-a-Lebensdauer nur pauschal abgedeckt."
     ],
     "file": "speicher/h2/data.json",
     "scripts": [

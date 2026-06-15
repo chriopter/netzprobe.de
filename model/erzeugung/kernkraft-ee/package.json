@@ -1,6 +1,6 @@
 {
   "preset": {
-    "id": "ee-moderat-kern",
+    "id": "kernkraft-ee",
     "label": "Kernkraft + EE",
     "gruppe": "lastfolgend",
     "rang": 60,
@@ -8,11 +8,11 @@
     "sichtbar": true
   },
   "$schema": "../../schemas/composition.schema.json",
-  "id": "ee-moderat-kern",
+  "id": "kernkraft-ee",
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "EE moderat + Restkern (CO₂-arm, lastfolgend)",
+    "title": "Kernkraft + EE",
     "short": "Moderater EE-Ausbau + Kernkraft als lastfolgende Grundlast, GAS-FREI: die Dunkelflaute deckt ein H₂-Saisonspeicher. Kostenoptimiert auf die CO₂-arme Ecke.",
     "source": "Konzept-Anker: WePlanet DACH »Deutschlands Energiezukunft« (2025) — ein kostenoptimaler DE-Mix enthält ~40 % Kernkraft, weil Grundlast-Kernkraft den teuren Teil der EE-Welt (Offshore-Massenausbau, HGÜ, Saisonspeicher-Überbau) ersetzt. Die Kapazitäts-Koeffizienten dieses Presets stammen aus einer Kostenoptimierung über die lokale netzprobe-Engine: Gitter aus EE-Niveau × Kernkraft × Peaking-Typ (Gas vs H₂) × Speichergrößen, je Kandidat €/MWh (Kostenmodell der Kosten-Sektion) + CO₂ + Lastabwurf ausgewertet; gewählt wurde das günstigste gasfreie, versorgungssichere Szenario mit nennenswertem EE-Anteil. Kosten je Technologie aus den Erzeuger-/Speicher-Paketen (WACC, CAPEX), Referenzertrag IAEA PRIS.",
     "sourceUrls": [
@@ -58,7 +58,7 @@
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (ee-moderat-kern)."
+        "description": "Technische Kennung (kernkraft-ee)."
       }
     ],
     "caveats": [
@@ -70,7 +70,7 @@
       "Die H₂-Kette (Roundtrip ~0,34) ist teuer; ein Teil der Kosten gegenüber reiner Kernkraft entsteht durch den H₂-Saisonspeicher, der die gasfreie Dunkelflaute-Deckung erst ermöglicht."
     ],
     "scripts": [
-      "erzeugung/ee-moderat-kern/model.rs"
+      "erzeugung/kernkraft-ee/model.rs"
     ]
   },
   "parameters": {}

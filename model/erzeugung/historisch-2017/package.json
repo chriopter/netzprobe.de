@@ -11,7 +11,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Historisch 2017",
+    "title": "2017",
     "short": "Pass-Through der echten 2017-Stundenkurve (Kernkraft an, Kohle hoch, EE-Anteil ~36 %).",
     "source": "Energy-Charts public_power API 2017 (echte stündliche Beobachtung).",
     "sourceUrls": [

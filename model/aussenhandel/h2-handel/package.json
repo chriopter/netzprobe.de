@@ -18,12 +18,12 @@
     "description": [
       "**Sektor:** importierter Wasserstoff, geliefert per Pipeline aus Skandinavien und dem Maghreb oder verschifft als Ammoniak/LOHC. Das Modell behandelt die Importmenge als TWh/Jahr-Bilanz (H₂-Heizwert `LHV`) und speist sie stündlich konstant (`Import-TWh × 1000 / 8760` GW) in den **H₂-Pool** ein — also den H₂-Speicher (Kavernen). Aus diesem Pool decken sich sowohl die vier H₂-Industriesektoren (`Stahl-DRI`, `Chemie`, `Schiff-e-Fuels`, `Flug-PtL`) als auch die Rückverstromung im Strom-Defizit. BMWK-Fortschreibung nennt `50–70 TWh` für 2030, Agora/Ariadne `200–400 TWh` für 2045.",
       "**Mechanik:** der Slider läuft von `0` bis `3000 TWh/a` mit Schrittweite `10 TWh` und Default `0`. In jeder Stunde versucht der Pool zuerst den Sektor-H₂-Bedarf zu decken (absteigend nach Strom-Hebel: Chemie/Schiff/Flug je `1/0,62 ≈ 1,61`, Stahl `1,56`). Der Pool führt H₂ als **Zwischenprodukt**: der Sektor-Bedarf ist `Elektrolysestrom × 0,62` in H₂-LHV, je GW geliefertem H₂ entfällt der Elektrolyse-Strom (`~1,6 GW`); die Synthese-Verluste H₂ → Endprodukt trägt der Pool H₂-seitig — `1 TWh` Import-H₂ liefert je nach Sektor nur `0,61–0,89 TWh` Endprodukt (Kerosin `0,61`, e-MeOH/NH₃ `0,81`, Chemie-Mix `0,89`, Stahl-H₂ `1,0`). Ungedeckter Sektor-Bedarf fällt auf inländische Direkt-Elektrolyse als Stromlast zurück. Pool-Überhang puffert für Rückverstromung in Defizitstunden — auch Import-H₂ wird dabei mit η = `0,55` (H₂-ready GuD) verstromt, nicht verlustfrei.",
-      "**Bilanz:** importierter H₂ ist kein zusätzlicher Stromzufluss, sondern ersetzt entweder inländische Elektrolyse-Stromlast (Sektor-Pfad) oder Stromerzeugung im Defizit (Rückverstromungs-Pfad). Architektur folgt dem Pool-Konsens in PyPSA-Eur/REMod/Agora KNDE2045 (H₂ als zentraler Carrier mit mehreren Senken). Emissionen werden in der aktuellen Version nicht bilanziert — implizit ist `grüner` H₂ angenommen. Der Max-Slider `3000 TWh` dient Stresstests und gibt den Import-Presets Kopfraum: das `100h2-import`-Preset (gesamte Last aus rückverstromtem Importwasserstoff) braucht bei Voll-e100 schon `~2450 TWh/a`; `100ee-import` bleibt mit maximierten Sektor-Targets unter `~700 TWh`."
+      "**Bilanz:** importierter H₂ ist kein zusätzlicher Stromzufluss, sondern ersetzt entweder inländische Elektrolyse-Stromlast (Sektor-Pfad) oder Stromerzeugung im Defizit (Rückverstromungs-Pfad). Architektur folgt dem Pool-Konsens in PyPSA-Eur/REMod/Agora KNDE2045 (H₂ als zentraler Carrier mit mehreren Senken). Emissionen werden in der aktuellen Version nicht bilanziert — implizit ist `grüner` H₂ angenommen. Der Max-Slider `3000 TWh` dient Stresstests und gibt den Import-Presets Kopfraum: das `h2-import-100`-Preset (gesamte Last aus rückverstromtem Importwasserstoff) braucht bei Voll-e100 schon `~2450 TWh/a`; `ee-85-h2-15` bleibt mit maximierten Sektor-Targets unter `~700 TWh`."
     ],
     "overview": [
       {
         "label": "Verwendung",
-        "value": "**Slider:** `0–3000 TWh/a` Import, Default `0`, Schritt `10 TWh`. BMWK-Korridor `50–70 TWh` für 2030, Agora/Ariadne `200–400 TWh` für 2045; das Maximum dient Stresstests und deckt das `100h2-import`-Preset (~2450 TWh bei Voll-e100, gesamte Last über H₂-Import)."
+        "value": "**Slider:** `0–3000 TWh/a` Import, Default `0`, Schritt `10 TWh`. BMWK-Korridor `50–70 TWh` für 2030, Agora/Ariadne `200–400 TWh` für 2045; das Maximum dient Stresstests und deckt das `h2-import-100`-Preset (~2450 TWh bei Voll-e100, gesamte Last über H₂-Import)."
       },
       {
         "label": "Verteilung",
@@ -40,7 +40,7 @@
       "Sektor-H2-Bedarf wird priority-basiert aus Pool gedeckt (höchster Strom-Hebel zuerst). Ungedeckter Bedarf läuft als Direkt-Elektrolyse-Stromlast — entspricht der heutigen Sektor-Last bei leerem Pool.",
       "Pool-Überhang kann im Strom-Defizit rückverstromt werden (H2-Speicher-Discharge-Logik, dischargeEfficiency 0,55). Damit wirkt der Import-Slider auch ohne aktive H2-Sektoren.",
       "Importemissionen werden nicht bilanziert — implizit grüner H2 angenommen.",
-      "Bounds: Min 0 TWh, Max 3000 TWh (Stresstest-Kopfraum; deckt das 100h2-import-Preset, das bei Voll-e100 ~2450 TWh/a importiert — weit über realistischen 2045-Szenarien)."
+      "Bounds: Min 0 TWh, Max 3000 TWh (Stresstest-Kopfraum; deckt das h2-import-100-Preset, das bei Voll-e100 ~2450 TWh/a importiert — weit über realistischen 2045-Szenarien)."
     ],
     "fields": [
       {
@@ -69,7 +69,7 @@
       "Sektor-Priority innerhalb des Pools ist eine Modellannahme; realwirtschaftlich verteilt sich H2 nach Preis-Bid, nicht nach η.",
       "Pool-Cap-Überschuss fällt verlustfrei weg — bei manuell hohen Import-Slider-Werten relativ zur Pool-Kapazität wirkt die Mehrmenge nicht; die Presets deckeln den Import inzwischen auf den Sektorbedarf, im Preset-Pfad entsteht kein bezahlter Überlauf.",
       "Grüner H2 angenommen — keine Upstream-Emissionen für importierten Wasserstoff modelliert.",
-      "Max-Slider 3000 TWh ist weit über realistischen 2045-Szenarien (Agora ~270, Studien-Korridor 60-450 TWh) — Stresstest und Preset-Kopfraum (100h2-import ~2450 TWh), keine Empfehlung; ab ~300 TWh dominiert geopolitisches Klumpenrisiko.",
+      "Max-Slider 3000 TWh ist weit über realistischen 2045-Szenarien (Agora ~270, Studien-Korridor 60-450 TWh) — Stresstest und Preset-Kopfraum (h2-import-100 ~2450 TWh), keine Empfehlung; ab ~300 TWh dominiert geopolitisches Klumpenrisiko.",
       "1 TWh Import-H₂ (210 €/MWh, heutiger Liefer-Mittelwert) liefert nur 0,61–0,89 TWh Endprodukt — implizit kostet e-Kerosin ~344 €/MWh, e-MeOH/NH₃ ~260 €/MWh, der Chemie-Mix ~236 €/MWh (PtL-Studienkorridor: Agora/Frontier ~100–300 €/MWh je Zeithorizont, Concawe ~170–250 €/MWh). Quercheck: der reale H2Global-NH₃-Preis 193 €/MWh liegt nun UNTER dem impliziten e-NH₃ von 260 — der Liefer-H₂-Preis deckt die Synthese teilweise mit ab (deren CAPEX im Bon nicht separat bepreist ist). CAPEX und Direktstrom der Synthese-/DAC-Anlagen sind H₂-seitig gelumpt, nicht separat bilanziert."
     ]
   },

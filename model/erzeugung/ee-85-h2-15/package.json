@@ -1,6 +1,6 @@
 {
   "preset": {
-    "id": "100ee-import",
+    "id": "ee-85-h2-15",
     "label": "EE 85% + H₂ 15%",
     "gruppe": "lastfolgend",
     "rang": 20,
@@ -8,11 +8,11 @@
     "sichtbar": true
   },
   "$schema": "../../schemas/composition.schema.json",
-  "id": "100ee-import",
+  "id": "ee-85-h2-15",
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "100% EE + Import",
+    "title": "EE 85% + H₂ 15%",
     "short": "EE-Mix nach Studien-Konsens (Agora KN2045 / BMWK LFS3 / Ariadne) plus H₂- und Strom-Import.",
     "source": "Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien: Agora KN2045 (Demand 1270 TWh, PV 470 GW, H2-Import 270 TWh), BMWK Langfristszenarien 3 T45-H2 (H2-Import 100-150 TWh), dena Aufbruch Klimaneutralität (H2-Gesamt 458 TWh, Großteil Import), Ariadne Modellvergleich (H2-Import 60-250 TWh, Strom-Import 94 TWh).",
     "sourceUrls": [
@@ -30,7 +30,7 @@
       "**Auslegung:** Der H₂-Import ersetzt Sektor-Elektrolyse-Strom (Deckungsreihenfolge absteigend nach Strom-Hebel `strom_per_h2`, wie der H₂-Pool der Engine); die EE-Flotte wird auf die **effektive Stromnachfrage** nach dieser Substitution ausgelegt: `Jahres-RE = 1,30 × effektive Demand − Biomasse − Laufwasser`. Der **Cushion 1,30** trägt Wetterjahr-Reserve plus die reale Speicherkette: Elektrolyse `η 0,62` × Rückverstromung `η 0,55` = Roundtrip `0,34`. Der H₂-Kavernenspeicher ist in **TWh H₂-LHV** dimensioniert (`0,15 × effektive Demand`) — direkt vergleichbar mit Kavernen-Potenzial-Angaben.",
       "**Import-Bilanz:** H₂-Import = `min(0,15 × Demand, Sektor-H₂-Bedarf in LHV)` — Import ohne Abnehmer liefe in die volle Kaverne und verfiele. Bei heutiger Last ohne H₂-Sektoren also `0 TWh`; bei e100 `417 TWh` (Basis `0,15 × 1 808 ≈ 271 TWh` plus `~146 TWh` Offshore-Cap-Kompensation — zusammen `~90 %` des Sektor-H₂-Bedarfs von `461 TWh`). **Strom-Import-Cap proportional** zur effektiven Demand: `0,011 GW/TWh` → 5,1 GW bei heutiger Last, 15,1 GW bei e100 (Ariadne 94 TWh bei 1 100 TWh Demand, EU-NTC 2030: 25–30 GW). **Emissionsfaktor 25 g/kWh** für grünen H₂-Import (Elektrolyse-RE in MENA/Skandinavien/AUS + Transport-Verluste 5–10 g) — konsistent mit »100ee«-Label; blauer H₂ mit CCS (100 g/kWh) wäre Inkonsistenz.",
       "**Hard Cap Wind offshore: 70 GW** (BSH FEP / WindSeeG-Ziel 2045 = physisches DE-AWZ-Limit unter Wahrung Schifffahrt/Naturschutz). Übersteigt die Auslegung den Cap, deckt zusätzlicher H₂-Import den Energie-Shortfall — aber nur soweit in den Sektoren noch H₂-Headroom besteht; der Rest wird über PV kompensiert (anders als das autark-Preset, das seit der Rekalibrierung via Wind onshore kompensiert).",
-      "**Anwendungsfall:** Realistischer Klimaneutralitäts-Pfad nach Studien-Konsens: PV-Schwerpunkt im Inland, H₂ überwiegend importiert, Strom-Verbund mit EU als Flex-Puffer. Lasttest mit Wetter-/Lastjahr 2025: `0 h` Lastabwurf bei heutiger Last (466 TWh) und bei e100; Abregelung ~2 TWh heute, 160 TWh (~10 % des EE-Potenzials) bei e100. Im Vergleich zu `100ee-noimport` sind die installierten EE-Leistungen deutlich kleiner — dafür entsteht eine substantielle Import-Abhängigkeit (geopolitisches Klumpenrisiko, siehe Caveats)."
+      "**Anwendungsfall:** Realistischer Klimaneutralitäts-Pfad nach Studien-Konsens: PV-Schwerpunkt im Inland, H₂ überwiegend importiert, Strom-Verbund mit EU als Flex-Puffer. Lasttest mit Wetter-/Lastjahr 2025: `0 h` Lastabwurf bei heutiger Last (466 TWh) und bei e100; Abregelung ~2 TWh heute, 160 TWh (~10 % des EE-Potenzials) bei e100. Im Vergleich zu `ee-100` sind die installierten EE-Leistungen deutlich kleiner — dafür entsteht eine substantielle Import-Abhängigkeit (geopolitisches Klumpenrisiko, siehe Caveats)."
     ],
     "overview": [
       {
@@ -73,7 +73,7 @@
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (100ee-import)."
+        "description": "Technische Kennung (ee-85-h2-15)."
       }
     ],
     "caveats": [
@@ -81,14 +81,14 @@
       "H₂-Import-Basis 0,15 × Demand folgt Agora KN2045 (270 TWh bei 1 270 TWh Demand), ist aber auf den Sektor-H₂-Bedarf gedeckelt — bei heutiger Last ohne H₂-Sektoren 0 TWh, bei e100 417 TWh inkl. ~146 TWh Offshore-Cap-Kompensation (~90 % des Sektorbedarfs 461 TWh). Studien-Range (teils Import-, teils H2-Gesamtmengen): Agora Import 270 TWh, Ariadne 60-250 TWh, BMWK LFS3 T45-H2 Gesamt 300-450 TWh, dena Gesamt 458 TWh — 417 TWh Import liegt am oberen Rand.",
       "Strom-Import-Cap proportional zur effektiven Demand (0,011 GW/TWh) — 5,1 GW bei heutiger Last, 15,1 GW bei e100. Real verfügbar bei EU-Nachbarn fraglich, weil FR/DK/NO/CH 2045 selbst Klimaneutral-Pfade verfolgen.",
       "Emissionsfaktor 25 g/kWh setzt grünen H₂-Import voraus (Elektrolyse mit RE in Exportland). Bei realem Mix mit blauem H₂ (CCS, ~100 g/kWh) wäre der Wert deutlich höher und das Preset-Label »100ee« inkonsistent.",
-      "Geopolitisches Risiko durch H₂-Import-Abhängigkeit (MENA, Skandinavien, AUS) ist im Modell nicht abgebildet; Diversifizierung (3+ Regionen, davon eine in EU) sollte real beachtet werden. Für den Stand-alone-Stresstest `100ee-noimport` wählen.",
+      "Geopolitisches Risiko durch H₂-Import-Abhängigkeit (MENA, Skandinavien, AUS) ist im Modell nicht abgebildet; Diversifizierung (3+ Regionen, davon eine in EU) sollte real beachtet werden. Für den Stand-alone-Stresstest `ee-100` wählen.",
       "Bei e100 liegt der Brutto-Auslegungsbedarf (1 808 TWh) 40–70 % über Studien-Demand (1 100–1 270 TWh), weil Effizienz-Hebel der Sektorkopplung fehlen — siehe e100-Caveat. Simuliert wird nach H₂-Substitution eine Stromlast von 1 068 TWh.",
       "Die Presets setzen capacityFactorMultiplier 1,0 — also den Ertrag der BESTANDSFLOTTE 2025, nicht den von 2045er-Neubauten (höhere Nabenhöhen/Wirkungsgrade, kern-Wiki empfiehlt 1,2–1,5 für Neubau). Mit Neubau-Erträgen wären ~20–30 % weniger GW nötig — die ausgewiesenen Flotten sind insoweit konservative Obergrenzen.",
       "Wind onshore 435 GW (e100) liegt über dem 2-%-Vorrangflächen-Ziel (≈7.150 km² ≈ 145–180 GW bei 20–25 MW/km²) — wie die PV-Fläche eine Machbarkeits-, keine Modellgrenze.",
       "Die Speicher skalieren hier BEWUSST mit der effektiven Demand nach Import-Substitution, nicht mit der Stromlast wie im autark-Preset: H₂- und Strom-Import sind in diesem Preset selbst der Flex-Puffer, die Speicher entsprechend kleiner kalibriert (0,15 GW/0,8 GWh je TWh statt 0,2/1,7) — und im Audit als gesund gemessen (~80 Batterie-Vollzyklen/a, ~57 % Kavernen-Hub). Eine Umstellung auf den Stromlast-Treiber wäre reine Renormierung ohne Erkenntnisgewinn."
     ],
     "scripts": [
-      "erzeugung/100ee-import/model.rs"
+      "erzeugung/ee-85-h2-15/model.rs"
     ]
   },
   "parameters": {}

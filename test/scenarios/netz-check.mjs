@@ -27,8 +27,8 @@ const S = [
   ['05 Wind-XL minimal Speicher',   150,   500,    70,    900,  146],
   ['06 Wind-only extrem',            60,   900,    70,   1100,  178],
   ['07 Mix ausgewogen T45',         400,   160,    70,   1102,  150], // O45-Strom-Anker (Peak-Verdopplung)
-  ['08 100ee-import (e100)',        860,   435,    70,   1830,  218], // aktuelles Preset-Resolve
-  ['09 100ee-noimport (e100)',      980,   885,    70,   1830,  218], // aktuelles Preset-Resolve
+  ['08 ee-85-h2-15 (e100)',        860,   435,    70,   1830,  218], // aktuelles Preset-Resolve
+  ['09 ee-100 (e100)',      980,   885,    70,   1830,  218], // aktuelles Preset-Resolve
   ['10 EE-Befuerworter-Traum',      500,   250,    70,   1300,  211],
   ['11 EE-Gegner-Albtraum',         120,    70,    10,    600,   97],
   ['12 EE+PSP Massivausbau',        450,   300,    70,   1200,  195],

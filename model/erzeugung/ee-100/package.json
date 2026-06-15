@@ -1,6 +1,6 @@
 {
   "preset": {
-    "id": "100ee-noimport",
+    "id": "ee-100",
     "label": "EE 100%",
     "gruppe": "lastfolgend",
     "rang": 10,
@@ -8,11 +8,11 @@
     "sichtbar": true
   },
   "$schema": "../../schemas/composition.schema.json",
-  "id": "100ee-noimport",
+  "id": "ee-100",
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "100% EE lokal (autark)",
+    "title": "EE 100%",
     "short": "PV/Wind/Speicher auf `1,30 × effektive Last` dimensioniert; Fossil und Import auf null. Stresstest für Autarkie.",
     "source": "Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien: BMWK Langfristszenarien 3 (T45-Strom), Agora KN2045, Ariadne Szenarienreport, Fraunhofer ISE REMod, Heide et al. (saisonal-optimaler Mix), DVGW/EWI H2-Speicherbedarf.",
     "sourceUrls": [
@@ -70,7 +70,7 @@
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (100ee-noimport)."
+        "description": "Technische Kennung (ee-100)."
       }
     ],
     "caveats": [
@@ -83,7 +83,7 @@
       "Die Presets setzen capacityFactorMultiplier 1,0 — also den Ertrag der BESTANDSFLOTTE 2025, nicht den von 2045er-Neubauten (höhere Nabenhöhen/Wirkungsgrade, kern-Wiki empfiehlt 1,2–1,5 für Neubau). Mit Neubau-Erträgen wären ~20–30 % weniger GW nötig — die ausgewiesenen Flotten sind insoweit konservative Obergrenzen."
     ],
     "scripts": [
-      "erzeugung/100ee-noimport/model.rs"
+      "erzeugung/ee-100/model.rs"
     ]
   },
   "parameters": {}
