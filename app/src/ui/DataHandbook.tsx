@@ -542,7 +542,7 @@ function ResourcesSection({ selected }: { selected: DatasetDoc }) {
   if (!data) return null;
   return <section id={tocAnchors.ressourcen} className="mt-9 scroll-mt-8">
     <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Ressourcen</h2>
-    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{data.narrative}</p>}
+    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{markdownInline(data.narrative)}</p>}
     <table className="mt-4 w-full max-w-2xl text-sm">
       <thead>
         <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
@@ -573,7 +573,7 @@ function KostenWikiSection({ selected }: { selected: DatasetDoc }) {
   if (!data) return null;
   return <section id={tocAnchors.kosten} className="mt-9 scroll-mt-8">
     <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Kosten</h2>
-    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{data.narrative}</p>}
+    {data.narrative && <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600 dark:text-zinc-300">{markdownInline(data.narrative)}</p>}
     <table className="mt-4 w-full max-w-2xl text-sm">
       <thead>
         <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
@@ -601,7 +601,7 @@ function SourcesSection({ selected }: { selected: DatasetDoc }) {
   return <section id={tocAnchors.sources} className="mt-9 scroll-mt-8">
     <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold dark:border-zinc-800 dark:text-zinc-50">Quellen</h2>
     <div className="mt-4 max-w-3xl text-sm leading-6">
-      <p className="text-zinc-700 dark:text-zinc-300">{selected.method.source}</p>
+      <p className="text-zinc-700 dark:text-zinc-300">{markdownInline(selected.method.source)}</p>
       {selected.method.sourceUrls?.length
         ? <ul className="mt-3 grid gap-1 text-zinc-700 dark:text-zinc-300">
             {selected.method.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
