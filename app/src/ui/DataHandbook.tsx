@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Globe, Menu, SlidersHorizontal, Zap } from 'lucide-react';
+import { Activity, ArrowRightLeft, BatteryCharging, Bookmark, ChevronRight, ExternalLink, Globe, Menu, Search, SlidersHorizontal, X, Zap } from 'lucide-react';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataFileUrl } from './dataPackages';
 import type { DatasetDoc } from './dataCatalog';
@@ -82,6 +82,7 @@ function resourceValue(e: ResourceEntry): string {
 }
 
 const KOSTEN_FIELDS: Array<[string, string, (v: number) => string]> = [
+  ['wacc', 'WACC (real)', v => `${(v * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %`],
   ['capexEurPerKW', 'CAPEX (Leistung)', v => `${v.toLocaleString('de-DE')} €/kW`],
   ['capexChargeEurPerKW', 'CAPEX (Einspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
   ['capexDischargeEurPerKW', 'CAPEX (Ausspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
@@ -241,7 +242,7 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
             </a>
           </div>
         </div>
-        <DataHandbookNav sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
+        <DataHandbookNav docs={docs} sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
       </div>
     </div>
   </aside>;
@@ -332,15 +333,54 @@ function ArticleToc({ items }: { items: TocItem[] }) {
   </aside>;
 }
 
+// Durchsuchbarer Text eines Eintrags: Titel, id, Kurzbeschreibung, Fließtext,
+// Herleitung, Abschnitte und Grenzen — plus Domänen-Label, damit „Speicher" o.ä.
+// die ganze Domäne findet. Einmal pro Doc berechnet und gecacht.
+const docHaystackCache = new WeakMap<DatasetDoc, string>();
+function docHaystack(doc: DatasetDoc): string {
+  const cached = docHaystackCache.get(doc);
+  if (cached) return cached;
+  const m = doc.method;
+  const parts: string[] = [
+    doc.id,
+    domainLabels[doc.domain] ?? doc.domain,
+    kindLabels[doc.kind],
+    m.title,
+    m.short ?? '',
+    ...(Array.isArray(m.description) ? m.description : [m.description ?? '']),
+    ...(m.reasoning ?? []),
+    ...(m.caveats ?? []),
+    ...(m.sections?.flatMap(s => [s.title, ...s.items]) ?? []),
+    ...(m.overview?.map(o => `${o.label} ${o.value}`) ?? []),
+  ];
+  const haystack = parts.join('  ').toLowerCase();
+  docHaystackCache.set(doc, haystack);
+  return haystack;
+}
+
+function searchDocs(docs: DatasetDoc[], query: string): DatasetDoc[] {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return [];
+  return docs.filter(doc => {
+    const haystack = docHaystack(doc);
+    return terms.every(term => haystack.includes(term));
+  });
+}
+
 function DataHandbookNav({
+  docs,
   sections,
   grouped,
   selectedId,
 }: {
+  docs: DatasetDoc[];
   sections: ReadonlyArray<readonly [string, string]>;
   grouped: Record<string, DatasetDoc[]>;
   selectedId: string | null;
 }) {
+  const [query, setQuery] = useState('');
+  const trimmedQuery = query.trim();
+  const results = trimmedQuery ? searchDocs(docs, trimmedQuery) : [];
   const selectedDomain = selectedId
     ? Object.entries(grouped).find(([, docs]) => docs.some(d => d.id === selectedId))?.[0] ?? null
     : null;
@@ -354,7 +394,28 @@ function DataHandbookNav({
     return next;
   });
   return <nav aria-label="Datensätze">
-    <div className="grid gap-1">
+    <div className="relative mb-3">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" aria-hidden="true"/>
+      <input
+        type="search"
+        value={query}
+        onChange={event => setQuery(event.target.value)}
+        placeholder="Wiki durchsuchen …"
+        aria-label="Wiki durchsuchen"
+        className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-8 pr-8 text-sm leading-5 text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-50/10 [&::-webkit-search-cancel-button]:hidden"
+      />
+      {query && <button
+        type="button"
+        aria-label="Suche zurücksetzen"
+        onClick={() => setQuery('')}
+        className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-zinc-400 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden="true"/>
+      </button>}
+    </div>
+    {trimmedQuery
+      ? <SearchResults results={results} selectedId={selectedId}/>
+      : <div className="grid gap-1">
       <a
         href={dataWikiHomeUrl()}
         className={cx(
@@ -399,8 +460,26 @@ function DataHandbookNav({
           </>}
         </CollapsibleSection>;
       })}
-    </div>
+    </div>}
   </nav>;
+}
+
+function SearchResults({ results, selectedId }: { results: DatasetDoc[]; selectedId: string | null }) {
+  if (!results.length) return <p className="px-2 py-3 text-sm leading-5 text-zinc-500 dark:text-zinc-400">Keine Treffer.</p>;
+  return <div>
+    <p className="px-2 pb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+      {results.length} {results.length === 1 ? 'Treffer' : 'Treffer'}
+    </p>
+    <div className="grid gap-0.5">
+      {results.map(doc => <TreeNode
+        key={doc.id}
+        href={dataWikiUrl(doc.id)}
+        label={doc.method.title}
+        selected={selectedId === doc.id}
+        tag={<span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-400">{domainLabels[doc.domain] ?? doc.domain}</span>}
+      />)}
+    </div>
+  </div>;
 }
 
 function DatasetArticle({ selected }: { selected: DatasetDoc }) {
@@ -504,7 +583,7 @@ function KostenWikiSection({ selected }: { selected: DatasetDoc }) {
         </tr>)}
       </tbody>
     </table>
-    <p className="mt-3 max-w-3xl text-xs leading-6 text-zinc-400 dark:text-zinc-500">CAPEX annuisiert über die Lebensdauer (Kapitalwiedergewinnungsfaktor, realer WACC im Register „Preise"). Brennstoff zusätzlich durch den Wirkungsgrad geteilt. Eingang in die Systemkosten-Rechnung der Kosten-Sektion.</p>
+    <p className="mt-3 max-w-3xl text-xs leading-6 text-zinc-400 dark:text-zinc-500">CAPEX annuisiert über die Lebensdauer (Kapitalwiedergewinnungsfaktor) mit dem technologiespezifischen realen WACC dieses Pakets. Brennstoff zusätzlich durch den Wirkungsgrad geteilt. Eingang in die Systemkosten-Rechnung der Kosten-Sektion.</p>
     {data.sourceUrls?.length
       ? <ul className="mt-3 grid max-w-3xl gap-1 text-sm text-zinc-700 dark:text-zinc-300">
           {data.sourceUrls.map(url => <li key={url} className="break-all">• <a href={url} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-700">{url}</a></li>)}
