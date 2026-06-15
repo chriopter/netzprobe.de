@@ -7,17 +7,6 @@ mod result;
 
 // Preset-Konstanten als Source-of-Truth aus den Erzeugung-Modulen.
 // Der Kern ist Dispatch-Engine — die Szenario-Parameter leben in den Presets.
-#[path = "../../erzeugung/100ee-noimport/model.rs"]
-mod preset_100ee_lokal;
-#[path = "../../erzeugung/100ee-import/model.rs"]
-mod preset_100ee_import;
-#[path = "../../erzeugung/100kern-lastfolgend/model.rs"]
-mod preset_100kern;
-#[path = "../../erzeugung/100h2-import/model.rs"]
-mod preset_100h2_import;
-#[path = "../../erzeugung/ee-moderat-kern/model.rs"]
-mod preset_ee_moderat_kern;
-
 pub use api::ApiView;
 pub use error::ModelError;
 pub use fingerprint::{
@@ -32,6 +21,11 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::borrow::Cow;
 use std::collections::HashMap;
+
+// Auto-discovery der Erzeugung-Presets via build.rs (model/kern/kern/build.rs):
+// scannt model/erzeugung/*/package.json nach einem "preset"-Block + `pub fn apply`
+// und generiert die `#[path] mod …;`-Deklarationen sowie `auto_dispatch`.
+include!(concat!(env!("OUT_DIR"), "/presets_generated.rs"));
 
 const EPS: f64 = 1e-9;
 const H2_LHV_KWH_PER_KG: f64 = 33.33;
@@ -607,27 +601,11 @@ impl StaticModel {
         demand_twh: f64,
         scenario: &Value,
     ) -> Result<(Value, Value, Value, Value), ModelError> {
-        match preset {
-            "historical-2025" => self.preset_historical_2025(),
-            "historical-2017" => self.preset_historical_2017(),
-            "100ee-noimport" => self.preset_100ee_noimport(demand_twh, scenario),
-            "100ee-import" => self.preset_100ee_import(demand_twh, scenario),
-            "100kern-lastfolgend" => preset_100kern::apply(self, demand_twh),
-            "ee-moderat-kern" => preset_ee_moderat_kern::apply(self, demand_twh),
-            "100h2-import" => self.preset_100h2_import(demand_twh, scenario),
-            "2025-skaliert" => self.preset_2025_scaled(demand_twh),
-            _ => Err(ModelError::Unsupported {
+        auto_dispatch(self, preset, demand_twh, scenario).unwrap_or_else(|| {
+            Err(ModelError::Unsupported {
                 message: format!("Unbekanntes supplyPreset: {preset}"),
-            }),
-        }
-    }
-
-    fn preset_historical_2025(&self) -> Result<(Value, Value, Value, Value), ModelError> {
-        self.composition_supply("historisch-2025")
-    }
-
-    fn preset_historical_2017(&self) -> Result<(Value, Value, Value, Value), ModelError> {
-        self.composition_supply("historisch-2017")
+            })
+        })
     }
 
     fn composition_supply(
@@ -664,306 +642,6 @@ impl StaticModel {
             }),
             json!({
                 "stromGW": comp_number(composition_id, "exportStromGW")?,
-            }),
-        ))
-    }
-
-    fn preset_100ee_noimport(
-        &self,
-        demand_twh: f64,
-        scenario: &Value,
-    ) -> Result<(Value, Value, Value, Value), ModelError> {
-        // Effektive Stromnachfrage: der Sektor-H2-Bedarf wird im Engine-Pool aus
-        // Überschuss-Elektrolyse gedeckt (H2-LHV / chargeEfficiency Strom je LHV)
-        // statt als direkte Sektor-Elektrolyse-Stromlast. Seit der Pool echtes
-        // H2-Zwischenprodukt führt (Bedarf = Sektor-Strom × chargeEfficiency),
-        // ist die Korrektur fast neutral — übrig bleibt nur der Stahl-Aufschlag
-        // (Pool-Elektrolyse 0,62 statt Onsite 52 kWh/kg ≈ 0,641, ~+3 TWh).
-        // Speicher (Batterie/Rückverstromung/Kaverne) skalieren dagegen mit der
-        // STROMLAST (Demand minus Sektor-Elektrolyse-Strom): die Pool-Sektoren
-        // bringen ihre Flexibilität selbst mit (Audit AP04).
-        let lhv = self.sector_h2_demand_twh(scenario)?;
-        let strom = self.sector_h2_strom_twh(scenario)?;
-        let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
-        let sector_lhv_total = lhv.stahl + lhv.chemie + lhv.schiff + lhv.flug;
-        let charge_eff = self.storage["h2"].charge_efficiency.max(0.1);
-        let eff_demand_twh = demand_twh - sector_strom_total + sector_lhv_total / charge_eff;
-        let stromlast_twh = demand_twh - sector_strom_total;
-        self.preset_100ee_with_demand(
-            eff_demand_twh,
-            stromlast_twh,
-            0.0,
-            comp_number("historisch-2025", "exportStromGW")?,
-        )
-    }
-
-    fn preset_100ee_import(
-        &self,
-        demand_twh: f64,
-        scenario: &Value,
-    ) -> Result<(Value, Value, Value, Value), ModelError> {
-        // Alle Werte aus dem Preset-Modul model/erzeugung/100ee-import/model.rs.
-        use preset_100ee_import::{
-            EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
-            STROM_IMPORT_EMISSION_G_PER_KWH,
-            target_variable_re_twh, variable_re_gw, wind_offshore_gw,
-            wind_offshore_shortfall_twh, strom_import_gw_cap,
-            battery_power_gw, battery_energy_gwh,
-            h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh, h2_import_twh,
-            strom_reduction_twh, remaining_sectors, h2_import_for_strom_twh,
-        };
-        let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
-        let yield_wind_on = self.annual_yield_twh_per_gw("windon").max(0.1);
-        let yield_wind_off = self.annual_yield_twh_per_gw("windoff").max(0.1);
-        let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
-        let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
-
-        // Sektor-H2-Potenzial (LHV) und Strom-Hebel, absteigend nach Hebel —
-        // identische Deckungsreihenfolge wie der Engine-H2-Pool im run_loop.
-        let lhv = self.sector_h2_demand_twh(scenario)?;
-        let ratio = self.sector_strom_per_h2()?;
-        let mut sectors: Vec<(f64, f64)> = vec![
-            (lhv.stahl, ratio.stahl),
-            (lhv.chemie, ratio.chemie),
-            (lhv.schiff, ratio.schiff),
-            (lhv.flug, ratio.flug),
-        ];
-        sectors.retain(|(lhv_twh, _)| *lhv_twh > 0.0);
-        sectors.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        let sector_lhv_total: f64 = sectors.iter().map(|(lhv_twh, _)| lhv_twh).sum();
-
-        // H2-Import nur bis zum Sektorbedarf — Import ohne Abnehmer liefe in die
-        // volle Kaverne und verfiele (bei heutiger Last: Import 0).
-        let h2_import_base = h2_import_twh(demand_twh).min(sector_lhv_total);
-        // EE-Flotte auf die EFFEKTIVE Stromnachfrage nach Import-Substitution
-        // auslegen (vorher Doppelzählung: voller Elektrolyse-Strom + Import).
-        let eff_demand_twh = demand_twh - strom_reduction_twh(h2_import_base, &sectors);
-        let target =
-            target_variable_re_twh(
-                eff_demand_twh,
-                biomasse_baseline_gw,
-                self.generation["biomasse"].availability,
-                laufwasser_baseline_gw,
-                self.generation["laufwasser"].availability,
-            );
-        let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
-        let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
-        let wind_on_gw = variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on);
-        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
-        // Wenn Wind off gecappt: Shortfall bevorzugt über zusätzlichen H2-Import
-        // (Demand-Substitution im restlichen Sektor-Headroom), Rest über PV.
-        let shortfall_strom_twh =
-            wind_offshore_shortfall_twh(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
-        let rest_sectors = remaining_sectors(&sectors, h2_import_base);
-        let (h2_import_extra, strom_covered_twh) =
-            h2_import_for_strom_twh(shortfall_strom_twh, &rest_sectors);
-        let pv_extra_gw = (shortfall_strom_twh - strom_covered_twh).max(0.0) / yield_pv;
-        let h2_import_total = h2_import_base + h2_import_extra;
-        Ok((
-            json!({
-                "pvInstalledGW": snap_gen("pv", pv_gw + pv_extra_gw)?,
-                "windOnInstalledGW": snap_gen("windon", wind_on_gw)?,
-                "windOffInstalledGW": snap_gen("windoff", wind_off_gw)?,
-                "kernkraftInstalledGW": 0.0,
-                "biomasseInstalledGW": biomasse_baseline_gw,
-                "laufwasserInstalledGW": laufwasser_baseline_gw,
-                "gasInstalledGW": 0.0,
-                "kohleInstalledGW": 0.0,
-                "pvCapacityFactorMultiplier": 1.0,
-                "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.0,
-            }),
-            json!({
-                "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(eff_demand_twh))?,
-                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", battery_energy_gwh(eff_demand_twh))?,
-                "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
-                "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
-                "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", h2_charge_power_gw(eff_demand_twh))?,
-                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", h2_discharge_power_gw(eff_demand_twh))?,
-                "h2EnergyGWh": snap_storage("h2", "energyGWh", h2_energy_gwh(eff_demand_twh))?,
-            }),
-            json!({
-                "stromGW": strom_import_gw_cap(eff_demand_twh),
-                "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
-                "h2TWh": h2_import_total,
-            }),
-            json!({
-                "stromGW": comp_number("historisch-2025", "exportStromGW")?,
-            }),
-        ))
-    }
-
-    // Preset "100% H2-Import": keine heimische Erzeugung, die gesamte Stromlast
-    // wird aus importiertem H₂ rückverstromt; der Sektor-Pool zieht direkt aus
-    // demselben Import. Sizing-Konstanten im Modul model/erzeugung/100h2-import.
-    fn preset_100h2_import(
-        &self,
-        demand_twh: f64,
-        scenario: &Value,
-    ) -> Result<(Value, Value, Value, Value), ModelError> {
-        use preset_100h2_import::{
-            cavern_energy_gwh, discharge_power_gw, import_h2_lhv_twh,
-            STROM_IMPORT_EMISSION_G_PER_KWH,
-        };
-        let discharge_eff = self.storage["h2"].discharge_efficiency.max(0.1);
-        // Sektor-H₂ (LHV) deckt der Import direkt; die zu deckende Stromlast ist
-        // Demand minus Sektor-Elektrolyse-Strom (diese Sektoren ziehen H₂ statt Strom).
-        let lhv = self.sector_h2_demand_twh(scenario)?;
-        let sector_lhv_total = lhv.stahl + lhv.chemie + lhv.schiff + lhv.flug;
-        let strom = self.sector_h2_strom_twh(scenario)?;
-        let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
-        let stromlast_twh = (demand_twh - sector_strom_total).max(0.0);
-        // Spitzen-Stromlast nach (konstanter) Pool-Reduktion → Rückverstromungs-Leistung.
-        let pool_reduction_gw =
-            self.h2_pool_strom_reduction_gw(self.total_sector_h2_demand_gw(scenario)?, scenario)?;
-        let frame = self.hours_for(scenario)?;
-        let mut peak_gw = 0.0_f64;
-        for row in frame.iter() {
-            peak_gw = peak_gw.max(self.demand_gw(row, scenario, pool_reduction_gw)?);
-        }
-        let import_lhv = import_h2_lhv_twh(stromlast_twh, sector_lhv_total, discharge_eff);
-        Ok((
-            json!({
-                "pvInstalledGW": 0.0,
-                "windOnInstalledGW": 0.0,
-                "windOffInstalledGW": 0.0,
-                "kernkraftInstalledGW": 0.0,
-                "biomasseInstalledGW": 0.0,
-                "laufwasserInstalledGW": 0.0,
-                "gasInstalledGW": 0.0,
-                "kohleInstalledGW": 0.0,
-                "pvCapacityFactorMultiplier": 1.0,
-                "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.0,
-            }),
-            json!({
-                "batteriePowerGW": 0.0,
-                "batterieEnergyGWh": 0.0,
-                "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
-                "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
-                "h2ChargePowerGW": 0.0,
-                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", discharge_power_gw(peak_gw))?,
-                "h2EnergyGWh": snap_storage("h2", "energyGWh", cavern_energy_gwh(stromlast_twh, discharge_eff))?,
-            }),
-            json!({
-                "stromGW": 0.0,
-                "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
-                "h2TWh": import_lhv,
-            }),
-            json!({
-                "stromGW": comp_number("historisch-2025", "exportStromGW")?,
-            }),
-        ))
-    }
-
-    // storage_demand_twh: STROMLAST als Speicher-Treiber (Demand minus Sektor-
-    // Elektrolyse-Strom) — nur die Elektrolyse-Leistung skaliert mit demand_twh,
-    // weil sie auch das Sektor-H2 des Pools produziert (Audit AP04).
-    fn preset_100ee_with_demand(
-        &self,
-        demand_twh: f64,
-        storage_demand_twh: f64,
-        import_gw: f64,
-        export_gw: f64,
-    ) -> Result<(Value, Value, Value, Value), ModelError> {
-        // Alle Werte aus dem Preset-Modul model/erzeugung/100ee-noimport/model.rs.
-        // Der Kern ist Dispatch-Engine; Szenario-Parameter leben im Preset.
-        use preset_100ee_lokal::{
-            EE_PV_SHARE, EE_WIND_ON_SHARE, EE_WIND_OFF_SHARE,
-            target_variable_re_twh, variable_re_gw, wind_offshore_gw,
-            wind_on_compensation_for_wind_offshore_cap,
-            battery_power_gw, battery_energy_gwh,
-            h2_charge_power_gw, h2_discharge_power_gw, h2_energy_gwh,
-        };
-        let yield_pv = self.annual_yield_twh_per_gw("solar").max(0.1);
-        let yield_wind_on = self.annual_yield_twh_per_gw("windon").max(0.1);
-        let yield_wind_off = self.annual_yield_twh_per_gw("windoff").max(0.1);
-        let biomasse_baseline_gw = comp_number("historisch-2025", "biomasseInstalledGW")?;
-        let laufwasser_baseline_gw = comp_number("historisch-2025", "laufwasserInstalledGW")?;
-        let target = target_variable_re_twh(
-            demand_twh,
-            biomasse_baseline_gw,
-            self.generation["biomasse"].availability,
-            laufwasser_baseline_gw,
-            self.generation["laufwasser"].availability,
-        );
-        let total_share = EE_PV_SHARE + EE_WIND_ON_SHARE + EE_WIND_OFF_SHARE;
-        let pv_gw = variable_re_gw(target, EE_PV_SHARE, total_share, yield_pv);
-        // Offshore-Cap-Shortfall wird über Wind onshore gedeckt (winter-
-        // komplementär, system-günstiger als PV; MC-Optimum, Audit AP05).
-        let wind_on_compensation = wind_on_compensation_for_wind_offshore_cap(
-            target, EE_WIND_OFF_SHARE, total_share, yield_wind_off, yield_wind_on,
-        );
-        let wind_on_gw =
-            variable_re_gw(target, EE_WIND_ON_SHARE, total_share, yield_wind_on) + wind_on_compensation;
-        let wind_off_gw = wind_offshore_gw(target, EE_WIND_OFF_SHARE, total_share, yield_wind_off);
-        Ok((
-            json!({
-                "pvInstalledGW": snap_gen("pv", pv_gw)?,
-                "windOnInstalledGW": snap_gen("windon", wind_on_gw)?,
-                "windOffInstalledGW": snap_gen("windoff", wind_off_gw)?,
-                "kernkraftInstalledGW": 0.0,
-                "biomasseInstalledGW": biomasse_baseline_gw,
-                "laufwasserInstalledGW": laufwasser_baseline_gw,
-                "gasInstalledGW": 0.0,
-                "kohleInstalledGW": 0.0,
-                "pvCapacityFactorMultiplier": 1.0,
-                "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.0,
-            }),
-            json!({
-                "batteriePowerGW": snap_storage("batterie", "powerGW", battery_power_gw(storage_demand_twh))?,
-                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", battery_energy_gwh(storage_demand_twh))?,
-                "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
-                "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
-                "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", h2_charge_power_gw(demand_twh))?,
-                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", h2_discharge_power_gw(storage_demand_twh))?,
-                "h2EnergyGWh": snap_storage("h2", "energyGWh", h2_energy_gwh(storage_demand_twh))?,
-            }),
-            json!({
-                "stromGW": import_gw,
-                "stromEmissionGperKWh": trade_number("strom-handel", &["import", "emissionGperKWh"])?,
-                "h2TWh": 0.0,
-            }),
-            json!({ "stromGW": export_gw }),
-        ))
-    }
-
-    fn preset_2025_scaled(
-        &self,
-        demand_twh: f64,
-    ) -> Result<(Value, Value, Value, Value), ModelError> {
-        let factor = demand_twh / 466.0;
-        Ok((
-            json!({
-                "pvInstalledGW": snap_gen("pv", comp_number("historisch-2025", "pvInstalledGW")? * factor)?,
-                "windOnInstalledGW": snap_gen("windon", comp_number("historisch-2025", "windOnInstalledGW")? * factor)?,
-                "windOffInstalledGW": snap_gen("windoff", comp_number("historisch-2025", "windOffInstalledGW")? * factor)?,
-                "kernkraftInstalledGW": snap_gen("kernkraft", comp_number("historisch-2025", "kernkraftInstalledGW")? * factor)?,
-                "biomasseInstalledGW": snap_gen("biomasse", comp_number("historisch-2025", "biomasseInstalledGW")? * factor)?,
-                "laufwasserInstalledGW": snap_gen("laufwasser", comp_number("historisch-2025", "laufwasserInstalledGW")? * factor)?,
-                "gasInstalledGW": snap_gen("gas", comp_number("historisch-2025", "gasInstalledGW")? * factor)?,
-                "kohleInstalledGW": snap_gen("kohle", comp_number("historisch-2025", "kohleInstalledGW")? * factor)?,
-                "pvCapacityFactorMultiplier": 1.0,
-                "windOnCapacityFactorMultiplier": 1.0,
-                "windOffCapacityFactorMultiplier": 1.0,
-            }),
-            json!({
-                "batteriePowerGW": snap_storage("batterie", "powerGW", comp_number("historisch-2025", "batteriePowerGW")? * factor)?,
-                "batterieEnergyGWh": snap_storage("batterie", "energyGWh", comp_number("historisch-2025", "batterieEnergyGWh")? * factor)?,
-                "pumpspeicherPowerGW": snap_storage("pumpspeicher", "powerGW", comp_number("historisch-2025", "pumpspeicherPowerGW")? * factor)?,
-                "pumpspeicherEnergyGWh": snap_storage("pumpspeicher", "energyGWh", comp_number("historisch-2025", "pumpspeicherEnergyGWh")? * factor)?,
-                "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", comp_number("historisch-2025", "h2ChargePowerGW")? * factor)?,
-                "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", comp_number("historisch-2025", "h2DischargePowerGW")? * factor)?,
-                "h2EnergyGWh": snap_storage("h2", "energyGWh", comp_number("historisch-2025", "h2EnergyGWh")? * factor)?,
-            }),
-            json!({
-                "stromGW": snap_trade("strom-handel", &["import", "stromGW"], comp_number("historisch-2025", "importStromGW")? * factor)?,
-                "stromEmissionGperKWh": trade_number("strom-handel", &["import", "emissionGperKWh"])?,
-                "h2TWh": comp_number("historisch-2025", "importH2TWh")?,
-            }),
-            json!({
-                "stromGW": snap_trade("strom-handel", &["export", "stromGW"], comp_number("historisch-2025", "exportStromGW")? * factor)?,
             }),
         ))
     }

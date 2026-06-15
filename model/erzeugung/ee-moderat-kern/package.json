@@ -1,4 +1,12 @@
 {
+  "preset": {
+    "id": "ee-moderat-kern",
+    "label": "Kernkraft + EE",
+    "gruppe": "lastfolgend",
+    "rang": 60,
+    "beschreibung": "Eigener kostenoptimierter Pfad: moderater EE-Ausbau + Kernkraft-Grundlast, GAS-FREI (H₂-Saisonspeicher deckt die Dunkelflaute). CO₂-arme Kostenoptimum-Ecke — Konzept-Anker WePlanet 2025",
+    "sichtbar": true
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "ee-moderat-kern",
   "domain": "erzeugung",

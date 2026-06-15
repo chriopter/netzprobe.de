@@ -1,4 +1,11 @@
 {
+  "preset":   {
+    "id": "2025-skaliert",
+    "label": "2025 hochskaliert",
+    "gruppe": "lastfolgend",
+    "rang": 70,
+    "beschreibung": "Aktueller 2025-Mix proportional zur Last hochskaliert"
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "2025-skaliert",
   "domain": "erzeugung",

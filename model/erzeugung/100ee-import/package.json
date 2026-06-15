@@ -1,4 +1,12 @@
 {
+  "preset": {
+    "id": "100ee-import",
+    "label": "EE 85% + H₂ 15%",
+    "gruppe": "lastfolgend",
+    "rang": 20,
+    "beschreibung": "EE-Mix nach Studien-Konsens (Agora KN2045 / BMWK LFS3 / Ariadne) plus H₂- und Strom-Import",
+    "sichtbar": true
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "100ee-import",
   "domain": "erzeugung",

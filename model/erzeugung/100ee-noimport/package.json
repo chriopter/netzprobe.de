@@ -1,4 +1,12 @@
 {
+  "preset": {
+    "id": "100ee-noimport",
+    "label": "EE 100%",
+    "gruppe": "lastfolgend",
+    "rang": 10,
+    "beschreibung": "Autark: 100% lokale EE-Erzeugung, kein Import — fordert großen Überbau und Saisonalspeicher",
+    "sichtbar": true
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "100ee-noimport",
   "domain": "erzeugung",

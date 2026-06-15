@@ -25,7 +25,7 @@ export type Scenario = {
     'e100-chemie': boolean;
     'e100-chemie-target-twh': number;
   };
-  supplyPreset: 'custom' | 'historical-2025' | 'historical-2017' | '100ee-noimport' | '100ee-import' | '100kern-lastfolgend' | 'ee-moderat-kern' | '100h2-import' | '2025-skaliert';
+  supplyPreset: 'custom' | string;
   loadYear: 2025 | 2017;
   generation: {
     pvInstalledGW: number;

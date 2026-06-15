@@ -1,4 +1,12 @@
 {
+  "preset": {
+    "id": "historical-2025",
+    "label": "2025",
+    "gruppe": "fix",
+    "rang": 10,
+    "beschreibung": "Beobachtete Erzeugung und Last 2025 (Pass-Through)",
+    "sichtbar": true
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "historisch-2025",
   "domain": "erzeugung",

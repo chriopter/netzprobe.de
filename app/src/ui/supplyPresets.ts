@@ -1,48 +1,33 @@
-export type SupplyPresetId = 'historical-2025' | 'historical-2017' | '100ee-noimport' | '100ee-import' | '100kern-lastfolgend' | 'ee-moderat-kern' | '100h2-import' | '2025-skaliert';
-export type SupplyPillId = SupplyPresetId | 'custom';
+import { supplyPresetCatalog } from './dataCatalog';
 
-export const supplyPresetIds: SupplyPresetId[] = [
-  'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '100kern-lastfolgend', 'ee-moderat-kern', '100h2-import', '2025-skaliert',
-];
+export type SupplyPresetId = string;
+export type SupplyPillId = string;
 
+const fixCatalog = supplyPresetCatalog.filter(e => e.gruppe === 'fix');
+const lastfolgendCatalog = supplyPresetCatalog.filter(e => e.gruppe === 'lastfolgend');
+
+export const supplyPresetIds: SupplyPresetId[] = supplyPresetCatalog.map(e => e.presetId);
+
+// 'custom' (Manuell) sits in the Fix group, right after the last fix entry.
 export const supplyPillIds: SupplyPillId[] = [
-  'historical-2025', 'historical-2017', 'custom', '100ee-noimport', '100ee-import', '100kern-lastfolgend', 'ee-moderat-kern', '100h2-import', '2025-skaliert',
+  ...fixCatalog.map(e => e.presetId),
+  'custom',
+  ...lastfolgendCatalog.map(e => e.presetId),
 ];
 
 export const supplyPillLabels: Record<SupplyPillId, string> = {
-  'historical-2025': '2025',
-  'historical-2017': '2017',
-  '100ee-noimport': '100% EE lokal',
-  '100ee-import': '100% EE + Import',
-  '100kern-lastfolgend': '100% Kernkraft',
-  'ee-moderat-kern': 'EE moderat + Kern',
-  '100h2-import': '100% H₂-Import',
-  '2025-skaliert': '2025 hochskaliert',
-  'custom': 'Manuell',
+  ...Object.fromEntries(supplyPresetCatalog.map(e => [e.presetId, e.label])),
+  custom: 'Manuell',
 };
 
 export const supplyPillDescriptions: Record<SupplyPillId, string> = {
-  'historical-2025': 'Beobachtete Erzeugung und Last 2025 (Pass-Through)',
-  'historical-2017': 'Beobachtete Erzeugung und Last 2017 — Kernkraft on, mehr Kohle, ~36% EE',
-  '100ee-noimport': 'Autark: 100% lokale EE-Erzeugung, kein Import — fordert großen Überbau und Saisonalspeicher',
-  '100ee-import': 'EE-Mix nach Studien-Konsens (Agora KN2045 / BMWK LFS3 / Ariadne) plus H₂- und Strom-Import',
-  '100kern-lastfolgend': 'Stresstest-Anker: 100% Kernkraft, lastfolgend (französisches Modell). Physisch unrealistisch bis 2045 — Vergleichswert zur 100%-EE-Variante',
-  'ee-moderat-kern': 'Eigener kostenoptimierter Pfad: moderater EE-Ausbau + Kernkraft-Grundlast, GAS-FREI (H₂-Saisonspeicher deckt die Dunkelflaute). CO₂-arme Kostenoptimum-Ecke — Konzept-Anker WePlanet 2025',
-  '100h2-import': 'Gedanken-Anker: die gesamte Last aus importiertem Wasserstoff rückverstromt, kein heimischer Park. Zeigt die Importabhängigkeit — ~2.450 TWh H₂/Jahr, Kosten fast vollständig im Import',
-  '2025-skaliert': 'Aktueller 2025-Mix proportional zur Last hochskaliert',
-  'custom': 'Slider frei konfigurierbar; Dispatch läuft mit deinen Werten',
+  ...Object.fromEntries(supplyPresetCatalog.map(e => [e.presetId, e.beschreibung])),
+  custom: 'Slider frei konfigurierbar; Dispatch läuft mit deinen Werten',
 };
 
 export const supplyPillWikiIds: Record<SupplyPillId, string> = {
-  'historical-2025': 'historisch-2025',
-  'historical-2017': 'historisch-2017',
-  '100ee-noimport': '100ee-noimport',
-  '100ee-import': '100ee-import',
-  '100kern-lastfolgend': '100kern-lastfolgend',
-  'ee-moderat-kern': 'ee-moderat-kern',
-  '100h2-import': '100h2-import',
-  '2025-skaliert': '2025-skaliert',
-  'custom': 'kern',
+  ...Object.fromEntries(supplyPresetCatalog.map(e => [e.presetId, e.wikiId])),
+  custom: 'kern',
 };
 
 // Aliases for backward-compatible imports in ScenarioSidebar.

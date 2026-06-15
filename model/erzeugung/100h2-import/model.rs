@@ -19,6 +19,11 @@
 //                     × Marge (gegen Kavernen-Überlaufverluste bei flachem Zufluss).
 // - Kaverne (LHV)   = Anteil der Jahres-Stromlast als Saisonpuffer, in LHV.
 
+use serde_json::{json, Value};
+use super::data::{comp_number, snap_storage};
+use super::error::ModelError;
+use super::StaticModel;
+
 // Rückverstromungs-Leistung deckt die Spitzen-Stromlast mit etwas Marge.
 pub const DISCHARGE_CUSHION: f64 = 1.05;
 // Import knapp über dem reinen Jahresbedarf: bei flachem Zufluss + 0,20-Kaverne
@@ -46,6 +51,65 @@ pub fn discharge_power_gw(peak_electricity_gw: f64) -> f64 {
 // Kavernen-Energie (GWh, H₂-LHV) als saisonaler Puffer.
 pub fn cavern_energy_gwh(stromlast_twh: f64, discharge_eff: f64) -> f64 {
     stromlast_twh.max(0.0) * CAVERN_FRACTION_OF_STROMLAST * 1000.0 / discharge_eff.max(0.1)
+}
+
+// Preset "100% H2-Import": keine heimische Erzeugung, die gesamte Stromlast
+// wird aus importiertem H₂ rückverstromt; der Sektor-Pool zieht direkt aus
+// demselben Import.
+pub fn apply(
+    model: &StaticModel,
+    demand_twh: f64,
+    scenario: &Value,
+) -> Result<(Value, Value, Value, Value), ModelError> {
+    let discharge_eff = model.storage["h2"].discharge_efficiency.max(0.1);
+    // Sektor-H₂ (LHV) deckt der Import direkt; die zu deckende Stromlast ist
+    // Demand minus Sektor-Elektrolyse-Strom (diese Sektoren ziehen H₂ statt Strom).
+    let lhv = model.sector_h2_demand_twh(scenario)?;
+    let sector_lhv_total = lhv.stahl + lhv.chemie + lhv.schiff + lhv.flug;
+    let strom = model.sector_h2_strom_twh(scenario)?;
+    let sector_strom_total = strom.stahl + strom.chemie + strom.schiff + strom.flug;
+    let stromlast_twh = (demand_twh - sector_strom_total).max(0.0);
+    // Spitzen-Stromlast nach (konstanter) Pool-Reduktion → Rückverstromungs-Leistung.
+    let pool_reduction_gw =
+        model.h2_pool_strom_reduction_gw(model.total_sector_h2_demand_gw(scenario)?, scenario)?;
+    let frame = model.hours_for(scenario)?;
+    let mut peak_gw = 0.0_f64;
+    for row in frame.iter() {
+        peak_gw = peak_gw.max(model.demand_gw(row, scenario, pool_reduction_gw)?);
+    }
+    let import_lhv = import_h2_lhv_twh(stromlast_twh, sector_lhv_total, discharge_eff);
+    Ok((
+        json!({
+            "pvInstalledGW": 0.0,
+            "windOnInstalledGW": 0.0,
+            "windOffInstalledGW": 0.0,
+            "kernkraftInstalledGW": 0.0,
+            "biomasseInstalledGW": 0.0,
+            "laufwasserInstalledGW": 0.0,
+            "gasInstalledGW": 0.0,
+            "kohleInstalledGW": 0.0,
+            "pvCapacityFactorMultiplier": 1.0,
+            "windOnCapacityFactorMultiplier": 1.0,
+            "windOffCapacityFactorMultiplier": 1.0,
+        }),
+        json!({
+            "batteriePowerGW": 0.0,
+            "batterieEnergyGWh": 0.0,
+            "pumpspeicherPowerGW": comp_number("historisch-2025", "pumpspeicherPowerGW")?,
+            "pumpspeicherEnergyGWh": comp_number("historisch-2025", "pumpspeicherEnergyGWh")?,
+            "h2ChargePowerGW": 0.0,
+            "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", discharge_power_gw(peak_gw))?,
+            "h2EnergyGWh": snap_storage("h2", "energyGWh", cavern_energy_gwh(stromlast_twh, discharge_eff))?,
+        }),
+        json!({
+            "stromGW": 0.0,
+            "stromEmissionGperKWh": STROM_IMPORT_EMISSION_G_PER_KWH,
+            "h2TWh": import_lhv,
+        }),
+        json!({
+            "stromGW": comp_number("historisch-2025", "exportStromGW")?,
+        }),
+    ))
 }
 
 #[cfg(test)]

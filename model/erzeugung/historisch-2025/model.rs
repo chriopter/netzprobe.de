@@ -1,3 +1,15 @@
+use serde_json::Value;
+use super::error::ModelError;
+use super::StaticModel;
+
+pub fn apply(
+    model: &StaticModel,
+    _demand_twh: f64,
+    _scenario: &Value,
+) -> Result<(Value, Value, Value, Value), ModelError> {
+    model.composition_supply("historisch-2025")
+}
+
 pub fn default_installed_gw(default_installed_gw: f64) -> f64 {
     default_installed_gw
 }

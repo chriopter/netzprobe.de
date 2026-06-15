@@ -12,10 +12,10 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { supplyPillIds, supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
+import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
-import { getPackage } from './dataCatalog';
+import { getPackage, supplyPresetCatalog } from './dataCatalog';
 
 const summaryFor = (id: string) => getPackage(id)?.method.summary ?? '';
 import { fmt, fmt0, twh, twh0 } from './format';
@@ -605,22 +605,27 @@ function ErzeugungSection({
 }) {
   if (!data) return null;
 
-  const pillPresets = supplyPillIds.map(id => ({
+  const pillFromId = (id: SupplyPillId) => ({
     id,
     label: supplyPillLabels[id],
     description: supplyPillDescriptions[id],
     docId: supplyPillWikiIds[id],
-  }));
+  });
+  const customPill = pillFromId('custom');
+  const fixPills = supplyPresetCatalog.filter(e => e.gruppe === 'fix').map(e => pillFromId(e.presetId));
+  const lastfolgendPills = supplyPresetCatalog.filter(e => e.gruppe === 'lastfolgend').map(e => pillFromId(e.presetId));
+
   const activeId: SupplyPillId = supplyPreset;
-  const activeWikiId = supplyPillWikiIds[activeId];
-  const visibleSupplyOrder: SupplyPillId[] = ['historical-2025', '100ee-noimport', '100ee-import', '100kern-lastfolgend', 'ee-moderat-kern', 'custom'];
-  const visibleSupplyPillIds = new Set<SupplyPillId>(visibleSupplyOrder);
-  const visibleSupplyPills = visibleSupplyOrder
-    .map(id => pillPresets.find(p => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => !!p);
+  const activeWikiId = supplyPillWikiIds[activeId] ?? 'kern';
+
+  const visibleSupplyPills = [
+    ...supplyPresetCatalog.filter(e => e.sichtbar).map(e => pillFromId(e.presetId)),
+    customPill,
+  ];
+  const visibleSupplyPillIds = new Set<SupplyPillId>(visibleSupplyPills.map(p => p.id));
   const supplyDropdownGroups: ReadonlyArray<PresetOptionGroup<SupplyPillId>> = [
-    { title: 'Fix', presets: pillPresets.filter(p => p.id === 'historical-2025' || p.id === 'historical-2017' || p.id === 'custom') },
-    { title: 'Lastfolgend', presets: pillPresets.filter(p => p.id === '100ee-noimport' || p.id === '100ee-import' || p.id === '100kern-lastfolgend' || p.id === 'ee-moderat-kern' || p.id === '100h2-import' || p.id === '2025-skaliert') },
+    { title: 'Fix', presets: [...fixPills, customPill] },
+    { title: 'Lastfolgend', presets: lastfolgendPills },
   ];
 
   const generationTotalGW = scenario.generation.pvInstalledGW
