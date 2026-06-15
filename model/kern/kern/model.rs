@@ -15,6 +15,8 @@ mod preset_100ee_import;
 mod preset_100kern;
 #[path = "../../erzeugung/100h2-import/model.rs"]
 mod preset_100h2_import;
+#[path = "../../erzeugung/ee-moderat-kern/model.rs"]
+mod preset_ee_moderat_kern;
 
 pub use api::ApiView;
 pub use error::ModelError;
@@ -611,6 +613,7 @@ impl StaticModel {
             "100ee-noimport" => self.preset_100ee_noimport(demand_twh, scenario),
             "100ee-import" => self.preset_100ee_import(demand_twh, scenario),
             "100kern-lastfolgend" => preset_100kern::apply(self, demand_twh),
+            "ee-moderat-kern" => preset_ee_moderat_kern::apply(self, demand_twh),
             "100h2-import" => self.preset_100h2_import(demand_twh, scenario),
             "2025-skaliert" => self.preset_2025_scaled(demand_twh),
             _ => Err(ModelError::Unsupported {
