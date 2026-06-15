@@ -226,6 +226,7 @@
       }
     },
     "kosten": {
+      "wacc": 0.05,
       "capexEurPerKW": 150,
       "capexEurPerKWh": 280,
       "omFixEurPerKWa": 4,

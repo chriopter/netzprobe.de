@@ -53,6 +53,9 @@ describe('Kosten · A Datenintegrität', () => {
         expect(k!.omFixEurPerKWa, id).toBeGreaterThanOrEqual(0);
       }
       expect(k!.lifetimeYears, id).toBeGreaterThan(0);
+      // Technologiespezifischer realer WACC — kein globaler Default mehr.
+      expect(k!.wacc, id).toBeGreaterThanOrEqual(0.02);
+      expect(k!.wacc, id).toBeLessThanOrEqual(0.12);
     }
   });
   it('Fuel-Technologien haben Wirkungsgrad ∈ (0,1] und Brennstoffpreis > 0', () => {
@@ -79,7 +82,7 @@ describe('Kosten · A Datenintegrität', () => {
     }
   });
   it('Register preise: Keys vorhanden, KEIN co2EurPerT, jeder Param dokumentiert', () => {
-    for (const key of ['wacc', 'gasFuelEurPerMWhTh', 'importEurPerMWh', 'exportEurPerMWh', 'h2ImportEurPerMWh', 'households', 'householdConsumptionKWhPerA']) {
+    for (const key of ['netzWacc', 'gasFuelEurPerMWhTh', 'importEurPerMWh', 'exportEurPerMWh', 'h2ImportEurPerMWh', 'households', 'householdConsumptionKWhPerA']) {
       expect(typeof prices[key], key).toBe('number');
     }
     expect(prices.co2EurPerT).toBeUndefined();
@@ -120,8 +123,8 @@ describe('Kosten · 0 Realismus', () => {
     expect(kostenOf('h2')!.capexEurPerKWh).toBeLessThanOrEqual(0.6);
   });
   it('0.3 zentrale Preise im Korridor', () => {
-    expect(prices.wacc).toBeGreaterThanOrEqual(0.03);
-    expect(prices.wacc).toBeLessThanOrEqual(0.08);
+    expect(prices.netzWacc).toBeGreaterThanOrEqual(0.03);
+    expect(prices.netzWacc).toBeLessThanOrEqual(0.08);
     expect(prices.gasFuelEurPerMWhTh).toBeGreaterThanOrEqual(25);
     expect(prices.gasFuelEurPerMWhTh).toBeLessThanOrEqual(45);
     expect(prices.uraniumEurPerMWhEl).toBeGreaterThanOrEqual(18);
@@ -132,6 +135,16 @@ describe('Kosten · 0 Realismus', () => {
     expect(prices.h2ImportEurPerMWh).toBeLessThanOrEqual(210);
     expect(prices.households).toBeGreaterThanOrEqual(40e6);
     expect(prices.households).toBeLessThanOrEqual(42e6);
+  });
+  it('0.4 technologiespezifischer WACC risikodifferenziert (ISE 2024: EE < Dispatchable < Kernkraft)', () => {
+    const w = (id: string) => kostenOf(id)!.wacc;
+    // Erneuerbare unter den thermischen Dispatchables.
+    expect(w('pv')).toBeLessThan(w('gas'));
+    expect(w('windon')).toBeLessThan(w('kohle'));
+    // Kernkraft trägt das höchste Bau-/Vorlaufrisiko.
+    expect(w('kernkraft')).toBeGreaterThanOrEqual(Math.max(w('gas'), w('kohle'), w('windoff')));
+    // Offshore-Wind über Onshore (größeres Capex-/Bau-Risiko).
+    expect(w('windoff')).toBeGreaterThan(w('windon'));
   });
 });
 
@@ -151,7 +164,7 @@ describe('Kosten · B Invarianten', () => {
   it('9 Hand-Szenario PV 100 GW (leere Reihe) → reine CAPEX+O&M', () => {
     const k = computeKosten(scen({ pvInstalledGW: 100 }), result([], {}));
     const kp = kostenOf('pv')!;
-    const capex = kp.capexEurPerKW * 100e6 * crf(0.05, kp.lifetimeYears);
+    const capex = kp.capexEurPerKW * 100e6 * crf(kp.wacc, kp.lifetimeYears);
     const om = kp.omFixEurPerKWa * 100e6;
     expect(k.breakdown.capex).toBeCloseTo(capex, -3);
     expect(k.breakdown.om).toBeCloseTo(om, -3);
@@ -162,7 +175,7 @@ describe('Kosten · B Invarianten', () => {
   it('10 Hand-Szenario Batterie 10 GW / 40 GWh', () => {
     const k = computeKosten(scen({}, { batteriePowerGW: 10, batterieEnergyGWh: 40 }), result([], {}));
     const kb = kostenOf('batterie')!;
-    const capex = (kb.capexEurPerKW * 10e6 + kb.capexEurPerKWh * 40e6) * crf(0.05, kb.lifetimeYears);
+    const capex = (kb.capexEurPerKW * 10e6 + kb.capexEurPerKWh * 40e6) * crf(kb.wacc, kb.lifetimeYears);
     expect(k.breakdown.capex).toBeCloseTo(capex, -3);
   });
 
@@ -227,7 +240,7 @@ describe('Kosten · B Invarianten', () => {
 describe('Kosten · C Netzausbau', () => {
   const netz = { capex: prices.netzCapexEurPerKwAddedRE, life: prices.netzLifetimeYears, base: prices.netzBaselineReCapacityGW };
   const netzAnnual = (pv: number, won: number, woff: number) =>
-    netz.capex * Math.max(0, pv + won + woff - netz.base) * 1e6 * crf(prices.wacc, netz.life);
+    netz.capex * Math.max(0, pv + won + woff - netz.base) * 1e6 * crf(prices.netzWacc, netz.life);
 
   it('C.0 Netz-Parameter vorhanden, dokumentiert & plausibel', () => {
     expect(netz.capex).toBeGreaterThan(0);
@@ -282,7 +295,7 @@ describe('Kosten · C Netzausbau', () => {
   // Lastgetriebener Term (AP03): Verteilnetz für E-Mobilität/WP/Industrie folgt
   // dem Zuwachs der Stromlast-Spitze über die 2025-Basis — technologieneutral.
   const lastAnnual = (peakGW: number) =>
-    prices.netzCapexEurPerKwAddedPeakLoad * Math.max(0, peakGW - prices.netzBaselinePeakLoadGW) * 1e6 * crf(prices.wacc, netz.life);
+    prices.netzCapexEurPerKwAddedPeakLoad * Math.max(0, peakGW - prices.netzBaselinePeakLoadGW) * 1e6 * crf(prices.netzWacc, netz.life);
 
   it('C.7 Last-Term: Peak ≤ 2025-Basis ⇒ 0; darüber Formel & Monotonie', () => {
     expect(prices.netzBaselinePeakLoadGW).toBeGreaterThan(70);
@@ -323,7 +336,7 @@ describe('Kosten · C Netzausbau', () => {
     expect(total2050).toBeGreaterThan(0.65e12);
     expect(total2050).toBeLessThan(0.95e12);
     // Invest-Summe zwischen NEP (~320 Mrd, nur ÜN) und IMK (651 Mrd ÜN+VN).
-    const invest = k.breakdown.netz / crf(prices.wacc, netz.life);
+    const invest = k.breakdown.netz / crf(prices.netzWacc, netz.life);
     expect(invest).toBeGreaterThan(0.32e12);
     expect(invest).toBeLessThan(0.651e12);
   });
@@ -336,7 +349,7 @@ describe('Kosten · C Netzausbau', () => {
 describe('Kosten · D Erneuerung', () => {
   const annualCapex = (id: 'pv' | 'batterie', gw: number, gwh = 0) => {
     const k = (id === 'batterie' ? byId['batterie'].parameters.kosten : byId['pv'].parameters.kosten) as Record<string, number>;
-    return (k.capexEurPerKW * gw * 1e6 + (k.capexEurPerKWh ?? 0) * gwh * 1e6) * crf(prices.wacc, k.lifetimeYears);
+    return (k.capexEurPerKW * gw * 1e6 + (k.capexEurPerKWh ?? 0) * gwh * 1e6) * crf(k.wacc, k.lifetimeYears);
   };
 
   it('D.1 CAPEX × Horizont skaliert linear über Lebensdauer hinaus (impliziter Ersatz)', () => {
@@ -378,11 +391,12 @@ describe('Kosten · D Erneuerung', () => {
     for (const id of ['pv', 'windon', 'kernkraft', 'batterie'] as const) {
       const isStorage = id === 'batterie';
       const k = (isStorage ? byId['batterie'].parameters.kosten : byId[id].parameters.kosten) as Record<string, number>;
-      const annuityFactor = crf(prices.wacc, k.lifetimeYears);
+      const annuityFactor = crf(k.wacc, k.lifetimeYears);
       const overLife = annuityFactor * k.lifetimeYears;
       // Über die Lebensdauer summiert > 1 (Finanzierungs-Aufschlag), aber endlich.
+      // Obergrenze 4: hohe-WACC-Langläufer (Kernkraft 7,8 % × 45 a) ⇒ ~3,6.
       expect(overLife, id).toBeGreaterThan(1);
-      expect(overLife, id).toBeLessThan(3);
+      expect(overLife, id).toBeLessThan(4);
     }
   });
 });

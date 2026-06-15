@@ -13,7 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const P = JSON.parse(readFileSync(join(root, 'model/referenz/preise/package.json'), 'utf8')).parameters;
 const crf = (wacc, life) => wacc <= 0 ? 1 / life : wacc / (1 - Math.pow(1 + wacc, -life));
 
-const CAPEX = P.netzCapexEurPerKwAddedRE, LIFE = P.netzLifetimeYears, BASE = P.netzBaselineReCapacityGW, WACC = P.wacc;
+const CAPEX = P.netzCapexEurPerKwAddedRE, LIFE = P.netzLifetimeYears, BASE = P.netzBaselineReCapacityGW, WACC = P.netzWacc;
 const CAPEX_LAST = P.netzCapexEurPerKwAddedPeakLoad, BASE_PEAK = P.netzBaselinePeakLoadGW;
 const netzAnnual = (pv, won, woff, peak) =>
   (CAPEX * Math.max(0, pv + won + woff - BASE) + CAPEX_LAST * Math.max(0, peak - BASE_PEAK)) * 1e6 * crf(WACC, LIFE);

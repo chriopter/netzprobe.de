@@ -221,6 +221,7 @@
       }
     },
     "kosten": {
+      "wacc": 0.06,
       "capexChargeEurPerKW": 1500,
       "capexDischargeEurPerKW": 1100,
       "capexEurPerKWh": 0.5,

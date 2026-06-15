@@ -123,7 +123,7 @@ const netzFacts = (k: KostenResult): Facts => ({
     ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW`],
     ['davon lastgetrieben', `${n1(k.params.netzLastEurPerKW * k.addedPeakLoadGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
-    [`Annuität (WACC ${n0(k.params.wacc * 100)} %)`, `${n1(k.params.netzCrf * 100)} %/a`],
+    [`Annuität (Netz-WACC ${n0(k.params.netzWacc * 100)} %)`, `${n1(k.params.netzCrf * 100)} %/a`],
   ],
 });
 
@@ -133,7 +133,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
   if (d.kind === 'h2import') return h2ImportFacts(k);
   const ko = d.kosten;
   if (!ko) return null;
-  const ann: [string, string] = [`Annuität (WACC ${n0(k.params.wacc * 100)} %)`, `${n1((d.crfValue ?? 0) * 100)} %/a`];
+  const ann: [string, string] = [`Annuität (WACC ${n1((ko.wacc ?? 0) * 100)} %)`, `${n1((d.crfValue ?? 0) * 100)} %/a`];
   const wikiId = TECH_WIKI[t.key];
   if (comp === 'capex') {
     if (d.kind === 'gen') return {

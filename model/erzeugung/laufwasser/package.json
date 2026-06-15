@@ -188,6 +188,7 @@
       }
     },
     "kosten": {
+      "wacc": 0.035,
       "capexEurPerKW": 4000,
       "omFixEurPerKWa": 80,
       "lifetimeYears": 60,
