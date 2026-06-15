@@ -1,0 +1,16 @@
+{
+  "name": "Netzprobe – Stromsimulation Deutschland",
+  "short_name": "Netzprobe",
+  "description": "Interaktive Stromsystem-Simulation für Deutschland: Last, Erzeugung, Speicher, Kosten und Ressourcen.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#18181b",
+  "theme_color": "#18181b",
+  "lang": "de",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
