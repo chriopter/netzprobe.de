@@ -214,6 +214,10 @@ fn api_hour_value(hour: &SimHour) -> Value {
     out.insert("h2SocGWh".to_string(), json!(hour.h2_soc_gwh));
     out.insert("curtailmentGW".to_string(), json!(hour.curtailment_gw));
     out.insert("loadSheddingGW".to_string(), json!(hour.load_shedding_gw));
+    out.insert(
+        "h2PoolReductionGW".to_string(),
+        json!(hour.h2_pool_reduction_gw),
+    );
     out.insert("supplyGW".to_string(), json!(hour.supply_gw));
     out.insert("balanceGW".to_string(), json!(hour.balance_gw));
     out.insert("co2Tph".to_string(), json!(hour.co2_tph));

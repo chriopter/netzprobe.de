@@ -8,6 +8,7 @@ import {
   MIX_GROUPS,
   type ChartMode,
   type ChartTheme,
+  type LoadView,
   type MixLeafKey,
   type MixVisibility,
 } from '../chartOptions';
@@ -15,18 +16,18 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartModeToggle, ChartPanel, HelpDot, HelpPanel, SegmentPill, statToneClass, type Stat } from '../sectionUi';
+import { ChartDropdown, ChartModeToggle, ChartPanel, HelpDot, HelpPanel, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
 // (Standard) oder nur der Speicher-Füllstand.
 export type MixContent = 'mix' | 'kombi' | 'speicher';
 
-function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, content: MixContent, scaleMaxGW?: number): boolean {
-  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW, content } : null, [hours, visibility, mode, theme, scaleMaxGW, content]);
+function useMixChart(containerId: string, hours: SimHour[] | undefined, visibility: MixVisibility, mode: ChartMode, theme: ChartTheme, content: MixContent, scaleMaxGW: number | undefined, loadView: LoadView): boolean {
+  const data = useMemo(() => hours && hours.length ? { hours, visibility, mode, theme, scaleMaxGW, content, loadView } : null, [hours, visibility, mode, theme, scaleMaxGW, content, loadView]);
   return useMainThreadChart(containerId, data, (d, viewport) => d.content === 'speicher'
     ? buildStorageChartOption(d.hours, d.theme, d.mode, viewport)
-    : buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme, d.content === 'kombi'), mode === 'sunburst');
+    : buildMixChartOption(d.hours, d.visibility, d.mode, viewport, d.scaleMaxGW, d.theme, d.content === 'kombi', d.loadView), mode === 'sunburst');
 }
 
 function MixLegend({ visibility, onToggleLeaf, onToggleGroup }: { visibility: MixVisibility; onToggleLeaf: (key: MixLeafKey, checked: boolean) => void; onToggleGroup: (groupId: string, checked: boolean) => void }) {
@@ -137,7 +138,10 @@ export default function MixSection(props: MixSectionProps) {
     theme,
   } = props;
 
-  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, mixContent, referenceScaleMaxGW);
+  // Last-Sicht: verbrauchsorientiert (wann gebraucht) vs. erzeugungsorientiert
+  // (wann der Strom gezogen wird). Default verbrauchsorientiert.
+  const [loadView, setLoadView] = useState<LoadView>('verbrauch');
+  const mixPending = useMixChart('mix-chart', sliced, mixVisibility, chartMode, theme, mixContent, referenceScaleMaxGW, loadView);
   const isPending = parentPending || mixPending;
   const blackout = result.summary.hoursWithLoadShedding;
   // Nur der ANTEIL der elektrifizierten Last, der auch versorgt wird: bei
@@ -229,13 +233,7 @@ export default function MixSection(props: MixSectionProps) {
     <div className="mb-2 mt-5 border-t border-zinc-200 dark:border-zinc-800"/>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
-        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-1.5 sm:left-3 sm:top-3 sm:gap-2">
-          <SegmentPill
-            value={mixContent}
-            options={[{ id: 'mix', label: 'Mix' }, { id: 'kombi', label: 'Mix + Speicher' }, { id: 'speicher', label: 'Speicher' }] as const}
-            onChange={setMixContent}
-            ariaLabel="Mix oder Speicher anzeigen"
-          />
+        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-1.5 sm:left-3 sm:top-3">
           <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
         </div>
         {/* Aufklapp-Hilfe als Overlay unter dem Fragezeichen — verschiebt das Layout nicht. */}
@@ -243,21 +241,45 @@ export default function MixSection(props: MixSectionProps) {
           <HelpPanel>
           <p>Die Blume zeigt die <strong>Stundensimulation eines Jahres</strong>: Der Winkel ist der Jahresverlauf (Januar oben, im Uhrzeigersinn), der Radius die Leistung in GW. Über „Polar / Linie" rechts oben gibt es dieselben Daten als klassische Zeitachse.</p>
           <ul>
-          <li><strong>Flächen</strong> — Erzeugung je Technologie, gestapelt in Einsatzreihenfolge; die <strong>schwarze Linie</strong> ist die Stromlast.</li>
+          <li><strong>Flächen</strong> — Erzeugung je Technologie, gestapelt in Einsatzreihenfolge. Die <strong>schwarze Linie „Last"</strong> hat zwei Sichten (Umschalter unter dem Chart): <em>Verbrauch</em> = wann Energie gebraucht wird (Direktlast + Industrie-H₂; kann im Winter über dem Stapel liegen, weil der Strom dafür im Sommer als H₂ erzeugt und gespeichert wurde) und <em>Erzeugung</em> = wann der Strom tatsächlich erzeugt/gezogen wird (Direktlast + Elektrolyse + Speicher-Laden; liegt immer im Erzeugungs-Stapel). Die Differenz der beiden Sichten ist die zeitliche Verschiebung durch Speicher.</li>
           <li><strong>Dispatch je Stunde</strong> — Erneuerbare speisen vorrangig ein; die Residuallast decken zuerst Speicher, dann regelbare Kraftwerke, zuletzt Import (rot). Bleibt eine Lücke, erscheint sie dunkelrot als „Fehlend". Überschüsse laden erst die Speicher, dann Export, der Rest wird abgeregelt.</li>
           <li><strong>Mix + Speicher / Speicher</strong> — Füllstände von Batterie und H₂-Speicher: kombiniert als gestrichelte Linien (0–100 % des jeweiligen Speichermaximums), solo in absoluten GWh.</li>
           <li><strong>Legende</strong> — Serien einzeln zuschaltbar; der Kreis-Pfeil setzt die eingefrorene Radius-Skala auf das aktuelle Szenario zurück.</li>
           </ul>
           <p>Die <strong>Stromlast</strong> kann unter der Last-Summe der Sidebar liegen: Sektoren wie Stahl, Chemie, Schiff und Flug deckt das System über den H₂-Pool (Elektrolyse bzw. Import) — sie zählen zur Sektor-Nachfrage, tauchen aber nicht als Stromlast auf („via H₂-Pool" in der Last-Kachel). Dispatch-Regeln, Wirkungsgrade und Quellen im Datenhandbuch (Kernmodell).</p>
+          <p><strong>Rückverstromung — keine Doppelzählung:</strong> H₂, das später wieder zu Strom wird, erscheint als Wasserstoff-<em>Einspeisung</em> (Erzeugungsseite, meist Winter). Der Strom, der dieses H₂ erzeugt hat, lief vorher als Elektrolyse-<em>Last</em> („Last + H₂", meist Sommer). Das sind zwei reale, zeitlich getrennte Flüsse auf verschiedenen Seiten der Bilanz — nicht dasselbe doppelt. Der Roundtrip-Verlust (nur ~⅓ kommt als Strom zurück) bedeutet: es geht mehr Strom in den Speicher als wieder heraus. Wer die Jahres-<em>Erzeugung</em> aufsummiert, zählt die Rückverstromung mit, obwohl sie aus früherem Strom stammt — das ist der normale Speicher-Effekt, kein Fehler.</p>
           </HelpPanel>
         </div>}
-        <div className="pointer-events-none absolute bottom-2 right-2 z-10 flex items-center gap-1.5 sm:bottom-auto sm:right-3 sm:top-3">
+        <div className="pointer-events-none absolute bottom-2 right-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-center justify-end gap-1.5 sm:bottom-auto sm:right-3 sm:top-3">
+          <div className="pointer-events-auto">
+            <ChartDropdown
+              value={mixContent}
+              options={[
+                { id: 'mix', label: 'Mix', description: 'Erzeugung je Technologie + Last-Linie' },
+                { id: 'kombi', label: 'Mix + Speicher', description: 'Erzeugung plus Speicher-Füllstände' },
+                { id: 'speicher', label: 'Speicher', description: 'nur Speicher-Füllstände (GWh)' },
+              ] as const}
+              onChange={setMixContent}
+              ariaLabel="Mix oder Speicher anzeigen"
+            />
+          </div>
+          {mixContent !== 'speicher' && <div className="pointer-events-auto">
+            <ChartDropdown
+              value={loadView}
+              options={[
+                { id: 'verbrauch', label: 'Verbrauch', description: 'Wann Energie gebraucht wird (Last + Industrie-H₂). Im Winter höher.' },
+                { id: 'erzeugung', label: 'Erzeugung', description: 'Wann der Strom erzeugt/gezogen wird (Last + Elektrolyse + Speicher-Laden).' },
+              ] as const}
+              onChange={setLoadView}
+              ariaLabel="Last: wann gebraucht oder wann der Strom gezogen wird"
+            />
+          </div>}
           <div className="pointer-events-auto">
             <button
               type="button"
               aria-label="Skala zurücksetzen"
               title="Skala auf aktuelles Szenario zurücksetzen"
-              className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-500 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
+              className="inline-flex h-[31px] w-[31px] items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
               onClick={resetMixScale}
               disabled={!deferredChartSource}
             >
