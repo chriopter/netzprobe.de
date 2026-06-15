@@ -1,19 +1,19 @@
 {
   "preset": {
-    "id": "100ee-import-plus",
+    "id": "ee-70-h2-30",
     "label": "EE 70% + H₂ 30%",
     "gruppe": "lastfolgend",
     "rang": 30,
     "beschreibung": "Variante von »EE 85% + H₂ 15%«: gleiches Modell, aber schlankerer Park und doppelt so viel grüner H₂-Import (30 % statt 15 % der Last). Kostenoptimaler durch weniger Überbau — auf Kosten höherer Importabhängigkeit."
   },
   "$schema": "../../schemas/composition.schema.json",
-  "id": "100ee-import-plus",
+  "id": "ee-70-h2-30",
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "EE 70% + H₂ 30% (Import-Variante)",
+    "title": "EE 70% + H₂ 30%",
     "short": "Variante von »EE 85% + H₂ 15%« — identische Modelllogik, drei Stellschrauben aggressiver auf Import gedreht: weniger Überbau, mehr H₂-Import, schlankerer heimischer Park.",
-    "source": "Identische Studienbasis wie das Eltern-Preset »EE 85% + H₂ 15%« (100ee-import): Agora KN2045, BMWK Langfristszenarien 3, dena Aufbruch Klimaneutralität, Ariadne Modellvergleich. Diese Variante schöpft den Studien-Import-Korridor stärker aus (Agora KN2045 ~270 TWh H₂-Import, dena Gesamt 458 TWh).",
+    "source": "Identische Studienbasis wie das Eltern-Preset »EE 85% + H₂ 15%« (ee-85-h2-15): Agora KN2045, BMWK Langfristszenarien 3, dena Aufbruch Klimaneutralität, Ariadne Modellvergleich. Diese Variante schöpft den Studien-Import-Korridor stärker aus (Agora KN2045 ~270 TWh H₂-Import, dena Gesamt 458 TWh).",
     "sourceUrls": [
       "https://www.agora-energiewende.de/publikationen/klimaneutrales-deutschland-2045-1",
       "https://langfristszenarien.de/enertile-explorer-de/szenario-explorer/das-projekt.php",
@@ -24,15 +24,15 @@
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
     "description": [
-      "**Variante, kein eigenes Modell.** Dieses Preset ist mechanisch identisch zum Eltern-Preset »EE 85% + H₂ 15%« (`100ee-import`) — gleiche Auslegungs-Logik, gleiche Mix-Anteile (`PV 35 % / Wind on 40 % / Wind off 25 %`), gleiches Speicher- und Strom-Import-Sizing, gleicher Emissionsfaktor (`25 g/kWh` grüner H₂). Geändert sind **nur drei Stellschrauben**, die das System schlanker und importlastiger machen.",
+      "**Variante, kein eigenes Modell.** Dieses Preset ist mechanisch identisch zum Eltern-Preset »EE 85% + H₂ 15%« (`ee-85-h2-15`) — gleiche Auslegungs-Logik, gleiche Mix-Anteile (`PV 35 % / Wind on 40 % / Wind off 25 %`), gleiches Speicher- und Strom-Import-Sizing, gleicher Emissionsfaktor (`25 g/kWh` grüner H₂). Geändert sind **nur drei Stellschrauben**, die das System schlanker und importlastiger machen.",
       "**Die drei Unterschiede:** (1) **Cushion `1,20` statt `1,30`** — weniger Überbau, weil der höhere Import den saisonalen Mismatch puffert. (2) **H₂-Import-Fraktion `0,30 × Demand` statt `0,15`** — doppelt so viel grüner H₂-Import (weiterhin gedeckelt auf den Sektor-H₂-Bedarf in LHV). (3) **Wind-Offshore-Cap `80 GW` statt `70 GW`** — wirkt bei den simulierten Lastniveaus allerdings **nicht** (die Auslegung bleibt mit ~66 GW unter 70), ist also nur für noch höhere Last relevant.",
       "**Folge im Park (e100, Auslegung der Engine):** PV `370 GW`, Wind on `185 GW`, Wind off `66 GW` — gegenüber dem Eltern-Preset (PV `600`, Wind on `305`, Wind off `70`) ein deutlich kleinerer heimischer Park. Speicher entsprechend kleiner: Batterie `100 GW / 550 GWh`, H₂ `80/120 GW` Leistung, Kaverne `100 TWh` LHV. Im Gegenzug steigt der **H₂-Import auf ~385 TWh** (Eltern: ~258 TWh) und der Strom-Import-Cap auf `~7 GW`.",
-      "**Anwendungsfall:** zeigt die Kosten-Logik »mehr importieren, weniger überbauen«. Weniger installierte Leistung und weniger Abregelung senken die Systemkosten je gelieferter MWh — der Preis ist eine **substantielle Importabhängigkeit** (geopolitisches Klumpenrisiko). Für den autarken Gegenpol siehe `100ee-noimport` (»EE 100%«), für den studien-mittigen Pfad das Eltern-Preset `100ee-import` (»EE 85% + H₂ 15%«)."
+      "**Anwendungsfall:** zeigt die Kosten-Logik »mehr importieren, weniger überbauen«. Weniger installierte Leistung und weniger Abregelung senken die Systemkosten je gelieferter MWh — der Preis ist eine **substantielle Importabhängigkeit** (geopolitisches Klumpenrisiko). Für den autarken Gegenpol siehe `ee-100` (»EE 100%«), für den studien-mittigen Pfad das Eltern-Preset `ee-85-h2-15` (»EE 85% + H₂ 15%«)."
     ],
     "overview": [
       {
         "label": "Verhältnis zum Eltern-Preset",
-        "value": "Variante von »EE 85% + H₂ 15%« (`100ee-import`). **Identisch:** Mix 35/40/25, Speicher-/Strom-Import-Sizing, Roundtrip 0,34 (Elektrolyse 0,62 × Rückverstromung 0,55), Emissionsfaktor 25 g/kWh. **Geändert:** Cushion, H₂-Import-Fraktion, Offshore-Cap (siehe unten)."
+        "value": "Variante von »EE 85% + H₂ 15%« (`ee-85-h2-15`). **Identisch:** Mix 35/40/25, Speicher-/Strom-Import-Sizing, Roundtrip 0,34 (Elektrolyse 0,62 × Rückverstromung 0,55), Emissionsfaktor 25 g/kWh. **Geändert:** Cushion, H₂-Import-Fraktion, Offshore-Cap (siehe unten)."
       },
       {
         "label": "Stellschraube 1 — Cushion",
@@ -52,7 +52,7 @@
       }
     ],
     "reasoning": [
-      "Auslegungs-Logik vollständig identisch zum Eltern-Preset 100ee-import — siehe dessen Wiki-Seite für die Schritt-für-Schritt-Herleitung (effektive Demand nach H₂-Import-Substitution, target = max(0, eff × Cushion − Bio − Hydro), Verteilung auf PV/WindOn/WindOff, Offshore-Cap mit H₂-/PV-Kompensation, Speicher- und Strom-Import-Sizing).",
+      "Auslegungs-Logik vollständig identisch zum Eltern-Preset ee-85-h2-15 — siehe dessen Wiki-Seite für die Schritt-für-Schritt-Herleitung (effektive Demand nach H₂-Import-Substitution, target = max(0, eff × Cushion − Bio − Hydro), Verteilung auf PV/WindOn/WindOff, Offshore-Cap mit H₂-/PV-Kompensation, Speicher- und Strom-Import-Sizing).",
       "Einziger Unterschied in den Formeln: Cushion 1,20 (statt 1,30), H₂-Import-Fraktion 0,30 (statt 0,15), Offshore-Cap 80 GW (statt 70).",
       "Werte werden über snap(min, max, step) auf das Slider-Raster gequantelt."
     ],
@@ -60,17 +60,17 @@
       {
         "name": "id",
         "unit": "Text",
-        "description": "Technische Kennung (100ee-import-plus)."
+        "description": "Technische Kennung (ee-70-h2-30)."
       }
     ],
     "caveats": [
-      "Diese Variante teilt ALLE Caveats des Eltern-Presets »EE 85% + H₂ 15%« (100ee-import) — insbesondere zur e100-Bruttolast, zu capacityFactorMultiplier 1,0 (Bestandsertrag statt Neubau) und zur Flächen-Machbarkeit. Sie werden hier nicht wiederholt.",
+      "Diese Variante teilt ALLE Caveats des Eltern-Presets »EE 85% + H₂ 15%« (ee-85-h2-15) — insbesondere zur e100-Bruttolast, zu capacityFactorMultiplier 1,0 (Bestandsertrag statt Neubau) und zur Flächen-Machbarkeit. Sie werden hier nicht wiederholt.",
       "Verschärfte Importabhängigkeit: H₂-Import ~385 TWh bei e100 (statt ~258) liegt am oberen Rand des Studien-Korridors. Geopolitisches Klumpenrisiko (MENA/Skandinavien/AUS) ist im Modell nicht abgebildet; reale Diversifizierung (3+ Regionen, davon eine in der EU) vorausgesetzt.",
       "Cushion 1,20 lässt weniger Wetterjahr-/Speicherketten-Reserve als das 1,30-Eltern-Preset. Lasttest 2025: 0 h Lastabwurf; in ungünstigeren Wetterjahren ist die Marge kleiner — bewusst gegen mehr Import eingetauscht.",
       "Der angehobene Offshore-Cap (80 GW) ist bei den simulierten Lastniveaus wirkungslos (Auslegung ~66 GW). Das Ergebnis ist insoweit identisch zu einem 70-GW-Cap; die Anhebung folgt der ursprünglichen Nutzer-Inspiration, nicht einer bindenden Modellgrenze."
     ],
     "scripts": [
-      "erzeugung/100ee-import-plus/model.rs"
+      "erzeugung/ee-70-h2-30/model.rs"
     ]
   },
   "parameters": {}

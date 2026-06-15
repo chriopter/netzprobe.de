@@ -29,7 +29,7 @@ const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.D
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
 import { pct, twh } from './format';
-import { supplyPillLabels } from './supplyPresets';
+import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
@@ -249,7 +249,8 @@ function splitUrlList(value: string) {
   return value.split(/[,.]/).filter(Boolean);
 }
 
-const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', 'historical-2025', 'historical-2017', '100ee-noimport', '100ee-import', '100kern-lastfolgend', '2025-skaliert'];
+// Datengetrieben aus den preset-Blöcken der package.json (siehe supplyPresetCatalog) plus 'custom'.
+const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', ...supplyPresetIds];
 
 function scenarioFromQueryParams(): Scenario {
   const params = queryParams();

@@ -1,19 +1,19 @@
 {
   "preset":   {
-    "id": "100h2-import",
+    "id": "h2-import-100",
     "label": "H₂-Import 100%",
     "gruppe": "lastfolgend",
     "rang": 40,
     "beschreibung": "Gedanken-Anker: die gesamte Last aus importiertem Wasserstoff rückverstromt, kein heimischer Park. Zeigt die Importabhängigkeit — ~2.450 TWh H₂/Jahr, Kosten fast vollständig im Import"
   },
   "$schema": "../../schemas/composition.schema.json",
-  "id": "100h2-import",
+  "id": "h2-import-100",
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "100% H₂-Import",
+    "title": "H₂-Import 100%",
     "short": "Gedanken-Anker: keine heimische Erzeugung — die gesamte Stromlast wird aus importiertem Wasserstoff rückverstromt; die stofflichen H₂-Sektoren ziehen direkt aus demselben Import.",
-    "source": "Konstruiertes Stresstest-Preset analog 100ee-noimport / 100kern-lastfolgend. Kein veröffentlichter 100%-H₂-Import-DE-Studienpfad existiert; Importpreis 210 EUR/MWh frei Grenze (H2-LHV, heutiger Liefer-Mittelwert aus H2Global/BNEF/HYDRIX), Wirkungsgrade aus dem H₂-Speicherpaket (Rückverstromung 0,55), Importmengen-Kalibrierung per Engine-Sweep (kein Lastabwurf bei exaktem Jahresbedarf + 0,20-Kaverne).",
+    "source": "Konstruiertes Stresstest-Preset analog ee-100 / kernkraft-100. Kein veröffentlichter 100%-H₂-Import-DE-Studienpfad existiert; Importpreis 210 EUR/MWh frei Grenze (H2-LHV, heutiger Liefer-Mittelwert aus H2Global/BNEF/HYDRIX), Wirkungsgrade aus dem H₂-Speicherpaket (Rückverstromung 0,55), Importmengen-Kalibrierung per Engine-Sweep (kein Lastabwurf bei exaktem Jahresbedarf + 0,20-Kaverne).",
     "sourceUrls": [
       "https://www.h2global.de/",
       "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
@@ -53,7 +53,7 @@
       "CO₂ = 0 unterstellt grünen Import; blauer/grauer H₂ würde Emissionen hinzufügen. Strom-Import-Cap auf 0 — keine Netz-Stromhilfe, alles über H₂."
     ],
     "scripts": [
-      "erzeugung/100h2-import/model.rs"
+      "erzeugung/h2-import-100/model.rs"
     ]
   },
   "parameters": {}

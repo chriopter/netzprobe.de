@@ -1,4 +1,4 @@
-// Preset "EE moderat + Restkern (lastfolgend, CO₂-arm)" — Source-of-Truth.
+// Preset "Kernkraft + EE" (kernkraft-ee) — Source-of-Truth.
 //
 // Idee: Erneuerbare NICHT bis zum teuren Überbau treiben, sondern auf einem
 // moderaten Niveau halten und den festen Rest mit Kernkraft als lastfolgender

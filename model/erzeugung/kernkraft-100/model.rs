@@ -1,4 +1,4 @@
-// Preset "100% Kernkraft (lastfolgend)" — Source-of-Truth.
+// Preset "Kernkraft 100%" (kernkraft-100) — Source-of-Truth.
 //
 // Kalibrierung gegen 3 Experten-Konsens (Mai 2026):
 // - Technik-Experte: Cushion 1.15, CF 0.70 (FR-Realität)

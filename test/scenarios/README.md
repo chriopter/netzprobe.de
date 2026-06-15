@@ -62,7 +62,7 @@ Definitionen geändert, auf die sich die Bereiche beziehen:
   (1.000 €/kW EE-Zubau + 1.200 €/kW Peak-Zuwachs statt 1.200 €/kW EE-only).
 - Der H₂-Pool führt echtes **H₂-Zwischenprodukt** (Synthese-Verluste
   H₂-seitig) — die 100ee-Presets sind ~10 % größer als bei Erstellung.
-- 100ee-noimport wurde **MC-rekalibriert** (PV 980 / WindOn 885 / WindOff 70
+- ee-100 wurde **MC-rekalibriert** (PV 980 / WindOn 885 / WindOff 70
   GW; Kaverne 115 TWh, Batterie 1.800 GWh / 210 GW, Rückverstromung 210 GW).
 - Laufwasser liefert mit korrigierter availability **0,457** (~19 TWh/a)
   statt fälschlich 0,63 (~26 TWh/a).

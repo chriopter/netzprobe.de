@@ -17,10 +17,10 @@ const HORIZON_YEARS = 20; // heute bis 2045
 
 const SCENARIOS = [
   { id: 'referenz-2025', label: 'Referenz 2025 (ohne e100)' },
-  { id: '100ee-noimport', label: 'e100 + 100% EE lokal' },
-  { id: '100ee-import', label: 'e100 + 100% EE + Import' },
-  { id: '2025-skaliert', label: 'e100 + 2025 hochskaliert' },
-  { id: '100kern-lastfolgend', label: 'e100 + 100% Kernkraft' },
+  { id: 'ee-100', label: 'e100 + 100% EE lokal' },
+  { id: 'ee-85-h2-15', label: 'e100 + 100% EE + Import' },
+  { id: '2025-hochskaliert', label: 'e100 + 2025 hochskaliert' },
+  { id: 'kernkraft-100', label: 'e100 + 100% Kernkraft' },
 ] as const;
 
 const data = {
