@@ -92,6 +92,11 @@
         "name": "notes",
         "unit": "Liste",
         "description": "Default-Lauf-Kennzahlen und Modell-Annahmen."
+      },
+      {
+        "name": "datensatz",
+        "unit": "Objekt",
+        "description": "Legende für die Datensatz-Sektion der UI (ueber, hinweis, struktur, einheitenKonvention, felder) — quelle der dortigen Erklärtexte, damit sie mit dem Modell gepflegt werden."
       }
     ],
     "caveats": [
@@ -141,6 +146,56 @@
       "Reihenfolge bei Unterdeckung: Speicher entladen → Gas+Kohle hochfahren (2:1) → Import bis Cap → Lastabwurf.",
       "Min-Last gas/kohle werden als Floor erzwungen — auch bei hoher RE laufen ~9 GW fossil. Senkt Default-Export gegenüber Realität.",
       "Keine Marktlogik, kein Redispatch, kein Reservebedarf, kein Netzmodell."
-    ]
+    ],
+    "datensatz": {
+      "ueber": "Netzprobe — stündliche Dispatch-Simulation des deutschen Stromsystems (netzprobe.de). Für ein Szenario (installierte Leistungen, Speicher, Außenhandel, Nachfrage) wird ein ganzes Jahr in 8.760 Stunden simuliert: Erneuerbare speisen vorrangig ein, die Residuallast decken Speicher, regelbare Kraftwerke und Import; Überschuss lädt Speicher/Elektrolyse oder wird abgeregelt. Daraus folgen die Systemkosten (CAPEX annuisiert über die Anlagenlebensdauer, heutige Preise ohne Lernkurven) und der Materialbedarf. Alle zugrundeliegenden Annahmen samt Quelle stehen in modellPakete.",
+      "hinweis": "Selbstbeschreibender Datensatz. 'lauf' = dieser konkrete Rechenlauf (Eingaben, Ergebnis, Rechenweg). 'modellPakete' = alle Annahmen/Parameter mit Wiki-Dokumentation (method). Einheiten stehen im Feldnamen-Suffix (siehe einheitenKonvention); nicht offensichtliche Felder unter felder.",
+      "struktur": {
+        "lauf.szenario": "Eingaben des Laufs: installierte Leistungen, Speicher, Außenhandel, Nachfrage-Schalter (Felddefinitionen in modellPakete).",
+        "lauf.ergebnisKennzahlen": "Jahres-Kennzahlen der Stundensimulation.",
+        "lauf.ergebnisStundenreihe": "Stündliche Dispatch-Zeitreihe (8.760 h): Erzeugung, Last, Speicher, Handel je Stunde in GW.",
+        "lauf.kosten": "Systemkosten-Rechenweg: je Technologie (capex/om/fuel, CAPEX annuisiert über crfValue) + Summen (breakdown) + Parameter (params).",
+        "lauf.ressourcen": "Materialbedarf pro Jahr in Tonnen (annualByMaterial), Gruppen-Summen und Brennstoff je Technologie (TWh).",
+        "modellPakete": "Alle Modell-Pakete vollständig: parameters (Annahmen) + method (Wiki-Doku: Titel, Beschreibung, Quelle, sourceUrls, Herleitung, Grenzen). Hier stehen die Definitionen/Quellen aller Parameter."
+      },
+      "einheitenKonvention": {
+        "Suffix GW": "Gigawatt (Leistung)",
+        "Suffix GWh": "Gigawattstunden (Energie/Speicher)",
+        "Suffix TWh": "Terawattstunden (Jahresenergie)",
+        "Suffix Eur": "Euro",
+        "Suffix EurPerMWh": "Euro je Megawattstunde",
+        "Suffix EurPerKW / EurPerKWh / EurPerKWa": "Euro je kW bzw. kWh bzw. kW·a",
+        "Suffix Pct": "Prozent",
+        "Suffix GperKWh": "Gramm CO₂ je kWh",
+        "Suffix MtPerYear": "Megatonnen CO₂ je Jahr",
+        "Suffix Tph": "Tonnen je Stunde",
+        "Suffix Years": "Jahre",
+        "wacc / efficiency / *Multiplier / vatRate": "dimensionsloser Faktor (0–1)"
+      },
+      "felder": {
+        "loadGW": "Direkte Stromlast der Stunde (nach H₂-Pool-Substitution), GW.",
+        "loadSheddingGW": "Nicht gedeckte Last (Stromausfall) der Stunde, GW.",
+        "loadSheddingTWh": "Nicht gedeckte Jahresenergie (Stromausfall), TWh.",
+        "curtailmentGW": "Abgeregelte Überschuss-Erzeugung der Stunde, GW.",
+        "curtailmentTWh": "Abgeregelte Überschuss-Erzeugung im Jahr, TWh.",
+        "h2PoolReductionGW": "Sektor-H₂ (Stahl/Chemie/Schiff/Flug) aus Überschuss-Elektrolyse; mindert die direkte Stromlast, GW.",
+        "h2PoolStromReductionTWh": "Jahressumme der per H₂-Pool gedeckten Sektor-Nachfrage (strom-äquivalent), TWh.",
+        "peakLoadGW": "Höchste Stromlast des Jahres, GW.",
+        "renewableSharePct": "EE-Anteil an der gelieferten Erzeugung, %.",
+        "renewableTWh": "Erneuerbare Jahreserzeugung, TWh.",
+        "co2GperKWh": "CO₂-Intensität der gedeckten Last, g/kWh.",
+        "co2MtPerYear": "Jahres-CO₂-Ausstoß, Mt.",
+        "co2Tph": "CO₂-Ausstoß der Stunde, t/h.",
+        "supplyGW": "Summe genutzter Erzeugung der Stunde, GW.",
+        "balanceGW": "Bilanz Erzeugung − Last der Stunde, GW.",
+        "storageChargeGW": "Gesamtes Speicher-/Elektrolyse-Laden der Stunde (Batterie + Pumpspeicher + H₂), GW.",
+        "storageDischargeGW": "Gesamte Speicher-Entladung der Stunde, GW.",
+        "perMWh": "Ø Systemkosten je gelieferte MWh (Gesamtkosten ÷ gedeckte Nachfrage), EUR/MWh.",
+        "investEur": "Einmalige Bauinvestition (Neubauwert, nicht annuisiert), EUR.",
+        "operatingEur": "Jährliche laufende Kosten (O&M, Brennstoff, Handel), EUR.",
+        "crfValue": "Kapitalwiedergewinnungsfaktor — annuisiert CAPEX über die Lebensdauer, 1/Jahr.",
+        "eurPerMWh": "Levelized Kosten dieser Technologie je MWh, EUR/MWh."
+      }
+    }
   }
 }
