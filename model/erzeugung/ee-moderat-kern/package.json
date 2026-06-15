@@ -1,0 +1,69 @@
+{
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "ee-moderat-kern",
+  "domain": "erzeugung",
+  "kind": "composition",
+  "method": {
+    "title": "EE moderat + Restkern (CO₂-arm, lastfolgend)",
+    "short": "Moderater EE-Ausbau + Kernkraft als lastfolgende Grundlast, GAS-FREI: die Dunkelflaute deckt ein H₂-Saisonspeicher. Kostenoptimiert auf die CO₂-arme Ecke.",
+    "source": "Konzept-Anker: WePlanet DACH »Deutschlands Energiezukunft« (2025) — ein kostenoptimaler DE-Mix enthält ~40 % Kernkraft, weil Grundlast-Kernkraft den teuren Teil der EE-Welt (Offshore-Massenausbau, HGÜ, Saisonspeicher-Überbau) ersetzt. Die Kapazitäts-Koeffizienten dieses Presets stammen aus einer Kostenoptimierung über die lokale netzprobe-Engine: Gitter aus EE-Niveau × Kernkraft × Peaking-Typ (Gas vs H₂) × Speichergrößen, je Kandidat €/MWh (Kostenmodell der Kosten-Sektion) + CO₂ + Lastabwurf ausgewertet; gewählt wurde das günstigste gasfreie, versorgungssichere Szenario mit nennenswertem EE-Anteil. Kosten je Technologie aus den Erzeuger-/Speicher-Paketen (WACC, CAPEX), Referenzertrag IAEA PRIS.",
+    "sourceUrls": [
+      "https://weplanet-dach.org/wp-content/uploads/2025/02/Deutschlands-Energiezukunft-Version-1-komprimiert.pdf",
+      "https://pris.iaea.org/PRIS/CountryStatistics/CountryStatisticsLandingPage.aspx?country=DE",
+      "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html"
+    ],
+    "period": "laufend",
+    "resolution": "stündlich",
+    "unit": "GW, GWh, TWh",
+    "description": [
+      "**Komposition:** Eigener Pfad zwischen 100ee und 100kern, **gasfrei**. Erneuerbare auf moderatem Niveau (PV/Wind), Kernkraft als lastfolgende Grundlast für den festen Rest, und ein H₂-Saisonspeicher (Elektrolyse → Kaverne → Rückverstromung), der die tiefe Dunkelflaute deckt UND den Sektor-H₂-Bedarf (Stahl/Chemie/Schiff/Flug) aus Überschuss-Strom erzeugt. Kein Gas, keine Kohle, kein Import. Biomasse/Laufwasser auf 2025-Bestand.",
+      "**Auslegung (GW je TWh Jahreslast → skaliert mit jeder Last):** PV `0,101`, Wind onshore `0,068`, Wind offshore `0,0177` (Cap 70 GW), Kernkraft `0,0996`, Gas `0`. Speicher: Batterie `0,12 GW` + `1,0 GWh` je TWh; H₂ Elektrolyse `0,061 GW`, Rückverstromung `0,055 GW`, Kaverne `66,4 GWh-LHV` je TWh. Kernkraft wird im Dispatch als variable (curtailbare) Quelle geführt → lastfolgend, kein starres Baseload; der H₂-Pool deckt die Sektor-H₂-Nachfrage aus Überschuss-Elektrolyse.",
+      "**Kostenoptimierung (Ergebnis bei e100):** Aus dem Engine-Gitter ging das günstigste gasfreie, sichere Szenario mit echtem EE-Anteil hervor. Resultierende Flotte: PV ~183 GW, Wind onshore ~123, Wind offshore ~32, Kernkraft ~180 GW; H₂ 110/100 GW + 120 TWh-Kaverne; Batterie 217 GW / 1.808 GWh. **Ergebnis: ~187 €/MWh, ~34 Mt CO₂, 0 h Lastabwurf.** Die ~30 Mt CO₂ sind der irreduzible e100-Prozess-Boden (Stahl/Chemie/Flug-Restemissionen), unabhängig vom Strommix — Gas würde ihn auf >100 Mt heben.",
+      "**Einordnung (Preset-Pfad, Sweep über die Engine):** Die Kostenfläche ist flach (~186–190 €/MWh über Kernkraft 180–235 GW) — mehr Kernkraft spart nur ~1 €/MWh, vergeudet aber 200+ TWh Curtailment; WENIGER Kernkraft bricht die Sicherheit (260–500 TWh Lastabwurf), weil der H₂-Speicher Sektor-H₂ UND Dunkelflaute decken muss. Gewählt ist der schlankste sichere Punkt mit dem geringsten Curtailment (12 TWh). Ein gaslastiger Mix wäre mit ~164 €/MWh günstiger, aber mit ~185 statt ~34 Mt CO₂. Dieses Preset ist das **Kostenoptimum der CO₂-armen EE+Kern-Variante**. Skaliert mit jeder Last (heute / e100 / manuell)."
+    ],
+    "overview": [
+      {
+        "label": "Erzeugungs-Mix",
+        "value": "**EE moderat + Kernkraft-Grundlast, gasfrei.** PV/Wind on/Wind off + Kernkraft als lastfolgende Residuallast; Bio/Laufwasser 2025-Bestand; kein Gas, keine Kohle. Kernkraftanteil an der Lieferung ~55 %."
+      },
+      {
+        "label": "Speicher",
+        "value": "**Batterie:** 0,12 GW · 1,0 GWh je TWh (Tag/Nacht-PV-Glättung). **H₂-Saisonspeicher:** Elektrolyse 0,061 GW, Rückverstromung 0,055 GW, Kaverne 66,4 GWh-LHV je TWh — deckt Dunkelflaute + Sektor-H₂. **Pumpspeicher:** 2025-Bestand 9,4 GW / 45 GWh."
+      },
+      {
+        "label": "CO₂",
+        "value": "**Gasfrei.** Bei e100 ~34 Mt — praktisch der irreduzible e100-Prozess-Boden (~30 Mt, Stahl/Chemie/Flug). Ein Gas-Backup würde diesen auf >100 Mt heben."
+      },
+      {
+        "label": "Handel",
+        "value": "**Import:** 0 (autark). **Export-Cap:** Default. Kein H₂-Import — der Sektor-H₂ kommt aus heimischer Überschuss-Elektrolyse."
+      }
+    ],
+    "reasoning": [
+      "Kapazität je TWh Jahreslast: PV 0,101 / Wind on 0,068 / Wind off 0,0177 (Cap 70 GW) / Kernkraft 0,0996 GW; Gas 0; Kohle 0.",
+      "Batterie = Demand × (0,12 GW; 1,0 GWh); H₂ Elektrolyse 0,061 GW, Rückverstromung 0,055 GW, Kaverne 66,4 GWh je TWh.",
+      "Bio/Laufwasser auf 2025-Bestand; Pumpspeicher 2025-Bestand; Import/H₂-Import = 0.",
+      "Koeffizienten aus Engine-Kostenoptimierung (custom-Modus-Gitter, €/MWh + CO₂ + Lastabwurf je Kandidat); gewählt: günstigstes gasfreies, sicheres Szenario mit EE-Anteil.",
+      "Werte werden über snap(min, max, step) auf das Slider-Raster gequantelt; alles skaliert linear mit der Last."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung (ee-moderat-kern)."
+      }
+    ],
+    "caveats": [
+      "**Auf das CO₂-arme Kostenoptimum getrimmt:** Auf dem Preset-Pfad ist die Kostenfläche flach (~186–190 €/MWh, Kernkraft 180–235 GW); reine Kernkraft spart nur ~1 €/MWh (bei 200+ TWh Curtailment), ein gaslastiger Mix wäre mit ~164 €/MWh günstiger, aber mit ~185 statt ~34 Mt CO₂. Dieses Preset wählt den schlanksten sicheren CO₂-armen Punkt.",
+      "Die ~34 Mt CO₂ bei e100 sind fast vollständig der irreduzible Prozess-/Restemissions-Boden der e100-Sektoren (Stahl, Chemie, Flug) und nicht durch den Strommix senkbar.",
+      "Bei e100 (1.808 TWh brutto, ~1.068 TWh Stromlast nach H₂-Pool) sind alle Kapazitäten groß — e100 setzt den Bedarf ohne Sektorkopplungs-Effizienz an. Studienvergleichbar (WePlanet ~995 TWh) wäre eine Last um ~1.000 TWh.",
+      "Wind onshore kann über das 2-%-Vorrangflächen-Ziel hinauslaufen — wie bei 100ee eine Machbarkeits-, keine Modellgrenze.",
+      "Kernkraft-CAPEX, WACC (7,8 % real) und Lebensdauer (45 a) stammen aus dem kernkraft-Paket; die hohen Kapitalkosten gelten für europäischen Neubau, nicht für abgeschriebene Bestandsflotten. ~180 GW Kernkraft-Neubau bis 2045 ist physisch/politisch unrealistisch — wie bei 100kern ein Modell-Vergleichspunkt.",
+      "Die H₂-Kette (Roundtrip ~0,34) ist teuer; ein Teil der Kosten gegenüber reiner Kernkraft entsteht durch den H₂-Saisonspeicher, der die gasfreie Dunkelflaute-Deckung erst ermöglicht."
+    ],
+    "scripts": [
+      "erzeugung/ee-moderat-kern/model.rs"
+    ]
+  },
+  "parameters": {}
+}
