@@ -135,7 +135,10 @@ const SITE_URL = 'https://netzprobe.de';
 const HEAD_TITLE = 'Netzprobe – Stromsimulation Deutschland';
 const HEAD_DESC = 'Interaktive Stromsystem-Simulation für Deutschland: Last, Erzeugung, Speicher, Kosten und Ressourcen für 2025 und 100%-Szenarien. Stündlicher Dispatch, quelloffen, ohne Account.';
 
-type WikiDoc = { id: string; hasData: boolean; domain: string; title: string; desc: string; dataUrl: string };
+type WikiDoc = {
+  id: string; hasData: boolean; domain: string; title: string; desc: string; dataUrl: string;
+  paras: string[]; overview: { label: string; value: string }[]; source: string;
+};
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -160,7 +163,14 @@ function collectWikiDocs(dir: string): WikiDoc[] {
         const rel = relative(modelDir, d).split(/[\\/]/).join('/');
         const hasData = typeof m.file === 'string' && !!m.file;
         const dataUrl = `${SITE_URL}/model/${hasData ? m.file : `${rel}/package.json`}`;
-        docs.push({ id: pkg.id, hasData, domain: pkg.domain ?? '', title: m.title, desc, dataUrl });
+        const paras = (Array.isArray(m.description) ? m.description : [m.description])
+          .filter((p: unknown) => typeof p === 'string').map((p: string) => stripMarkdown(p));
+        const overview = Array.isArray(m.overview)
+          ? m.overview.filter((o: { label?: unknown; value?: unknown }) => o?.label && o?.value)
+              .map((o: { label: string; value: string }) => ({ label: stripMarkdown(o.label), value: stripMarkdown(o.value) }))
+          : [];
+        const source = stripMarkdown(String(m.source ?? ''));
+        docs.push({ id: pkg.id, hasData, domain: pkg.domain ?? '', title: m.title, desc, dataUrl, paras, overview, source });
       } catch { /* ungültige package.json überspringen */ }
     }
   };
@@ -201,6 +211,21 @@ function wikiLd(doc: WikiDoc, pageUrl: string): string {
     : { '@context': 'https://schema.org', '@type': 'TechArticle', headline: doc.title, description: doc.desc,
         url: pageUrl, inLanguage: 'de', author: ORG, isPartOf: SITE };
   return ld(main) + ld(breadcrumb);
+}
+
+// Prerendered Text-Inhalt für den <body> — Googlebot/Applebot indexieren den
+// Wiki-Text ohne JS. createRoot() ersetzt #root beim Mount, also kein Duplikat.
+function wikiBody(doc: WikiDoc): string {
+  const e = escapeHtml;
+  const paras = doc.paras.map(p => `<p>${e(p)}</p>`).join('');
+  const ov = doc.overview.length
+    ? `<dl>${doc.overview.map(o => `<dt>${e(o.label)}</dt><dd>${e(o.value)}</dd>`).join('')}</dl>`
+    : '';
+  const src = doc.source ? `<p>Quellen: ${e(doc.source)}</p>` : '';
+  return `<main>`
+    + `<nav><a href="${SITE_URL}/">Netzprobe</a> › <a href="${SITE_URL}/wiki/">Wiki</a> › ${e(doc.title)}</nav>`
+    + `<h1>${e(doc.title)}</h1><p>${e(doc.desc)}</p>${paras}${ov}${src}`
+    + `</main>`;
 }
 
 function seo(): Plugin {
@@ -250,6 +275,7 @@ function seo(): Plugin {
           .split(HEAD_DESC).join(escapeHtml(doc.desc))
           .split(`"${SITE_URL}/"`).join(`"${escapeHtml(pageUrl)}"`);
         html = inject(html, wikiLd(doc, pageUrl));
+        html = html.replace('<div id="root"></div>', `<div id="root">${wikiBody(doc)}</div>`);
         const outDir = resolve(distDir, 'wiki', doc.id);
         mkdirSync(outDir, { recursive: true });
         writeFileSync(resolve(outDir, 'index.html'), html);
