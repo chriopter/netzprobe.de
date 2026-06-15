@@ -1,4 +1,12 @@
 {
+  "preset": {
+    "id": "100kern-lastfolgend",
+    "label": "Kernkraft 100%",
+    "gruppe": "lastfolgend",
+    "rang": 50,
+    "beschreibung": "Stresstest-Anker: 100% Kernkraft, lastfolgend (französisches Modell). Physisch unrealistisch bis 2045 — Vergleichswert zur 100%-EE-Variante",
+    "sichtbar": true
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "100kern-lastfolgend",
   "domain": "erzeugung",

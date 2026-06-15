@@ -52,6 +52,7 @@ fn kern_gw(target_twh: f64) -> f64 {
 pub fn apply(
     _model: &StaticModel,
     demand_twh: f64,
+    _scenario: &Value,
 ) -> Result<(Value, Value, Value, Value), ModelError> {
     // Bio/Hydro auf 0 → Kernkraft muss vollen Demand decken.
     let target = target_kern_twh(demand_twh, 0.0, 0.0);

@@ -28,9 +28,29 @@ export type DatasetDoc = {
   method: DatasetMethod;
 };
 
+export type DatasetPreset = {
+  id: string;
+  label: string;
+  gruppe: 'fix' | 'lastfolgend';
+  rang: number;
+  beschreibung: string;
+  sichtbar?: boolean;
+};
+
 // Volle Paket-Form: DatasetDoc plus parameters-Subobjekt.
 export type DatasetPackage = DatasetDoc & {
   parameters: Record<string, unknown>;
+  preset?: DatasetPreset;
+};
+
+export type SupplyPresetCatalogEntry = {
+  presetId: string;
+  label: string;
+  gruppe: 'fix' | 'lastfolgend';
+  rang: number;
+  beschreibung: string;
+  sichtbar: boolean;
+  wikiId: string;
 };
 
 export const templateDescriptionPaths = [
@@ -137,3 +157,21 @@ export function generatorDataJsonPathForId(id: string): string | null {
 }
 
 export const datasetDocs: DatasetDoc[] = Array.from(packageById.values());
+
+const groupOrder: Record<DatasetPreset['gruppe'], number> = { fix: 0, lastfolgend: 1 };
+
+export const supplyPresetCatalog: SupplyPresetCatalogEntry[] = Object.values(packageModules)
+  .filter((pkg): pkg is DatasetPackage => !!pkg && !!pkg.preset)
+  .map(pkg => {
+    const preset = pkg.preset!;
+    return {
+      presetId: preset.id,
+      label: preset.label,
+      gruppe: preset.gruppe,
+      rang: preset.rang,
+      beschreibung: preset.beschreibung,
+      sichtbar: !!preset.sichtbar,
+      wikiId: pkg.id,
+    };
+  })
+  .sort((a, b) => groupOrder[a.gruppe] - groupOrder[b.gruppe] || a.rang - b.rang);

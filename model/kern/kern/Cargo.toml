@@ -6,6 +6,9 @@ edition = "2024"
 [lib]
 path = "model.rs"
 
+[build-dependencies]
+serde_json = "*"
+
 [dependencies]
 chrono = "*"
 chrono-tz = "*"

@@ -1,3 +1,15 @@
+use serde_json::Value;
+use super::error::ModelError;
+use super::StaticModel;
+
+pub fn apply(
+    model: &StaticModel,
+    _demand_twh: f64,
+    _scenario: &Value,
+) -> Result<(Value, Value, Value, Value), ModelError> {
+    model.composition_supply("historisch-2017")
+}
+
 pub const INSTALLED_2017_PV_GW: f64 = 42.4;
 pub const INSTALLED_2017_WIND_ON_GW: f64 = 50.2;
 pub const INSTALLED_2017_WIND_OFF_GW: f64 = 5.4;

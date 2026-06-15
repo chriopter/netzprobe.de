@@ -1,4 +1,9 @@
-// Preset "100% EE + Import" — Source-of-Truth.
+// Preset "EE 70% + H₂ 30% (höherer Import, schlanker)" — Source-of-Truth.
+//
+// Variante von 100ee-import mit höherem grünem H₂-Import (30 % der Last statt
+// 15 %) und schlankerem Park: weniger Überbau (Cushion 1.20 statt 1.30), der
+// erhöhte Import puffert den saisonalen Mismatch. Offshore-Cap auf 80 GW
+// angehoben (optimistischeres Floating-Offshore-Szenario).
 //
 // Kalibrierung gegen DE-2045-Klimaneutralitäts-Studien (Mai 2026):
 // - Agora KN2045:        Demand 1270 TWh, PV 470 GW, Wind on 180, Wind off 73, H2-Import 270 TWh
@@ -25,7 +30,7 @@ pub const EE_WIND_OFF_SHARE: f64 = 0.25;
 // Wetterjahr-Schwankungen + reale Speicherkette (Elektrolyse 0,62 × Rückverstromung
 // 0,55). Kalibriert nach LHV-Pool-Fix: 1,20 ließ bei heutiger Last 207 h und bei
 // e100 ~300 h Lastabwurf; 1,25 reichte nur für heutige Last, 1,30 deckt beide.
-pub const EE_CUSHION: f64 = 1.30;
+pub const EE_CUSHION: f64 = 1.20;
 // Batterie: 0.15 GW/TWh + 0.8 GWh/TWh. Weniger als lokal (0.3/1.5), weil H2- und Strom-Import
 // als Flex-Puffer verfügbar. Bei e100 ergibt das ~275 GW / 1465 GWh — ausreichend für Peak.
 pub const EE_BATTERY_POWER_PER_TWH: f64 = 0.15;
@@ -42,9 +47,9 @@ pub const EE_H2_DISCHARGE_PER_TWH: f64 = 0.18;
 // 0.10 ließ nach dem LHV-Fix Winterlücken (Energie-, nicht Leistungsmangel).
 pub const EE_H2_ENERGY_FRACTION_OF_DEMAND: f64 = 0.15;
 // Physisches Maximum Wind offshore DE-AWZ laut BSH FEP / WindSeeG: 70 GW bis 2045.
-pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 70.0;
+pub const EE_WIND_OFFSHORE_MAX_GW: f64 = 80.0;
 
-pub const H2_IMPORT_TWH_FRACTION_OF_DEMAND: f64 = 0.15;
+pub const H2_IMPORT_TWH_FRACTION_OF_DEMAND: f64 = 0.30;
 // Strom-Import-Cap proportional zur Demand (statt absolut 20 GW): typisch ~1.1 % der Last
 // als Cap-Leistung; bei 466 TWh → 5 GW (~22 TWh/a bei 50 % Auslastung; konsistent mit
 // Ariadne 94 TWh bei 1100 TWh Demand), bei 1830 TWh → 20 GW (~88 TWh/a).
@@ -289,9 +294,10 @@ mod tests {
 
     #[test]
     fn h2_import_follows_demand_fraction() {
-        // Basis-Import 0.15 × Demand; der Deckel auf den Sektor-LHV-Bedarf
-        // wird in der Preset-Auflösung (kern model.rs) angewandt.
-        assert!((h2_import_twh(1342.0) - 201.3).abs() < 1e-6);
+        // Basis-Import 0.30 × Demand; der Deckel auf den Sektor-LHV-Bedarf
+        // wird im apply angewandt.
+        assert!((h2_import_twh(1342.0) - 402.6).abs() < 1e-6);
+        // h2_energy_gwh nutzt EE_H2_ENERGY_FRACTION_OF_DEMAND (0.15), unverändert.
         assert!((h2_energy_gwh(1342.0) - 201_300.0).abs() < 1e-6);
     }
 
@@ -314,9 +320,10 @@ mod tests {
     }
 
     #[test]
-    fn wind_offshore_capped_at_70_gw() {
+    fn wind_offshore_capped_at_80_gw() {
         let result = wind_offshore_gw(10_000.0, 0.25, 1.0, 2.8);
         assert!((result - EE_WIND_OFFSHORE_MAX_GW).abs() < 1e-6);
+        assert!((EE_WIND_OFFSHORE_MAX_GW - 80.0).abs() < 1e-9);
     }
 
     #[test]

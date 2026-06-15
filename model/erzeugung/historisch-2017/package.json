@@ -1,4 +1,11 @@
 {
+  "preset":   {
+    "id": "historical-2017",
+    "label": "2017",
+    "gruppe": "fix",
+    "rang": 20,
+    "beschreibung": "Beobachtete Erzeugung und Last 2017 — Kernkraft on, mehr Kohle, ~36% EE"
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "historisch-2017",
   "domain": "erzeugung",

@@ -49,6 +49,7 @@ pub const H2_ENERGY_GWH_PER_TWH: f64 = 66.4;
 pub fn apply(
     _model: &StaticModel,
     demand_twh: f64,
+    _scenario: &Value,
 ) -> Result<(Value, Value, Value, Value), ModelError> {
     let pv_gw = demand_twh * PV_GW_PER_TWH;
     let wind_on_gw = demand_twh * WIND_ON_GW_PER_TWH;

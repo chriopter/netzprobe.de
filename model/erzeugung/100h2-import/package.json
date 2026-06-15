@@ -1,4 +1,11 @@
 {
+  "preset":   {
+    "id": "100h2-import",
+    "label": "H₂-Import 100%",
+    "gruppe": "lastfolgend",
+    "rang": 40,
+    "beschreibung": "Gedanken-Anker: die gesamte Last aus importiertem Wasserstoff rückverstromt, kein heimischer Park. Zeigt die Importabhängigkeit — ~2.450 TWh H₂/Jahr, Kosten fast vollständig im Import"
+  },
   "$schema": "../../schemas/composition.schema.json",
   "id": "100h2-import",
   "domain": "erzeugung",
