@@ -81,6 +81,7 @@ export function matchingLoadPreset(scenario: Scenario): LoadPillId {
 type ScenarioSidebarProps = {
   data: DataSet | null;
   scenario: Scenario;
+  generationTWh: Record<string, number> | null;
   selectedPeriod: { start: string; end: string };
   periodPreset: PeriodPreset;
   customStart: string;
@@ -207,6 +208,7 @@ export function e100ElectricTWh(scenario: Scenario, data: DataSet | null): Recor
 export const ScenarioSidebar = memo(function ScenarioSidebar({
   data,
   scenario,
+  generationTWh,
   selectedPeriod,
   periodPreset,
   customStart,
@@ -361,6 +363,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
         <ErzeugungSection
           data={data}
           scenario={scenario}
+          generationTWh={generationTWh}
           supplyPreset={supplyPreset}
           onSupplyPresetChange={onSupplyPresetChange}
           onGenerationChange={onGenerationChange}
@@ -399,12 +402,15 @@ type GenerationGroup = {
   id: 'erneuerbar' | 'kernkraft' | 'konventionell';
   title: string;
   fields: GenerationFieldSpec[];
-  summary: (scenario: Scenario) => string;
+  summary: (scenario: Scenario, twh?: number) => string;
 };
 
-function formatCapacitySummary(value: number, baseline: number): string {
+function formatCapacitySummary(value: number, baseline: number, twh?: number): string {
   const multiplier = formatSummaryMultiplier(value, baseline);
-  return multiplier ? `${fmt0.format(value)} GW · ${multiplier}` : `${fmt0.format(value)} GW`;
+  const parts = [`${fmt0.format(value)} GW`];
+  if (twh != null) parts.push(`${fmt0.format(twh)} TWh`);
+  if (multiplier) parts.push(multiplier);
+  return parts.join(' · ');
 }
 
 function formatSummaryMultiplier(value: number, baseline: number | undefined): string | null {
@@ -428,14 +434,14 @@ function generationGroups(erz: DataSet['erzeugungs-modell']): GenerationGroup[] 
       { key: 'windOffInstalledGW', docId: datasetIds.erzWindOff,    label: 'Wind Offshore', unit: 'GW',  min: erz.sources.windOff.installedGW.min,    max: erz.sources.windOff.installedGW.max,    step: erz.sources.windOff.installedGW.step,    baseline: h.windOffInstalledGW,    co2eGperKWh: erz.sources.windOff.emissions.co2eGperKWh,    referenceScale: erz.sources.windOff.referenceScales?.power,  },
       { key: 'biomasseInstalledGW', docId: datasetIds.erzBiomasse,   label: 'Biomasse',      unit: 'GW',  min: erz.sources.biomasse.installedGW.min,   max: erz.sources.biomasse.installedGW.max,   step: erz.sources.biomasse.installedGW.step,   baseline: h.biomasseInstalledGW,   co2eGperKWh: erz.sources.biomasse.emissions.co2eGperKWh,   referenceScale: erz.sources.biomasse.referenceScales?.power,  },
       { key: 'laufwasserInstalledGW', docId: datasetIds.erzLaufwasser, label: 'Laufwasser',    unit: 'GW',  min: erz.sources.laufwasser.installedGW.min, max: erz.sources.laufwasser.installedGW.max, step: erz.sources.laufwasser.installedGW.step, baseline: h.laufwasserInstalledGW, co2eGperKWh: erz.sources.laufwasser.emissions.co2eGperKWh, referenceScale: erz.sources.laufwasser.referenceScales?.power,  },
-    ], summary: (s) => formatCapacitySummary(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW, renewableBaseline) },
+    ], summary: (s, twh) => formatCapacitySummary(s.generation.pvInstalledGW + s.generation.windOnInstalledGW + s.generation.windOffInstalledGW + s.generation.biomasseInstalledGW + s.generation.laufwasserInstalledGW, renewableBaseline, twh) },
     { id: 'kernkraft', title: 'Kernkraft', fields: [
       { key: 'kernkraftInstalledGW', docId: datasetIds.erzKernkraft, label: 'Kernkraft', unit: 'GW', min: erz.sources.kernkraft.installedGW.min, max: erz.sources.kernkraft.installedGW.max, step: erz.sources.kernkraft.installedGW.step, baseline: h.kernkraftInstalledGW, co2eGperKWh: erz.sources.kernkraft.emissions.co2eGperKWh, referenceScale: erz.sources.kernkraft.referenceScales?.power,  },
-    ], summary: (s) => formatCapacitySummary(s.generation.kernkraftInstalledGW, h.kernkraftInstalledGW) },
+    ], summary: (s, twh) => formatCapacitySummary(s.generation.kernkraftInstalledGW, h.kernkraftInstalledGW, twh) },
     { id: 'konventionell', title: 'Konventionell', fields: [
       { key: 'gasInstalledGW', docId: datasetIds.erzGas,   label: 'Gas',   unit: 'GW', min: erz.sources.gas.installedGW.min,   max: erz.sources.gas.installedGW.max,   step: erz.sources.gas.installedGW.step,   baseline: h.gasInstalledGW,   co2eGperKWh: erz.sources.gas.emissions.co2eGperKWh,   referenceScale: erz.sources.gas.referenceScales?.power,  },
       { key: 'kohleInstalledGW', docId: datasetIds.erzKohle, label: 'Kohle', unit: 'GW', min: erz.sources.kohle.installedGW.min, max: erz.sources.kohle.installedGW.max, step: erz.sources.kohle.installedGW.step, baseline: h.kohleInstalledGW, co2eGperKWh: erz.sources.kohle.emissions.co2eGperKWh, referenceScale: erz.sources.kohle.referenceScales?.power,  },
-    ], summary: (s) => formatCapacitySummary(s.generation.gasInstalledGW + s.generation.kohleInstalledGW, conventionalBaseline) },
+    ], summary: (s, twh) => formatCapacitySummary(s.generation.gasInstalledGW + s.generation.kohleInstalledGW, conventionalBaseline, twh) },
   ];
 }
 
@@ -583,6 +589,7 @@ function PresetDropdownPill<TId extends string>({
 function ErzeugungSection({
   data,
   scenario,
+  generationTWh,
   supplyPreset,
   onSupplyPresetChange,
   onGenerationChange,
@@ -590,6 +597,7 @@ function ErzeugungSection({
 }: {
   data: DataSet | null;
   scenario: Scenario;
+  generationTWh: Record<string, number> | null;
   supplyPreset: Scenario['supplyPreset'];
   onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
   onGenerationChange: (field: GenerationFieldKey, value: number) => void;
@@ -623,11 +631,12 @@ function ErzeugungSection({
     + scenario.generation.kernkraftInstalledGW
     + scenario.generation.gasInstalledGW
     + scenario.generation.kohleInstalledGW;
+  const generationTotalTWh = generationTWh ? Object.values(generationTWh).reduce((a, b) => a + b, 0) : null;
   return <SidebarCard
     title="Erzeugung"
     icon={<Zap className="h-4 w-4"/>}
     docId={activeWikiId}
-    meta={`${fmt0.format(generationTotalGW)} GW`}
+    meta={generationTotalTWh != null ? `${fmt0.format(generationTotalGW)} GW · ${fmt0.format(generationTotalTWh)} TWh` : `${fmt0.format(generationTotalGW)} GW`}
     collapsible
     defaultOpen
   >
@@ -640,6 +649,7 @@ function ErzeugungSection({
       <SupplyGroupAccordions
         data={data}
         scenario={scenario}
+        generationTWh={generationTWh}
         onGenerationChange={onGenerationChange}
         onStorageChange={onStorageChange}
       />
@@ -745,11 +755,13 @@ type SupplyGroupId = 'erneuerbar' | 'kernkraft' | 'konventionell' | 'batterie' |
 function SupplyGroupAccordions({
   data,
   scenario,
+  generationTWh,
   onGenerationChange,
   onStorageChange,
 }: {
   data: DataSet;
   scenario: Scenario;
+  generationTWh: Record<string, number> | null;
   onGenerationChange: (field: GenerationFieldKey, value: number) => void;
   onStorageChange: (field: StorageFieldKey, value: number) => void;
 }) {
@@ -815,30 +827,34 @@ function SupplyGroupAccordions({
   };
 
   return <div className="grid divide-y divide-zinc-100 dark:divide-zinc-800">
-    {genGroups.map(group => <GroupAccordion
-      key={group.id}
-      title={group.title}
-      summary={group.summary(scenario)}
-      open={open[group.id]}
-      onToggle={() => toggle(group.id)}
-      checked={isGenEnabled(group)}
-      onChecked={(c) => setGenEnabled(group, c)}
-    >
-      {group.fields.map(field => <CapacitySliderRow
-        key={field.key}
-        label={field.label}
-        unit={field.unit}
-        value={scenario.generation[field.key]}
-        min={field.min}
-        max={field.max}
-        step={field.step}
-        baseline={field.baseline}
-        co2eGperKWh={field.co2eGperKWh}
-        referenceScale={field.referenceScale}
-        docId={field.docId}
-        onValue={value => onGenerationChange(field.key, value)}
-      />)}
-    </GroupAccordion>)}
+    {genGroups.map(group => {
+      const groupTWh = generationTWh ? group.fields.reduce((sum, f) => sum + (generationTWh[f.key] ?? 0), 0) : undefined;
+      return <GroupAccordion
+        key={group.id}
+        title={group.title}
+        summary={group.summary(scenario, groupTWh)}
+        open={open[group.id]}
+        onToggle={() => toggle(group.id)}
+        checked={isGenEnabled(group)}
+        onChecked={(c) => setGenEnabled(group, c)}
+      >
+        {group.fields.map(field => <CapacitySliderRow
+          key={field.key}
+          label={field.label}
+          unit={field.unit}
+          value={scenario.generation[field.key]}
+          min={field.min}
+          max={field.max}
+          step={field.step}
+          baseline={field.baseline}
+          co2eGperKWh={field.co2eGperKWh}
+          referenceScale={field.referenceScale}
+          docId={field.docId}
+          energyTWh={generationTWh?.[field.key]}
+          onValue={value => onGenerationChange(field.key, value)}
+        />)}
+      </GroupAccordion>;
+    })}
     {stoGroups.map(group => <GroupAccordion
       key={group.id}
       title={group.title}
@@ -958,7 +974,7 @@ function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {
   return `CO₂e: ${fmt0.format(co2eGperKWh)} g/kWh`;
 }
 
-function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, docId, onValue }: {
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, energyTWh, docId, onValue }: {
   label: string;
   unit: string;
   value: number;
@@ -968,6 +984,7 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   baseline?: number;
   co2eGperKWh?: number;
   referenceScale?: ReferenceScale;
+  energyTWh?: number;
   docId?: string;
   onValue: (value: number) => void;
 }) {
@@ -981,7 +998,8 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   const multiplier = formatMultiplier(display, baseline);
   const emissionText = formatEmissionFactor(co2eGperKWh);
   const referenceText = formatReferenceScale(display, referenceScale);
-  const detailText = [emissionText, referenceText].filter(Boolean).join(' · ');
+  const energyText = energyTWh != null && energyTWh > 0.05 ? `≈ ${fmt0.format(energyTWh)} TWh/a` : '';
+  const detailText = [energyText, emissionText, referenceText].filter(Boolean).join(' · ');
   const commit = (raw: number) => {
     setDragValue(null);
     onValue(raw);
