@@ -183,7 +183,30 @@ function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
   return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">Preset</span>;
 }
 
+function WikiSearch({ query, onChange }: { query: string; onChange: (q: string) => void }) {
+  return <div className="relative">
+    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" aria-hidden="true"/>
+    <input
+      type="search"
+      value={query}
+      onChange={event => onChange(event.target.value)}
+      placeholder="Wiki durchsuchen …"
+      aria-label="Wiki durchsuchen"
+      className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-8 pr-8 text-sm leading-5 text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-50/10 [&::-webkit-search-cancel-button]:hidden"
+    />
+    {query && <button
+      type="button"
+      aria-label="Suche zurücksetzen"
+      onClick={() => onChange('')}
+      className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-zinc-400 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+    >
+      <X className="h-3.5 w-3.5" aria-hidden="true"/>
+    </button>}
+  </div>;
+}
+
 export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedChange }: { docs: DatasetDoc[]; collapsed: boolean; actionBar?: ReactNode; onCollapsedChange: (collapsed: boolean) => void }) {
+  const [query, setQuery] = useState('');
   const selectedId = selectedIdFromUrl();
   const onChangelog = isChangelogRoute();
   const grouped = groupDocsForWiki(docs);
@@ -216,12 +239,13 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
           </div>
           <MainTabs active="wiki"/>
         </div>
-        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px] dark:border-zinc-800">
-          {actionBar}
+        <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-2 dark:border-zinc-800">
+          <WikiSearch query={query} onChange={setQuery}/>
         </div>
       </section>
       <div className={cx('py-5', sidebarInset)}>
-        <div className="mb-3 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+        <DataHandbookNav docs={docs} query={query} sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
+        <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
           <h2 className="mb-0.5 block rounded-md px-2 py-1.5 text-sm font-medium leading-5 text-zinc-950 dark:text-zinc-50">Allgemein</h2>
           <div className="mb-1 grid min-w-0 gap-0.5 pl-8">
             <a
@@ -242,7 +266,6 @@ export function DataHandbookSidebar({ docs, collapsed, actionBar, onCollapsedCha
             </a>
           </div>
         </div>
-        <DataHandbookNav docs={docs} sections={wikiSections} grouped={grouped} selectedId={selectedId}/>
       </div>
     </div>
   </aside>;
@@ -369,16 +392,17 @@ function searchDocs(docs: DatasetDoc[], query: string): DatasetDoc[] {
 
 function DataHandbookNav({
   docs,
+  query,
   sections,
   grouped,
   selectedId,
 }: {
   docs: DatasetDoc[];
+  query: string;
   sections: ReadonlyArray<readonly [string, string]>;
   grouped: Record<string, DatasetDoc[]>;
   selectedId: string | null;
 }) {
-  const [query, setQuery] = useState('');
   const trimmedQuery = query.trim();
   const results = trimmedQuery ? searchDocs(docs, trimmedQuery) : [];
   const selectedDomain = selectedId
@@ -394,25 +418,6 @@ function DataHandbookNav({
     return next;
   });
   return <nav aria-label="Datensätze">
-    <div className="relative mb-3">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" aria-hidden="true"/>
-      <input
-        type="search"
-        value={query}
-        onChange={event => setQuery(event.target.value)}
-        placeholder="Wiki durchsuchen …"
-        aria-label="Wiki durchsuchen"
-        className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-8 pr-8 text-sm leading-5 text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-50/10 [&::-webkit-search-cancel-button]:hidden"
-      />
-      {query && <button
-        type="button"
-        aria-label="Suche zurücksetzen"
-        onClick={() => setQuery('')}
-        className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-zinc-400 transition hover:text-zinc-900 dark:hover:text-zinc-100"
-      >
-        <X className="h-3.5 w-3.5" aria-hidden="true"/>
-      </button>}
-    </div>
     {trimmedQuery
       ? <SearchResults results={results} selectedId={selectedId}/>
       : <div className="grid gap-1">
