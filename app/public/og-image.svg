@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c0c0e"/>
+      <stop offset="1" stop-color="#18181b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- gestapelte Erzeugungs-Silhouette (PV amber, Wind teal, Rest zinc) als Motiv -->
+  <g opacity="0.9">
+    <path d="M0 630 L0 500 C150 470 260 540 400 500 C560 455 700 545 860 505 C1000 470 1110 525 1200 500 L1200 630 Z" fill="#3f3f46"/>
+    <path d="M0 630 L0 545 C150 520 260 575 400 545 C560 510 700 580 860 552 C1000 525 1110 565 1200 548 L1200 630 Z" fill="#2dd4bf" opacity="0.85"/>
+    <path d="M0 630 L0 585 C150 570 280 600 430 585 C600 568 760 600 920 588 C1050 578 1130 595 1200 586 L1200 630 Z" fill="#f59e0b"/>
+  </g>
+
+  <!-- Logo-Mark -->
+  <g transform="translate(96,120)">
+    <rect width="84" height="84" rx="20" fill="#f59e0b"/>
+    <g transform="translate(20,22)" fill="#18181b">
+      <rect x="0"  y="24" width="11" height="16" rx="2"/>
+      <rect x="16" y="12" width="11" height="28" rx="2"/>
+      <rect x="32" y="0"  width="11" height="40" rx="2"/>
+    </g>
+  </g>
+
+  <text x="200" y="158" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="700" fill="#fafafa">Netzprobe</text>
+  <text x="200" y="200" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#a1a1aa">Stromsimulation Deutschland</text>
+
+  <text x="96" y="320" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="600" fill="#e4e4e7">Last · Erzeugung · Speicher · Kosten · Ressourcen</text>
+  <text x="96" y="378" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#a1a1aa">Stündliche Dispatch-Simulation für 2025 und 100%-Szenarien</text>
+
+  <text x="96" y="448" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#f59e0b">netzprobe.de</text>
+  <text x="300" y="448" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="400" fill="#a1a1aa">quelloffen · ohne Account</text>
+</svg>
