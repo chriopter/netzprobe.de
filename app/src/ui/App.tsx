@@ -854,6 +854,41 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     return () => window.clearTimeout(timer);
   }, [result, chartResult]);
 
+  // Pro-Technologie erzeugte Jahresenergie (TWh, BRUTTO inkl. abgeregeltem
+  // Überschuss — also GW × Volllaststunden, was die Flotte herstellt; die
+  // Abregelung steht separat im Mix-Panel). Für die Energiemengen-Anzeige der
+  // Erzeugungs-Sidebar; gleiche Annualisierung wie die Kostenrechnung.
+  const generationTWh = useMemo<Record<string, number> | null>(() => {
+    const hours = result?.hours;
+    if (!hours || hours.length === 0) return null;
+    // [Szenario-Key, [gelieferte GW-Felder + Abregelungs-Felder]] = Brutto-Erzeugung.
+    const fields: Array<[string, string[]]> = [
+      ['pvInstalledGW', ['pvGW', 'pvCurtailedGW']],
+      ['windOnInstalledGW', ['windOnGW', 'windOnCurtailedGW']],
+      ['windOffInstalledGW', ['windOffGW', 'windOffCurtailedGW']],
+      ['biomasseInstalledGW', ['biomasseGW']],
+      ['laufwasserInstalledGW', ['laufwasserGW']],
+      ['kernkraftInstalledGW', ['kernkraftGW', 'kernkraftCurtailedGW']],
+      ['gasInstalledGW', ['gasGW']],
+      ['kohleInstalledGW', ['kohleGW']],
+    ];
+    let loadSum = 0;
+    const sums: Record<string, number> = {};
+    for (const h of hours) {
+      const hr = h as unknown as Record<string, number>;
+      loadSum += hr.loadGW ?? 0;
+      for (const [key, hfs] of fields) {
+        let gross = 0;
+        for (const hf of hfs) gross += hr[hf] ?? 0;
+        sums[key] = (sums[key] ?? 0) + gross;
+      }
+    }
+    const annualScale = loadSum > 0 ? result!.summary.totalDemandTWh * 1000 / loadSum : 1;
+    const out: Record<string, number> = {};
+    for (const [key] of fields) out[key] = (sums[key] ?? 0) * annualScale / 1000;
+    return out;
+  }, [result]);
+
   // Defer chart-source updates: Slider-Tick triggert sofortige KPI-Updates, der
   // Chart läuft hinterher und blockiert Input nicht.
   const deferredChartSource = useDeferredValue<SimulationResult | null>(chartResult ?? result);
@@ -1049,6 +1084,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
         customStart={customStart}
         customEnd={customEnd}
         periodYears={periodYears}
+        generationTWh={generationTWh}
         collapsed={sidebarCollapsed}
         openSectors={openSectors}
         expandedRow={expandedRow}
