@@ -180,7 +180,7 @@ function isChangelogRoute() {
 function KindTag({ kind }: { kind: DatasetDoc['kind'] }) {
   if (kind === 'template') return <span className="ml-2 inline-flex items-center rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-800 dark:bg-sky-950 dark:text-sky-300">Vorlage</span>;
   if (kind !== 'composition') return null;
-  return <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">Preset</span>;
+  return <span className="ml-2 inline-flex items-center rounded-md bg-teal-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-teal-800 dark:bg-teal-950 dark:text-teal-300">Preset</span>;
 }
 
 function WikiSearch({ query, onChange }: { query: string; onChange: (q: string) => void }) {
@@ -453,7 +453,7 @@ function DataHandbookNav({
           </>}
           {!!presets.length && <>
             <TreeSubheader variant="preset">Presets</TreeSubheader>
-            <div className="ml-1.5 grid gap-0.5 border-l border-amber-300 pl-2">
+            <div className="ml-1.5 grid gap-0.5 border-l border-teal-400 pl-2">
               {presets.map(doc => <TreeNode key={doc.id} href={dataWikiUrl(doc.id)} label={doc.method.title} selected={selectedId === doc.id}/>)}
             </div>
           </>}
@@ -1070,7 +1070,7 @@ function highlightParameters(source: string, parameters?: Record<string, unknown
     out.push(
       <span key={`${m.index}-${hit}`} className="text-red-400" title={`${pathStr} aus model.json${valueStr ? ` = ${valueStr}` : ''}`}>
         {hit}
-        {valueStr && <span className="text-amber-300">⟨{valueStr}⟩</span>}
+        {valueStr && <span className="text-teal-400">⟨{valueStr}⟩</span>}
       </span>
     );
     last = m.index + hit.length;
@@ -1213,7 +1213,7 @@ function TreeNode({ href, label, selected, tag }: { href: string; label: string;
 function TreeSubheader({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'preset' }) {
   return <div className={cx(
     'px-2 pt-2 pb-0.5 text-[10px] font-medium uppercase tracking-wider',
-    variant === 'preset' ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500',
+    variant === 'preset' ? 'text-teal-700 dark:text-teal-400' : 'text-zinc-400 dark:text-zinc-500',
   )}>{children}</div>;
 }
 
