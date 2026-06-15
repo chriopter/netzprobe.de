@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 import type { ChartMode } from './chartOptions';
 import { cx, muted, panelHeader } from './ui';
 
@@ -156,6 +156,53 @@ export function SegmentPill<T extends string>({ value, options, onChange, ariaLa
         value === option.id ? 'text-white dark:text-zinc-950' : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
       )}
     >{option.label}</button>)}
+  </div>;
+}
+
+// Kompaktes Dropdown für Chart-Steuerungen (zeigt den aktuellen Wert + Chevron,
+// klappt eine Optionsliste aus). Platzsparender als eine breite SegmentPill,
+// wenn mehrere Steuerungen in einer Gruppe stehen.
+export function ChartDropdown<T extends string>({ value, options, onChange, ariaLabel }: { value: T; options: ReadonlyArray<{ id: T; label: string; description?: string }>; onChange: (value: T) => void; ariaLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (event: MouseEvent) => { if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  const current = options.find(option => option.id === value) ?? options[0];
+  return <div ref={ref} className="relative">
+    <button
+      type="button"
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      aria-label={ariaLabel}
+      onClick={() => setOpen(prev => !prev)}
+      className="inline-flex h-[31px] items-center gap-1 rounded-full border border-zinc-200 bg-white pl-3 pr-2 text-[12px] font-medium leading-none text-zinc-700 transition hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 sm:text-[13px] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:text-zinc-50"
+    >
+      <span className="whitespace-nowrap">{current?.label}</span>
+      <ChevronDown className={cx('h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform', open && 'rotate-180')} aria-hidden="true"/>
+    </button>
+    {open && <div role="listbox" aria-label={ariaLabel} className="absolute right-0 top-[calc(100%+4px)] z-30 w-max min-w-full max-w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      {options.map(option => <button
+        key={option.id}
+        type="button"
+        role="option"
+        aria-selected={option.id === value}
+        title={option.description}
+        onClick={() => { onChange(option.id); setOpen(false); }}
+        className={cx(
+          'block w-full px-3 py-1.5 text-left transition',
+          option.id === value ? 'bg-zinc-50 dark:bg-zinc-800/60' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800',
+        )}
+      >
+        <span className={cx('block text-[13px] leading-5', option.id === value ? 'font-medium text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-200')}>{option.label}</span>
+        {option.description && <span className="mt-0.5 block text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{option.description}</span>}
+      </button>)}
+    </div>}
   </div>;
 }
 

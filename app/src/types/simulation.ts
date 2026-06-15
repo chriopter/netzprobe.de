@@ -28,6 +28,9 @@ export type SimHour = {
   h2SocGWh: number;
   curtailmentGW: number;
   loadSheddingGW: number;
+  // Sektor-H₂ aus dem Pool (Industrie-H₂, strom-äquiv) — für die
+  // verbrauchsorientierte Last-Sicht (wann Energie gebraucht wird).
+  h2PoolReductionGW: number;
   supplyGW: number;
   balanceGW: number;
   co2Tph: number;

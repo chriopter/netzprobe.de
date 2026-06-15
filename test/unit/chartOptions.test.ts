@@ -32,6 +32,7 @@ const hour = (loadSheddingGW: number): SimHour => ({
   h2SocGWh: 0,
   curtailmentGW: 0,
   loadSheddingGW,
+  h2PoolReductionGW: 0,
   supplyGW: 40,
   balanceGW: 0,
   co2Tph: 0,

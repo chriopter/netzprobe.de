@@ -11,6 +11,12 @@ export const EXTRA_LEAVES: ExtraLeaf[] = [
   { key: 'loadSheddingGW', label: 'Fehlend', color: '#b91c1c', glyph: '▨' },
 ];
 export type ChartMode = 'sunburst' | 'linie';
+// Zwei Sichten auf die Last:
+//  - 'verbrauch': wann Energie gebraucht wird (Direktlast + Industrie-H₂-Verbrauch).
+//    Kann über dem Strom-Stapel liegen (im Winter aus Sommer-H₂ gedeckt).
+//  - 'erzeugung': wann der Strom gezogen wird (Direktlast + Elektrolyse + Speicher-
+//    Laden). Liegt immer im Erzeugungs-Stapel.
+export type LoadView = 'verbrauch' | 'erzeugung';
 export type ChartViewport = { width: number; height: number };
 export type ChartTheme = 'light' | 'dark';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
@@ -288,9 +294,14 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light', withStorage = false): EChartsOption {
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light', withStorage = false, loadView: LoadView = 'verbrauch'): EChartsOption {
   const chartHours = compressHours(hours);
   const colors = chartTheme(theme);
+  // Last je Sicht: verbrauchsorientiert (Direktlast + Industrie-H₂-Verbrauch)
+  // oder erzeugungsorientiert (Direktlast + Elektrolyse + Speicher-Laden).
+  const loadValue = (h: SimHour) => loadView === 'erzeugung'
+    ? h.loadGW + h.storageChargeGW
+    : h.loadGW + h.h2PoolReductionGW;
   const leafMeta = new Map(MIX_GROUPS.flatMap(group => group.leaves).map(leaf => [leaf.key, leaf]));
   const supplySeries = STACK_ORDER
     .filter(key => visibility[key] && leafMeta.has(key))
@@ -398,7 +409,11 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         if (hour.exportGW > 0) lines.push(row(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`));
         if (hour.dataBoundaryResidualGW !== 0) lines.push(row(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`));
         if (withStorage) lines.push(row(`${dot('#10b981')}Füllstand: ${bold(`${fmt0.format(hour.batteryGWh / batMax * 100)} %`)} ${muted('Batterie')} · ${bold(`${fmt0.format(hour.h2GWh / h2Max * 100)} %`)} ${muted('H₂')}`));
-        if (visibility.loadGW) lines.push(row(`${dot(colors.loadDot)}Last: ${bold(`${fmt.format(hour.loadGW)} GW`)}`));
+        if (visibility.loadGW) {
+          const extra = loadView === 'erzeugung' ? hour.storageChargeGW : hour.h2PoolReductionGW;
+          const extraLabel = loadView === 'erzeugung' ? 'Elektrolyse/Speicher-Laden' : 'Industrie-H₂';
+          lines.push(row(`${dot(colors.loadDot)}Last: ${bold(`${fmt.format(hour.loadGW + extra)} GW`)}${extra > 0.05 ? detailLine(muted(`Strom ${fmt.format(hour.loadGW)} + ${extraLabel} ${fmt.format(extra)}`)) : ''}`));
+        }
         return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
       },
     },
@@ -422,6 +437,10 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         itemStyle: { color: '#b91c1c' },
         data: chartHours.map((h) => h.loadSheddingGW),
       }] : []),
+      // "Last" = direkte Stromlast + H₂-Elektrolyse. Die Elektrolyse (Industrie-H₂)
+      // ist echter Strombezug und gehört zur Last — so sieht man, wo die Last
+      // wirklich läuft. Liegt per Energiebilanz immer im Erzeugungs-Stapel
+      // (Abstand zum Stapel = Curtailment + Export, vom Stapel gedeckt).
       ...(visibility.loadGW ? [{
         name: 'Last',
         type: 'line' as const,
@@ -430,7 +449,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         smooth: false,
         itemStyle: { color: colors.loadColor },
         lineStyle: { width: 2.2, color: colors.loadColor },
-        data: chartHours.map((h) => h.loadGW),
+        data: chartHours.map(loadValue),
       }] : []),
       ...(withStorage ? [
         storageFillSeries('Batterie-Füllstand', '#10b981', batData, batMax),
