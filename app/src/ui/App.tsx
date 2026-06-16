@@ -1,7 +1,7 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChangelogPage } from './ChangelogPage';
 import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
-import { Camera, Link, Menu, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react';
+import { Camera, Link, Menu, Moon, Pause, Play, Plus, RotateCcw, Sun, X } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart, MapChart, ScatterChart } from 'echarts/charts';
 import { GeoComponent, GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -415,9 +415,22 @@ function useRustSimulation(
   const requestRef = useRef(0);
   const hasFiredFirstRef = useRef(false);
   const lastRunTokenRef = useRef(runToken);
+  // Ergebnis-Cache pro Szenario-INHALT (+ View): beim Wechsel zwischen Reitern
+  // wird ein bereits gerechnetes Szenario sofort aus dem Cache angezeigt, ohne
+  // die Engine erneut zu befragen. Eine unveränderte Kopie teilt sich den Cache.
+  const cacheRef = useRef(new Map<string, SimulationResult>());
 
   useEffect(() => {
     if (!data) return;
+    const cacheKey = JSON.stringify({ scenario, view });
+    const cached = cacheRef.current.get(cacheKey);
+    if (cached) {
+      setResult(cached);
+      setStale(false);
+      setInFlight(false);
+      hasFiredFirstRef.current = true;
+      return;
+    }
     let cancelled = false;
     let abort: AbortController | null = null;
     const fire = () => {
@@ -437,6 +450,8 @@ function useRustSimulation(
         })
         .then(nextResult => {
           if (cancelled || requestId !== requestRef.current) return;
+          if (cacheRef.current.size > 64) cacheRef.current.clear();
+          cacheRef.current.set(cacheKey, nextResult);
           setResult(nextResult);
           setStale(false);
         })
@@ -487,9 +502,17 @@ function useRustSimulation(
 function useRustResolvedScenario(data: DataSet | null, scenario: Scenario): Scenario {
   const [resolved, setResolved] = useState<Scenario>(scenario);
   const requestRef = useRef(0);
+  // Auflösungs-Cache pro Szenario-Inhalt — siehe useRustSimulation.
+  const cacheRef = useRef(new Map<string, Scenario>());
   useEffect(() => {
     if (!data) {
       setResolved(scenario);
+      return;
+    }
+    const cacheKey = JSON.stringify(scenario);
+    const cached = cacheRef.current.get(cacheKey);
+    if (cached) {
+      setResolved(cached);
       return;
     }
     const requestId = ++requestRef.current;
@@ -505,7 +528,10 @@ function useRustResolvedScenario(data: DataSet | null, scenario: Scenario): Scen
         return response.json() as Promise<Scenario>;
       })
       .then(next => {
-        if (requestId === requestRef.current) setResolved(next);
+        if (requestId !== requestRef.current) return;
+        if (cacheRef.current.size > 64) cacheRef.current.clear();
+        cacheRef.current.set(cacheKey, next);
+        setResolved(next);
       })
       .catch(error => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -730,10 +756,98 @@ function ChangelogRoute() {
   </main>;
 }
 
+// Szenario-Reiter: einfacher Slot-Wechsler oben über dem Dashboard. Erst nur
+// Umschalten + Hinzufügen/Entfernen; Vergleich/Side-by-side später.
+function ScenarioTabs({ count, active, onSelect, onAdd, onRemove }: {
+  count: number;
+  active: number;
+  onSelect: (index: number) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}) {
+  // Browser-Tab-Logik: das aktive Szenario ist breit mit Label, inaktive sind
+  // kompakte Nummern-Pillen, die beim Anklicken „aufgehen" (aktiv werden).
+  return <div className="flex items-center gap-1">
+    {Array.from({ length: count }, (_, i) => {
+      if (i === active) {
+        return <div key={i} className="inline-flex h-[26px] items-center rounded-full bg-zinc-950 text-xs font-medium text-white dark:bg-zinc-50 dark:text-zinc-950">
+          <span className={cx('whitespace-nowrap pl-3', count > 1 ? 'pr-1' : 'pr-3')}>Szenario {i + 1}</span>
+          {count > 1 && <button
+            type="button"
+            onClick={() => onRemove(i)}
+            aria-label={`Szenario ${i + 1} entfernen`}
+            className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full opacity-60 transition hover:bg-black/15 hover:opacity-100 dark:hover:bg-white/20"
+          ><X className="h-3 w-3"/></button>}
+        </div>;
+      }
+      return <button
+        key={i}
+        type="button"
+        onClick={() => onSelect(i)}
+        aria-label={`Szenario ${i + 1}`}
+        title={`Szenario ${i + 1}`}
+        className="inline-flex h-[26px] w-[26px] items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50"
+      >{i + 1}</button>;
+    })}
+    <button
+      type="button"
+      onClick={onAdd}
+      aria-label="Szenario hinzufügen"
+      title="Szenario hinzufügen"
+      className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+    ><Plus className="h-4 w-4"/></button>
+  </div>;
+}
+
 function Dashboard({ theme }: { theme: ThemeMode }) {
   const [rawData, setRawData] = useState<DataSet | null>(null);
   const [historical2017, setHistorical2017] = useState<Historical2017Data | null>(null);
-  const [scenario, setScenario] = useState<Scenario>(scenarioFromQueryParams);
+  // Mehrere Szenario-Slots (Reiter); der aktive Slot ist das, was Sidebar/Bon
+  // anzeigen. setScenario bleibt als Wrapper auf den aktiven Slot bestehen, damit
+  // alle vorhandenen Handler unverändert weiterlaufen.
+  const [scenarios, setScenarios] = useState<Scenario[]>(() => [scenarioFromQueryParams()]);
+  const [activeScenario, setActiveScenario] = useState(0);
+  const scenario = scenarios[activeScenario] ?? scenarios[0];
+  const setScenario = (updater: Scenario | ((prev: Scenario) => Scenario)) =>
+    setScenarios(prev => prev.map((s, i) => i === activeScenario
+      ? (typeof updater === 'function' ? (updater as (p: Scenario) => Scenario)(s) : updater)
+      : s));
+  const addScenario = () => {
+    setScenarios(prev => [...prev, JSON.parse(JSON.stringify(prev[activeScenario] ?? prev[0])) as Scenario]);
+    setActiveScenario(scenarios.length);
+  };
+  const removeScenario = (index: number) => {
+    if (scenarios.length <= 1) return;
+    setScenarios(prev => prev.filter((_, i) => i !== index));
+    setActiveScenario(a => Math.max(0, Math.min(index <= a ? a - 1 : a, scenarios.length - 2)));
+  };
+  // Tasten 1–9: direkt zu Szenario N springen. Nur greifen, wenn kein Eingabe-
+  // feld/Slider fokussiert ist und keine Modifier-Taste gedrückt ist — sonst
+  // würde es die normale Tastatur-Bedienung (Eingaben, Slider) stören.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return;
+      if (event.key >= '1' && event.key <= '9') {
+        const index = Number(event.key) - 1;
+        // Existiert das Szenario noch nicht, bis dahin mit Kopien des aktiven
+        // auffüllen (wie der „+"-Knopf) und dann hinspringen.
+        if (index >= scenarios.length) {
+          setScenarios(prev => {
+            const next = [...prev];
+            const seed = prev[activeScenario] ?? prev[0];
+            while (next.length <= index) next.push(JSON.parse(JSON.stringify(seed)) as Scenario);
+            return next;
+          });
+        }
+        setActiveScenario(index);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [scenarios.length, activeScenario]);
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(periodPresetFromUrl);
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
   const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
@@ -877,12 +991,18 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
       setChartResult(result);
       return;
     }
+    // Kein aktiver Slider-Drag (z. B. Szenario-Wechsel): Chart sofort umstellen,
+    // damit das Umschalten zwischen Reitern nicht spürbar nachläuft.
+    if (!sliderActive) {
+      setChartResult(result);
+      return;
+    }
     // 180ms-Debounce: bei schnellem Slider-Drag werden Zwischenergebnisse
     // verworfen, der Chart-Render läuft erst nachdem der Slider stillsteht.
     // KPIs (oben) bleiben am ungedebouncten `result` und reagieren sofort.
     const timer = window.setTimeout(() => setChartResult(result), 180);
     return () => window.clearTimeout(timer);
-  }, [result, chartResult]);
+  }, [result, chartResult, sliderActive]);
 
   // Pro-Technologie erzeugte Jahresenergie (TWh, BRUTTO inkl. abgeregeltem
   // Überschuss — also GW × Volllaststunden, was die Flotte herstellt; die
@@ -1071,7 +1191,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar}/>
+          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} rightSlot={<ScenarioTabs count={scenarios.length} active={activeScenario} onSelect={setActiveScenario} onAdd={addScenario} onRemove={removeScenario}/>}/>
           <MixSection
             result={result}
             resolvedScenario={resolvedScenario}
@@ -1327,12 +1447,12 @@ function scrollToSection(id: MainViewId) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void }) {
+function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, rightSlot }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; rightSlot?: ReactNode }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label }));
   // Kurzlabels nur auf Mobile, damit die vier Tabs neben dem fixierten Theme-Knopf passen.
   const shortLabel: Record<MainViewId, string> = { mix: 'Mix', flaeche: 'Fläche', ressourcen: 'Stoffe', kosten: 'Kosten' };
   const activeIndex = tabs.findIndex(tab => tab.id === active);
-  return <div className="pointer-events-none sticky top-2 z-30 flex items-center gap-2 pr-12 sm:top-3 sm:pr-0">
+  return <div className={cx('pointer-events-none sticky top-2 z-30 flex items-center gap-2 sm:top-3', rightSlot ? 'pr-12' : 'pr-12 sm:pr-0')}>
     {sidebarCollapsed && <div className="pointer-events-auto"><SidebarOpenButton onClick={onOpenSidebar}/></div>}
     <nav aria-label="Hauptansicht" className="pointer-events-auto relative grid min-w-0 overflow-hidden rounded-full border border-zinc-200 bg-white p-0.5 text-[12px] font-medium leading-none shadow-sm sm:text-[13px] dark:border-zinc-700 dark:bg-zinc-900" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
       <span
@@ -1356,6 +1476,7 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar }: { a
         ><span className="sm:hidden">{shortLabel[tab.id]}</span><span className="hidden sm:inline">{tab.label}</span></button>;
       })}
     </nav>
+    {rightSlot && <div className="pointer-events-auto ml-auto">{rightSlot}</div>}
   </div>;
 }
 
