@@ -21,10 +21,28 @@ export type Kosten = {
   lifetimeYears: number;
   fuelEurPerMWhTh?: number;
   efficiency?: number;
+  // Grenzkosten-CAPEX für Zubau über capexBaselineGW hinaus (EUR/kW). Wenn
+  // gesetzt, wird capexEurPerKW zum mengengewichteten Flotten-MITTEL: der
+  // Bestand bis capexBaselineGW kostet capexEurPerKW, jede weitere GW kostet
+  // capexMarginalEurPerKW. Bei PV bildet das den Strukturwandel ab — heutige
+  // Flotte rooftop-lastig (teuer), marginaler Zubau zunehmend Freifläche
+  // (billig, ~Floor). Asymptotisch nähert sich der Mittelwert dem Marginalwert.
+  capexMarginalEurPerKW?: number;
+  capexBaselineGW?: number;
 };
 
 // Kapitalwiedergewinnungsfaktor (annuisiert das CAPEX über die Lebensdauer).
 export const crf = (wacc: number, life: number) => wacc <= 0 ? 1 / life : wacc / (1 - Math.pow(1 + wacc, -life));
+
+// Flotten-Durchschnitts-CAPEX bei gegebener installierter Leistung. Ohne
+// Grenzkosten-Parameter konstant; mit ihnen ein mengengewichtetes Mittel aus
+// Bestand (capexEurPerKW bis capexBaselineGW) und Zubau (capexMarginalEurPerKW).
+export const effectiveCapexEurPerKW = (k: Kosten, gw: number): number => {
+  const base = k.capexEurPerKW ?? 0;
+  const baseGW = k.capexBaselineGW;
+  if (k.capexMarginalEurPerKW == null || baseGW == null || gw <= baseGW) return base;
+  return (baseGW * base + (gw - baseGW) * k.capexMarginalEurPerKW) / gw;
+};
 
 // [uiManifest-Key, Label, Scenario-GW-Feld, SimHour-Feld]
 const GEN: Array<[string, string, keyof Scenario['generation'], keyof SimHour]> = [
@@ -51,6 +69,9 @@ export type KostenTechDetail = {
   dischargeTWh?: number;
   genTWh?: number;
   crfValue?: number;
+  // Effektive Flotten-CAPEX nach Grenzkosten-Blend (EUR/kW); weicht von
+  // kosten.capexEurPerKW ab, sobald capexMarginalEurPerKW greift.
+  capexEffectiveEurPerKW?: number;
   kosten?: Kosten;
 };
 export type KostenTech = { key: string; label: string; capex: number; om: number; fuel: number; total: number; eurPerMWh: number | null; detail?: KostenTechDetail };
@@ -182,14 +203,15 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     if (!k) continue;
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
-    const capexLump = (k.capexEurPerKW ?? 0) * gw * 1e6;
+    const capexPerKW = effectiveCapexEurPerKW(k, gw);
+    const capexLump = capexPerKW * gw * 1e6;
     investEur += capexLump; investErzeugung += capexLump;
     const capex = capexLump * crf(k.wacc, k.lifetimeYears);
     const om = (k.omFixEurPerKWa ?? 0) * gw * 1e6 + (k.omVarEurPerMWh ?? 0) * genMWh;
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
     capexSum += capex; omSum += om; fuelSum += fuel;
     const total = capex + om + fuel;
-    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), kosten: k } });
+    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), capexEffectiveEurPerKW: capexPerKW, kosten: k } });
   }
 
   // [key, label, Lade-GW, Entlade-GW, Energie-GWh]. Batterie/PSW haben EINE
