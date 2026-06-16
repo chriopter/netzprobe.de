@@ -10,15 +10,15 @@ pub fn apply(
     demand_twh: f64,
     _scenario: &Value,
 ) -> Result<(Value, Value, Value, Value), ModelError> {
-    let factor = demand_twh / 466.0;
+    let factor = scaling_factor(demand_twh);
     Ok((
         json!({
             "pvInstalledGW": snap_gen("pv", comp_number("historisch-2025", "pvInstalledGW")? * factor)?,
             "windOnInstalledGW": snap_gen("windon", comp_number("historisch-2025", "windOnInstalledGW")? * factor)?,
             "windOffInstalledGW": snap_gen("windoff", comp_number("historisch-2025", "windOffInstalledGW")? * factor)?,
             "kernkraftInstalledGW": snap_gen("kernkraft", comp_number("historisch-2025", "kernkraftInstalledGW")? * factor)?,
-            "biomasseInstalledGW": snap_gen("biomasse", comp_number("historisch-2025", "biomasseInstalledGW")? * factor)?,
-            "laufwasserInstalledGW": snap_gen("laufwasser", comp_number("historisch-2025", "laufwasserInstalledGW")? * factor)?,
+            "biomasseInstalledGW": snap_gen("biomasse", comp_number("historisch-2025", "biomasseInstalledGW")?)?,
+            "laufwasserInstalledGW": snap_gen("laufwasser", comp_number("historisch-2025", "laufwasserInstalledGW")?)?,
             "gasInstalledGW": snap_gen("gas", comp_number("historisch-2025", "gasInstalledGW")? * factor)?,
             "kohleInstalledGW": snap_gen("kohle", comp_number("historisch-2025", "kohleInstalledGW")? * factor)?,
             "pvCapacityFactorMultiplier": 1.0,
@@ -28,8 +28,8 @@ pub fn apply(
         json!({
             "batteriePowerGW": snap_storage("batterie", "powerGW", comp_number("historisch-2025", "batteriePowerGW")? * factor)?,
             "batterieEnergyGWh": snap_storage("batterie", "energyGWh", comp_number("historisch-2025", "batterieEnergyGWh")? * factor)?,
-            "pumpspeicherPowerGW": snap_storage("pumpspeicher", "powerGW", comp_number("historisch-2025", "pumpspeicherPowerGW")? * factor)?,
-            "pumpspeicherEnergyGWh": snap_storage("pumpspeicher", "energyGWh", comp_number("historisch-2025", "pumpspeicherEnergyGWh")? * factor)?,
+            "pumpspeicherPowerGW": snap_storage("pumpspeicher", "powerGW", comp_number("historisch-2025", "pumpspeicherPowerGW")?)?,
+            "pumpspeicherEnergyGWh": snap_storage("pumpspeicher", "energyGWh", comp_number("historisch-2025", "pumpspeicherEnergyGWh")?)?,
             "h2ChargePowerGW": snap_storage("h2", "chargePowerGW", comp_number("historisch-2025", "h2ChargePowerGW")? * factor)?,
             "h2DischargePowerGW": snap_storage("h2", "dischargePowerGW", comp_number("historisch-2025", "h2DischargePowerGW")? * factor)?,
             "h2EnergyGWh": snap_storage("h2", "energyGWh", comp_number("historisch-2025", "h2EnergyGWh")? * factor)?,
