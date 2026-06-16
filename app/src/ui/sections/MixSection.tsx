@@ -16,7 +16,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartDropdown, ChartModeToggle, ChartPanel, HelpDot, HelpPanel, ScreenshotButton, SectionHeading, statToneClass, type Stat } from '../sectionUi';
+import { ChartDropdown, ChartModeToggle, ChartPanel, HelpDot, HelpPanel, SectionHeading, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
@@ -200,10 +200,6 @@ export default function MixSection(props: MixSectionProps) {
   ];
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
-      <div className="flex items-center gap-2">
-        <SectionHeading id="mix"/>
-        <ScreenshotButton targetId="section-mix" filename="netzprobe-energiemix.png" label="Energiemix als Bild speichern"/>
-      </div>
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedDelivered != null ? `${fmt0.format(electrifiedDelivered * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> über {periodYears} Jahre.
       </p>
@@ -235,12 +231,13 @@ export default function MixSection(props: MixSectionProps) {
         </div>)}
       </div>}
     <div className="mb-2 mt-5 border-t border-zinc-200 dark:border-zinc-800"/>
+    <div className="flex items-center gap-2">
+      <SectionHeading id="mix"/>
+      <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
+    </div>
     <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
-        <div className="pointer-events-auto absolute left-2 top-2 z-10 flex items-center gap-1.5 sm:left-3 sm:top-3">
-          <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
-        </div>
-        {/* Aufklapp-Hilfe als Overlay unter dem Fragezeichen — verschiebt das Layout nicht. */}
+        {/* Aufklapp-Hilfe (Trigger sitzt im Titel über dem Chart) als Overlay. */}
         {helpOpen && <div className="absolute left-2 top-12 z-20 max-h-[calc(100%-3.5rem)] w-[min(38rem,calc(100%-1rem))] overflow-auto rounded-lg shadow-lg sm:left-3">
           <HelpPanel>
           <p>Die Blume zeigt die <strong>Stundensimulation eines Jahres</strong>: Der Winkel ist der Jahresverlauf (Januar oben, im Uhrzeigersinn), der Radius die Leistung in GW. Über „Polar / Linie" rechts oben gibt es dieselben Daten als klassische Zeitachse.</p>

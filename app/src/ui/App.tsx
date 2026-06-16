@@ -34,7 +34,7 @@ import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { KOSTEN_LEVERS } from './costLevers';
-import { captureNodeToPng } from './sectionUi';
+import { captureNodeToPng, FloatingPanel } from './sectionUi';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
 type SimulationView = { start: string; end: string; maxPoints: number };
@@ -1146,20 +1146,6 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     }
     window.setTimeout(() => setActionStatus(null), 1600);
   };
-  // Toolbar: ein PNG über ALLE Abschnitte (der gemeinsame Wrapper #dashboard-sections).
-  const screenshotAllSections = async () => {
-    const node = document.getElementById('dashboard-sections');
-    if (!node) return;
-    setActionStatus('Erzeuge Gesamtbild …');
-    try {
-      await captureNodeToPng(node, 'netzprobe-uebersicht.png');
-      setActionStatus('Gesamtbild gespeichert');
-    } catch (error) {
-      console.error('Gesamt-Screenshot fehlgeschlagen:', error);
-      setActionStatus('Screenshot nicht möglich');
-    }
-    window.setTimeout(() => setActionStatus(null), 1800);
-  };
   const toggleLiveSimulation = () => {
     setLiveSimulation(value => {
       const next = !value;
@@ -1236,7 +1222,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           status={actionStatus}
           onReset={resetConfiguration}
           onCopyUrl={copyShareUrl}
-          onScreenshotAll={screenshotAllSections}
+          screenshotMenu={<ScreenshotMenu/>}
           live={liveSimulation}
           onToggleLive={toggleLiveSimulation}
         />}
@@ -1337,18 +1323,68 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   </main>;
 }
 
-function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, onScreenshotAll, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot?: () => void; onScreenshotAll?: () => void; onToggleLive: () => void }) {
-  return <HeaderToolBar status={status} live={live} onToggleLive={onToggleLive} onScreenshot={onScreenshot} onScreenshotAll={onScreenshotAll} onRefresh={onReset} onCopyUrl={onCopyUrl}/>;
+// Kamera-Dropdown: ein Button (oben links), Klick öffnet eine Auswahl, welcher
+// Abschnitt (oder alle) als PNG gespeichert wird. captureNodeToPng erfasst den
+// jeweiligen Knoten per id im aktuellen aufgeklappten Zustand.
+const SCREENSHOT_TARGETS = [
+  { label: 'Alle Abschnitte', id: 'dashboard-sections', file: 'netzprobe-uebersicht.png' },
+  { label: 'Energiemix', id: 'section-mix', file: 'netzprobe-energiemix.png' },
+  { label: 'Fläche', id: 'section-flaeche', file: 'netzprobe-flaeche.png' },
+  { label: 'Ressourcen', id: 'section-ressourcen', file: 'netzprobe-ressourcen.png' },
+  { label: 'Kosten', id: 'section-kosten', file: 'netzprobe-kostenrechnung.png' },
+  { label: 'Datensatz', id: 'section-datensatz', file: 'netzprobe-datensatz.png' },
+] as const;
+
+function ScreenshotMenu() {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const ref = useRef<HTMLButtonElement>(null);
+  const shoot = async (target: typeof SCREENSHOT_TARGETS[number]) => {
+    setOpen(false);
+    const node = document.getElementById(target.id);
+    if (!node) return;
+    setBusy(target.id);
+    try {
+      await captureNodeToPng(node, target.file);
+    } catch (error) {
+      console.error('Screenshot fehlgeschlagen:', error);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return <>
+    <button
+      ref={ref}
+      type="button"
+      aria-label="Als Bild speichern"
+      title="Als Bild speichern"
+      onClick={() => setOpen(o => !o)}
+      className={cx(iconButton, 'h-[27px] w-[27px]')}
+    ><Camera className="h-4 w-4"/></button>
+    <FloatingPanel anchorRef={ref} open={open} onClose={() => setOpen(false)} className="w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      {SCREENSHOT_TARGETS.map(target => <button
+        key={target.id}
+        type="button"
+        onClick={() => shoot(target)}
+        disabled={busy != null}
+        className="block w-full rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+      >{busy === target.id ? 'Erzeuge …' : target.label}</button>)}
+    </FloatingPanel>
+  </>;
 }
 
-function HeaderToolBar({ status, live, onToggleLive, onScreenshot, onScreenshotAll, onRefresh, onCopyUrl }: { status: string | null; live: boolean; onToggleLive: () => void; onScreenshot?: () => void; onScreenshotAll?: () => void; onRefresh: () => void; onCopyUrl: () => void }) {
+function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, screenshotMenu, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot?: () => void; screenshotMenu?: ReactNode; onToggleLive: () => void }) {
+  return <HeaderToolBar status={status} live={live} onToggleLive={onToggleLive} onScreenshot={onScreenshot} screenshotMenu={screenshotMenu} onRefresh={onReset} onCopyUrl={onCopyUrl}/>;
+}
+
+function HeaderToolBar({ status, live, onToggleLive, onScreenshot, screenshotMenu, onRefresh, onCopyUrl }: { status: string | null; live: boolean; onToggleLive: () => void; onScreenshot?: () => void; screenshotMenu?: ReactNode; onRefresh: () => void; onCopyUrl: () => void }) {
   return <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
     <div className="flex w-full justify-between">
       <IconAction label={live ? 'Live-Berechnung pausieren' : 'Live-Berechnung aktivieren'} onClick={onToggleLive} tone={live ? 'default' : 'danger'}>
         {live ? <Pause className="h-4 w-4"/> : <Play className="h-4 w-4"/>}
       </IconAction>
       {onScreenshot && <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>}
-      {onScreenshotAll && <IconAction label="Alle Abschnitte als Bild" onClick={onScreenshotAll}><Camera className="h-4 w-4"/></IconAction>}
+      {screenshotMenu}
       <IconAction label="Aktualisieren" onClick={onRefresh}><RotateCcw className="h-4 w-4"/></IconAction>
       <IconAction label="Link" onClick={onCopyUrl}><Link className="h-4 w-4"/></IconAction>
     </div>
