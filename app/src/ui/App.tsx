@@ -28,6 +28,7 @@ const loadDataFileViewer = () => import('./DataFileViewer');
 const DataFileViewer = lazy(() => loadDataFileViewer().then(m => ({ default: m.DataFileViewer })));
 import type { DatasetDoc } from './dataCatalog';
 import { DisclaimerFooter } from './DisclaimerFooter';
+import { UpdateBanner } from './UpdateBanner';
 import { pct, twh } from './format';
 import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
@@ -591,6 +592,7 @@ export function App() {
         : null;
 
   return <>
+    <UpdateBanner/>
     <ThemeToggle theme={theme} onToggleTheme={toggleTheme}/>
     {dashboardMounted && <div hidden={!routeIsDashboard}><Dashboard theme={theme}/></div>}
     {!routeIsDashboard && routeContent}
