@@ -127,8 +127,9 @@ describe('Kosten · 0 Realismus', () => {
     expect(prices.netzWacc).toBeLessThanOrEqual(0.08);
     expect(prices.gasFuelEurPerMWhTh).toBeGreaterThanOrEqual(25);
     expect(prices.gasFuelEurPerMWhTh).toBeLessThanOrEqual(45);
-    expect(prices.uraniumEurPerMWhEl).toBeGreaterThanOrEqual(18);
-    expect(prices.uraniumEurPerMWhEl).toBeLessThanOrEqual(25);
+    // Marktbasierter Front-End-Vollzyklus (WNA/NEA-Korridor 9–13; Spot bis ~19)
+    expect(prices.uraniumEurPerMWhEl).toBeGreaterThanOrEqual(9);
+    expect(prices.uraniumEurPerMWhEl).toBeLessThanOrEqual(19);
     expect(prices.importEurPerMWh).toBeGreaterThanOrEqual(70);
     expect(prices.importEurPerMWh).toBeLessThanOrEqual(120);
     expect(prices.h2ImportEurPerMWh).toBeGreaterThanOrEqual(90);
