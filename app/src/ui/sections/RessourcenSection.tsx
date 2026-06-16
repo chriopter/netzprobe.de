@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import type { Scenario } from '../../types/scenario';
 import type { DataSet } from '../../types/data';
 import type { SimulationResult } from '../../types/simulation';
-import { HelpDot, HelpPanel, ScreenshotButton, SectionHeading, ViewPill, type SectionView } from '../sectionUi';
+import { HelpDot, HelpPanel, SectionHeading, ViewPill, type SectionView } from '../sectionUi';
 import { e100ElectricTWh } from '../ScenarioSidebar';
 import { cx } from '../ui';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
@@ -242,7 +242,6 @@ export default function RessourcenSection({ scenario, result, periodYears, data 
     <div className="flex items-center gap-2">
       <SectionHeading id="ressourcen"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie wird der Materialbedarf berechnet?"/>
-      <ScreenshotButton targetId="section-ressourcen" filename="netzprobe-ressourcen.png" label="Ressourcen als Bild speichern"/>
       <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
     </div>
     {helpOpen && <HelpPanel>

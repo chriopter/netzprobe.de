@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
-import { HelpDot, HelpPanel, ScreenshotButton, SectionHeading } from '../sectionUi';
+import { HelpDot, HelpPanel, SectionHeading } from '../sectionUi';
 import { cx } from '../ui';
 import { fmt0 } from '../format';
 import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult, type KostenTech } from '../kosten';
@@ -742,7 +742,6 @@ export default function KostenSection({ scenario, result, periodYears, supplyLab
     <div className="flex items-center gap-2">
       <SectionHeading id="kosten"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie werden die Kosten berechnet?"/>
-      <ScreenshotButton targetId="section-kosten" filename="netzprobe-kostenrechnung.png" label="Kostenrechnung als Bild speichern"/>
     </div>
     {helpOpen && <HelpPanel>
       <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. In der Sicht <strong>pro Jahr</strong> ist diese Zahl horizont-unabhängig und der faire Vergleich zwischen Szenarien; der Schalter oben am Bon stellt wahlweise auf <strong>Gesamt</strong> um und multipliziert dann jeden Posten mit dem Kostenzeitraum.</p>

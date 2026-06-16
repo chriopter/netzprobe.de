@@ -5,7 +5,7 @@ import { computeKosten } from '../kosten';
 import { annualByMaterial, groupSums, fuelTWhFromResult } from '../ressourcen';
 import { e100ElectricTWh } from '../ScenarioSidebar';
 import { cx } from '../ui';
-import { HelpDot, HelpPanel, ScreenshotButton } from '../sectionUi';
+import { HelpDot, HelpPanel } from '../sectionUi';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
 import type { DataSet } from '../../types/data';
@@ -150,7 +150,6 @@ export default function DatensatzSection({ resolvedScenario, result, periodYears
     <div className="flex items-center gap-2">
       <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">Datensatz</h2>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(o => !o)} label="Was steht im Datensatz?"/>
-      <ScreenshotButton targetId="section-datensatz" filename="netzprobe-datensatz.png" label="Datensatz als Bild speichern"/>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
