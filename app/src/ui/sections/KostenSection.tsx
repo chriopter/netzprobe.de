@@ -368,6 +368,7 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
           Preise — er ordnet Verhältnisse ein, prognostiziert nicht 2045. */}
       <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Kostenzeitraum {horizon} Jahre · Heutige Preise ohne Lernkurven</p>
       <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
+      {k.hasCostOverrides && <p className="mt-2 text-center"><span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Eigene Kostenannahmen aktiv</span></p>}
       {/* Master-Schalter: skaliert den GANZEN Bon (jede Kostenart, jede
           Technologie, SUMME) wahlweise pro Jahr oder über den Kostenzeitraum. */}
       <div className="mt-4 flex justify-center">

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import {
   Activity,
   ArrowRightLeft,
@@ -8,11 +8,13 @@ import {
   Edit3,
   Info,
   Menu,
+  RotateCcw,
   SlidersHorizontal,
   Zap,
 } from 'lucide-react';
 
 import { FloatingPanel } from './sectionUi';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, type KostenLever } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -124,6 +126,7 @@ type ScenarioSidebarProps = {
   onE100ChemieTargetChange: (twh: number) => void;
   onGenerationChange: (field: keyof Scenario['generation'], value: number) => void;
   onStorageChange: (field: keyof Scenario['storage'], value: number) => void;
+  onCostOverrideChange: (tech: string, leverKey: string, value: number) => void;
   onImportChange: (field: keyof Scenario['import'], value: number) => void;
   onExportChange: (field: keyof Scenario['export'], value: number) => void;
   supplyPreset: Scenario['supplyPreset'];
@@ -251,6 +254,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   onE100ChemieTargetChange,
   onGenerationChange,
   onStorageChange,
+  onCostOverrideChange,
   onImportChange,
   onExportChange,
   supplyPreset,
@@ -369,6 +373,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           onSupplyPresetChange={onSupplyPresetChange}
           onGenerationChange={onGenerationChange}
           onStorageChange={onStorageChange}
+          onCostOverrideChange={onCostOverrideChange}
         />
 
         <AussenhandelSection
@@ -604,6 +609,7 @@ function ErzeugungSection({
   onSupplyPresetChange,
   onGenerationChange,
   onStorageChange,
+  onCostOverrideChange,
 }: {
   data: DataSet | null;
   scenario: Scenario;
@@ -612,6 +618,7 @@ function ErzeugungSection({
   onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
   onGenerationChange: (field: GenerationFieldKey, value: number) => void;
   onStorageChange: (field: StorageFieldKey, value: number) => void;
+  onCostOverrideChange: (tech: string, leverKey: string, value: number) => void;
 }) {
   if (!data) return null;
 
@@ -667,6 +674,7 @@ function ErzeugungSection({
         generationTWh={generationTWh}
         onGenerationChange={onGenerationChange}
         onStorageChange={onStorageChange}
+        onCostOverrideChange={onCostOverrideChange}
       />
     </div>
   </SidebarCard>;
@@ -767,18 +775,72 @@ function AussenhandelSection({
 
 type SupplyGroupId = 'erneuerbar' | 'kernkraft' | 'konventionell' | 'batterie' | 'pumpspeicher' | 'h2';
 
+// Verschachtelte Kosten-Hebel pro Technologie ("eigene Annahmen"). Controlled:
+// Werte kommen aus scenario.costOverrides[tech], Änderungen via onChange.
+// Konfiguration der Hebel in ./costLevers.
+function TechKostenMock({ tech, docId, values, onChange }: {
+  tech: string;
+  docId?: string;
+  values?: Record<string, number>;
+  onChange: (tech: string, leverKey: string, value: number) => void;
+}) {
+  const levers = KOSTEN_LEVERS[tech] ?? [];
+  const [open, setOpen] = useState(false);
+  if (!levers.length) return null;
+  const valOf = (l: KostenLever) => values?.[l.key] ?? l.def;
+  const dirty = levers.some(l => valOf(l) !== l.def);
+  return <div className="mb-1 ml-3 rounded-lg border border-zinc-200/70 bg-zinc-50/50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
+    <div className="flex items-center gap-2 px-3 py-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex flex-1 items-center gap-2 text-left text-[11px] font-medium text-zinc-600 dark:text-zinc-300"
+      >
+        Kosten-Annahmen
+        {dirty && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">eigene Annahmen</span>}
+      </button>
+      {dirty && <button
+        type="button"
+        onClick={() => levers.forEach(l => onChange(tech, l.key, l.def))}
+        aria-label="Kosten-Annahmen auf Standardwerte zurücksetzen"
+        title="auf Standardwerte zurücksetzen"
+        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+      ><RotateCcw className="h-3 w-3"/></button>}
+      {docId && <InfoLink id={docId} label="Kosten-Quellen im Wiki" alwaysVisible/>}
+      <button type="button" onClick={() => setOpen(o => !o)} aria-label="Kosten-Annahmen auf/zu" className="shrink-0">
+        <ChevronDown className={cx('h-3.5 w-3.5 text-zinc-400 transition-transform', open && 'rotate-180')} aria-hidden="true"/>
+      </button>
+    </div>
+    {open && <div className="space-y-1 px-3 pb-2.5 pt-0.5">
+      {levers.map(l => <CapacitySliderRow
+        key={l.key}
+        label={l.label}
+        unit={l.unit}
+        value={valOf(l)}
+        min={l.min}
+        max={l.max}
+        step={l.step}
+        baseline={l.def}
+        onValue={value => onChange(tech, l.key, value)}
+      />)}
+    </div>}
+  </div>;
+}
+
 function SupplyGroupAccordions({
   data,
   scenario,
   generationTWh,
   onGenerationChange,
   onStorageChange,
+  onCostOverrideChange,
 }: {
   data: DataSet;
   scenario: Scenario;
   generationTWh: Record<string, number> | null;
   onGenerationChange: (field: GenerationFieldKey, value: number) => void;
   onStorageChange: (field: StorageFieldKey, value: number) => void;
+  onCostOverrideChange: (tech: string, leverKey: string, value: number) => void;
 }) {
   const [open, setOpen] = useState<Record<SupplyGroupId, boolean>>({
     erneuerbar: false, kernkraft: false, konventionell: false,
@@ -853,21 +915,23 @@ function SupplyGroupAccordions({
         checked={isGenEnabled(group)}
         onChecked={(c) => setGenEnabled(group, c)}
       >
-        {group.fields.map(field => <CapacitySliderRow
-          key={field.key}
-          label={field.label}
-          unit={field.unit}
-          value={scenario.generation[field.key]}
-          min={field.min}
-          max={field.max}
-          step={field.step}
-          baseline={field.baseline}
-          co2eGperKWh={field.co2eGperKWh}
-          referenceScale={field.referenceScale}
-          docId={field.docId}
-          energyTWh={generationTWh?.[field.key]}
-          onValue={value => onGenerationChange(field.key, value)}
-        />)}
+        {group.fields.map(field => <Fragment key={field.key}>
+          <CapacitySliderRow
+            label={field.label}
+            unit={field.unit}
+            value={scenario.generation[field.key]}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            baseline={field.baseline}
+            co2eGperKWh={field.co2eGperKWh}
+            referenceScale={field.referenceScale}
+            docId={field.docId}
+            energyTWh={generationTWh?.[field.key]}
+            onValue={value => onGenerationChange(field.key, value)}
+          />
+          {FIELD_TO_TECH[field.key] && <TechKostenMock tech={FIELD_TO_TECH[field.key]} docId={field.docId} values={scenario.costOverrides?.[FIELD_TO_TECH[field.key]]} onChange={onCostOverrideChange}/>}
+        </Fragment>)}
       </GroupAccordion>;
     })}
     {stoGroups.map(group => <GroupAccordion
@@ -893,6 +957,7 @@ function SupplyGroupAccordions({
         docId={field.docId}
         onValue={value => onStorageChange(field.key, value)}
       />)}
+      {KOSTEN_LEVERS[group.id] && <TechKostenMock tech={group.id} docId={group.fields[0]?.docId} values={scenario.costOverrides?.[group.id]} onChange={onCostOverrideChange}/>}
     </GroupAccordion>)}
   </div>;
 }

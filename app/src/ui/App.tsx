@@ -33,6 +33,7 @@ import { pct, twh } from './format';
 import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
+import { KOSTEN_LEVERS } from './costLevers';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
 type SimulationView = { start: string; end: string; maxPoints: number };
@@ -300,6 +301,19 @@ function scenarioFromQueryParams(): Scenario {
     const value = Number(raw);
     if (Number.isFinite(value)) exp[key] = value;
   }
+  const co = params.get('co');
+  if (co) {
+    const overrides: Record<string, Record<string, number>> = {};
+    for (const part of co.split(',')) {
+      const [techKey, rawVal] = part.split(':');
+      if (!techKey || rawVal == null) continue;
+      const [tech, leverKey] = techKey.split('.');
+      const value = Number(rawVal);
+      if (!tech || !leverKey || !Number.isFinite(value)) continue;
+      (overrides[tech] ??= {})[leverKey] = value;
+    }
+    scenario.costOverrides = overrides;
+  }
   return scenario;
 }
 
@@ -338,6 +352,18 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
     if (scenario.export[key] === scenarioBase.export[key]) url.searchParams.delete(param);
     else url.searchParams.set(param, String(scenario.export[key]));
   }
+  // Kosten-Overrides: kompakt als co=tech.leverKey:wert,… — nur Hebel, die vom
+  // Default abweichen (gleiche Logik wie hasActiveOverrides).
+  const coParts: string[] = [];
+  for (const tech of Object.keys(KOSTEN_LEVERS)) {
+    const ov = scenario.costOverrides?.[tech];
+    if (!ov) continue;
+    for (const lever of KOSTEN_LEVERS[tech]) {
+      const v = ov[lever.key];
+      if (v != null && v !== lever.def) coParts.push(`${tech}.${lever.key}:${v}`);
+    }
+  }
+  if (coParts.length) url.searchParams.set('co', coParts.join(',')); else url.searchParams.delete('co');
 }
 
 // ECharts-Module einmalig registrieren. Charts laufen im Main-Thread; DOM-
@@ -1157,6 +1183,18 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             storage: { ...base.storage, [field]: v },
             import: base.import,
             export: base.export,
+          };
+        })}
+        onCostOverrideChange={(tech, key, value) => setScenario(prev => {
+          const base = prev.supplyPreset === 'custom' ? prev : resolvedScenario;
+          return {
+            ...prev,
+            supplyPreset: 'custom',
+            generation: base.generation,
+            storage: base.storage,
+            import: base.import,
+            export: base.export,
+            costOverrides: { ...prev.costOverrides, [tech]: { ...prev.costOverrides?.[tech], [key]: value } },
           };
         })}
         onImportChange={(field, v) => setScenario(prev => {

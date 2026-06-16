@@ -1,6 +1,7 @@
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
+import { mergeTechKosten, hasActiveOverrides } from './costLevers';
 
 export type Kosten = {
   // Realer, technologiespezifischer Kapitalkostensatz (Dezimal). Liegt je Paket
@@ -94,6 +95,9 @@ export type KostenResult = {
   // Export läuft praktisch dauerhaft am Cap: die Erlösgutschrift ist dann eine
   // Obergrenze (der eigene Caveat im strom-handel-Paket greift).
   exportAtCap: boolean;
+  // Mindestens eine Technologie hat eine vom Default abweichende „eigene
+  // Annahme" (Kosten-Override) — fürs Bon-Signal „eigene Annahmen aktiv".
+  hasCostOverrides: boolean;
   perTech: KostenTech[];
   // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
   params: {
@@ -199,8 +203,9 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   let investErzeugung = 0, investSpeicher = 0;
 
   for (const [key, label, gwField, hf] of GEN) {
-    const k = genPkg[key]?.kosten;
-    if (!k) continue;
+    const k0 = genPkg[key]?.kosten;
+    if (!k0) continue;
+    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key]);
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
     const capexPerKW = effectiveCapexEurPerKW(k, gw);
@@ -223,8 +228,9 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     ['h2', 'Wasserstoff', scenario.storage.h2ChargePowerGW, scenario.storage.h2DischargePowerGW, scenario.storage.h2EnergyGWh],
   ];
   for (const [key, label, chargeGW, dischargeGW, energy] of storCaps) {
-    const k = stoPkg[key]?.kosten;
-    if (!k || (chargeGW <= 0 && dischargeGW <= 0 && energy <= 0)) continue;
+    const k0 = stoPkg[key]?.kosten;
+    if (!k0 || (chargeGW <= 0 && dischargeGW <= 0 && energy <= 0)) continue;
+    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key]);
     const split = k.capexChargeEurPerKW != null || k.capexDischargeEurPerKW != null;
     const powerCapexEur = split
       ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
@@ -321,6 +327,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     addedReGW,
     addedPeakLoadGW,
     exportAtCap,
+    hasCostOverrides: hasActiveOverrides(scenario.costOverrides),
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
       netzWacc,

@@ -68,6 +68,7 @@ export function normalizeScenario(scenario: Scenario): Scenario {
     ...scenario,
     supplyPreset,
     loadYear,
+    costOverrides: scenario.costOverrides ?? {},
     demand: {
       'last-2025': demand['last-2025'] ?? true,
       'e100-pkw': demand['e100-pkw'] ?? false,

@@ -227,6 +227,26 @@ describe('Kosten · B Invarianten', () => {
     expect(at(100).params.exportEffectiveEurPerMWh).toBeCloseTo(at(90).params.exportEffectiveEurPerMWh, 6);
   });
 
+  it('18b Kosten-Override: eigene CAPEX/WACC wirken, Default = no-op', () => {
+    const hours = [hour({ loadGW: 50, pvGW: 50 })];
+    const summary = { totalDemandTWh: 0.438 };
+    const baseScen = scen({ pvInstalledGW: 100 });
+    const base = computeKosten(baseScen, result(hours, summary));
+    expect(base.hasCostOverrides).toBe(false);
+    // PV-CAPEX 850 → 1600: PV-Posten und Summe steigen, Flag gesetzt
+    const capUp = computeKosten({ ...baseScen, costOverrides: { pv: { capex: 1600 } } }, result(hours, summary));
+    expect(capUp.hasCostOverrides).toBe(true);
+    expect(capUp.perTech.find(t => t.key === 'pv')!.total).toBeGreaterThan(base.perTech.find(t => t.key === 'pv')!.total);
+    expect(capUp.total).toBeGreaterThan(base.total);
+    // Override == Default ist kein Override (Flag bleibt false, Summe unverändert)
+    const noop = computeKosten({ ...baseScen, costOverrides: { pv: { capex: 850 } } }, result(hours, summary));
+    expect(noop.hasCostOverrides).toBe(false);
+    expect(noop.total).toBeCloseTo(base.total, -2);
+    // WACC-Hebel: Slider-% → Dezimal (scale 0.01), höhere WACC ⇒ höhere Annuität
+    const waccUp = computeKosten({ ...baseScen, costOverrides: { pv: { wacc: 7 } } }, result(hours, summary));
+    expect(waccUp.total).toBeGreaterThan(base.total);
+  });
+
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {
     // 10 GW Gas konstant, loadGW 10 → annualScale = 24, Jahres-Erzeugung = 10·8760 = 87,6 GWh·... = 87,6 TWh
     const hours = Array.from({ length: 365 }, () => hour({ loadGW: 10, gasGW: 10 }));
