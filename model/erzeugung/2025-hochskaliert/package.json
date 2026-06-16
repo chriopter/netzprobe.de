@@ -19,9 +19,9 @@
     "resolution": "stündlich",
     "unit": "GW, GWh, TWh",
     "description": [
-      "**Komposition:** das Preset multipliziert sämtliche Default-Werte der `erz-*`, `speicher-*` und `aussenhandel-*` Bausteine — inklusive Kohle, Gas und Import-Cap — mit dem **Skalierungsfaktor** `f = demandTWh / 466 TWh` und rundet das Ergebnis pro Slider auf das Min/Max/Step-Raster des jeweiligen Bausteins. Die Mix-Anteile aus 2025 bleiben damit erhalten; der Mix als Ganzes wächst proportional mit der Last.",
+      "**Komposition:** das Preset multipliziert die Default-Werte der `erz-*`, `speicher-*` und `aussenhandel-*` Bausteine — inklusive Kohle, Gas und Import-Cap — mit dem **Skalierungsfaktor** `f = demandTWh / 466 TWh` und rundet das Ergebnis pro Slider auf das Min/Max/Step-Raster des jeweiligen Bausteins. **Ausnahme Biomasse:** sie bleibt auf dem 2025-Stand (4,8 GW) und skaliert *nicht* mit, weil die nachhaltig verfügbare Anbaufläche/Substratmenge nicht vervielfacht werden kann. Die übrigen Mix-Anteile aus 2025 bleiben erhalten und wachsen proportional mit der Last; der Biomasse-Anteil sinkt mit steigendem `f` entsprechend.",
       "**Werte:** Baseline `466 TWh/a` (Default-Lauf 2025). Bei `Demand = 932 TWh/a` ergibt sich `f = 2` und damit zum Beispiel `PV 205 GW`, `Wind onshore 125,6 GW`, `Kohle 62 GW`, `Batterie 20 GW / 50 GWh`. Werte werden vor dem Snap an die Slider-Maxima begrenzt — bei `f > 2` läuft etwa die PV in den `2.000 GW`-Anschlag, während Kohle weiter wächst, sodass der Mix langsam von 2025 abweicht.",
-      "**Anwendungsfall:** Lineare 2025-Hochrechnung als Vergleichsanker zu klimaneutralen Presets. Beantwortet die Frage: „Was passiert, wenn die Energiewende nicht stattfindet und der 2025-Mix einfach proportional zur Last skaliert wird?\" — und macht damit den fossilen Pfad bei wachsendem Strombedarf sichtbar."
+      "**Anwendungsfall:** Lineare 2025-Hochrechnung als Vergleichsanker zu klimaneutralen Presets. Beantwortet die Frage: „Was passiert, wenn die Energiewende nicht stattfindet und der 2025-Mix einfach proportional zur Last skaliert wird?\" — und macht damit den fossilen Pfad bei wachsendem Strombedarf sichtbar. **Wichtig:** das Szenario erbt die global geteilte Last inklusive der e100-Elektrifizierung (E-Pkw, Wärmepumpen, ~740 TWh Elektrolysestrom für Stahl/Chemie/Schiff/Flug), baut diese Sektoren aber mit dem fossilen 2025-Mix — es produziert kein H₂ und ist daher kein in sich geschlossenes „fossiles 2025\", sondern e100-Laststruktur auf 2025-Erzeugungsflotte (s. Caveats)."
     ],
     "overview": [
       {
@@ -39,7 +39,7 @@
     ],
     "reasoning": [
       "factor = demandTWh / SCALING_BASELINE_DEMAND_TWH (= 466 TWh).",
-      "Für jede Quelle: snap(defaultInstalledGW × factor, minInstalledGW, maxInstalledGW, stepGW).",
+      "Für jede Quelle: snap(defaultInstalledGW × factor, minInstalledGW, maxInstalledGW, stepGW) — Ausnahme Biomasse: snap(defaultInstalledGW, …) ohne factor, da flächen-/substratbegrenzt.",
       "Auch Import/Export-Caps und alle Speicher-Slider werden mitskaliert; Importemissionsfaktor bleibt auf dem 300 g/kWh aus aussenhandel/strom-handel."
     ],
     "fields": [
@@ -53,8 +53,10 @@
       "Skaliert Kohle und Gas mit — kein Klimaneutralitäts-Szenario, sondern reine 2025-Hochrechnung.",
       "An Slider-Maxima wird geclippt, dadurch Mix-Verzerrung bei großen Faktoren.",
       "Lineare Skalierung ignoriert Skaleneffekte (Speicher-Sizing, Netz-Topologie).",
+      "Biomasse skaliert bewusst NICHT mit (bleibt 4,8 GW) — die nachhaltig verfügbare Fläche/Substratmenge ist nicht vervielfachbar. Laufwasser (~4,8 GW) und Pumpspeicher (~9,4 GW) skalieren dagegen weiterhin linear mit, obwohl auch sie geografisch nahezu ausgeschöpft sind; deren hochskalierte Inlandsleistung ist daher optimistisch und unterzeichnet tendenziell den fossilen Backup-Bedarf.",
+      "Import-/Export-Caps skalieren mit dem Faktor — bei f=2 verdoppelt sich das Import-Cap, was zeitgleich doppelten Überschuss im (fiktiv mitskalierten) Ausland unterstellt; die schon im 2025-Mix enthaltene Import-Abhängigkeit wird so fortgeschrieben statt aufgelöst.",
       "Importemissionsfaktor bleibt Default 300 g/kWh (Nachbarmix laut aussenhandel/strom-handel) — kein H₂-Import modelliert.",
-      "Die H₂-Sektoren (Stahl/Chemie/Schiff/Flug, ~740 TWh Elektrolysestrom ≈ 84,5 GW Flachlast) laufen hier als reine Stromlast — die Elektrolyseur-Anlagen selbst kosten im Bon nichts (~10 Mrd EUR/a CAPEX+O&M bei 1.500 EUR/kW), während die 100ee-Szenarien ihre Elektrolyse voll bezahlen. Der Kostenvergleich ist insoweit zugunsten dieses Szenarios verzerrt."
+      "Die H₂-Sektoren (Stahl/Chemie/Schiff/Flug, ~740 TWh Elektrolysestrom ≈ 84,5 GW Flachlast) stecken zwar in der global geteilten Last, dieses Szenario baut dafür aber weder Elektrolyseure noch produziert es H₂ — der Strom wird mit dem fossilen 2025-Mix erzeugt, das grüne Endprodukt entsteht nicht. Es ist damit kein in sich geschlossenes „fossiles 2025\": die e100-Laststruktur (elektrifizierte Industrie) trifft auf eine 2025-Erzeugungsflotte. Ein realer „ohne Energiewende\"-Pfad würde diese Sektoren gar nicht elektrifizieren, sondern fossil weiterbetreiben — die hier getragene Elektrolyselast ist also ein Vergleichs-Artefakt der geteilten Last, kein eigenständig sinnvoller Endzustand. Für den Kostenvergleich folgt daraus: die ~10 Mrd EUR/a Elektrolyseur-CAPEX (1.500 EUR/kW), die die 100ee-Szenarien voll zahlen, fehlen hier — insoweit ist der Vergleich zugunsten dieses Szenarios verzerrt; eine saubere Korrektur ist aber nicht „CAPEX nachtragen\", sondern die Last-Inkonsistenz mitzudenken."
     ],
     "scripts": [
       "erzeugung/2025-hochskaliert/model.rs"
