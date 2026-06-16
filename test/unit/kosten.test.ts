@@ -208,6 +208,23 @@ describe('Kosten · B Invarianten', () => {
     expect(k.importCost - k.exportRevenue).toBeCloseTo(k.breakdown.importNet, -2);
   });
 
+  it('18 Export-Capture-Preis fällt mit dem EE-Anteil (Kannibalisierung)', () => {
+    const at = (reShare: number) => computeKosten(
+      scen({ pvInstalledGW: 100 }),
+      result([hour({ loadGW: 50, pvGW: 50 })], { totalDemandTWh: 0.438, exportTWh: 20, renewableSharePct: reShare }),
+    );
+    // ≤60 % EE: voller Capture-Preis (= exportEurPerMWh, Pauschal-Obergrenze)
+    expect(at(55).params.exportEffectiveEurPerMWh).toBeCloseTo(prices.exportEurPerMWh, 6);
+    // 80 % EE: 60 − 1,5·20 = 30 €/MWh
+    expect(at(80).params.exportEffectiveEurPerMWh).toBeCloseTo(30, 6);
+    // 100 % EE: Boden 0 → kein Erlös (aber auch keine Zahlung)
+    expect(at(100).params.exportEffectiveEurPerMWh).toBe(0);
+    expect(at(100).exportRevenue).toBe(0);
+    // Monoton fallend mit dem EE-Anteil
+    expect(at(70).exportRevenue).toBeLessThan(at(60).exportRevenue);
+    expect(at(90).exportRevenue).toBeLessThan(at(70).exportRevenue);
+  });
+
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {
     // 10 GW Gas konstant, loadGW 10 → annualScale = 24, Jahres-Erzeugung = 10·8760 = 87,6 GWh·... = 87,6 TWh
     const hours = Array.from({ length: 365 }, () => hour({ loadGW: 10, gasGW: 10 }));

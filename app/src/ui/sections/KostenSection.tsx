@@ -103,12 +103,13 @@ const stromImportFacts = (k: KostenResult): Facts => ({
   ],
 });
 const stromExportFacts = (k: KostenResult): Facts => ({
-  note: 'Exportierter Überschuss, gutgeschrieben zum Großhandelspreis.',
+  note: 'Exportierter Überschuss, gutgeschrieben zum mengengewichteten Capture-Preis. Dieser fällt mit steigendem EE-Anteil (Kannibalisierung: Export läuft in Überschussstunden mit niedrigen/negativen Preisen, Nachbarn haben korreliert Überschuss).',
   wikiId: 'strom-handel',
   source: preiseField('exportEurPerMWh'),
   facts: [
     ['Menge', `${n1(k.params.exportTWh)} TWh/a`],
-    ['Erlös', `${n0(k.params.exportEurPerMWh)} €/MWh`],
+    ['Capture-Preis', `${n0(k.params.exportEffectiveEurPerMWh)} €/MWh${k.params.exportEffectiveEurPerMWh < k.params.exportEurPerMWh ? ` (max ${n0(k.params.exportEurPerMWh)})` : ''}`],
+    ['bei EE-Anteil', `${n0(k.params.exportReSharePct)} %`],
   ],
 });
 const netzFacts = (k: KostenResult): Facts => ({
