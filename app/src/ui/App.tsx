@@ -34,6 +34,7 @@ import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { KOSTEN_LEVERS } from './costLevers';
+import { captureNodeToPng } from './sectionUi';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
 type SimulationView = { start: string; end: string; maxPoints: number };
@@ -1145,70 +1146,19 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     }
     window.setTimeout(() => setActionStatus(null), 1600);
   };
-  const copyChartScreenshot = async () => {
-    const canvas = document.querySelector<HTMLCanvasElement>('#mix-chart canvas');
-    if (!canvas || !result) {
-      setActionStatus('Chart nicht bereit');
-      window.setTimeout(() => setActionStatus(null), 1600);
-      return;
-    }
+  // Toolbar: ein PNG über ALLE Abschnitte (der gemeinsame Wrapper #dashboard-sections).
+  const screenshotAllSections = async () => {
+    const node = document.getElementById('dashboard-sections');
+    if (!node) return;
+    setActionStatus('Erzeuge Gesamtbild …');
     try {
-      const exportCanvas = document.createElement('canvas');
-      const width = Math.max(1200, Math.min(1800, canvas.width || 1200));
-      const chartRatio = canvas.height && canvas.width ? canvas.height / canvas.width : .62;
-      const chartWidth = width - 80;
-      const chartHeight = Math.round(chartWidth * chartRatio);
-      const headerHeight = 190;
-      exportCanvas.width = width;
-      exportCanvas.height = headerHeight + chartHeight + 48;
-      const ctx = exportCanvas.getContext('2d');
-      if (!ctx) throw new Error('Kein Canvas-Kontext');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-      ctx.fillStyle = '#18181b';
-      ctx.font = '600 32px Inter, system-ui, sans-serif';
-      ctx.fillText('Netzprobe · Energiemix vs. Last', 40, 54);
-      ctx.fillStyle = '#71717a';
-      ctx.font = '400 18px Inter, system-ui, sans-serif';
-      ctx.fillText(`${formatDate(selectedPeriod.start)} - ${formatDate(selectedPeriod.end)} · ${chartMode === 'sunburst' ? 'Polar' : 'Linie'}`, 40, 84);
-
-      const kpis: Array<[string, string, string]> = [
-        ['Jahreslast', twh(result.summary.totalDemandTWh), '#18181b'],
-        ['EE-Anteil', pct(result.summary.renewableSharePct), '#18181b'],
-        ['Import', twh(result.summary.importTWh), '#18181b'],
-        ['Fehlend', twh(result.summary.loadSheddingTWh), result.summary.loadSheddingTWh > 0.1 ? '#e11d48' : '#059669'],
-        ['Abregelung', twh(result.summary.curtailmentTWh), '#18181b'],
-      ];
-      const cardGap = 12;
-      const cardWidth = Math.floor((width - 80 - cardGap * (kpis.length - 1)) / kpis.length);
-      kpis.forEach(([label, value, color], index) => {
-        const x = 40 + index * (cardWidth + cardGap);
-        ctx.fillStyle = '#fafafa';
-        roundRect(ctx, x, 112, cardWidth, 58, 10);
-        ctx.fill();
-        ctx.strokeStyle = '#e4e4e7';
-        ctx.stroke();
-        ctx.fillStyle = '#71717a';
-        ctx.font = '700 13px Inter, system-ui, sans-serif';
-        ctx.fillText(label.toUpperCase(), x + 14, 136);
-        ctx.fillStyle = color;
-        ctx.font = '600 22px Inter, system-ui, sans-serif';
-        ctx.fillText(value, x + 14, 160);
-      });
-
-      ctx.drawImage(canvas, 40, headerHeight, chartWidth, chartHeight);
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        exportCanvas.toBlob(result => result ? resolve(result) : reject(new Error('Kein Bild erzeugt')), 'image/png');
-      });
-      const ClipboardItemCtor = window.ClipboardItem;
-      if (!ClipboardItemCtor || !navigator.clipboard.write) throw new Error('Bild-Zwischenablage nicht verfügbar');
-      await navigator.clipboard.write([new ClipboardItemCtor({ 'image/png': blob })]);
-      setActionStatus('Plot kopiert');
-    } catch {
+      await captureNodeToPng(node, 'netzprobe-uebersicht.png');
+      setActionStatus('Gesamtbild gespeichert');
+    } catch (error) {
+      console.error('Gesamt-Screenshot fehlgeschlagen:', error);
       setActionStatus('Screenshot nicht möglich');
     }
-    window.setTimeout(() => setActionStatus(null), 1600);
+    window.setTimeout(() => setActionStatus(null), 1800);
   };
   const toggleLiveSimulation = () => {
     setLiveSimulation(value => {
@@ -1232,6 +1182,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           Lade Daten …
         </div> : <>
           <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} rightSlot={<ScenarioTabs count={scenarios.length} active={activeScenario} onSelect={setActiveScenario} onAdd={addScenario} onRemove={removeScenario}/>}/>
+          <div id="dashboard-sections" className="flex flex-col gap-3">
           <MixSection
             result={result}
             resolvedScenario={resolvedScenario}
@@ -1259,6 +1210,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
           {/* Eigene Sektion, bewusst NICHT in MAIN_VIEW_LABELS/den MainViewTabs verlinkt. */}
           <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} data={data} shareUrl={shareUrl}/>
+          </div>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
@@ -1284,7 +1236,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           status={actionStatus}
           onReset={resetConfiguration}
           onCopyUrl={copyShareUrl}
-          onScreenshot={copyChartScreenshot}
+          onScreenshotAll={screenshotAllSections}
           live={liveSimulation}
           onToggleLive={toggleLiveSimulation}
         />}
@@ -1385,17 +1337,18 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   </main>;
 }
 
-function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot: () => void; onToggleLive: () => void }) {
-  return <HeaderToolBar status={status} live={live} onToggleLive={onToggleLive} onScreenshot={onScreenshot} onRefresh={onReset} onCopyUrl={onCopyUrl}/>;
+function HeaderActions({ status, live, onReset, onCopyUrl, onScreenshot, onScreenshotAll, onToggleLive }: { status: string | null; live: boolean; onReset: () => void; onCopyUrl: () => void; onScreenshot?: () => void; onScreenshotAll?: () => void; onToggleLive: () => void }) {
+  return <HeaderToolBar status={status} live={live} onToggleLive={onToggleLive} onScreenshot={onScreenshot} onScreenshotAll={onScreenshotAll} onRefresh={onReset} onCopyUrl={onCopyUrl}/>;
 }
 
-function HeaderToolBar({ status, live, onToggleLive, onScreenshot, onRefresh, onCopyUrl }: { status: string | null; live: boolean; onToggleLive: () => void; onScreenshot: () => void; onRefresh: () => void; onCopyUrl: () => void }) {
+function HeaderToolBar({ status, live, onToggleLive, onScreenshot, onScreenshotAll, onRefresh, onCopyUrl }: { status: string | null; live: boolean; onToggleLive: () => void; onScreenshot?: () => void; onScreenshotAll?: () => void; onRefresh: () => void; onCopyUrl: () => void }) {
   return <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
     <div className="flex w-full justify-between">
       <IconAction label={live ? 'Live-Berechnung pausieren' : 'Live-Berechnung aktivieren'} onClick={onToggleLive} tone={live ? 'default' : 'danger'}>
         {live ? <Pause className="h-4 w-4"/> : <Play className="h-4 w-4"/>}
       </IconAction>
-      <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>
+      {onScreenshot && <IconAction label="Plot" onClick={onScreenshot}><Camera className="h-4 w-4"/></IconAction>}
+      {onScreenshotAll && <IconAction label="Alle Abschnitte als Bild" onClick={onScreenshotAll}><Camera className="h-4 w-4"/></IconAction>}
       <IconAction label="Aktualisieren" onClick={onRefresh}><RotateCcw className="h-4 w-4"/></IconAction>
       <IconAction label="Link" onClick={onCopyUrl}><Link className="h-4 w-4"/></IconAction>
     </div>
@@ -1531,20 +1484,6 @@ function ThemeToggle({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme
   >
     {theme === 'dark' ? <Sun className="h-4 w-4" aria-hidden="true"/> : <Moon className="h-4 w-4" aria-hidden="true"/>}
   </button>;
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
 }
 
 function formatDate(date: string) {

@@ -16,7 +16,7 @@ import type { Scenario } from '../../types/scenario';
 import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
-import { ChartDropdown, ChartModeToggle, ChartPanel, HelpDot, HelpPanel, statToneClass, type Stat } from '../sectionUi';
+import { ChartDropdown, ChartModeToggle, ChartPanel, HelpDot, HelpPanel, ScreenshotButton, SectionHeading, statToneClass, type Stat } from '../sectionUi';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
@@ -200,6 +200,10 @@ export default function MixSection(props: MixSectionProps) {
   ];
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
+      <div className="flex items-center gap-2">
+        <SectionHeading id="mix"/>
+        <ScreenshotButton targetId="section-mix" filename="netzprobe-energiemix.png" label="Energiemix als Bild speichern"/>
+      </div>
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
         <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedDelivered != null ? `${fmt0.format(electrifiedDelivered * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> über {periodYears} Jahre.
       </p>
