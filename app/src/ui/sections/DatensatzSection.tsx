@@ -96,7 +96,7 @@ function countLeaves(value: unknown): number {
   return 1;
 }
 
-export default function DatensatzSection({ resolvedScenario, result, periodYears, data }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; data: DataSet | null }) {
+export default function DatensatzSection({ resolvedScenario, result, periodYears, data, shareUrl }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; data: DataSet | null; shareUrl: string }) {
   const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
   const ressourcen = useMemo(() => {
     const fuelTWh = fuelTWhFromResult(result);
@@ -128,7 +128,10 @@ export default function DatensatzSection({ resolvedScenario, result, periodYears
   // wird also auch im Wiki gepflegt und beim Überarbeiten des Modells gesehen.
   const legende = useMemo(() => (getPackage('kern')?.parameters as { datensatz?: unknown })?.datensatz ?? null, []);
 
-  const root = useMemo(() => ({ legende, lauf, modellPakete }), [legende, lauf, modellPakete]);
+  // quelle: reproduzierbarer, teilbarer Link auf genau dieses Szenario(-Set) —
+  // damit der Datensatz nicht nur eine flüchtige blob-UUID, sondern seine
+  // Herkunft mitträgt (Öffnen der URL erzeugt bit-identisch dieselben Daten).
+  const root = useMemo(() => ({ quelle: { tool: 'netzprobe.de', szenarioUrl: shareUrl }, legende, lauf, modellPakete }), [shareUrl, legende, lauf, modellPakete]);
   const rootEntries = Object.entries(root);
 
   // Pro-Modus: erst auf Klick ausklappen. Solange eingeklappt, wird der teure
@@ -160,6 +163,7 @@ export default function DatensatzSection({ resolvedScenario, result, periodYears
     {helpOpen && <HelpPanel>
       <p>Vollständige, <strong>automatisch erzeugte</strong> und <strong>selbstbeschreibende</strong> Aufstellung aller Daten dieser Rechnung — zum Aufklappen (per Klick) und als JSON kopierbar (Kopier-Symbol). Gedacht zum Hineinkopieren in ein LLM, um Methodik und Zahlen prüfen zu lassen. Eine <code>legende</code> oben erklärt Struktur, Einheiten und nicht offensichtliche Felder; <code>modellPakete</code> liest direkt aus <code>model/**/package.json</code>, neue Parameter erscheinen ohne Codeänderung.</p>
       <ul>
+        <li><strong>quelle</strong> — teilbarer Link auf genau dieses Szenario(-Set); Öffnen reproduziert die Daten bit-identisch.</li>
         <li><strong>legende</strong> — Struktur, automatisch abgeleitete Einheiten und Feld-Glossar.</li>
         <li><strong>lauf</strong> — die konkreten Ein- und Ausgaben: aufgelöstes Szenario, Ergebnis-Kennzahlen, die vollständige Stundenreihe, sowie der Kosten- und Ressourcen-Rechenweg mit echten Zahlen.</li>
         <li><strong>modellPakete</strong> — alle Pakete <em>vollständig</em>: <code>parameters</code> plus die Wiki-Texte unter <code>method</code> (Titel, Beschreibung, Quelle, sourceUrls, Herleitung, Grenzen).</li>

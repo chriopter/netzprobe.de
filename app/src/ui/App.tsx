@@ -254,8 +254,7 @@ function splitUrlList(value: string) {
 // Datengetrieben aus den preset-Blöcken der package.json (siehe supplyPresetCatalog) plus 'custom'.
 const validSupplyPresets: ReadonlyArray<Scenario['supplyPreset']> = ['custom', ...supplyPresetIds];
 
-function scenarioFromQueryParams(): Scenario {
-  const params = queryParams();
+function parseScenarioFromParams(params: URLSearchParams): Scenario {
   const scenario = normalizeScenario(defaultScenario);
   const spRaw = params.get('sp');
   // Migration: alte 'manual' Werte werden zu 'custom'.
@@ -317,40 +316,59 @@ function scenarioFromQueryParams(): Scenario {
   return scenario;
 }
 
-function syncScenarioParams(url: URL, scenario: Scenario) {
-  url.searchParams.delete('s');
-  if (scenario.supplyPreset === scenarioBase.supplyPreset) url.searchParams.delete('sp');
-  else url.searchParams.set('sp', scenario.supplyPreset);
+// base64url für den kompakten Mehr-Szenario-Param (URL-sicher, keine %-Flut).
+// Lädt das komplette Szenario-Set aus der URL — lesbar, ohne Base64: Szenario 0
+// steht unpräfixiert (abwärtskompatibel zu alten Einzel-URLs), weitere als
+// `s1.<key>`, `s2.<key>` …; `sn` = Anzahl, `sa` = aktiver Index.
+const PREFIXED_KEY = /^s(\d+)\./;
+function scenariosFromQueryParams(): { scenarios: Scenario[]; active: number } {
+  const params = queryParams();
+  const scenarios = [parseScenarioFromParams(params)];
+  const count = Math.max(1, Number(params.get('sn')) || 1);
+  for (let i = 1; i < count; i++) {
+    const prefix = `s${i}.`;
+    const sub = new URLSearchParams();
+    for (const [key, value] of params) if (key.startsWith(prefix)) sub.set(key.slice(prefix.length), value);
+    scenarios.push(parseScenarioFromParams(sub));
+  }
+  const active = Math.min(Math.max(0, Number(params.get('sa')) || 0), scenarios.length - 1);
+  return { scenarios, active };
+}
+
+function writeScenarioParams(params: URLSearchParams, scenario: Scenario) {
+  params.delete('s');
+  if (scenario.supplyPreset === scenarioBase.supplyPreset) params.delete('sp');
+  else params.set('sp', scenario.supplyPreset);
   const enabled = electrificationFlags.filter(key => scenario.demand[key]);
   if (enabled.length === 0) {
-    url.searchParams.delete('e');
+    params.delete('e');
   } else if (enabled.length === electrificationFlags.length) {
-    url.searchParams.set('e', fullElectrificationId);
+    params.set('e', fullElectrificationId);
   } else {
     const ids = enabled
       .filter(key => electrificationIds.has(key))
       .join(listSeparator);
-    url.searchParams.set('e', ids);
+    params.set('e', ids);
   }
   for (const [param, key] of scenarioNumberParams) {
-    if (scenario.demand[key] === scenarioBase.demand[key]) url.searchParams.delete(param);
-    else url.searchParams.set(param, String(scenario.demand[key]));
+    if (scenario.demand[key] === scenarioBase.demand[key]) params.delete(param);
+    else params.set(param, String(scenario.demand[key]));
   }
   for (const [param, key] of scenarioGenerationParams) {
-    if (scenario.generation[key] === scenarioBase.generation[key]) url.searchParams.delete(param);
-    else url.searchParams.set(param, String(scenario.generation[key]));
+    if (scenario.generation[key] === scenarioBase.generation[key]) params.delete(param);
+    else params.set(param, String(scenario.generation[key]));
   }
   for (const [param, key] of scenarioStorageParams) {
-    if (scenario.storage[key] === scenarioBase.storage[key]) url.searchParams.delete(param);
-    else url.searchParams.set(param, String(scenario.storage[key]));
+    if (scenario.storage[key] === scenarioBase.storage[key]) params.delete(param);
+    else params.set(param, String(scenario.storage[key]));
   }
   for (const [param, key] of scenarioImportParams) {
-    if (scenario.import[key] === scenarioBase.import[key]) url.searchParams.delete(param);
-    else url.searchParams.set(param, String(scenario.import[key]));
+    if (scenario.import[key] === scenarioBase.import[key]) params.delete(param);
+    else params.set(param, String(scenario.import[key]));
   }
   for (const [param, key] of scenarioExportParams) {
-    if (scenario.export[key] === scenarioBase.export[key]) url.searchParams.delete(param);
-    else url.searchParams.set(param, String(scenario.export[key]));
+    if (scenario.export[key] === scenarioBase.export[key]) params.delete(param);
+    else params.set(param, String(scenario.export[key]));
   }
   // Kosten-Overrides: kompakt als co=tech.leverKey:wert,… — nur Hebel, die vom
   // Default abweichen (gleiche Logik wie hasActiveOverrides).
@@ -363,7 +381,28 @@ function syncScenarioParams(url: URL, scenario: Scenario) {
       if (v != null && v !== lever.def) coParts.push(`${tech}.${lever.key}:${v}`);
     }
   }
-  if (coParts.length) url.searchParams.set('co', coParts.join(',')); else url.searchParams.delete('co');
+  if (coParts.length) params.set('co', coParts.join(',')); else params.delete('co');
+}
+
+// Schreibt das ganze Set lesbar in die URL: Szenario 0 unpräfixiert (wie eine
+// klassische Einzel-URL), weitere als `s1.<key>` …, plus `sn`/`sa`. Räumt alte
+// Prefix-Params (und den früheren base64-`set`) weg.
+function syncScenarioParams(url: URL, scenarios: Scenario[], active: number) {
+  for (const key of [...url.searchParams.keys()]) if (PREFIXED_KEY.test(key)) url.searchParams.delete(key);
+  url.searchParams.delete('set');
+  writeScenarioParams(url.searchParams, scenarios[0] ?? scenarioBase);
+  for (let i = 1; i < scenarios.length; i++) {
+    const sub = new URLSearchParams();
+    writeScenarioParams(sub, scenarios[i]);
+    for (const [key, value] of sub) url.searchParams.set(`s${i}.${key}`, value);
+  }
+  if (scenarios.length > 1) {
+    url.searchParams.set('sn', String(scenarios.length));
+    url.searchParams.set('sa', String(active));
+  } else {
+    url.searchParams.delete('sn');
+    url.searchParams.delete('sa');
+  }
 }
 
 // ECharts-Module einmalig registrieren. Charts laufen im Main-Thread; DOM-
@@ -805,8 +844,9 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   // Mehrere Szenario-Slots (Reiter); der aktive Slot ist das, was Sidebar/Bon
   // anzeigen. setScenario bleibt als Wrapper auf den aktiven Slot bestehen, damit
   // alle vorhandenen Handler unverändert weiterlaufen.
-  const [scenarios, setScenarios] = useState<Scenario[]>(() => [scenarioFromQueryParams()]);
-  const [activeScenario, setActiveScenario] = useState(0);
+  const initialScenarioSet = useMemo(scenariosFromQueryParams, []);
+  const [scenarios, setScenarios] = useState<Scenario[]>(initialScenarioSet.scenarios);
+  const [activeScenario, setActiveScenario] = useState(initialScenarioSet.active);
   const scenario = scenarios[activeScenario] ?? scenarios[0];
   const setScenario = (updater: Scenario | ((prev: Scenario) => Scenario)) =>
     setScenarios(prev => prev.map((s, i) => i === activeScenario
@@ -924,7 +964,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
-    syncScenarioParams(url, scenario);
+    syncScenarioParams(url, scenarios, activeScenario);
 
     if (periodPreset === defaultPeriodPreset) url.searchParams.delete('p');
     else url.searchParams.set('p', periodPreset);
@@ -969,7 +1009,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
     setShareUrl(url.toString());
-  }, [scenario, periodPreset, customStart, customEnd, periodYears, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenarios, activeScenario, periodPreset, customStart, customEnd, periodYears, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1218,7 +1258,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           <RessourcenSection scenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
           <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
           {/* Eigene Sektion, bewusst NICHT in MAIN_VIEW_LABELS/den MainViewTabs verlinkt. */}
-          <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
+          <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} data={data} shareUrl={shareUrl}/>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
       </section>
