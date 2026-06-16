@@ -385,6 +385,14 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
 
         <ModelSection/>
       </div>
+      <div className={cx(sidebarInset, 'sticky bottom-0 z-30 mt-auto border-t border-zinc-200 bg-zinc-50/80 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80')}>
+        <p className="flex items-center gap-1 text-[11px] leading-5 text-zinc-400 dark:text-zinc-500">
+          <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1 font-mono text-[10px] text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">1</kbd>
+          –
+          <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1 font-mono text-[10px] text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">9</kbd>
+          <span className="ml-1">wechselt das Szenario (legt ein fehlendes an).</span>
+        </p>
+      </div>
     </div>
   </aside>;
 });
