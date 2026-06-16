@@ -291,7 +291,7 @@ function buildFlaecheMapOption(anlageKm2: number, wirkungKm2: number, offshoreWi
         label: {
           show: true,
           formatter: `Offshore\n${fmtKm2(offshoreWirkungKm2)} km²`,
-          position: 'top',
+          position: 'left',
           color: dark ? '#7dd3fc' : '#0369a1',
           fontSize: 11,
           fontWeight: 600,

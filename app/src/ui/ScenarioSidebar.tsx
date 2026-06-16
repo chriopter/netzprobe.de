@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { FloatingPanel } from './sectionUi';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -553,35 +554,44 @@ function PresetDropdownPill<TId extends string>({
   const optionGroups = groups ?? [{ title: '', presets }];
   const allPresets = optionGroups.flatMap(group => group.presets);
   const activeState = active ?? allPresets.some(p => p.id === activeId);
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   return <span className="group relative inline-flex items-center">
-    <details className="relative inline-block">
-      <summary className={cx(
-        'flex h-[26px] w-fit cursor-pointer list-none items-center rounded-full border px-3 text-xs font-medium transition marker:hidden [&::-webkit-details-marker]:hidden',
+    <button
+      ref={triggerRef}
+      type="button"
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      onClick={() => setOpen(o => !o)}
+      className={cx(
+        'flex h-[26px] w-fit cursor-pointer items-center rounded-full border px-3 text-xs font-medium transition',
         activeState ? 'border-zinc-950 bg-zinc-950 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950' : 'border-transparent bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-50',
-      )}>
-        <span>{label}</span>
-        <ChevronDown className="ml-1 h-3 w-3" aria-hidden="true"/>
-      </summary>
-      <div className="absolute left-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-        {optionGroups.map(group => <div key={group.title || 'options'}>
-          {group.title && <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400 first:pt-0.5">{group.title}</div>}
-          {group.presets.map(p => <div key={p.id} className={cx('rounded-md', p.id === activeId && 'bg-zinc-50 dark:bg-zinc-800')}>
-            <button
-              type="button"
-              title={p.description}
-              className={cx(
-                'w-full min-w-0 rounded-md px-2 py-1.5 text-left text-xs font-medium transition',
-                p.id === activeId ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
-              )}
-              onClick={event => {
-                onSelect(p.id);
-                event.currentTarget.closest('details')?.removeAttribute('open');
-              }}
-            >{p.label}</button>
-          </div>)}
+      )}
+    >
+      <span>{label}</span>
+      <ChevronDown className={cx('ml-1 h-3 w-3 transition-transform', open && 'rotate-180')} aria-hidden="true"/>
+    </button>
+    <FloatingPanel
+      anchorRef={triggerRef}
+      open={open}
+      onClose={() => setOpen(false)}
+      className="w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+    >
+      {optionGroups.map(group => <div key={group.title || 'options'}>
+        {group.title && <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400 first:pt-0.5">{group.title}</div>}
+        {group.presets.map(p => <div key={p.id} className={cx('rounded-md', p.id === activeId && 'bg-zinc-50 dark:bg-zinc-800')}>
+          <button
+            type="button"
+            title={p.description}
+            className={cx(
+              'w-full min-w-0 rounded-md px-2 py-1.5 text-left text-xs font-medium transition',
+              p.id === activeId ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
+            )}
+            onClick={() => { onSelect(p.id); setOpen(false); }}
+          >{p.label}</button>
         </div>)}
-      </div>
-    </details>
+      </div>)}
+    </FloatingPanel>
     {docId && <span className="absolute -right-4 top-1/2 -translate-y-1/2"><InfoLink id={docId} label={`${label} im Wiki öffnen`}/></span>}
   </span>;
 }
