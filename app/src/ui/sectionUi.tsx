@@ -1,8 +1,63 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { toPng } from 'html-to-image';
+import { Camera, ChevronDown, HelpCircle } from 'lucide-react';
 import type { ChartMode } from './chartOptions';
 import { cx, muted, panelHeader } from './ui';
+
+// Erfasst einen DOM-Knoten im AKTUELLEN (aufgeklappten) Zustand als PNG-Download.
+// html-to-image nimmt die volle gerenderte Höhe; Elemente mit data-shot-hide
+// (Kamera-Buttons, Toolbars) werden gefiltert; skipFonts vermeidet den cross-
+// origin-Font-Embed, der sonst still wirft.
+export async function captureNodeToPng(node: HTMLElement, filename: string): Promise<void> {
+  const cs = getComputedStyle(node).backgroundColor;
+  const opaque = cs && cs !== 'rgba(0, 0, 0, 0)' && cs !== 'transparent';
+  const bg = opaque ? cs : (document.documentElement.classList.contains('dark') ? '#09090b' : '#ffffff');
+  const dataUrl = await toPng(node, {
+    pixelRatio: 2,
+    skipFonts: true,
+    backgroundColor: bg,
+    filter: el => !(el instanceof HTMLElement && el.dataset.shotHide != null),
+  });
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  a.click();
+}
+
+// Kamera-Button, der den Knoten mit der gegebenen id als PNG speichert. Trägt
+// selbst data-shot-hide, erscheint also nicht im Bild (auch nicht im Gesamt-Shot).
+export function ScreenshotButton({ targetId, filename, label = 'Als Bild speichern', className }: { targetId: string; filename: string; label?: string; className?: string }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const shoot = async () => {
+    const node = document.getElementById(targetId);
+    if (!node || busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await captureNodeToPng(node, filename);
+      setMsg('Gespeichert ✓');
+    } catch (error) {
+      console.error('Screenshot fehlgeschlagen:', error);
+      setMsg('Fehlgeschlagen');
+    } finally {
+      setBusy(false);
+      window.setTimeout(() => setMsg(null), 2000);
+    }
+  };
+  return <span className="relative inline-flex" data-shot-hide>
+    <button
+      type="button"
+      onClick={shoot}
+      disabled={busy}
+      aria-label={label}
+      title={label}
+      className={cx('inline-flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200', className)}
+    ><Camera className="h-4 w-4"/></button>
+    {msg && <span className="absolute right-full top-1/2 mr-1 -translate-y-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white shadow-md dark:bg-zinc-100 dark:text-zinc-900">{msg}</span>}
+  </span>;
+}
 
 export type MainViewId = 'mix' | 'flaeche' | 'ressourcen' | 'kosten';
 

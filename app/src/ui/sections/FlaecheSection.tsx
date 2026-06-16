@@ -8,7 +8,7 @@ import germanyGeoJson from '../germanyGeoJson.json';
 import { defaultScenario, normalizeScenario } from '../scenarioPresets';
 import { uiManifest } from '../uiManifest';
 import { cx } from '../ui';
-import { HelpDot, HelpPanel, SectionHeading, StatCard, ViewPill, type SectionView } from '../sectionUi';
+import { HelpDot, HelpPanel, ScreenshotButton, SectionHeading, StatCard, ViewPill, type SectionView } from '../sectionUi';
 
 const scenarioBase = normalizeScenario(defaultScenario);
 
@@ -623,6 +623,7 @@ export default function FlaecheSection({ scenario, theme }: { scenario: Scenario
     <div className="flex items-center gap-2">
       <SectionHeading id="flaeche"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie wird der Flächenbedarf berechnet?"/>
+      <ScreenshotButton targetId="section-flaeche" filename="netzprobe-flaeche.png" label="Fläche als Bild speichern"/>
       <div className="ml-auto"><ViewPill view={view} onChange={setView}/></div>
     </div>
     {helpOpen && <HelpPanel>

@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
-import { Camera, Info } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { useMemo, useState } from 'react';
+import { Info } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
-import { HelpDot, HelpPanel, SectionHeading } from '../sectionUi';
+import { HelpDot, HelpPanel, ScreenshotButton, SectionHeading } from '../sectionUi';
 import { cx } from '../ui';
 import { fmt0 } from '../format';
 import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult, type KostenTech } from '../kosten';
@@ -349,54 +348,8 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
       window.setTimeout(() => setCopied(false), 1600);
     }).catch(() => {});
   };
-  // Screenshot des Bons im AKTUELLEN (aufgeklappten) Zustand als PNG. html-to-image
-  // erfasst den vollen gerenderten Knoten (nicht nur den Viewport), die Aktions-
-  // Icons werden per data-shot-hide ausgeblendet.
-  const bonRef = useRef<HTMLDivElement>(null);
-  const [shooting, setShooting] = useState(false);
-  const [shotMsg, setShotMsg] = useState<string | null>(null);
-  const screenshotBon = async () => {
-    const node = bonRef.current;
-    if (!node || shooting) return;
-    setShooting(true);
-    setShotMsg(null);
-    try {
-      // skipFonts: der Web-Font-Embedding-Schritt von html-to-image scheitert
-      // bei cross-origin geladenen Fonts (wirft sonst still) — Fallback-Font im
-      // Bild ist akzeptabel. backgroundColor verhindert Transparenz.
-      const dataUrl = await toPng(node, {
-        pixelRatio: 2,
-        skipFonts: true,
-        backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
-        filter: el => !(el instanceof HTMLElement && el.dataset.shotHide != null),
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'netzprobe-stromrechnung.png';
-      a.click();
-      setShotMsg('Gespeichert ✓');
-    } catch (error) {
-      console.error('Screenshot der Kostenrechnung fehlgeschlagen:', error);
-      setShotMsg('Screenshot fehlgeschlagen');
-    } finally {
-      setShooting(false);
-      window.setTimeout(() => setShotMsg(null), 2000);
-    }
-  };
   return <div className="w-full font-mono text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
-    <div ref={bonRef} className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
-      <button
-        type="button"
-        data-shot-hide
-        onClick={screenshotBon}
-        disabled={shooting}
-        aria-label="Kostenrechnung als Bild speichern"
-        title="Als Bild speichern"
-        className="absolute right-11 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-      >
-        <Camera className="h-3.5 w-3.5"/>
-      </button>
-      {shotMsg && <span data-shot-hide className="absolute right-10 top-3.5 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white shadow-md dark:bg-zinc-100 dark:text-zinc-900">{shotMsg}</span>}
+    <div className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 mix-blend-multiply dark:mix-blend-screen" style={{ backgroundImage: PAPER_GRAIN }}/>
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.175] mix-blend-multiply dark:opacity-[0.06] dark:mix-blend-normal" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
       <a
@@ -406,7 +359,7 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
         data-shot-hide
         aria-label="Kosten-Annahmen im Wiki öffnen"
         title="Kosten-Annahmen im Wiki öffnen"
-        className="absolute right-4 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        className="absolute right-4 top-4 z-10 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
       >
         <Info className="h-3.5 w-3.5"/>
       </a>
@@ -789,6 +742,7 @@ export default function KostenSection({ scenario, result, periodYears, supplyLab
     <div className="flex items-center gap-2">
       <SectionHeading id="kosten"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie werden die Kosten berechnet?"/>
+      <ScreenshotButton targetId="section-kosten" filename="netzprobe-kostenrechnung.png" label="Kostenrechnung als Bild speichern"/>
     </div>
     {helpOpen && <HelpPanel>
       <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. In der Sicht <strong>pro Jahr</strong> ist diese Zahl horizont-unabhängig und der faire Vergleich zwischen Szenarien; der Schalter oben am Bon stellt wahlweise auf <strong>Gesamt</strong> um und multipliziert dann jeden Posten mit dem Kostenzeitraum.</p>
