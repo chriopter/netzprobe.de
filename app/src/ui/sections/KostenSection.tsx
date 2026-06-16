@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Info } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Camera, Info } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import QRCode from 'qrcode';
 import type { Scenario } from '../../types/scenario';
 import type { SimulationResult } from '../../types/simulation';
@@ -348,14 +349,52 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
       window.setTimeout(() => setCopied(false), 1600);
     }).catch(() => {});
   };
+  // Screenshot des Bons im AKTUELLEN (aufgeklappten) Zustand als PNG. html-to-image
+  // erfasst den vollen gerenderten Knoten (nicht nur den Viewport), die Aktions-
+  // Icons werden per data-shot-hide ausgeblendet.
+  const bonRef = useRef<HTMLDivElement>(null);
+  const [shooting, setShooting] = useState(false);
+  const screenshotBon = async () => {
+    const node = bonRef.current;
+    if (!node || shooting) return;
+    setShooting(true);
+    try {
+      const dataUrl = await toPng(node, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
+        filter: el => !(el instanceof HTMLElement && el.dataset.shotHide != null),
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'netzprobe-stromrechnung.png';
+      a.click();
+    } catch (error) {
+      console.error('Screenshot der Kostenrechnung fehlgeschlagen:', error);
+    } finally {
+      setShooting(false);
+    }
+  };
   return <div className="w-full font-mono text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
-    <div className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
+    <div ref={bonRef} className="relative flex aspect-[210/297] flex-col border border-zinc-200 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.10)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_16px_40px_rgba(0,0,0,0.5)]">
+      <button
+        type="button"
+        data-shot-hide
+        onClick={screenshotBon}
+        disabled={shooting}
+        aria-label="Kostenrechnung als Bild speichern"
+        title="Als Bild speichern"
+        className="absolute right-11 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+      >
+        <Camera className="h-3.5 w-3.5"/>
+      </button>
       <div aria-hidden className="pointer-events-none absolute inset-0 mix-blend-multiply dark:mix-blend-screen" style={{ backgroundImage: PAPER_GRAIN }}/>
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.175] mix-blend-multiply dark:opacity-[0.06] dark:mix-blend-normal" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
       <a
         href={dataWikiUrl('preise')}
         target="_blank"
         rel="noreferrer"
+        data-shot-hide
         aria-label="Kosten-Annahmen im Wiki öffnen"
         title="Kosten-Annahmen im Wiki öffnen"
         className="absolute right-4 top-4 inline-flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
