@@ -137,17 +137,31 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
   const ann: [string, string] = [`Annuität (WACC ${n1((ko.wacc ?? 0) * 100)} %)`, `${n1((d.crfValue ?? 0) * 100)} %/a`];
   const wikiId = TECH_WIKI[t.key];
   if (comp === 'capex') {
-    if (d.kind === 'gen') return {
-      note: 'Neubauwert der Flotte × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive laufendem Ersatz.',
-      wikiId,
-      source: kostenSource(wikiId),
-      facts: [
-        ['Installierte Leistung', `${n1(d.gw ?? 0)} GW`],
-        ['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`],
-        ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
-        ann,
-      ],
-    };
+    if (d.kind === 'gen') {
+      // Grenzkosten-Blend aktiv (z. B. PV: Bestand rooftop-lastig, Zubau
+      // Freifläche): effektives Flotten-Mittel weicht vom Bestandswert ab.
+      const blended = ko.capexMarginalEurPerKW != null && d.capexEffectiveEurPerKW != null
+        && Math.round(d.capexEffectiveEurPerKW) !== Math.round(ko.capexEurPerKW ?? 0);
+      return {
+        note: blended
+          ? 'Neubauwert der Flotte × Annuitätsfaktor. CAPEX als mengengewichtetes Mittel: Bestand zum Bestandswert, Zubau zum Freifläche-Grenzwert.'
+          : 'Neubauwert der Flotte × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive laufendem Ersatz.',
+        wikiId,
+        source: kostenSource(wikiId),
+        facts: [
+          ['Installierte Leistung', `${n1(d.gw ?? 0)} GW`],
+          ...(blended
+            ? [
+              ['Bestand bis', `${n1(ko.capexBaselineGW ?? 0)} GW × ${n0(ko.capexEurPerKW ?? 0)} €/kW`],
+              ['Zubau (Freifläche)', `${n0(ko.capexMarginalEurPerKW ?? 0)} €/kW`],
+              ['Investition (Flotten-Mittel)', `${n0(d.capexEffectiveEurPerKW ?? 0)} €/kW`],
+            ] as Array<[string, string]>
+            : [['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`]] as Array<[string, string]>),
+          ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+          ann,
+        ],
+      };
+    }
     const split = ko.capexChargeEurPerKW != null || ko.capexDischargeEurPerKW != null;
     const power: Array<[string, string]> = split
       ? [

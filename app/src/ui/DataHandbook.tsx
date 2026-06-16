@@ -84,6 +84,8 @@ function resourceValue(e: ResourceEntry): string {
 const KOSTEN_FIELDS: Array<[string, string, (v: number) => string]> = [
   ['wacc', 'WACC (real)', v => `${(v * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} %`],
   ['capexEurPerKW', 'CAPEX (Leistung)', v => `${v.toLocaleString('de-DE')} €/kW`],
+  ['capexMarginalEurPerKW', 'CAPEX (Grenzkosten Zubau)', v => `${v.toLocaleString('de-DE')} €/kW`],
+  ['capexBaselineGW', 'CAPEX-Bestandsschwelle', v => `${v.toLocaleString('de-DE')} GW`],
   ['capexChargeEurPerKW', 'CAPEX (Einspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
   ['capexDischargeEurPerKW', 'CAPEX (Ausspeisung)', v => `${v.toLocaleString('de-DE')} €/kW`],
   ['capexEurPerKWh', 'CAPEX (Energie)', v => `${v.toLocaleString('de-DE')} €/kWh`],
