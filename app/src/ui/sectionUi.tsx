@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import type { ChartMode } from './chartOptions';
 import { cx, muted, panelHeader } from './ui';
@@ -159,23 +160,79 @@ export function SegmentPill<T extends string>({ value, options, onChange, ariaLa
   </div>;
 }
 
+// Schwebendes Panel, das via Portal an document.body gehängt und per fixed-Position
+// am Anker ausgerichtet wird. Dadurch wird es NICHT vom overflow-hidden / Stacking-
+// Context der umgebenden Karten abgeschnitten und legt sich sauber über den Inhalt.
+// Klappt nach oben, wenn unter dem Anker zu wenig Platz ist.
+export function FloatingPanel({
+  anchorRef, open, onClose, align = 'left', className, children,
+}: {
+  anchorRef: RefObject<HTMLElement | null>;
+  open: boolean;
+  onClose: () => void;
+  align?: 'left' | 'right';
+  className?: string;
+  children: ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const [box, setBox] = useState<{ rect: DOMRect; up: boolean } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) { setBox(null); return; }
+    const place = () => {
+      const a = anchorRef.current;
+      if (!a) return;
+      const rect = a.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const up = spaceBelow < 260 && rect.top > spaceBelow;
+      setBox({ rect, up });
+    };
+    place();
+    const onPointer = (event: PointerEvent) => {
+      const t = event.target as Node;
+      if (!anchorRef.current?.contains(t) && !panelRef.current?.contains(t)) onCloseRef.current();
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onCloseRef.current(); };
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('pointerdown', onPointer, true);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('pointerdown', onPointer, true);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open, anchorRef]);
+
+  if (!open || !box) return null;
+  const { rect, up } = box;
+  const style: CSSProperties = {
+    position: 'fixed',
+    minWidth: rect.width,
+    ...(align === 'right'
+      ? { right: Math.max(8, window.innerWidth - rect.right) }
+      : { left: Math.max(8, rect.left) }),
+    ...(up ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
+  };
+  return createPortal(
+    <div ref={panelRef} style={style} className={cx('z-50', className)}>{children}</div>,
+    document.body,
+  );
+}
+
 // Kompaktes Dropdown für Chart-Steuerungen (zeigt den aktuellen Wert + Chevron,
 // klappt eine Optionsliste aus). Platzsparender als eine breite SegmentPill,
 // wenn mehrere Steuerungen in einer Gruppe stehen.
 export function ChartDropdown<T extends string>({ value, options, onChange, ariaLabel }: { value: T; options: ReadonlyArray<{ id: T; label: string; description?: string }>; onChange: (value: T) => void; ariaLabel: string }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (event: MouseEvent) => { if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false); };
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
-  }, [open]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const current = options.find(option => option.id === value) ?? options[0];
-  return <div ref={ref} className="relative">
+  return <>
     <button
+      ref={triggerRef}
       type="button"
       aria-haspopup="listbox"
       aria-expanded={open}
@@ -186,24 +243,32 @@ export function ChartDropdown<T extends string>({ value, options, onChange, aria
       <span className="whitespace-nowrap">{current?.label}</span>
       <ChevronDown className={cx('h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform', open && 'rotate-180')} aria-hidden="true"/>
     </button>
-    {open && <div role="listbox" aria-label={ariaLabel} className="absolute right-0 top-[calc(100%+4px)] z-30 w-max min-w-full max-w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-      {options.map(option => <button
-        key={option.id}
-        type="button"
-        role="option"
-        aria-selected={option.id === value}
-        title={option.description}
-        onClick={() => { onChange(option.id); setOpen(false); }}
-        className={cx(
-          'block w-full px-3 py-1.5 text-left transition',
-          option.id === value ? 'bg-zinc-50 dark:bg-zinc-800/60' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800',
-        )}
-      >
-        <span className={cx('block text-[13px] leading-5', option.id === value ? 'font-medium text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-200')}>{option.label}</span>
-        {option.description && <span className="mt-0.5 block text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{option.description}</span>}
-      </button>)}
-    </div>}
-  </div>;
+    <FloatingPanel
+      anchorRef={triggerRef}
+      open={open}
+      onClose={() => setOpen(false)}
+      align="right"
+      className="w-max max-w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+    >
+      <div role="listbox" aria-label={ariaLabel}>
+        {options.map(option => <button
+          key={option.id}
+          type="button"
+          role="option"
+          aria-selected={option.id === value}
+          title={option.description}
+          onClick={() => { onChange(option.id); setOpen(false); }}
+          className={cx(
+            'block w-full px-3 py-1.5 text-left transition',
+            option.id === value ? 'bg-zinc-50 dark:bg-zinc-800/60' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800',
+          )}
+        >
+          <span className={cx('block text-[13px] leading-5', option.id === value ? 'font-medium text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-200')}>{option.label}</span>
+          {option.description && <span className="mt-0.5 block text-[11px] leading-4 text-zinc-400 dark:text-zinc-500">{option.description}</span>}
+        </button>)}
+      </div>
+    </FloatingPanel>
+  </>;
 }
 
 export function ChartModeToggle({ mode, onChange }: { mode: ChartMode; onChange: (mode: ChartMode) => void }) {
