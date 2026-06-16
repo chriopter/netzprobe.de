@@ -34,22 +34,22 @@
       {
         "name": "gasFuelEurPerMWhTh",
         "unit": "Zahl",
-        "description": "Erdgas frei Kraftwerk EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 23 (= 22,9 gerundet), Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
+        "description": "Erdgas frei Kraftwerk EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 11, Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
       },
       {
         "name": "hardCoalFuelEurPerMWhTh",
         "unit": "Zahl",
-        "description": "Steinkohle EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 23 (= 22,9 gerundet), Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
+        "description": "Steinkohle EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 11, Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
       },
       {
         "name": "ligniteFuelEurPerMWhTh",
         "unit": "Zahl",
-        "description": "Braunkohle EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 23 (= 22,9 gerundet), Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
+        "description": "Braunkohle EUR/MWh_th. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 11, Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
       },
       {
         "name": "uraniumEurPerMWhEl",
         "unit": "Zahl",
-        "description": "Kernbrennstoff frei Kraftwerk je MWh_el; 22,9 = ISE 2024 Tab. 5 (Uran 8,0 EUR/MWh_th, flach bis 2045) ÷ 0,35 Netto-Wirkungsgrad — gleiche Quelle wie alle anderen Brennstoffpreise. Marktbasierter WNA/NEA-Vollzyklus (Uran + Konversion + Anreicherung + Fabrikation + Back-End) läge bei ~9–13 EUR/MWh_el, nach den Preisanstiegen seit 2022 bis ~15–19 bei Spotpreisen; Rückbau ist nirgends enthalten. Bewusst konservative Obergrenze. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 23 (= 22,9 gerundet), Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
+        "description": "Kernbrennstoff frei Kraftwerk je MWh_el; 11 = marktbasierter Front-End-Vollzyklus (Uran + Konversion + Anreicherung + Fabrikation), WNA-Rechenbeispiel (Sept 2021 ~4,6 USD/MWh) auf 2024/25-Vertragspreise hochgerechnet (Uran ~80 USD/lb, SWU nach 2022-Spike erhöht); Front-End-Basis konsistent mit dem modellweiten Ausschluss von Rückbau/Endlager. Im WNA/NEA-Korridor 9–13; Spot-Peaks 2024 lägen ~15–19. Früherer Wert 22,9 (ISE 2024 Tab. 5: Uran 8,0 EUR/MWh_th ÷ 0,35) lag ~2× über Markt. HINWEIS: Referenz-/Test-Anker — die Kostenrechnung liest die wirksamen Brennstoffpreise aus den Technologie-Paketen (parameters.kosten.fuelEurPerMWhTh); Kernkraft verrechnet dort 11, Kohle den Braunkohle-dominierten Blend 5 EUR/MWh_th."
       },
       {
         "name": "importEurPerMWh",
@@ -174,7 +174,7 @@
       "Endkundenpreis-Brücke ist kostenbasiert, nicht marktbasiert: der Energie+Vertrieb-Anteil (Systemkosten ab Werk + 2,5 ct Vertrieb ≈ 12,5 ct im Referenzlauf) liegt unter dem BDEW-Block Beschaffung+Vertrieb (16,0 ct, Marktpreise + Marge). Der Referenz-Endkundenpreis (~36,5 ct/kWh, ~91 €/Monat) liegt darum ~10 % unter dem realen BDEW-Niveau (~40 ct, ~100 €/Monat) — alle Szenario-€/Monat-Werte sind absolut ~10 % zu niedrig, die Vergleiche der Szenarien untereinander bleiben gültig.",
       "Der Kosten-Bon weist drei Größen aus: (1) »SUMME pro Jahr« ist die levelized Jahresmiete — CAPEX über die ANLAGENLEBENSDAUER annuisiert (CRF, realer WACC 5 %, inkl. Finanzierung und implizitem Ersatz) plus Betrieb/Brennstoff; horizont-unabhängig, der faire Szenario-Vergleich. (2) »Gesamtkosten über N Jahre« = die levelized Jahresmiete × Kostenzeitraum (Seitenleisten-Regler, 20/30/40 Jahre, Default 20). Das ist die korrekte Vollkostensumme: weil die Annuität in (1) die Baukosten über die Anlagenlebensdauer streckt, zählt »Jahresmiete × Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut, was über die zwei Annuitäts-Zyklen exakt abgebildet ist. Undiskontierte Summe heutiger Preise. (3) »Einmalige Bauinvestition« (nur nachrichtlich) ist der Neubauwert der ganzen Zielflotte (Erzeugung + Speicher + Netz, OHNE Annuisierung) — die Größenordnung des Anschubs, NICHT die Gesamtkosten; sie unterzeichnet die Vollkosten, weil sie den Ersatz und die Finanzierung nicht enthält. Bewusst NICHT ausgewiesen wird »Bauinvestition + Betrieb × Jahre«: das würde den Ersatz kurzlebiger Anlagen unterzählen (CAPEX nur einmal), die Annuitäts-Summe (2) ist die saubere Größe.",
       "Alle drei Kostengrößen sind Vollkosten des Stromsystems — NICHT vergleichbar mit Studien-»Mehrinvestitionen« der Energiewende (1–2 Bio. €), die nur die Differenz zu einem Referenzpfad zählen. Die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (Heizöl/Erdgas/Kraftstoffe, ~70–90 Mrd €/a) — der Kostensprung der e100-Szenarien gegen die Referenz überzeichnet daher die echte Mehrbelastung.",
-      "Kernbrennstoff 22,9 EUR/MWh_el ist die exakte ISE-2024-Übernahme (8,0 EUR/MWh_th ÷ 0,35) und liegt ~2× über dem marktbasierten WNA/NEA-Vollzyklus (~9–13 EUR/MWh_el; Spot-Niveaus 2022–25 ~15–19). Im 100%-Kernkraft-Szenario macht die Differenz ~12 EUR/MWh bzw. ~20–26 Mrd EUR/a aus — konservative Obergrenze; nur Uran auf eine andere Quelle umzustellen würde die einheitliche ISE-Brennstoffbasis brechen.",
+      "Kernbrennstoff 11 EUR/MWh_el ist der marktbasierte Front-End-Vollzyklus (Uran + Konversion + Anreicherung + Fabrikation), konsistent mit dem modellweiten Ausschluss von Rückbau/Endlager — WNA-Rechenbeispiel (Sept 2021 ~4,6 USD/MWh) auf 2024/25-Vertragspreise hochgerechnet, im WNA/NEA-Korridor 9–13; Spot-Peaks 2024 lägen ~15–19. Der frühere ISE-Wert 22,9 (8,0 EUR/MWh_th ÷ 0,35) lag ~2× über Markt und war die einzige Nicht-Markt-Setzung unter den Brennstoffpreisen. Die Korrektur senkt das 100%-Kernkraft-Szenario um ~12 EUR/MWh bzw. ~20–26 Mrd EUR/a.",
       "Im historischen Referenz-Lauf decken Müll/Öl/Sonstige/Geothermie ~13,7 TWh (~3 % der Last) ohne jeden Kostenposten — der Referenz-Anker ~50,5 Mrd EUR/a ist um grob 1–1,5 Mrd untersetzt, der Kostensprung zu den e100-Szenarien entsprechend leicht überzeichnet (gleiche Richtung wie die fehlenden fossilen Endenergiekosten).",
       "Die Endkundenpreis-Brücke legt das Bestandsnetz-Entgelt (10,9 ct/kWh) volumetrisch auf den vollen e100-Haushaltsverbrauch (8.740 kWh) um — unter Erlösobergrenzen-Regulierung fiele das ct-Entgelt bei ~3-fachem Volumen, der Musterhaushalt wird in e100-Szenarien also um bis zu ~50 EUR/Monat ÜBERerhoben. Dieser Effekt wirkt dem kostenbasierten ~10-%-Unterschätzungs-Bias entgegen; in e100-Szenarien heben sich beide grob auf, in der Referenz gilt nur der Unterschätzungs-Bias.",
       "h2ImportEurPerMWh = 210 (delivered free-border, H2-LHV). Korrektur Juni 2026 von 150 nach oben: 150 (= 5 EUR/kg) entsprach optimistischen GESTEHUNGSkosten an Top-MENA-Standorten, nicht dem geforderten LIEFERpreis frei Grenze. Jede heutige Liefer-Evidenz liegt höher: H2Global-Pilotauktion 2024 (Fertiglobe, 1.000 EUR/t grünes NH3 frei Rotterdam) = 193 EUR/MWh auf NH3-LHV bzw. ~210–240 EUR/MWh als zurückgecracktes H2 (25–30 % Crack-Verlust); BNEF 2025 (importiertes grünes NH3 → H2 gecrackt) 7,3–8,9 USD/kg ≈ 200–245 EUR/MWh; EEX-HYDRIX/ACER 2025 (RFNBO-Produktion EU) 7–10 EUR/kg ≈ 210–300 EUR/MWh; IEA GHR grüne H2-Gestehung 1,5–8 USD/kg bestätigt: 150 ist ein Gestehungs-, kein Lieferpreis. 210 ist die konvergente Mitte (170 nur als Untergrenze, wenn als NH3 ohne Crack genutzt). Wirkung: ~+25 Mrd EUR/a im ee-85-h2-15 (417 TWh), ~+147 Mrd EUR/a im h2-import-100 (2.450 TWh)."
@@ -186,7 +186,7 @@
     "gasFuelEurPerMWhTh": 38,
     "hardCoalFuelEurPerMWhTh": 11.6,
     "ligniteFuelEurPerMWhTh": 2.3,
-    "uraniumEurPerMWhEl": 22.9,
+    "uraniumEurPerMWhEl": 11,
     "importEurPerMWh": 89,
     "exportEurPerMWh": 60,
     "exportCaptureReThresholdPct": 60,
