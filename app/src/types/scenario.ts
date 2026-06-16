@@ -75,4 +75,11 @@ export type Scenario = {
   export: {
     stromGW: number;
   };
+  /**
+   * Optionale „eigene Annahmen": pro Technologie (pv, windon, …, batterie, h2)
+   * überschriebene Kostenparameter, als Slider-Werte (Anzeige-Einheit) je
+   * Hebel-Key. Default = leer ⇒ Fraunhofer-/Studien-Werte aus den Paketen.
+   * Konfiguration + Mapping auf die kosten-Felder in ui/costLevers.ts.
+   */
+  costOverrides?: Record<string, Record<string, number>>;
 };
