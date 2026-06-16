@@ -354,14 +354,19 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
   // Icons werden per data-shot-hide ausgeblendet.
   const bonRef = useRef<HTMLDivElement>(null);
   const [shooting, setShooting] = useState(false);
+  const [shotMsg, setShotMsg] = useState<string | null>(null);
   const screenshotBon = async () => {
     const node = bonRef.current;
     if (!node || shooting) return;
     setShooting(true);
+    setShotMsg(null);
     try {
+      // skipFonts: der Web-Font-Embedding-Schritt von html-to-image scheitert
+      // bei cross-origin geladenen Fonts (wirft sonst still) — Fallback-Font im
+      // Bild ist akzeptabel. backgroundColor verhindert Transparenz.
       const dataUrl = await toPng(node, {
         pixelRatio: 2,
-        cacheBust: true,
+        skipFonts: true,
         backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
         filter: el => !(el instanceof HTMLElement && el.dataset.shotHide != null),
       });
@@ -369,10 +374,13 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
       a.href = dataUrl;
       a.download = 'netzprobe-stromrechnung.png';
       a.click();
+      setShotMsg('Gespeichert ✓');
     } catch (error) {
       console.error('Screenshot der Kostenrechnung fehlgeschlagen:', error);
+      setShotMsg('Screenshot fehlgeschlagen');
     } finally {
       setShooting(false);
+      window.setTimeout(() => setShotMsg(null), 2000);
     }
   };
   return <div className="w-full font-mono text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
@@ -388,6 +396,7 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
       >
         <Camera className="h-3.5 w-3.5"/>
       </button>
+      {shotMsg && <span data-shot-hide className="absolute right-10 top-3.5 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white shadow-md dark:bg-zinc-100 dark:text-zinc-900">{shotMsg}</span>}
       <div aria-hidden className="pointer-events-none absolute inset-0 mix-blend-multiply dark:mix-blend-screen" style={{ backgroundImage: PAPER_GRAIN }}/>
       <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.175] mix-blend-multiply dark:opacity-[0.06] dark:mix-blend-normal" style={{ backgroundImage: PAPER_CRUMPLE, backgroundSize: '420px 420px' }}/>
       <a
