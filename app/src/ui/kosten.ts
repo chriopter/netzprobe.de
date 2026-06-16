@@ -83,6 +83,10 @@ export type KostenResult = {
     exportTWh: number;
     importEurPerMWh: number;
     exportEurPerMWh: number;
+    // Effektiver, EE-abhängiger Export-Capture-Preis (€/MWh) und der zugrunde
+    // liegende EE-Anteil — der flache exportEurPerMWh ist nur die Obergrenze.
+    exportEffectiveEurPerMWh: number;
+    exportReSharePct: number;
     netzEurPerKW: number;
     netzLastEurPerKW: number;
     netzLifetimeYears: number;
@@ -228,10 +232,24 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   // CO₂-Bepreisung bewusst NICHT enthalten: rein politisch gesetzter Transfer,
   // kein realer Ressourcenaufwand des Systems.
   const importCost = result.summary.importTWh * 1e6 * (P.importEurPerMWh ?? 0);
-  const exportRevenue = result.summary.exportTWh * 1e6 * (P.exportEurPerMWh ?? 0);
+  // Export-Capture-Preis: der mengengewichtete Exporterlös fällt mit steigendem
+  // EE-Anteil (Kannibalisierung). Export passiert in Überschussstunden mit
+  // niedrigen/negativen Preisen, und die Nachbarn haben korreliert Überschuss
+  // (PV mittags räumlich gekoppelt) — Interkonnektion rettet den Solarwert nicht.
+  // Lineares Modell mit Boden, kalibriert an: 2023 realisiert ~0,81×Baseload bei
+  // ~58 % EE; S&P/arXiv 2405.17166 (Solar-Marktwert→0 bei hoher VRE-Durchdringung);
+  // struktureller Dauerüberschuss → ~0. Anker: 60 %→60, 70 %→45, 80 %→30, 100 %→0.
+  // Quellen + Caveat in referenz/preise/package.json.
+  const exportCaptureMax = P.exportEurPerMWh ?? 0;
+  const exportReSharePct = result.summary.renewableSharePct ?? 0;
+  const exportEffectiveEurPerMWh = Math.min(exportCaptureMax, Math.max(
+    P.exportFloorEurPerMWh ?? 0,
+    exportCaptureMax - (P.exportCaptureSlopeEurPerPp ?? 1.5) * Math.max(0, exportReSharePct - (P.exportCaptureReThresholdPct ?? 60)),
+  ));
+  const exportRevenue = result.summary.exportTWh * 1e6 * exportEffectiveEurPerMWh;
   const importNet = importCost - exportRevenue;
-  // Dauerhaft am Export-Cap (≥95 % der theoretischen Cap-Energie): Erlös als
-  // Obergrenze flaggen — z.B. 100kern exportiert 25 GW × 8.760 h durchgehend.
+  // Dauerhaft am Export-Cap (≥95 % der theoretischen Cap-Energie): auch mit dem
+  // Capture-Preis ein Hinweis, dass der Export strukturell limitiert ist.
   const exportCapTWh = (scenario.export?.stromGW ?? 0) * 8.76;
   const exportAtCap = exportCapTWh > 0 && result.summary.exportTWh >= 0.95 * exportCapTWh;
 
@@ -290,6 +308,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
       exportTWh: result.summary.exportTWh,
       importEurPerMWh: P.importEurPerMWh ?? 0,
       exportEurPerMWh: P.exportEurPerMWh ?? 0,
+      exportEffectiveEurPerMWh,
+      exportReSharePct,
       netzEurPerKW: P.netzCapexEurPerKwAddedRE ?? 0,
       netzLastEurPerKW: P.netzCapexEurPerKwAddedPeakLoad ?? 0,
       netzLifetimeYears: P.netzLifetimeYears ?? 40,
