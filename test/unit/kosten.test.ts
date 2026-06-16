@@ -217,12 +217,13 @@ describe('Kosten · B Invarianten', () => {
     expect(at(55).params.exportEffectiveEurPerMWh).toBeCloseTo(prices.exportEurPerMWh, 6);
     // 80 % EE: 60 − 1,5·20 = 30 €/MWh
     expect(at(80).params.exportEffectiveEurPerMWh).toBeCloseTo(30, 6);
-    // 100 % EE: Boden 0 → kein Erlös (aber auch keine Zahlung)
-    expect(at(100).params.exportEffectiveEurPerMWh).toBe(0);
-    expect(at(100).exportRevenue).toBe(0);
-    // Monoton fallend mit dem EE-Anteil
+    // 100 % EE: Boden ~20 €/MWh (Flex-gestützter Marktwert, nicht 0)
+    expect(at(100).params.exportEffectiveEurPerMWh).toBeCloseTo(20, 6);
+    expect(at(100).exportRevenue).toBeGreaterThan(0);
+    // Monoton fallend bis zum Boden; ab ~87 % EE konstant 20
     expect(at(70).exportRevenue).toBeLessThan(at(60).exportRevenue);
-    expect(at(90).exportRevenue).toBeLessThan(at(70).exportRevenue);
+    expect(at(80).exportRevenue).toBeLessThan(at(70).exportRevenue);
+    expect(at(100).params.exportEffectiveEurPerMWh).toBeCloseTo(at(90).params.exportEffectiveEurPerMWh, 6);
   });
 
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {
