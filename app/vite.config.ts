@@ -136,7 +136,7 @@ const HEAD_TITLE = 'Netzprobe – Stromsimulation Deutschland';
 const HEAD_DESC = 'Interaktive Stromsystem-Simulation für Deutschland: Last, Erzeugung, Speicher, Kosten und Ressourcen für 2025 und 100%-Szenarien. Stündlicher Dispatch, quelloffen, ohne Account.';
 
 type WikiDoc = {
-  id: string; hasData: boolean; domain: string; title: string; desc: string; dataUrl: string;
+  id: string; hasData: boolean; domain: string; kind: string; title: string; desc: string; dataUrl: string;
   paras: string[]; overview: { label: string; value: string }[]; source: string;
 };
 
@@ -170,7 +170,7 @@ function collectWikiDocs(dir: string): WikiDoc[] {
               .map((o: { label: string; value: string }) => ({ label: stripMarkdown(o.label), value: stripMarkdown(o.value) }))
           : [];
         const source = stripMarkdown(String(m.source ?? ''));
-        docs.push({ id: pkg.id, hasData, domain: pkg.domain ?? '', title: m.title, desc, dataUrl, paras, overview, source });
+        docs.push({ id: pkg.id, hasData, domain: pkg.domain ?? '', kind: pkg.kind ?? '', title: m.title, desc, dataUrl, paras, overview, source });
       } catch { /* ungültige package.json überspringen */ }
     }
   };
@@ -184,6 +184,23 @@ const ld = (obj: unknown) =>
 const ORG = { '@type': 'Organization', name: 'Netzprobe', url: `${SITE_URL}/` };
 const SITE = { '@type': 'WebSite', name: 'Netzprobe', url: `${SITE_URL}/` };
 
+// Lesbares Label je Domain für Übersicht und Titel-Anreicherung.
+const DOMAIN_LABEL: Record<string, string> = {
+  last: 'Netzlast', erzeugung: 'Erzeugung', speicher: 'Speicher', aussenhandel: 'Außenhandel',
+  referenz: 'Referenz', modell: 'Modell',
+};
+
+// SEO-Titel: viele method.title sind generisch ("2017", "PV", "Batterie"). Drei
+// Seiten heißen sogar identisch "2017" (Last-Datensatz, Erzeugungs-Datensatz,
+// historisches Szenario). Ein Kontext-Präfix macht <title>/H1 aussagekräftig und
+// eindeutig. Kompositionen sind Szenarien; sonst nach Domain benennen. Enthält der
+// Titel das Label schon (z.B. "Pumpspeicher", "H2-Außenhandel"), bleibt er unverändert.
+function seoTitle(doc: WikiDoc): string {
+  const label = doc.kind === 'composition' ? 'Szenario' : DOMAIN_LABEL[doc.domain];
+  if (!label || doc.title.toLowerCase().includes(label.toLowerCase())) return doc.title;
+  return `${label} ${doc.title}`;
+}
+
 function homepageLd(): string {
   return ld([
     { '@context': 'https://schema.org', ...SITE, inLanguage: 'de',
@@ -194,38 +211,81 @@ function homepageLd(): string {
   ]);
 }
 
-function wikiLd(doc: WikiDoc, pageUrl: string): string {
+function wikiLd(doc: WikiDoc, pageUrl: string, title: string): string {
   const breadcrumb = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Netzprobe', item: `${SITE_URL}/` },
       { '@type': 'ListItem', position: 2, name: 'Wiki', item: `${SITE_URL}/wiki/` },
-      { '@type': 'ListItem', position: 3, name: doc.title, item: pageUrl },
+      { '@type': 'ListItem', position: 3, name: title, item: pageUrl },
     ],
   };
   const main = doc.hasData
-    ? { '@context': 'https://schema.org', '@type': 'Dataset', name: doc.title, description: doc.desc,
+    ? { '@context': 'https://schema.org', '@type': 'Dataset', name: title, description: doc.desc,
         url: pageUrl, identifier: doc.id, inLanguage: 'de', isAccessibleForFree: true,
         keywords: ['Stromsystem', 'Energie', doc.domain].filter(Boolean), creator: ORG, isPartOf: SITE,
         distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: doc.dataUrl }] }
-    : { '@context': 'https://schema.org', '@type': 'TechArticle', headline: doc.title, description: doc.desc,
+    : { '@context': 'https://schema.org', '@type': 'TechArticle', headline: title, description: doc.desc,
         url: pageUrl, inLanguage: 'de', author: ORG, isPartOf: SITE };
   return ld(main) + ld(breadcrumb);
 }
 
 // Prerendered Text-Inhalt für den <body> — Googlebot/Applebot indexieren den
 // Wiki-Text ohne JS. createRoot() ersetzt #root beim Mount, also kein Duplikat.
-function wikiBody(doc: WikiDoc): string {
+function wikiBody(doc: WikiDoc, all: WikiDoc[]): string {
   const e = escapeHtml;
+  const title = seoTitle(doc);
   const paras = doc.paras.map(p => `<p>${e(p)}</p>`).join('');
   const ov = doc.overview.length
     ? `<dl>${doc.overview.map(o => `<dt>${e(o.label)}</dt><dd>${e(o.value)}</dd>`).join('')}</dl>`
     : '';
   const src = doc.source ? `<p>Quellen: ${e(doc.source)}</p>` : '';
+  // Interne Verlinkung: Geschwister derselben Domain. Gibt Crawlern einen
+  // Link-Graph (statt nur Sitemap) und verteilt Relevanz zwischen verwandten Seiten.
+  const siblings = all.filter(d => d.domain === doc.domain && d.id !== doc.id);
+  const related = siblings.length
+    ? `<nav><h2>Verwandte Einträge</h2><ul>${siblings
+        .map(d => `<li><a href="${SITE_URL}/wiki/${e(d.id)}">${e(seoTitle(d))}</a></li>`).join('')}</ul></nav>`
+    : '';
   return `<main>`
-    + `<nav><a href="${SITE_URL}/">Netzprobe</a> › <a href="${SITE_URL}/wiki/">Wiki</a> › ${e(doc.title)}</nav>`
-    + `<h1>${e(doc.title)}</h1><p>${e(doc.desc)}</p>${paras}${ov}${src}`
+    + `<nav><a href="${SITE_URL}/">Netzprobe</a> › <a href="${SITE_URL}/wiki/">Wiki</a> › ${e(title)}</nav>`
+    + `<h1>${e(title)}</h1><p>${e(doc.desc)}</p>${paras}${ov}${src}${related}`
     + `</main>`;
+}
+
+// Prerendered Übersicht für /wiki/ — ohne JS nur ein leerer SPA-Shell, daher kein
+// Link-Graph und keine indexierbare Liste. Hier nach Domain gruppiert verlinkt.
+function wikiIndexBody(all: WikiDoc[]): string {
+  const e = escapeHtml;
+  const order = ['last', 'erzeugung', 'speicher', 'aussenhandel', 'referenz', 'modell'];
+  const domains = [...new Set(all.map(d => d.domain))]
+    .sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+  const groups = domains.map(dom => {
+    const items = all.filter(d => d.domain === dom)
+      .map(d => `<li><a href="${SITE_URL}/wiki/${e(d.id)}">${e(seoTitle(d))}</a> — ${e(d.desc)}</li>`).join('');
+    return `<section><h2>${e(DOMAIN_LABEL[dom] ?? dom)}</h2><ul>${items}</ul></section>`;
+  }).join('');
+  return `<main>`
+    + `<nav><a href="${SITE_URL}/">Netzprobe</a> › Wiki</nav>`
+    + `<h1>Wiki</h1><p>Dokumentierte Modellannahmen und Datensätze von Netzprobe: `
+    + `Netzlast, Erzeugung, Speicher, Außenhandel und Referenzdaten für das deutsche Stromsystem.</p>`
+    + `${groups}</main>`;
+}
+
+function wikiIndexLd(all: WikiDoc[]): string {
+  const breadcrumb = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Netzprobe', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Wiki', item: `${SITE_URL}/wiki/` },
+    ],
+  };
+  const collection = {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Wiki – Netzprobe',
+    url: `${SITE_URL}/wiki/`, inLanguage: 'de', isPartOf: SITE,
+    hasPart: all.map(d => ({ '@type': 'CreativeWork', name: seoTitle(d), url: `${SITE_URL}/wiki/${d.id}` })),
+  };
+  return ld(collection) + ld(breadcrumb);
 }
 
 function seo(): Plugin {
@@ -261,28 +321,42 @@ function seo(): Plugin {
       const inject = (html: string, snippet: string) =>
         html.replace('</head>', `    ${snippet}\n  </head>`);
 
+      const docs = collectWikiDocs(modelDir);
+
       // Startseite: WebSite + WebApplication JSON-LD.
       writeFileSync(resolve(distDir, 'index.html'), inject(template, homepageLd()));
 
-      // Per Wiki-Eintrag eine statische index.html mit eigenem Head + JSON-LD.
-      // React mountet in #root wie gehabt (kein Hydration-Mismatch, Body identisch).
-      let count = 0;
-      for (const doc of collectWikiDocs(modelDir)) {
-        const pageUrl = `${SITE_URL}/wiki/${doc.id}`;
-        const pageTitle = `${doc.title} – Netzprobe`;
+      // Per Seite eine statische index.html mit eigenem Head + JSON-LD ableiten.
+      // React mountet in #root wie gehabt (createRoot ersetzt, kein Hydration-Mismatch).
+      const renderPage = (pageUrl: string, pageTitle: string, desc: string, headLd: string, body: string) => {
         let html = template
           .split(HEAD_TITLE).join(escapeHtml(pageTitle))
-          .split(HEAD_DESC).join(escapeHtml(doc.desc))
+          .split(HEAD_DESC).join(escapeHtml(desc))
           .split(`"${SITE_URL}/"`).join(`"${escapeHtml(pageUrl)}"`);
-        html = inject(html, wikiLd(doc, pageUrl));
-        html = html.replace('<div id="root"></div>', `<div id="root">${wikiBody(doc)}</div>`);
+        html = inject(html, headLd);
+        return html.replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+      };
+
+      // /wiki/ Übersicht: bisher nur leerer SPA-Shell, jetzt indexierbare Linkliste.
+      const wikiIndexDesc = 'Wiki von Netzprobe: dokumentierte Modellannahmen und Datensätze zu '
+        + 'Netzlast, Erzeugung, Speicher und Außenhandel des deutschen Stromsystems.';
+      const wikiIndexHtml = renderPage(`${SITE_URL}/wiki/`, 'Wiki – Netzprobe', wikiIndexDesc,
+        wikiIndexLd(docs), wikiIndexBody(docs));
+      mkdirSync(resolve(distDir, 'wiki'), { recursive: true });
+      writeFileSync(resolve(distDir, 'wiki', 'index.html'), wikiIndexHtml);
+
+      let count = 0;
+      for (const doc of docs) {
+        const pageUrl = `${SITE_URL}/wiki/${doc.id}`;
+        const pageTitle = `${seoTitle(doc)} – Netzprobe`;
+        const html = renderPage(pageUrl, pageTitle, doc.desc, wikiLd(doc, pageUrl, seoTitle(doc)), wikiBody(doc, docs));
         const outDir = resolve(distDir, 'wiki', doc.id);
         mkdirSync(outDir, { recursive: true });
         writeFileSync(resolve(outDir, 'index.html'), html);
         count++;
       }
       // eslint-disable-next-line no-console
-      console.log(`[seo] sitemap.xml + ${count} prerendered /wiki/* pages + JSON-LD`);
+      console.log(`[seo] sitemap.xml + /wiki/ + ${count} prerendered /wiki/* pages + JSON-LD`);
     },
   };
 }
