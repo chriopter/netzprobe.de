@@ -47,6 +47,7 @@ export const uiManifest = {
     stahl: params('e100-stahl'),
     chemie: params('e100-chemie'),
   },
+  klima: params('klimatisierung'),
   generation: {
     pv: params('pv'),
     windon: params('windon'),

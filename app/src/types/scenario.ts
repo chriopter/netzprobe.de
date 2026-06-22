@@ -24,6 +24,10 @@ export type Scenario = {
     'e100-stahl-target-mio-ton': number;
     'e100-chemie': boolean;
     'e100-chemie-target-twh': number;
+    // Wachstum (kein e100-Sektor): flächendeckende Klimatisierung als Zusatzlast
+    // mit temperaturgetriebenem Hitzetag-Abendpeak. target-twh = Jahresenergie.
+    'klima-flaechendeckend': boolean;
+    'klima-flaechendeckend-target-twh': number;
   };
   supplyPreset: 'custom' | string;
   loadYear: 2025 | 2017;

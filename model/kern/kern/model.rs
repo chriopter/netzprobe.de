@@ -112,6 +112,7 @@ enum DemandId {
     IndustrieWaerme,
     Stahl,
     Chemie,
+    Klima,
 }
 
 #[derive(Debug, Clone)]
@@ -165,6 +166,7 @@ struct HourInput {
     wind_off_factor: f64,
     month_index: usize,
     heating_degree_day_weight: f64,
+    cooling_degree_day_weight: f64,
     hour_of_day_berlin: usize,
 }
 
@@ -303,12 +305,27 @@ impl StaticModel {
                 .ok_or_else(|| data_error("e100-heiz.degreeDayProfile fehlt"))?,
         )
         .map_err(|err| data_error(err.to_string()))?;
+        // Cooling-Degree-Day-Tagesprofil (klimatisierung) — gleiche Struktur wie
+        // das Heiz-Gradtagsprofil (days[].date/.weight), nur Schwelle umgedreht.
+        let klima_pkg = package_data(include_str!("../../last/klimatisierung/package.json"))?;
+        let cooling_profile: HeatingProfile = serde_json::from_value(
+            klima_pkg
+                .get("coolingDegreeDayProfile")
+                .cloned()
+                .ok_or_else(|| data_error("klimatisierung.coolingDegreeDayProfile fehlt"))?,
+        )
+        .map_err(|err| data_error(err.to_string()))?;
 
         let factors_by_time: HashMap<_, _> = factors
             .into_iter()
             .map(|hour| (hour.time.clone(), hour))
             .collect();
         let heating_by_date: HashMap<_, _> = heating_profile
+            .days
+            .into_iter()
+            .map(|day| (day.date.clone(), day.weight))
+            .collect();
+        let cooling_by_date: HashMap<_, _> = cooling_profile
             .days
             .into_iter()
             .map(|day| (day.date.clone(), day.weight))
@@ -323,6 +340,9 @@ impl StaticModel {
             let heating_weight = *heating_by_date
                 .get(&date)
                 .ok_or_else(|| data_error(format!("missing heating day for {}", date)))?;
+            let cooling_weight = *cooling_by_date
+                .get(&date)
+                .ok_or_else(|| data_error(format!("missing cooling day for {}", date)))?;
             // Monat aus dem Berlin-Datum (konsistent mit Heiztagen/Tagesstunde,
             // nicht UTC — sonst rutschen 1-2 h je Monatsgrenze in den Nachbarmonat).
             let month_index = date
@@ -340,6 +360,7 @@ impl StaticModel {
                 wind_off_factor: factor.wind_off_100m.first().copied().unwrap_or(0.0),
                 month_index,
                 heating_degree_day_weight: heating_weight,
+                cooling_degree_day_weight: cooling_weight,
                 hour_of_day_berlin: hour,
             });
         }
@@ -385,6 +406,10 @@ impl StaticModel {
             (
                 DemandId::Chemie,
                 include_str!("../../last/e100-chemie/package.json"),
+            ),
+            (
+                DemandId::Klima,
+                include_str!("../../last/klimatisierung/package.json"),
             ),
         ] {
             let data = package_data(raw)?;
@@ -1173,6 +1198,18 @@ impl StaticModel {
             "e100-chemie",
             "e100-chemie-target-twh",
         )?;
+        // Wachstum: flächendeckende Klimatisierung (kein e100-Sektor, additiv).
+        // Soft-Guard: fehlt das Flag (alte Szenarien/Fixtures), kein Klima-Beitrag
+        // → bestehende Ergebnisse bleiben bit-identisch.
+        if s_bool(scenario, &["demand", "klima-flaechendeckend"]).unwrap_or(false) {
+            load += self.hourly_e100(
+                row,
+                scenario,
+                DemandId::Klima,
+                "klima-flaechendeckend",
+                "klima-flaechendeckend-target-twh",
+            )?;
+        }
         Ok((load - pool_reduction_gw).max(0.0))
     }
 
@@ -1214,16 +1251,24 @@ impl StaticModel {
             DemandId::Stahl => (target.max(0.0) * number(&package.data, "mwhPerTon")?
                 - number_or(&package.data, "alreadyElectricTWh", 0.0))
             .max(0.0),
+            // Klimatisierung: Ziel-TWh direkt (keine Effizienz-/Substitutions-Umrechnung).
+            DemandId::Klima => target.max(0.0),
         };
         let multiplier = package
             .multipliers
             .get(row.hour_of_day_berlin)
             .copied()
             .unwrap_or(0.0);
-        if matches!(id, DemandId::Heiz | DemandId::Ghd) {
-            Ok(annual_twh * 1000.0 * row.heating_degree_day_weight * multiplier / 24.0)
-        } else {
-            Ok(annual_twh * 1000.0 * multiplier / 8760.0)
+        match id {
+            // Temperaturgetrieben: Tagesgewicht (Gradtage) × 24-h-Form.
+            DemandId::Heiz | DemandId::Ghd => {
+                Ok(annual_twh * 1000.0 * row.heating_degree_day_weight * multiplier / 24.0)
+            }
+            DemandId::Klima => {
+                Ok(annual_twh * 1000.0 * row.cooling_degree_day_weight * multiplier / 24.0)
+            }
+            // Flach übers Jahr (eigene 24-h-Form, kein Tagesgang).
+            _ => Ok(annual_twh * 1000.0 * multiplier / 8760.0),
         }
     }
 
