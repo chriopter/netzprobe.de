@@ -11,7 +11,7 @@
   <text x="290" y="138" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="700" fill="#15395c">Netzprobe</text>
   <text x="292" y="182" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#64748b">Stromsimulation Deutschland</text>
   <text x="96" y="370" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="600" fill="#15395c">Last · Erzeugung · Speicher · Kosten · Ressourcen</text>
-  <text x="96" y="426" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#64748b">Stündliche Dispatch-Simulation für 2025 und 100%-Szenarien</text>
+  <text x="96" y="426" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#64748b">Strom-Simulationen für verschiedene Szenarien</text>
   <rect x="96" y="520" width="1008" height="3" fill="#2e7d7d" opacity="0.5"/>
   <text x="96" y="576" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#2e7d7d">netzprobe.de</text>
   <text x="300" y="576" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="400" fill="#94a3b8">quelloffen · ohne Account</text>
