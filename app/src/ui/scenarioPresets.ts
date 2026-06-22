@@ -20,6 +20,7 @@ export const defaultScenario: Scenario = {
     'e100-industrie-waerme': false, 'e100-industrie-waerme-target-heat-twh': uiManifest.e100['industrie-waerme'].defaultTargetHeatTWh,
     'e100-stahl': false, 'e100-stahl-target-mio-ton': uiManifest.e100.stahl.defaultTargetMioTon,
     'e100-chemie': false, 'e100-chemie-target-twh': uiManifest.e100.chemie.defaultTargetTotalTWh,
+    'klima-flaechendeckend': false, 'klima-flaechendeckend-target-twh': uiManifest.klima.defaultTargetTWh,
   },
   generation: {
     pvInstalledGW: uiManifest.historisch2025.pvInstalledGW,
@@ -91,6 +92,8 @@ export function normalizeScenario(scenario: Scenario): Scenario {
       'e100-stahl-target-mio-ton': demand['e100-stahl-target-mio-ton'] ?? defaultScenario.demand['e100-stahl-target-mio-ton'],
       'e100-chemie': demand['e100-chemie'] ?? false,
       'e100-chemie-target-twh': demand['e100-chemie-target-twh'] ?? defaultScenario.demand['e100-chemie-target-twh'],
+      'klima-flaechendeckend': demand['klima-flaechendeckend'] ?? false,
+      'klima-flaechendeckend-target-twh': demand['klima-flaechendeckend-target-twh'] ?? defaultScenario.demand['klima-flaechendeckend-target-twh'],
     },
     generation: {
       pvInstalledGW: generation.pvInstalledGW ?? defaultScenario.generation.pvInstalledGW,

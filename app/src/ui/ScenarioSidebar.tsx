@@ -124,6 +124,8 @@ type ScenarioSidebarProps = {
   onE100StahlTargetChange: (mioTon: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (twh: number) => void;
+  onKlimaChange: (checked: boolean) => void;
+  onKlimaTargetChange: (twh: number) => void;
   onGenerationChange: (field: keyof Scenario['generation'], value: number) => void;
   onStorageChange: (field: keyof Scenario['storage'], value: number) => void;
   onCostOverrideChange: (tech: string, leverKey: string, value: number) => void;
@@ -133,7 +135,7 @@ type ScenarioSidebarProps = {
   onSupplyPresetChange: (preset: Scenario['supplyPreset']) => void;
 };
 
-export type SidebarSectorId = 'verkehr' | 'waerme' | 'industrie';
+export type SidebarSectorId = 'verkehr' | 'waerme' | 'industrie' | 'wachstum';
 export type SidebarOpenSectors = Record<SidebarSectorId, boolean>;
 export type SidebarExpandedRow = string | null;
 
@@ -252,6 +254,8 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   onE100StahlTargetChange,
   onE100ChemieChange,
   onE100ChemieTargetChange,
+  onKlimaChange,
+  onKlimaTargetChange,
   onGenerationChange,
   onStorageChange,
   onCostOverrideChange,
@@ -359,6 +363,8 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           onE100StahlTargetChange={onE100StahlTargetChange}
           onE100ChemieChange={onE100ChemieChange}
           onE100ChemieTargetChange={onE100ChemieTargetChange}
+          onKlimaChange={onKlimaChange}
+          onKlimaTargetChange={onKlimaTargetChange}
           openSectors={openSectors}
           expandedRow={expandedRow}
           onOpenSectorsChange={onOpenSectorsChange}
@@ -1211,6 +1217,8 @@ type LoadConfigurationProps = {
   onE100StahlTargetChange: (n: number) => void;
   onE100ChemieChange: (checked: boolean) => void;
   onE100ChemieTargetChange: (n: number) => void;
+  onKlimaChange: (checked: boolean) => void;
+  onKlimaTargetChange: (n: number) => void;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
@@ -1273,8 +1281,11 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   const transportEnabled = scenario.demand['e100-pkw'] || scenario.demand['e100-lkw'] || scenario.demand['e100-bahn'] || scenario.demand['e100-schiff'] || scenario.demand['e100-flug'];
   const heatEnabled = scenario.demand['e100-heiz'] || scenario.demand['e100-ghd'];
   const industryEnabled = scenario.demand['e100-industrie-waerme'] || scenario.demand['e100-stahl'] || scenario.demand['e100-chemie'];
+  // Wachstum (kein e100-Sektor): flächendeckende Klimatisierung als Zusatzlast.
+  const klimaEnabled = scenario.demand['klima-flaechendeckend'];
+  const klimaTotal = klimaEnabled ? scenario.demand['klima-flaechendeckend-target-twh'] : 0;
   const basisTotal = scenario.demand['last-2025'] && loadSumTWh ? loadSumTWh : 0;
-  const electrificationTotal = basisTotal + transportTotal + heatTotal + industryTotal;
+  const electrificationTotal = basisTotal + transportTotal + heatTotal + industryTotal + klimaTotal;
   const electrificationPotentialTotal = data ? (
     (loadSumTWh ?? 0)
     + e100PkwAdditionalTWh(scenario.demand['e100-pkw-million-km'], data['e100-pkw'])
@@ -1287,6 +1298,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
     + e100IndustrieAdditionalElectricityTWh(scenario.demand['e100-industrie-waerme-target-heat-twh'], data['e100-industrie-waerme'])
     + e100StahlAdditionalTWh(scenario.demand['e100-stahl-target-mio-ton'], data['e100-stahl'])
     + e100ChemieAdditionalTWh(scenario.demand['e100-chemie-target-twh'], data['e100-chemie'])
+    + scenario.demand['klima-flaechendeckend-target-twh']
   ) : 0;
   const selectHistorical = () => {
     onLoadPresetChange(loadPresetStates['nur-2025']);
@@ -1296,7 +1308,7 @@ function LoadConfiguration(props: LoadConfigurationProps) {
   };
   const selectElectrification = () => {
     onLoadPresetChange(loadPresetStates.e100);
-    onOpenSectorsChange({ verkehr: false, waerme: false, industrie: false });
+    onOpenSectorsChange({ verkehr: false, waerme: false, industrie: false, wachstum: false });
     onExpandedRowChange(null);
   };
 
@@ -1449,6 +1461,26 @@ function LoadConfiguration(props: LoadConfigurationProps) {
               onChecked={props.onE100ChemieChange}
               onValue={props.onE100ChemieTargetChange}
               onToggleExpand={() => toggleRow('e100-chemie')}
+            />
+          </div>
+        </AccordionSection>}
+
+        {data && <AccordionSection
+          title="Wachstum"
+          value={twh0(klimaTotal)}
+          checked={klimaEnabled}
+          docId="klimatisierung"
+          open={openSectors.wachstum}
+          onChecked={props.onKlimaChange}
+          onToggle={() => toggleSector('wachstum')}
+        >
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <KlimaControl
+              scenario={scenario}
+              expanded={expandedRow === 'klima-flaechendeckend'}
+              onChecked={props.onKlimaChange}
+              onValue={props.onKlimaTargetChange}
+              onToggleExpand={() => toggleRow('klima-flaechendeckend')}
             />
           </div>
         </AccordionSection>}
@@ -1977,6 +2009,28 @@ function E100GhdControl({ data, scenario, expanded, onChecked, onValue, onToggle
     electricTWh={e100GhdAdditionalElectricityTWh(target, model)}
     detail={`${target.toLocaleString('de-DE')} TWh Wärme · ${formatPercent(target / model.referenceHeatDemandTWh * 100)}${referenceText ? ` · ${referenceText}` : ''} · ${summaryFor(datasetIds.e100Ghd)}`}
     docId={datasetIds.e100Ghd}
+    expanded={expanded}
+    onChecked={onChecked}
+    onValue={onValue}
+    onToggleExpand={onToggleExpand}
+  />;
+}
+
+function KlimaControl({ scenario, expanded, onChecked, onValue, onToggleExpand }: { scenario: Scenario; expanded: boolean; onChecked: (checked: boolean) => void; onValue: (n: number) => void; onToggleExpand: () => void }) {
+  const m = uiManifest.klima as unknown as Record<string, number>;
+  const target = scenario.demand['klima-flaechendeckend-target-twh'];
+  return <SectorRow
+    label="Klimatisierung (flächendeckend)"
+    enabled={scenario.demand['klima-flaechendeckend']}
+    value={target}
+    min={m.minTargetTWh}
+    max={m.maxTargetTWh}
+    step={m.stepTWh}
+    valueLabel="Kühlstrom"
+    valueUnit="TWh/a"
+    electricTWh={scenario.demand['klima-flaechendeckend'] ? target : 0}
+    detail={`${target.toLocaleString('de-DE')} TWh/a · temperaturgetriebener Hitzetag-Abendpeak (~17 Uhr, antikorreliert zur PV)`}
+    docId="klimatisierung"
     expanded={expanded}
     onChecked={onChecked}
     onValue={onValue}

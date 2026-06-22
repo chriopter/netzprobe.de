@@ -21,24 +21,49 @@ stop_api() {
   api_pid=""
 }
 
+# Signatur der überwachten Quellen (mtime + Pfad), für den Polling-Fallback.
+watch_signature() {
+  find server model Cargo.toml Cargo.lock -type f \
+    \( -name '*.rs' -o -name '*.toml' -o -name '*.json' -o -name '*.lock' \) \
+    -not -path '*/target/*' -not -path '*/node_modules/*' \
+    -printf '%T@ %p\n' 2>/dev/null | sort
+}
+
 watch_loop() {
-  if ! command -v inotifywait >/dev/null 2>&1; then
-    echo "[bin/dev] inotifywait nicht gefunden — auto-restart deaktiviert."
-    echo "[bin/dev] Installation: pacman -S inotify-tools (Arch) bzw. apt install inotify-tools (Debian/Ubuntu)."
+  if command -v inotifywait >/dev/null 2>&1; then
+    while true; do
+      if ! inotifywait -qq -e modify,create,delete,move -r \
+          --exclude '(target|node_modules|dist|\.git|tsbuildinfo)' \
+          server model Cargo.toml Cargo.lock 2>/dev/null; then
+        sleep 0.5
+        continue
+      fi
+      echo ""
+      echo "[bin/dev] Änderung erkannt — restarte API..."
+      stop_api
+      sleep 0.3
+      start_api
+    done
     return 0
   fi
+  # Fallback ohne inotify-tools: Polling der Datei-mtimes (alle 2 s). Etwas
+  # weniger effizient, aber der API-Server bleibt nie auf altem Rust-Stand.
+  echo "[bin/dev] inotifywait nicht gefunden — Polling-Fallback (2 s) für API-Restart aktiv."
+  echo "[bin/dev] Effizienter mit: pacman -S inotify-tools (Arch) bzw. apt install inotify-tools (Debian/Ubuntu)."
+  local last
+  last="$(watch_signature)"
   while true; do
-    if ! inotifywait -qq -e modify,create,delete,move -r \
-        --exclude '(target|node_modules|dist|\.git|tsbuildinfo)' \
-        server model Cargo.toml Cargo.lock 2>/dev/null; then
-      sleep 0.5
-      continue
+    sleep 2
+    local now
+    now="$(watch_signature)"
+    if [[ "$now" != "$last" ]]; then
+      echo ""
+      echo "[bin/dev] Änderung erkannt (Polling) — restarte API..."
+      stop_api
+      sleep 0.3
+      start_api
+      last="$now"
     fi
-    echo ""
-    echo "[bin/dev] Änderung erkannt — restarte API..."
-    stop_api
-    sleep 0.3
-    start_api
   done
 }
 

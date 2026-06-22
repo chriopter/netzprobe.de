@@ -1,0 +1,2346 @@
+{
+  "$schema": "../../schemas/scenario-last.schema.json",
+  "id": "klimatisierung",
+  "domain": "last",
+  "kind": "scenario",
+  "method": {
+    "title": "Klimatisierung (flächendeckend)",
+    "short": "Wachstums-Zusatzlast: flächendeckende Raumkühlung (Wohn- + öffentliche/Gewerbe-Gebäude) mit temperaturgetriebenem Hitzetag-Abendpeak.",
+    "source": "Öko-Institut/ISOE (Wohngebäude-Klimatisierung 2020–2050); arXiv 2507.13534 (2025, Hitzewellen-AC-Last DE); UBA Climate Change 25/2014 (Kälteversorgung DE); IEA Future of Cooling; Open-Meteo ERA5 + DWD (Temperaturen 2025).",
+    "sourceUrls": [
+      "https://www.oeko.de/publikation/klimatisierungsbedarf-und-dafuer-abgerufener-stromverbrauch-fuer-wohngebaeude-in-deutschland-von-2020-bis-2050/",
+      "https://arxiv.org/html/2507.13534v2",
+      "https://www.umweltbundesamt.de/sites/default/files/medien/378/publikationen/climate_change_25_2014_nachhaltige_kaelteversorgung_in_deutschland_1.pdf",
+      "https://iea.blob.core.windows.net/assets/0bb45525-277f-4c9c-8d0c-9c0cb5e7d525/The_Future_of_Cooling.pdf",
+      "https://archive-api.open-meteo.com/v1/era5",
+      "https://opendata.dwd.de/climate_environment/CDC/regional_averages_DE/monthly/air_temperature_mean/"
+    ],
+    "period": "reale Tagesmitteltemperaturen 2025 (Profil); Mengen: Studien-Szenarien 2050",
+    "resolution": "Tag × Stunde",
+    "unit": "TWh Strom",
+    "description": [
+      "**Was es ist:** ein Wachstums-Szenario (kein e100-Sektor), das die **flächendeckende Ausstattung mit Raumklimatisierung** als zusätzliche Stromlast obendrauf legt — Wohngebäude *und* öffentliche/Gewerbe-Gebäude. Es modelliert bewusst den **Netz-relevanten Effekt: den scharfen Nachmittag/Abend-Peak an Hitzetagen**, der antikorreliert zur PV-Erzeugung liegt.",
+      "**Mengen-Anker:** Default `12 TWh/a` für »flächendeckend«. Einordnung: Öko-Institut/ISOE rechnen für die *Wohngebäude*-Klimatisierung bis 2050 mit `3–6 %` des Haushaltsstroms (`~4–8 TWh/a`); öffentliche/Gewerbe-Gebäude kommen obendrauf. Heutige Gebäude- + Industriekälte liegt bereits bei `~30 TWh/a` (UBA 2014), davon der größte Teil ganzjährige Prozess-/Gewerbekälte. Der Slider (`0–30 TWh/a`) deckt von »kaum« bis »Vollausstattung mit Klimawandel-Aufschlag«.",
+      "**Lastform — der eigentliche Punkt:** Tagesgewichte folgen realen **Cooling-Degree-Days 2025** (`CDD = max(0, Tagesmittel − 16 °C)`, Open-Meteo ERA5 / DWD-kalibriert) → 87 Kühltage, stark auf wenige Hitzetage konzentriert. Innerhalb des Tages ein 24-h-Profil mit Peak um **17 Uhr** (thermische Trägheit + Abend-Belegung), das **antikorreliert zur PV** liegt. Heißester Tag 2025: **27.6 °C** (2025-07-02); bei Default `12 TWh/a` ergibt das eine Spitzenstunden-Leistung von **~41 GW** zusätzlich.",
+      "**Validierung gegen Literatur:** Die arXiv-DE-Studie (2025) findet bei nur `35 %` Haushalts-Ausstattung (nur mobile 2,1-kW-Geräte, ohne Gewerbe) während einer Hitzewelle `+12,9 GW` Spitzenlast um 19 Uhr — antikorreliert zur PV. Hochskaliert auf Vollausstattung inkl. Gewerbe ist die hier modellierte Größenordnung (`~35–45 GW` am heißesten Tag) konsistent — wobei die lineare Hochrechnung `35 %→100 %` selbst eine Vereinfachung ist (siehe Caveats). Der Modell-Peak liegt um `~17 Uhr` statt der `19 Uhr` der Studie: die arXiv-Kurve ist die reine Einschaltkurve *neu gekaufter Mobilgeräte*, das Modell mischt thermische Gebäudeträgheit (Aufheizen über den Tag) und Abend-Belegung — beides liegt nach dem PV-Mittag, die Antikorrelation zur Solarerzeugung bleibt in beiden Fällen. Der Effekt ist netztechnisch relevant, energetisch (TWh) dagegen moderat — genau diese Asymmetrie bildet das Element ab."
+    ],
+    "overview": [
+      {
+        "label": "Verwendung",
+        "value": "**Häkchen + Slider** in der Last-Gruppe »Wachstum«. Slider `0–30 TWh/a`, Default `12` (»flächendeckend«). `0` = aus."
+      },
+      {
+        "label": "Verteilung",
+        "value": "**Profil:** Cooling-Degree-Day-Tageskette aus realen Tagesmitteltemperaturen 2025 (`max(0, T − 16 °C)`) × 24-h-Tagesgang mit Peak ~17 Uhr. Auf wenige Hitzetage konzentriert, antikorreliert zur PV."
+      },
+      {
+        "label": "Formel",
+        "value": "**Rechnung je Stunde:** `Last = Ziel-TWh × 1000 × CDD-Tagesgewicht × Stundenmultiplikator / 24` (GW)."
+      }
+    ],
+    "reasoning": [
+      "Mengen-Anker defaultTargetTWh 12: Öko-Institut/ISOE Wohngebäude-Klimatisierung 2050 ~4–8 TWh (3–6 % Haushaltsstrom) zzgl. öffentliche/Gewerbe-Gebäude. Slider 0–30 deckt den Studienkorridor inkl. Klimawandel-Aufschlag und heutige Gebäude-/Industriekälte (~30 TWh, UBA 2014).",
+      "Cooling-Degree-Day-Tagesprofil: reale Tagesmitteltemperaturen 2025 (Open-Meteo ERA5, 8-Städte-Mittel, auf DWD-Gebietsmittel monatlich kalibriert — identische Quelle wie das Heiz-Gradtagsprofil). CDD = max(0, T − 16 °C); weight = CDD-Tag / Jahressumme CDD; Summe 1. Schwelle 16 °C (Tagesmittel) entspricht grob dem Beginn spürbaren Kühlbedarfs in Gebäuden (Innenlasten + solare Gewinne heben die Innentemperatur über das Tagesmittel).",
+      "24-h-Tagesgang hourlyProfile.multipliers: niedrig nachts, Anstieg ab Mittag, Peak ~17 Uhr durch thermische Gebäudeträgheit (Aufheizen über den Tag) und Abend-Belegung/-Rückkehr; Abklingen zur Nacht. Bewusst gegenüber dem PV-Mittagspeak verschoben — das erzeugt die für Hochsommer typische Antikorrelation Last↔Solar. Summe 24, Tagesmittel 1,0.",
+      "Validierungsanker arXiv 2507.13534 (2025): 35 % Haushalts-Ausstattung, nur mobile 2,1-kW-Geräte, Hitzewelle Juli 2025 → +12,9 GW um 19 Uhr (+21 % der Stundenlast), antikorreliert zur PV; ausdrücklich konservativ (ohne Gewerbe/Industrie). Vollausstattung inkl. Gewerbe skaliert auf ~35–45 GW — die hier modellierte Größenordnung. Der Modell-Peak (17 Uhr) liegt früher als der arXiv-Anker (19 Uhr), weil die Studie nur die Geräte-Einschaltkurve neu gekaufter Mobilgeräte zeigt, das Modell dagegen thermische Gebäudeträgheit + Belegung mischt; beide liegen nach dem PV-Mittag (Antikorrelation bleibt)."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung."
+      },
+      {
+        "name": "referenceYear",
+        "unit": "Jahr",
+        "description": "Bezugsjahr der Temperatur-/CDD-Reihe (2025)."
+      },
+      {
+        "name": "coolingLimitC",
+        "unit": "°C",
+        "description": "Kühlgrenz-Tagesmitteltemperatur; oberhalb entsteht Kühlbedarf (CDD = max(0, T − coolingLimitC))."
+      },
+      {
+        "name": "defaultTargetTWh",
+        "unit": "TWh/a",
+        "description": "Default-Jahresenergie für »flächendeckend« (Slider-Startwert)."
+      },
+      {
+        "name": "minTargetTWh",
+        "unit": "TWh/a",
+        "description": "Slider-Minimum."
+      },
+      {
+        "name": "maxTargetTWh",
+        "unit": "TWh/a",
+        "description": "Slider-Maximum."
+      },
+      {
+        "name": "stepTWh",
+        "unit": "TWh/a",
+        "description": "Slider-Schrittweite."
+      },
+      {
+        "name": "hourlyProfile",
+        "unit": "Objekt",
+        "description": "24-h-Tagesgang der Kühllast (Multiplikatoren, Summe 24, Peak ~17 Uhr)."
+      },
+      {
+        "name": "coolingDegreeDayProfile",
+        "unit": "Objekt",
+        "description": "Tageskette der CDD-Gewichte 2025 (Summe 1) aus realen Tagesmitteltemperaturen."
+      }
+    ],
+    "caveats": [
+      "Kein e100-Sektor, sondern ein additives WACHSTUMS-Element — kommt obendrauf, unabhängig vom e100-Master.",
+      "Energetisch (TWh) moderat, netztechnisch (GW-Spitze am Hitzetag-Abend) relevant — das Element ist genau auf diese Asymmetrie ausgelegt.",
+      "Reale Klimatisierung ist etwas breiter gestreut als reine CDD (Verhalten, Gebäudethermik, Prozesskälte ganzjährig) — die CDD-Konzentration überzeichnet die Hitzetag-Spitze leicht, was hier bewusst zur Sichtbarmachung des Peaks gewählt ist.",
+      "Profil auf Basis 2025-Temperaturen; künftige, häufigere/heißere Hitzewellen (Klimawandel) würden die Spitze weiter erhöhen — der Anker ist insofern eher untere Kante.",
+      "Tagesgewicht für alle 24 h des Tages identisch aufgelöst (wie beim Heiz-Profil); die Stundenform kommt allein aus hourlyProfile.",
+      "Die Brücke vom arXiv-Anker (12,9 GW bei 35 % Haushalts-Ausstattung, nur mobile 2,1-kW-Geräte) zu ~35–45 GW Vollausstattung unterstellt Linearität über die Ausstattungsquote, eine ähnliche Gerätecharakteristik bei Gewerbe/öffentlichen Gebäuden und volle Gleichzeitigkeit — bewusste Vereinfachungen als Skalierungs-Brücke Studie→Modell.",
+      "Default 12 TWh/a ≈ grob 6 TWh Wohngebäude (oberes Öko/ISOE-Ende) + ~6 TWh öffentliche/Gewerbe-Gebäude. Slider-Max 30 ist eine Größenordnungs-Obergrenze (orientiert an heutiger Gebäude-/Industriekälte ~30 TWh), NICHT gleichartige Last — die heutigen 30 TWh sind überwiegend ganzjährige Prozess-/Gewerbekälte, nicht der modellierte Sommer-Peak."
+    ]
+  },
+  "parameters": {
+    "referenceYear": 2025,
+    "coolingLimitC": 16.0,
+    "defaultTargetTWh": 12,
+    "minTargetTWh": 0,
+    "maxTargetTWh": 30,
+    "stepTWh": 1,
+    "hourlyProfile": {
+      "source": "Synthetischer Kühl-Tagesgang: thermische Gebäudeträgheit + Abend-Belegung, Peak ~17 Uhr, antikorreliert zur PV. Summe 24.",
+      "peakHour": 17,
+      "multipliers": [
+        0.4589,
+        0.413,
+        0.3671,
+        0.3671,
+        0.3671,
+        0.413,
+        0.5048,
+        0.5966,
+        0.7342,
+        0.8719,
+        1.0096,
+        1.1472,
+        1.2849,
+        1.4226,
+        1.5602,
+        1.6979,
+        1.7897,
+        1.8355,
+        1.7438,
+        1.5602,
+        1.3308,
+        1.1013,
+        0.826,
+        0.5966
+      ]
+    },
+    "coolingDegreeDayProfile": {
+      "year": 2025,
+      "coolingLimitC": 16.0,
+      "temperatureSource": "Open-Meteo ERA5 (8-Städte-Mittel), auf DWD-Gebietsmittel DE 2025 monatlich kalibriert — gleiche Quelle wie das Heiz-Gradtagsprofil.",
+      "annualCoolingDegreeDays": 258.0,
+      "coolingDays": 87,
+      "hottestDay": {
+        "date": "2025-07-02",
+        "meanTemperatureC": 27.6
+      },
+      "sumNote": "weight summiert zu 1.",
+      "days": [
+        {
+          "date": "2025-01-01",
+          "meanTemperatureC": 4.39,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-02",
+          "meanTemperatureC": 3.45,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-03",
+          "meanTemperatureC": 0.04,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-04",
+          "meanTemperatureC": -1.31,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-05",
+          "meanTemperatureC": 1.5,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-06",
+          "meanTemperatureC": 7.89,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-07",
+          "meanTemperatureC": 4.06,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-08",
+          "meanTemperatureC": 1.79,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-09",
+          "meanTemperatureC": 2.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-10",
+          "meanTemperatureC": 0.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-11",
+          "meanTemperatureC": -0.92,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-12",
+          "meanTemperatureC": -1.21,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-13",
+          "meanTemperatureC": -3.1,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-14",
+          "meanTemperatureC": -1.7,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-15",
+          "meanTemperatureC": 1.54,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-16",
+          "meanTemperatureC": 1.66,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-17",
+          "meanTemperatureC": -0.76,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-18",
+          "meanTemperatureC": -1.43,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-19",
+          "meanTemperatureC": -1.11,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-20",
+          "meanTemperatureC": -1.36,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-21",
+          "meanTemperatureC": -1.23,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-22",
+          "meanTemperatureC": 0.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-23",
+          "meanTemperatureC": 2.79,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-24",
+          "meanTemperatureC": 5.09,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-25",
+          "meanTemperatureC": 7.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-26",
+          "meanTemperatureC": 4.87,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-27",
+          "meanTemperatureC": 7.44,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-28",
+          "meanTemperatureC": 6.1,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-29",
+          "meanTemperatureC": 5.61,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-30",
+          "meanTemperatureC": 4.66,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-01-31",
+          "meanTemperatureC": 2.56,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-01",
+          "meanTemperatureC": 0.33,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-02",
+          "meanTemperatureC": -0.65,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-03",
+          "meanTemperatureC": -1.4,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-04",
+          "meanTemperatureC": -1.18,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-05",
+          "meanTemperatureC": 0.12,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-06",
+          "meanTemperatureC": 1.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-07",
+          "meanTemperatureC": 1.44,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-08",
+          "meanTemperatureC": 1.5,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-09",
+          "meanTemperatureC": 0.34,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-10",
+          "meanTemperatureC": 0.86,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-11",
+          "meanTemperatureC": 1.51,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-12",
+          "meanTemperatureC": 1.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-13",
+          "meanTemperatureC": -0.16,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-14",
+          "meanTemperatureC": -0.93,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-15",
+          "meanTemperatureC": -1.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-16",
+          "meanTemperatureC": -1.84,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-17",
+          "meanTemperatureC": -3.34,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-18",
+          "meanTemperatureC": -3.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-19",
+          "meanTemperatureC": -2.49,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-20",
+          "meanTemperatureC": 1.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-21",
+          "meanTemperatureC": 6.82,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-22",
+          "meanTemperatureC": 6.86,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-23",
+          "meanTemperatureC": 7.43,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-24",
+          "meanTemperatureC": 7.47,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-25",
+          "meanTemperatureC": 7.84,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-26",
+          "meanTemperatureC": 5.33,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-27",
+          "meanTemperatureC": 3.86,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-02-28",
+          "meanTemperatureC": 2.36,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-01",
+          "meanTemperatureC": 2.6,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-02",
+          "meanTemperatureC": 2.65,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-03",
+          "meanTemperatureC": 3.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-04",
+          "meanTemperatureC": 3.71,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-05",
+          "meanTemperatureC": 5.33,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-06",
+          "meanTemperatureC": 6.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-07",
+          "meanTemperatureC": 7.85,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-08",
+          "meanTemperatureC": 7.69,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-09",
+          "meanTemperatureC": 7.91,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-10",
+          "meanTemperatureC": 6.91,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-11",
+          "meanTemperatureC": 5.81,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-12",
+          "meanTemperatureC": 4.57,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-13",
+          "meanTemperatureC": 3.5,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-14",
+          "meanTemperatureC": 3.14,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-15",
+          "meanTemperatureC": 3.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-16",
+          "meanTemperatureC": 3.09,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-17",
+          "meanTemperatureC": 2.71,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-18",
+          "meanTemperatureC": 1.77,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-19",
+          "meanTemperatureC": 4.06,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-20",
+          "meanTemperatureC": 7.57,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-21",
+          "meanTemperatureC": 9.89,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-22",
+          "meanTemperatureC": 10.6,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-23",
+          "meanTemperatureC": 9.81,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-24",
+          "meanTemperatureC": 9.27,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-25",
+          "meanTemperatureC": 8.39,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-26",
+          "meanTemperatureC": 7.5,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-27",
+          "meanTemperatureC": 7.01,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-28",
+          "meanTemperatureC": 8.04,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-29",
+          "meanTemperatureC": 8.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-30",
+          "meanTemperatureC": 7.01,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-03-31",
+          "meanTemperatureC": 6.96,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-01",
+          "meanTemperatureC": 6.44,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-02",
+          "meanTemperatureC": 8.54,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-03",
+          "meanTemperatureC": 10.4,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-04",
+          "meanTemperatureC": 11.43,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-05",
+          "meanTemperatureC": 8.97,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-06",
+          "meanTemperatureC": 4.19,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-07",
+          "meanTemperatureC": 5.08,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-08",
+          "meanTemperatureC": 7.09,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-09",
+          "meanTemperatureC": 7.82,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-10",
+          "meanTemperatureC": 7.88,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-11",
+          "meanTemperatureC": 9.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-12",
+          "meanTemperatureC": 12.23,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-13",
+          "meanTemperatureC": 13.78,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-14",
+          "meanTemperatureC": 13.25,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-15",
+          "meanTemperatureC": 14.67,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-16",
+          "meanTemperatureC": 14.59,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-17",
+          "meanTemperatureC": 11.4,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-18",
+          "meanTemperatureC": 8.74,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-19",
+          "meanTemperatureC": 9.32,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-20",
+          "meanTemperatureC": 10.83,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-21",
+          "meanTemperatureC": 11.08,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-22",
+          "meanTemperatureC": 11.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-23",
+          "meanTemperatureC": 11.58,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-24",
+          "meanTemperatureC": 10.66,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-25",
+          "meanTemperatureC": 9.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-26",
+          "meanTemperatureC": 10.21,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-27",
+          "meanTemperatureC": 11.03,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-28",
+          "meanTemperatureC": 12.64,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-29",
+          "meanTemperatureC": 14.2,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-04-30",
+          "meanTemperatureC": 15.89,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-01",
+          "meanTemperatureC": 17.02,
+          "coolingDegreeDay": 1.02,
+          "weight": 0.003953488372
+        },
+        {
+          "date": "2025-05-02",
+          "meanTemperatureC": 18.13,
+          "coolingDegreeDay": 2.13,
+          "weight": 0.008255813953
+        },
+        {
+          "date": "2025-05-03",
+          "meanTemperatureC": 14.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-04",
+          "meanTemperatureC": 9.82,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-05",
+          "meanTemperatureC": 8.05,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-06",
+          "meanTemperatureC": 8.48,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-07",
+          "meanTemperatureC": 9.82,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-08",
+          "meanTemperatureC": 10.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-09",
+          "meanTemperatureC": 10.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-10",
+          "meanTemperatureC": 12.26,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-11",
+          "meanTemperatureC": 13.76,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-12",
+          "meanTemperatureC": 13.38,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-13",
+          "meanTemperatureC": 13.72,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-14",
+          "meanTemperatureC": 14.69,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-15",
+          "meanTemperatureC": 12.32,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-16",
+          "meanTemperatureC": 11.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-17",
+          "meanTemperatureC": 11.64,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-18",
+          "meanTemperatureC": 11.65,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-19",
+          "meanTemperatureC": 13.56,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-20",
+          "meanTemperatureC": 15.29,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-21",
+          "meanTemperatureC": 14.43,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-22",
+          "meanTemperatureC": 10.68,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-23",
+          "meanTemperatureC": 8.69,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-24",
+          "meanTemperatureC": 10.38,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-25",
+          "meanTemperatureC": 12.82,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-26",
+          "meanTemperatureC": 13.19,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-27",
+          "meanTemperatureC": 13.48,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-28",
+          "meanTemperatureC": 13.87,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-29",
+          "meanTemperatureC": 12.69,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-05-30",
+          "meanTemperatureC": 17.49,
+          "coolingDegreeDay": 1.49,
+          "weight": 0.005775193798
+        },
+        {
+          "date": "2025-05-31",
+          "meanTemperatureC": 18.84,
+          "coolingDegreeDay": 2.84,
+          "weight": 0.011007751938
+        },
+        {
+          "date": "2025-06-01",
+          "meanTemperatureC": 18.46,
+          "coolingDegreeDay": 2.46,
+          "weight": 0.009534883721
+        },
+        {
+          "date": "2025-06-02",
+          "meanTemperatureC": 15.8,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-03",
+          "meanTemperatureC": 16.45,
+          "coolingDegreeDay": 0.45,
+          "weight": 0.001744186047
+        },
+        {
+          "date": "2025-06-04",
+          "meanTemperatureC": 17.37,
+          "coolingDegreeDay": 1.37,
+          "weight": 0.005310077519
+        },
+        {
+          "date": "2025-06-05",
+          "meanTemperatureC": 15.75,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-06",
+          "meanTemperatureC": 16.21,
+          "coolingDegreeDay": 0.21,
+          "weight": 0.000813953488
+        },
+        {
+          "date": "2025-06-07",
+          "meanTemperatureC": 15.04,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-08",
+          "meanTemperatureC": 13.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-09",
+          "meanTemperatureC": 12.6,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-10",
+          "meanTemperatureC": 14.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-11",
+          "meanTemperatureC": 14.6,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-06-12",
+          "meanTemperatureC": 16.86,
+          "coolingDegreeDay": 0.86,
+          "weight": 0.003333333333
+        },
+        {
+          "date": "2025-06-13",
+          "meanTemperatureC": 20.27,
+          "coolingDegreeDay": 4.27,
+          "weight": 0.016550387597
+        },
+        {
+          "date": "2025-06-14",
+          "meanTemperatureC": 22.7,
+          "coolingDegreeDay": 6.7,
+          "weight": 0.025968992248
+        },
+        {
+          "date": "2025-06-15",
+          "meanTemperatureC": 20.35,
+          "coolingDegreeDay": 4.35,
+          "weight": 0.016860465116
+        },
+        {
+          "date": "2025-06-16",
+          "meanTemperatureC": 16.84,
+          "coolingDegreeDay": 0.84,
+          "weight": 0.003255813953
+        },
+        {
+          "date": "2025-06-17",
+          "meanTemperatureC": 18.32,
+          "coolingDegreeDay": 2.32,
+          "weight": 0.008992248062
+        },
+        {
+          "date": "2025-06-18",
+          "meanTemperatureC": 19.83,
+          "coolingDegreeDay": 3.83,
+          "weight": 0.01484496124
+        },
+        {
+          "date": "2025-06-19",
+          "meanTemperatureC": 18.69,
+          "coolingDegreeDay": 2.69,
+          "weight": 0.010426356589
+        },
+        {
+          "date": "2025-06-20",
+          "meanTemperatureC": 17.59,
+          "coolingDegreeDay": 1.59,
+          "weight": 0.006162790698
+        },
+        {
+          "date": "2025-06-21",
+          "meanTemperatureC": 20.6,
+          "coolingDegreeDay": 4.6,
+          "weight": 0.017829457364
+        },
+        {
+          "date": "2025-06-22",
+          "meanTemperatureC": 24.13,
+          "coolingDegreeDay": 8.13,
+          "weight": 0.031511627907
+        },
+        {
+          "date": "2025-06-23",
+          "meanTemperatureC": 20.46,
+          "coolingDegreeDay": 4.46,
+          "weight": 0.017286821705
+        },
+        {
+          "date": "2025-06-24",
+          "meanTemperatureC": 18.29,
+          "coolingDegreeDay": 2.29,
+          "weight": 0.008875968992
+        },
+        {
+          "date": "2025-06-25",
+          "meanTemperatureC": 21.64,
+          "coolingDegreeDay": 5.64,
+          "weight": 0.021860465116
+        },
+        {
+          "date": "2025-06-26",
+          "meanTemperatureC": 20.96,
+          "coolingDegreeDay": 4.96,
+          "weight": 0.019224806202
+        },
+        {
+          "date": "2025-06-27",
+          "meanTemperatureC": 18.47,
+          "coolingDegreeDay": 2.47,
+          "weight": 0.009573643411
+        },
+        {
+          "date": "2025-06-28",
+          "meanTemperatureC": 21.06,
+          "coolingDegreeDay": 5.06,
+          "weight": 0.019612403101
+        },
+        {
+          "date": "2025-06-29",
+          "meanTemperatureC": 22.62,
+          "coolingDegreeDay": 6.62,
+          "weight": 0.025658914729
+        },
+        {
+          "date": "2025-06-30",
+          "meanTemperatureC": 21.86,
+          "coolingDegreeDay": 5.86,
+          "weight": 0.022713178295
+        },
+        {
+          "date": "2025-07-01",
+          "meanTemperatureC": 25.07,
+          "coolingDegreeDay": 9.07,
+          "weight": 0.03515503876
+        },
+        {
+          "date": "2025-07-02",
+          "meanTemperatureC": 27.65,
+          "coolingDegreeDay": 11.65,
+          "weight": 0.04515503876
+        },
+        {
+          "date": "2025-07-03",
+          "meanTemperatureC": 21.07,
+          "coolingDegreeDay": 5.07,
+          "weight": 0.019651162791
+        },
+        {
+          "date": "2025-07-04",
+          "meanTemperatureC": 19.02,
+          "coolingDegreeDay": 3.02,
+          "weight": 0.011705426357
+        },
+        {
+          "date": "2025-07-05",
+          "meanTemperatureC": 20.67,
+          "coolingDegreeDay": 4.67,
+          "weight": 0.018100775194
+        },
+        {
+          "date": "2025-07-06",
+          "meanTemperatureC": 19.45,
+          "coolingDegreeDay": 3.45,
+          "weight": 0.013372093023
+        },
+        {
+          "date": "2025-07-07",
+          "meanTemperatureC": 16.42,
+          "coolingDegreeDay": 0.42,
+          "weight": 0.001627906977
+        },
+        {
+          "date": "2025-07-08",
+          "meanTemperatureC": 14.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-07-09",
+          "meanTemperatureC": 15.4,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-07-10",
+          "meanTemperatureC": 16.76,
+          "coolingDegreeDay": 0.76,
+          "weight": 0.002945736434
+        },
+        {
+          "date": "2025-07-11",
+          "meanTemperatureC": 17.42,
+          "coolingDegreeDay": 1.42,
+          "weight": 0.005503875969
+        },
+        {
+          "date": "2025-07-12",
+          "meanTemperatureC": 17.57,
+          "coolingDegreeDay": 1.57,
+          "weight": 0.006085271318
+        },
+        {
+          "date": "2025-07-13",
+          "meanTemperatureC": 18.76,
+          "coolingDegreeDay": 2.76,
+          "weight": 0.010697674419
+        },
+        {
+          "date": "2025-07-14",
+          "meanTemperatureC": 19.32,
+          "coolingDegreeDay": 3.32,
+          "weight": 0.012868217054
+        },
+        {
+          "date": "2025-07-15",
+          "meanTemperatureC": 18.05,
+          "coolingDegreeDay": 2.05,
+          "weight": 0.007945736434
+        },
+        {
+          "date": "2025-07-16",
+          "meanTemperatureC": 16.3,
+          "coolingDegreeDay": 0.3,
+          "weight": 0.001162790698
+        },
+        {
+          "date": "2025-07-17",
+          "meanTemperatureC": 16.47,
+          "coolingDegreeDay": 0.47,
+          "weight": 0.001821705426
+        },
+        {
+          "date": "2025-07-18",
+          "meanTemperatureC": 19.02,
+          "coolingDegreeDay": 3.02,
+          "weight": 0.011705426357
+        },
+        {
+          "date": "2025-07-19",
+          "meanTemperatureC": 21.07,
+          "coolingDegreeDay": 5.07,
+          "weight": 0.019651162791
+        },
+        {
+          "date": "2025-07-20",
+          "meanTemperatureC": 22,
+          "coolingDegreeDay": 6.0,
+          "weight": 0.023255813953
+        },
+        {
+          "date": "2025-07-21",
+          "meanTemperatureC": 18.63,
+          "coolingDegreeDay": 2.63,
+          "weight": 0.01019379845
+        },
+        {
+          "date": "2025-07-22",
+          "meanTemperatureC": 17.1,
+          "coolingDegreeDay": 1.1,
+          "weight": 0.004263565891
+        },
+        {
+          "date": "2025-07-23",
+          "meanTemperatureC": 17.87,
+          "coolingDegreeDay": 1.87,
+          "weight": 0.007248062016
+        },
+        {
+          "date": "2025-07-24",
+          "meanTemperatureC": 17.96,
+          "coolingDegreeDay": 1.96,
+          "weight": 0.007596899225
+        },
+        {
+          "date": "2025-07-25",
+          "meanTemperatureC": 18.17,
+          "coolingDegreeDay": 2.17,
+          "weight": 0.008410852713
+        },
+        {
+          "date": "2025-07-26",
+          "meanTemperatureC": 17.84,
+          "coolingDegreeDay": 1.84,
+          "weight": 0.007131782946
+        },
+        {
+          "date": "2025-07-27",
+          "meanTemperatureC": 17.22,
+          "coolingDegreeDay": 1.22,
+          "weight": 0.004728682171
+        },
+        {
+          "date": "2025-07-28",
+          "meanTemperatureC": 15.99,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-07-29",
+          "meanTemperatureC": 15.27,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-07-30",
+          "meanTemperatureC": 15.43,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-07-31",
+          "meanTemperatureC": 15.71,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-01",
+          "meanTemperatureC": 16.13,
+          "coolingDegreeDay": 0.13,
+          "weight": 0.000503875969
+        },
+        {
+          "date": "2025-08-02",
+          "meanTemperatureC": 15.14,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-03",
+          "meanTemperatureC": 14.83,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-04",
+          "meanTemperatureC": 16.83,
+          "coolingDegreeDay": 0.83,
+          "weight": 0.003217054264
+        },
+        {
+          "date": "2025-08-05",
+          "meanTemperatureC": 17.17,
+          "coolingDegreeDay": 1.17,
+          "weight": 0.004534883721
+        },
+        {
+          "date": "2025-08-06",
+          "meanTemperatureC": 15.39,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-07",
+          "meanTemperatureC": 17.43,
+          "coolingDegreeDay": 1.43,
+          "weight": 0.005542635659
+        },
+        {
+          "date": "2025-08-08",
+          "meanTemperatureC": 19.9,
+          "coolingDegreeDay": 3.9,
+          "weight": 0.01511627907
+        },
+        {
+          "date": "2025-08-09",
+          "meanTemperatureC": 21,
+          "coolingDegreeDay": 5.0,
+          "weight": 0.019379844961
+        },
+        {
+          "date": "2025-08-10",
+          "meanTemperatureC": 19.44,
+          "coolingDegreeDay": 3.44,
+          "weight": 0.013333333333
+        },
+        {
+          "date": "2025-08-11",
+          "meanTemperatureC": 19.08,
+          "coolingDegreeDay": 3.08,
+          "weight": 0.011937984496
+        },
+        {
+          "date": "2025-08-12",
+          "meanTemperatureC": 21.47,
+          "coolingDegreeDay": 5.47,
+          "weight": 0.021201550388
+        },
+        {
+          "date": "2025-08-13",
+          "meanTemperatureC": 24.32,
+          "coolingDegreeDay": 8.32,
+          "weight": 0.032248062016
+        },
+        {
+          "date": "2025-08-14",
+          "meanTemperatureC": 25.09,
+          "coolingDegreeDay": 9.09,
+          "weight": 0.03523255814
+        },
+        {
+          "date": "2025-08-15",
+          "meanTemperatureC": 24.18,
+          "coolingDegreeDay": 8.18,
+          "weight": 0.031705426357
+        },
+        {
+          "date": "2025-08-16",
+          "meanTemperatureC": 19.86,
+          "coolingDegreeDay": 3.86,
+          "weight": 0.01496124031
+        },
+        {
+          "date": "2025-08-17",
+          "meanTemperatureC": 17.19,
+          "coolingDegreeDay": 1.19,
+          "weight": 0.004612403101
+        },
+        {
+          "date": "2025-08-18",
+          "meanTemperatureC": 17.97,
+          "coolingDegreeDay": 1.97,
+          "weight": 0.007635658915
+        },
+        {
+          "date": "2025-08-19",
+          "meanTemperatureC": 19.56,
+          "coolingDegreeDay": 3.56,
+          "weight": 0.013798449612
+        },
+        {
+          "date": "2025-08-20",
+          "meanTemperatureC": 18.87,
+          "coolingDegreeDay": 2.87,
+          "weight": 0.011124031008
+        },
+        {
+          "date": "2025-08-21",
+          "meanTemperatureC": 17.12,
+          "coolingDegreeDay": 1.12,
+          "weight": 0.004341085271
+        },
+        {
+          "date": "2025-08-22",
+          "meanTemperatureC": 14.97,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-23",
+          "meanTemperatureC": 13.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-24",
+          "meanTemperatureC": 13.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-25",
+          "meanTemperatureC": 14.56,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-08-26",
+          "meanTemperatureC": 17.14,
+          "coolingDegreeDay": 1.14,
+          "weight": 0.004418604651
+        },
+        {
+          "date": "2025-08-27",
+          "meanTemperatureC": 20.08,
+          "coolingDegreeDay": 4.08,
+          "weight": 0.015813953488
+        },
+        {
+          "date": "2025-08-28",
+          "meanTemperatureC": 18.18,
+          "coolingDegreeDay": 2.18,
+          "weight": 0.008449612403
+        },
+        {
+          "date": "2025-08-29",
+          "meanTemperatureC": 17.04,
+          "coolingDegreeDay": 1.04,
+          "weight": 0.004031007752
+        },
+        {
+          "date": "2025-08-30",
+          "meanTemperatureC": 16.47,
+          "coolingDegreeDay": 0.47,
+          "weight": 0.001821705426
+        },
+        {
+          "date": "2025-08-31",
+          "meanTemperatureC": 17.62,
+          "coolingDegreeDay": 1.62,
+          "weight": 0.006279069767
+        },
+        {
+          "date": "2025-09-01",
+          "meanTemperatureC": 17.56,
+          "coolingDegreeDay": 1.56,
+          "weight": 0.006046511628
+        },
+        {
+          "date": "2025-09-02",
+          "meanTemperatureC": 16.33,
+          "coolingDegreeDay": 0.33,
+          "weight": 0.001279069767
+        },
+        {
+          "date": "2025-09-03",
+          "meanTemperatureC": 17.97,
+          "coolingDegreeDay": 1.97,
+          "weight": 0.007635658915
+        },
+        {
+          "date": "2025-09-04",
+          "meanTemperatureC": 19.31,
+          "coolingDegreeDay": 3.31,
+          "weight": 0.012829457364
+        },
+        {
+          "date": "2025-09-05",
+          "meanTemperatureC": 15.95,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-06",
+          "meanTemperatureC": 15.28,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-07",
+          "meanTemperatureC": 16.46,
+          "coolingDegreeDay": 0.46,
+          "weight": 0.001782945736
+        },
+        {
+          "date": "2025-09-08",
+          "meanTemperatureC": 16.59,
+          "coolingDegreeDay": 0.59,
+          "weight": 0.002286821705
+        },
+        {
+          "date": "2025-09-09",
+          "meanTemperatureC": 15.99,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-10",
+          "meanTemperatureC": 14.77,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-11",
+          "meanTemperatureC": 15.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-12",
+          "meanTemperatureC": 14.16,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-13",
+          "meanTemperatureC": 14.13,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-14",
+          "meanTemperatureC": 14.11,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-15",
+          "meanTemperatureC": 16.74,
+          "coolingDegreeDay": 0.74,
+          "weight": 0.002868217054
+        },
+        {
+          "date": "2025-09-16",
+          "meanTemperatureC": 14.24,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-17",
+          "meanTemperatureC": 13.3,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-18",
+          "meanTemperatureC": 16.62,
+          "coolingDegreeDay": 0.62,
+          "weight": 0.002403100775
+        },
+        {
+          "date": "2025-09-19",
+          "meanTemperatureC": 17.89,
+          "coolingDegreeDay": 1.89,
+          "weight": 0.007325581395
+        },
+        {
+          "date": "2025-09-20",
+          "meanTemperatureC": 19.62,
+          "coolingDegreeDay": 3.62,
+          "weight": 0.014031007752
+        },
+        {
+          "date": "2025-09-21",
+          "meanTemperatureC": 17.38,
+          "coolingDegreeDay": 1.38,
+          "weight": 0.005348837209
+        },
+        {
+          "date": "2025-09-22",
+          "meanTemperatureC": 11.56,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-23",
+          "meanTemperatureC": 10.87,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-24",
+          "meanTemperatureC": 10.23,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-25",
+          "meanTemperatureC": 9.66,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-26",
+          "meanTemperatureC": 10.86,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-27",
+          "meanTemperatureC": 12.26,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-28",
+          "meanTemperatureC": 12.21,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-29",
+          "meanTemperatureC": 11.47,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-09-30",
+          "meanTemperatureC": 10.57,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-01",
+          "meanTemperatureC": 8.6,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-02",
+          "meanTemperatureC": 8.01,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-03",
+          "meanTemperatureC": 8.27,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-04",
+          "meanTemperatureC": 10.66,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-05",
+          "meanTemperatureC": 9.91,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-06",
+          "meanTemperatureC": 10.52,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-07",
+          "meanTemperatureC": 12.16,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-08",
+          "meanTemperatureC": 12.62,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-09",
+          "meanTemperatureC": 12.01,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-10",
+          "meanTemperatureC": 11.73,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-11",
+          "meanTemperatureC": 12.38,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-12",
+          "meanTemperatureC": 11.81,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-13",
+          "meanTemperatureC": 11.22,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-14",
+          "meanTemperatureC": 10.28,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-15",
+          "meanTemperatureC": 10.31,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-16",
+          "meanTemperatureC": 9.95,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-17",
+          "meanTemperatureC": 9.73,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-18",
+          "meanTemperatureC": 7.19,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-19",
+          "meanTemperatureC": 6.27,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-20",
+          "meanTemperatureC": 9.59,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-21",
+          "meanTemperatureC": 11.9,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-22",
+          "meanTemperatureC": 11.79,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-23",
+          "meanTemperatureC": 11.68,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-24",
+          "meanTemperatureC": 8.44,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-25",
+          "meanTemperatureC": 8.04,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-26",
+          "meanTemperatureC": 6.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-27",
+          "meanTemperatureC": 6.79,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-28",
+          "meanTemperatureC": 8.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-29",
+          "meanTemperatureC": 10.13,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-30",
+          "meanTemperatureC": 9.85,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-10-31",
+          "meanTemperatureC": 7.35,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-01",
+          "meanTemperatureC": 10.41,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-02",
+          "meanTemperatureC": 9.85,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-03",
+          "meanTemperatureC": 8.38,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-04",
+          "meanTemperatureC": 9.88,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-05",
+          "meanTemperatureC": 8.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-06",
+          "meanTemperatureC": 6.31,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-07",
+          "meanTemperatureC": 4.93,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-08",
+          "meanTemperatureC": 4.87,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-09",
+          "meanTemperatureC": 6.72,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-10",
+          "meanTemperatureC": 6.72,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-11",
+          "meanTemperatureC": 7.62,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-12",
+          "meanTemperatureC": 7.75,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-13",
+          "meanTemperatureC": 10.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-14",
+          "meanTemperatureC": 10.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-15",
+          "meanTemperatureC": 8.15,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-16",
+          "meanTemperatureC": 7.16,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-17",
+          "meanTemperatureC": 3.77,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-18",
+          "meanTemperatureC": 1.7,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-19",
+          "meanTemperatureC": 1.77,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-20",
+          "meanTemperatureC": 1.11,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-21",
+          "meanTemperatureC": -1.55,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-22",
+          "meanTemperatureC": -2.74,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-23",
+          "meanTemperatureC": -2.49,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-24",
+          "meanTemperatureC": 1.36,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-25",
+          "meanTemperatureC": 1.75,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-26",
+          "meanTemperatureC": 1.42,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-27",
+          "meanTemperatureC": 1.42,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-28",
+          "meanTemperatureC": 4.09,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-29",
+          "meanTemperatureC": 5.81,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-11-30",
+          "meanTemperatureC": 5.45,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-01",
+          "meanTemperatureC": 3.17,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-02",
+          "meanTemperatureC": 2.59,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-03",
+          "meanTemperatureC": 2.84,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-04",
+          "meanTemperatureC": 1.93,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-05",
+          "meanTemperatureC": 1.8,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-06",
+          "meanTemperatureC": 3.69,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-07",
+          "meanTemperatureC": 7.18,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-08",
+          "meanTemperatureC": 10.87,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-09",
+          "meanTemperatureC": 10.13,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-10",
+          "meanTemperatureC": 9.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-11",
+          "meanTemperatureC": 7.27,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-12",
+          "meanTemperatureC": 4.51,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-13",
+          "meanTemperatureC": 5,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-14",
+          "meanTemperatureC": 4.35,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-15",
+          "meanTemperatureC": 3.7,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-16",
+          "meanTemperatureC": 2.63,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-17",
+          "meanTemperatureC": 2.9,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-18",
+          "meanTemperatureC": 5.64,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-19",
+          "meanTemperatureC": 7.18,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-20",
+          "meanTemperatureC": 4.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-21",
+          "meanTemperatureC": 4.37,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-22",
+          "meanTemperatureC": 2.45,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-23",
+          "meanTemperatureC": 1.74,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-24",
+          "meanTemperatureC": -0.67,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-25",
+          "meanTemperatureC": -3.48,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-26",
+          "meanTemperatureC": -3.25,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-27",
+          "meanTemperatureC": -0.75,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-28",
+          "meanTemperatureC": -1.2,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-29",
+          "meanTemperatureC": -0.64,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-30",
+          "meanTemperatureC": -0.9,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        },
+        {
+          "date": "2025-12-31",
+          "meanTemperatureC": -0.94,
+          "coolingDegreeDay": 0.0,
+          "weight": 0.0
+        }
+      ]
+    }
+  }
+}

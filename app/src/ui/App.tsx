@@ -46,7 +46,7 @@ const defaultChartMode: ChartMode = 'sunburst';
 const defaultPeriodPreset: PeriodPreset = 'year';
 const defaultPeriodYears: CostPeriod = '20';
 const defaultOpenSections = '';
-const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false };
+const defaultOpenSectors: SidebarOpenSectors = { verkehr: false, waerme: false, industrie: false, wachstum: false };
 const themeStorageKey = 'theme';
 const listSeparator = '.';
 const scenarioBase = normalizeScenario(defaultScenario);
@@ -67,6 +67,7 @@ const scenarioNumberParams: Array<[string, keyof Scenario['demand']]> = [
   ['iwTWh', 'e100-industrie-waerme-target-heat-twh'],
   ['stahlMt', 'e100-stahl-target-mio-ton'],
   ['chemieTWh', 'e100-chemie-target-twh'],
+  ['klimaTWh', 'klima-flaechendeckend-target-twh'],
 ];
 
 const scenarioGenerationParams: Array<[string, keyof Scenario['generation']]> = [
@@ -165,6 +166,7 @@ function openSectorsFromUrl(): SidebarOpenSectors {
     verkehr: values.has('verkehr'),
     waerme: values.has('waerme'),
     industrie: values.has('industrie'),
+    wachstum: values.has('wachstum'),
   };
 }
 
@@ -314,6 +316,10 @@ function parseScenarioFromParams(params: URLSearchParams): Scenario {
     }
     scenario.costOverrides = overrides;
   }
+  const klima = params.get('klima');
+  if (klima !== null) (scenario.demand as Record<string, boolean | number>)['klima-flaechendeckend'] = klima === '1';
+  const base = params.get('base');
+  if (base !== null) (scenario.demand as Record<string, boolean | number>)['last-2025'] = base === '1';
   return scenario;
 }
 
@@ -383,6 +389,12 @@ function writeScenarioParams(params: URLSearchParams, scenario: Scenario) {
     }
   }
   if (coParts.length) params.set('co', coParts.join(',')); else params.delete('co');
+  // Wachstum-Flag (klimatisierung) — eigener boolescher Param.
+  if (scenario.demand['klima-flaechendeckend'] === scenarioBase.demand['klima-flaechendeckend']) params.delete('klima');
+  else params.set('klima', scenario.demand['klima-flaechendeckend'] ? '1' : '0');
+  // Basislast 2025 (Default an) — eigener Param, damit „Basis abgehakt" teilbar ist.
+  if (scenario.demand['last-2025'] === scenarioBase.demand['last-2025']) params.delete('base');
+  else params.set('base', scenario.demand['last-2025'] ? '1' : '0');
 }
 
 // Schreibt das ganze Set lesbar in die URL: Szenario 0 unpräfixiert (wie eine
@@ -1256,6 +1268,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
         onE100StahlTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-stahl-target-mio-ton': v } }))}
         onE100ChemieChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie': checked } }))}
         onE100ChemieTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'e100-chemie-target-twh': v } }))}
+        onKlimaChange={(checked) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'klima-flaechendeckend': checked } }))}
+        onKlimaTargetChange={(v) => setScenario(prev => ({ ...prev, demand: { ...prev.demand, 'klima-flaechendeckend-target-twh': v } }))}
         onGenerationChange={(field, v) => setScenario(prev => {
           // Beim ersten Wechsel weg vom Preset: resolvedScenario-Werte als
           // Basis (sonst würde prev.generation veraltete Preset-Loader-Werte
