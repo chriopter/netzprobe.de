@@ -64,6 +64,10 @@ export const DEFAULT_MIX_VISIBILITY: MixVisibility = {
 const shortDateLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit', timeZone: 'Europe/Berlin' });
 const dayLabels = (hours: SimHour[]) => hours.map(shortDateLabel);
 const dateKey = (hour: SimHour) => new Date(hour.time).toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' });
+const berlinHourLabel = (hour: SimHour) => new Date(hour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin', hour12: false });
+// Datum + Uhrzeit, sobald das Fenster stündlich aufgelöst ist (mehr Punkte als Tage).
+const hourlyLabels = (hours: SimHour[]) => hours.map(hour => `${shortDateLabel(hour)} ${berlinHourLabel(hour)}`);
+const isHourlyResolution = (hours: SimHour[]) => hours.length > new Set(hours.map(dateKey)).size;
 const dateParts = (date: string) => ({ month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) });
 
 const averageBucket = (bucket: SimHour[], numericKeys: (keyof SimHour)[]): SimHour => {
@@ -87,7 +91,7 @@ const chronologicalDailyAverages = (hours: SimHour[], numericKeys: (keyof SimHou
     });
 };
 
-const compressHours = (hours: SimHour[], maxPoints = 365) => {
+const compressHours = (hours: SimHour[], maxPoints = 744) => {
   if (hours.length <= maxPoints) return hours;
   const numericKeys = Object.keys(hours[0]).filter((key) => key !== 'time') as (keyof SimHour)[];
   const uniqueDates = new Set(hours.map(dateKey));
@@ -105,14 +109,14 @@ const isFullYearView = (hours: SimHour[], chartHours: SimHour[]) => new Set([...
 const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const shortMonthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const xAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
-  if (!isFullYearView(hours, chartHours)) return dayLabels(chartHours);
+  if (!isFullYearView(hours, chartHours)) return isHourlyResolution(chartHours) ? hourlyLabels(chartHours) : dayLabels(chartHours);
   const slots = new Map<number, string>();
   monthNames.forEach((label, index) => slots.set(Math.round(index * (chartHours.length - 1) / (monthNames.length - 1)), label));
   return chartHours.map((_, index) => slots.get(index) ?? '');
 };
 
 const angleAxisLabels = (hours: SimHour[], chartHours: SimHour[]) => {
-  if (!isFullYearView(hours, chartHours)) return dayLabels(chartHours);
+  if (!isFullYearView(hours, chartHours)) return isHourlyResolution(chartHours) ? hourlyLabels(chartHours) : dayLabels(chartHours);
   const slots = new Map<number, string>();
   shortMonthNames.forEach((label, index) => slots.set(Math.min(chartHours.length - 1, Math.round((index + 0.5) * chartHours.length / shortMonthNames.length)), label));
   return chartHours.map((_, index) => slots.get(index) ?? '');
@@ -148,11 +152,16 @@ const chartTheme = (theme: ChartTheme = 'light') => theme === 'dark'
 
 const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'light') => {
   const colors = chartTheme(theme);
+  // Bei stündlicher Auflösung gibt es zu viele Labels für eine horizontale Achse:
+  // angewinkelt (Excel-Style) und automatisch ausdünnen statt überlappen lassen.
+  const hourly = !isFullYearView(hours, chartHours) && isHourlyResolution(chartHours);
   return {
   type: 'category' as const,
   data: xAxisLabels(hours, chartHours),
   axisTick: { show: false },
-  axisLabel: { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
+  axisLabel: hourly
+    ? { color: colors.axisText, interval: 'auto' as const, hideOverlap: true, rotate: 45, fontSize: 9, margin: 10 }
+    : { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
   axisLine: { lineStyle: { color: colors.axisLine } },
   };
 };
