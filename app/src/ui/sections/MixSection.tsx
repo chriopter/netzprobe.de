@@ -235,7 +235,7 @@ export default function MixSection(props: MixSectionProps) {
       <SectionHeading id="mix"/>
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie liest man den Energiemix?"/>
     </div>
-    <ChartPanel className="flex flex-col sm:h-[calc(100vh-3.5rem)]">
+    <ChartPanel className={cx('flex flex-col', chartMode === 'linie' ? 'sm:h-[calc(50vh-1.75rem)]' : 'sm:h-[calc(100vh-3.5rem)]')}>
       <div className="relative aspect-square min-h-0 w-full bg-white dark:bg-zinc-950 sm:aspect-auto sm:flex-1">
         {/* Aufklapp-Hilfe (Trigger sitzt im Titel über dem Chart) als Overlay. */}
         {helpOpen && <div className="absolute left-2 top-12 z-20 max-h-[calc(100%-3.5rem)] w-[min(38rem,calc(100%-1rem))] overflow-auto rounded-lg shadow-lg sm:left-3">
