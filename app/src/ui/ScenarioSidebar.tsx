@@ -865,6 +865,7 @@ function SupplyGroupAccordions({
   // Snapshot der zuletzt aktiven Werte je Gruppe, um beim Wiedereinschalten zu
   // restaurieren statt auf 2025-Baseline zurückzufallen.
   const [savedGen, setSavedGen] = useState<Partial<Record<SupplyGroupId, Record<string, number>>>>({});
+  const [savedGenField, setSavedGenField] = useState<Partial<Record<GenerationFieldKey, number>>>({});
   const [savedSto, setSavedSto] = useState<Partial<Record<SupplyGroupId, Record<string, number>>>>({});
 
   const genGroups = generationGroups(data['erzeugungs-modell']);
@@ -884,6 +885,10 @@ function SupplyGroupAccordions({
   };
 
   const isGenEnabled = (group: GenerationGroup) => group.fields.some(f => scenario.generation[f.key] > 0);
+  // Teilweise = manche Arten an, manche aus → Bindestrich statt Haken.
+  const isGenPartial = (group: GenerationGroup) => group.fields.length > 1
+    && group.fields.some(f => scenario.generation[f.key] > 0)
+    && group.fields.some(f => scenario.generation[f.key] <= 0);
   const setGenEnabled = (group: GenerationGroup, checked: boolean) => {
     if (checked) {
       const saved = savedGen[group.id];
@@ -897,6 +902,17 @@ function SupplyGroupAccordions({
         onGenerationChange(f.key, 0);
       }
       setSavedGen(prev => ({ ...prev, [group.id]: snapshot }));
+    }
+  };
+
+  // Per-Erzeugungsart-Schalter: abhaken = installierte Leistung auf 0 (Wert
+  // gemerkt), wieder anhaken = vorheriger Wert bzw. sinnvoller Default.
+  const setGenFieldEnabled = (field: GenerationFieldSpec, checked: boolean) => {
+    if (checked) {
+      onGenerationChange(field.key, activationDefault(savedGenField[field.key], field.baseline, field.max, field.step));
+    } else {
+      setSavedGenField(prev => ({ ...prev, [field.key]: scenario.generation[field.key] }));
+      onGenerationChange(field.key, 0);
     }
   };
 
@@ -927,6 +943,7 @@ function SupplyGroupAccordions({
         open={open[group.id]}
         onToggle={() => toggle(group.id)}
         checked={isGenEnabled(group)}
+        indeterminate={isGenPartial(group)}
         onChecked={(c) => setGenEnabled(group, c)}
       >
         {group.fields.map(field => <Fragment key={field.key}>
@@ -943,6 +960,7 @@ function SupplyGroupAccordions({
             docId={field.docId}
             energyTWh={generationTWh?.[field.key]}
             onValue={value => onGenerationChange(field.key, value)}
+            toggle={{ checked: scenario.generation[field.key] > 0, onChange: c => setGenFieldEnabled(field, c) }}
           />
           {FIELD_TO_TECH[field.key] && <TechKostenMock tech={FIELD_TO_TECH[field.key]} docId={field.docId} values={scenario.costOverrides?.[FIELD_TO_TECH[field.key]]} onChange={onCostOverrideChange}/>}
         </Fragment>)}
@@ -984,6 +1002,7 @@ function GroupAccordion({
   open,
   onToggle,
   checked,
+  indeterminate,
   onChecked,
   docId,
   children,
@@ -995,12 +1014,19 @@ function GroupAccordion({
   open: boolean;
   onToggle: () => void;
   checked?: boolean;
+  indeterminate?: boolean;
   onChecked?: (checked: boolean) => void;
   docId?: string;
   children: ReactNode;
 }) {
   const Chevron = open ? ChevronUp : ChevronDown;
   const hasCheckbox = onChecked !== undefined;
+  // Tri-State: Bindestrich (indeterminate) wenn nur ein Teil der Gruppe aktiv
+  // ist — die DOM-Eigenschaft lässt sich nur imperativ setzen.
+  const cbRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (cbRef.current) cbRef.current.indeterminate = !!indeterminate && !!checked;
+  }, [indeterminate, checked]);
   // Rahmenlos: die Liste trennt mit divide-y, die Kopfzeile zeigt Hover.
   return <section>
     <div
@@ -1013,6 +1039,7 @@ function GroupAccordion({
       onClick={onToggle}
     >
       {hasCheckbox && <input
+        ref={cbRef}
         className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
         type="checkbox"
         checked={!!checked}
@@ -1068,7 +1095,7 @@ function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {
   return `CO₂e: ${fmt0.format(co2eGperKWh)} g/kWh`;
 }
 
-function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, energyTWh, docId, onValue }: {
+function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eGperKWh, referenceScale, energyTWh, docId, onValue, toggle }: {
   label: string;
   unit: string;
   value: number;
@@ -1081,7 +1108,9 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   energyTWh?: number;
   docId?: string;
   onValue: (value: number) => void;
+  toggle?: { checked: boolean; onChange: (checked: boolean) => void };
 }) {
+  const off = toggle ? !toggle.checked : false;
   // Lokaler Drag-State: waehrend Pointer-Drag wird nur der lokale Wert
   // aktualisiert, der teure onValue-Callback (Simulation) feuert erst beim
   // Loslassen. Keyboard-Eingaben (Pfeiltasten) commiten direkt, weil dort kein
@@ -1101,10 +1130,18 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
   return <div className="group grid gap-1 px-1 py-1.5">
     <div className="flex items-baseline justify-between gap-2">
       <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-950 dark:text-zinc-50">
-        {label}
+        {toggle && <input
+          type="checkbox"
+          checked={toggle.checked}
+          onChange={event => toggle.onChange(event.target.checked)}
+          aria-label={`${label} ein-/ausschalten`}
+          title={toggle.checked ? `${label} ausschalten (auf 0 setzen)` : `${label} einschalten`}
+          className="h-3 w-3 cursor-pointer accent-zinc-950 dark:accent-zinc-50"
+        />}
+        <span className={cx(off && 'text-zinc-400 line-through dark:text-zinc-500')}>{label}</span>
         {docId && <InfoLink id={docId} label={`${label} im Wiki öffnen`}/>}
       </span>
-      <span className="flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500">
+      <span className={cx('flex items-baseline gap-1 whitespace-nowrap text-xs tabular-nums text-zinc-500', off && 'opacity-40')}>
         <EditableNumber value={display} min={min} max={max} step={step} onChange={onValue} title={`${label} direkt eingeben (${min.toLocaleString('de-DE')}–${max.toLocaleString('de-DE')} ${unit})`}/>
         <span>{unit}</span>
         {multiplier && <span className="ml-1 text-zinc-400">({multiplier})</span>}
@@ -1113,7 +1150,7 @@ function CapacitySliderRow({ label, unit, value, min, max, step, baseline, co2eG
     {detailText && <div className="px-0.5 text-xs leading-5 text-zinc-500">{detailText}</div>}
     <input
       aria-label={label}
-      className="w-full"
+      className={cx('w-full', off && 'opacity-40')}
       style={{ ['--range-pct' as string]: `${pct}%` }}
       type="range"
       min={min}
@@ -1519,13 +1556,13 @@ function PeriodControl({
   const yearMin = `${loadYear}-01-01`;
   const yearMax = `${loadYear}-12-31`;
   const [open, setOpen] = useState(false);
-  const selectedMonthId = preset === 'custom' ? monthIdFromRange(customStart, customEnd, loadYear) : null;
-  const activePeriodPillId = selectedMonthId ? null : preset;
-  const activePeriodLabel = selectedMonthId
-    ? periodMonthPills.find(month => month.id === selectedMonthId)?.label ?? 'Mehr'
+  const selectedNamedId = preset === 'custom' ? namedIdFromRange(customStart, customEnd, loadYear) : null;
+  const activePeriodPillId = selectedNamedId ? null : preset;
+  const activePeriodLabel = selectedNamedId
+    ? namedRangeLabel(selectedNamedId) ?? 'Mehr'
     : periodPills.find(pill => pill.id === preset)?.label ?? 'Manuell';
-  const selectMonth = (monthId: PeriodMonthId) => {
-    const range = monthRange(loadYear, monthId);
+  const selectNamedRange = (id: NamedRangeId) => {
+    const range = rangeForNamedId(loadYear, id);
     onRange(range.start, range.end);
   };
   const periodMeta = preset === 'year' ? String(loadYear) : `${formatDate(start)} bis ${formatDate(end)}`;
@@ -1538,7 +1575,7 @@ function PeriodControl({
             activeId={activePeriodPillId}
             onSelect={onPreset}
           />
-          <PresetDropdownPill label="Mehr" presets={periodMonthPills} activeId={selectedMonthId} onSelect={selectMonth}/>
+          <PresetDropdownPill label="Mehr" groups={namedRangeGroups} activeId={selectedNamedId} onSelect={selectNamedRange}/>
         </div>
         {preset === 'custom' && <div className="grid grid-cols-2 gap-2">
           <input aria-label="Startdatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customStart} onChange={event => onStart(event.target.value)}/>
@@ -1602,6 +1639,38 @@ function monthIdFromRange(start: string, end: string, year: 2025 | 2017): Period
     const range = monthRange(year, month.id);
     return range.start === start && range.end === end;
   })?.id ?? null;
+}
+
+// Benannte Sonderzeiträume im »Mehr«-Dropdown — energetisch markante Fenster,
+// die als custom-Range aufgelöst werden (wie die Monate). Erweiterbar (z. B.
+// Dunkelflaute), daher eigene Gruppe über den Monaten.
+type SpecialRangeId = 'hitzewoche';
+const specialRangePills: ReadonlyArray<PresetOption<SpecialRangeId>> = [
+  { id: 'hitzewoche', label: 'Hitzewoche', description: 'Heiße Sommerwoche 30.06.–06.07. (Klimatisierungs-Abendpeak)' },
+];
+function specialRange(year: 2025 | 2017, id: SpecialRangeId) {
+  if (id === 'hitzewoche') return { start: `${year}-06-30`, end: `${year}-07-06` };
+  return null;
+}
+
+type NamedRangeId = PeriodMonthId | SpecialRangeId;
+const namedRangeGroups: ReadonlyArray<PresetOptionGroup<NamedRangeId>> = [
+  { title: 'Sommer', presets: specialRangePills },
+  { title: 'Monate', presets: periodMonthPills },
+];
+function rangeForNamedId(year: 2025 | 2017, id: NamedRangeId) {
+  return specialRange(year, id as SpecialRangeId) ?? monthRange(year, id as PeriodMonthId);
+}
+function namedIdFromRange(start: string, end: string, year: 2025 | 2017): NamedRangeId | null {
+  const month = monthIdFromRange(start, end, year);
+  if (month) return month;
+  return specialRangePills.find(p => {
+    const range = specialRange(year, p.id);
+    return range && range.start === start && range.end === end;
+  })?.id ?? null;
+}
+function namedRangeLabel(id: NamedRangeId): string | undefined {
+  return [...specialRangePills, ...periodMonthPills].find(p => p.id === id)?.label;
 }
 
 function ModelSection() {

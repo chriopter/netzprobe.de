@@ -251,7 +251,8 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
     return {
       polar: {
         center: ['50%', compact ? '50%' : '52%'],
-        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '96%'],
+        // Außenradius ~20 % kleiner als zuvor (96 %): mehr Luft links/rechts.
+        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['5%', '77%'],
       },
       angleAxis: angleAxis(hours, chartHours, compact, theme),
       radiusAxis: radiusAxis('GW', scaleMaxGW, theme),
@@ -487,7 +488,7 @@ export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'l
     ? {
       polar: {
         center: ['50%', compact ? '50%' : '52%'],
-        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['6%', '92%'],
+        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['5%', '77%'],
       },
       angleAxis: angleAxis(hours, chartHours, compact, theme),
       radiusAxis: radiusAxis('GWh', undefined, theme),
