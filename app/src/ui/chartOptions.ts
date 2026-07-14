@@ -155,11 +155,13 @@ const chartTheme = (theme: ChartTheme = 'light') => theme === 'dark'
       loadDot: '#111827',
     };
 
-// Stundenschritt für Achsen-Labels: so fein, wie es die Chart-Breite erlaubt
-// (rotierte Labels brauchen ~20 px Abstand), sonst auf glatte Schritte runden.
+// Stundenschritt für Achsen-Labels: so fein, wie es die Chart-Breite erlaubt,
+// sonst auf glatte Schritte runden. 45°-rotierte Labels kollidieren erst,
+// wenn der Querabstand (~0,7 × Tick-Abstand) unter die Texthöhe fällt —
+// ~15 px Tick-Abstand reichen daher für stündliche Labels.
 const hourlyLabelStep = (count: number, plotWidthPx: number) => {
   const spacing = plotWidthPx / Math.max(1, count);
-  return [1, 2, 3, 4, 6, 8, 12, 24].find(step => spacing * step >= 20) ?? 24;
+  return [1, 2, 3, 4, 6, 8, 12, 24].find(step => spacing * step >= 15) ?? 24;
 };
 
 const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'light', viewport?: ChartViewport) => {
@@ -170,6 +172,7 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'lig
   const hourly = !isFullYearView(hours, chartHours) && isHourlyResolution(chartHours);
   const plotWidth = Math.max(200, (viewport?.width ?? 900) - 64);
   const step = hourlyLabelStep(chartHours.length, plotWidth);
+  console.log('[xAxis-debug]', JSON.stringify({ hourly, points: chartHours.length, plotWidth, step, viewportWidth: viewport?.width }));
   const showLabel = chartHours.map((hour, index) => {
     if (index === 0 || dateKey(hour) !== dateKey(chartHours[index - 1])) return true;
     return Number(berlinHourLabel(hour).slice(0, 2)) % step === 0;
