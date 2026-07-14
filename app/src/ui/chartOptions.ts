@@ -65,8 +65,13 @@ const shortDateLabel = (hour: SimHour) => new Date(hour.time).toLocaleDateString
 const dayLabels = (hours: SimHour[]) => hours.map(shortDateLabel);
 const dateKey = (hour: SimHour) => new Date(hour.time).toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' });
 const berlinHourLabel = (hour: SimHour) => new Date(hour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin', hour12: false });
-// Datum + Uhrzeit, sobald das Fenster stündlich aufgelöst ist (mehr Punkte als Tage).
-const hourlyLabels = (hours: SimHour[]) => hours.map(hour => `${shortDateLabel(hour)} ${berlinHourLabel(hour)}`);
+// Stündliche Achsen-Labels: Datum nur am Tageswechsel, sonst nur Uhrzeit —
+// kürzere Labels lassen mehr Stunden-Ticks zu, bevor hideOverlap ausdünnt.
+const hourlyLabels = (hours: SimHour[]) => hours.map((hour, index) => {
+  const time = berlinHourLabel(hour);
+  const dayStart = index === 0 || dateKey(hour) !== dateKey(hours[index - 1]);
+  return dayStart ? `${shortDateLabel(hour)} ${time}` : time;
+});
 const isHourlyResolution = (hours: SimHour[]) => hours.length > new Set(hours.map(dateKey)).size;
 const dateParts = (date: string) => ({ month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) });
 
@@ -150,17 +155,31 @@ const chartTheme = (theme: ChartTheme = 'light') => theme === 'dark'
       loadDot: '#111827',
     };
 
-const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'light') => {
+// Stundenschritt für Achsen-Labels: so fein, wie es die Chart-Breite erlaubt
+// (rotierte Labels brauchen ~20 px Abstand), sonst auf glatte Schritte runden.
+const hourlyLabelStep = (count: number, plotWidthPx: number) => {
+  const spacing = plotWidthPx / Math.max(1, count);
+  return [1, 2, 3, 4, 6, 8, 12, 24].find(step => spacing * step >= 20) ?? 24;
+};
+
+const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'light', viewport?: ChartViewport) => {
   const colors = chartTheme(theme);
   // Bei stündlicher Auflösung gibt es zu viele Labels für eine horizontale Achse:
-  // angewinkelt (Excel-Style) und automatisch ausdünnen statt überlappen lassen.
+  // angewinkelt (Excel-Style) und deterministisch auf glatte Stundenschritte
+  // ausdünnen (ECharts' hideOverlap dünnt sonst unnötig aggressiv aus).
   const hourly = !isFullYearView(hours, chartHours) && isHourlyResolution(chartHours);
+  const plotWidth = Math.max(200, (viewport?.width ?? 900) - 64);
+  const step = hourlyLabelStep(chartHours.length, plotWidth);
+  const showLabel = chartHours.map((hour, index) => {
+    if (index === 0 || dateKey(hour) !== dateKey(chartHours[index - 1])) return true;
+    return Number(berlinHourLabel(hour).slice(0, 2)) % step === 0;
+  });
   return {
   type: 'category' as const,
   data: xAxisLabels(hours, chartHours),
   axisTick: { show: false },
   axisLabel: hourly
-    ? { color: colors.axisText, interval: 0, hideOverlap: true, rotate: 45, fontSize: 9, margin: 10 }
+    ? { color: colors.axisText, interval: (index: number) => showLabel[index] ?? false, hideOverlap: false, rotate: 45, fontSize: 9, margin: 10 }
     : { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
   axisLine: { lineStyle: { color: colors.axisLine } },
   };
@@ -263,7 +282,7 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
     grid: compact
       ? { left: 4, right: 4, top: 6, bottom: 24, containLabel: true }
       : { left: 44, right: 20, top: 10, bottom: 48 },
-    xAxis: xAxis(hours, chartHours, theme),
+    xAxis: xAxis(hours, chartHours, theme, viewport),
     yAxis: yAxis('GW', scaleMaxGW, theme),
   };
 };
@@ -497,7 +516,7 @@ export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'l
     }
     : {
       grid: { left: 46, right: 20, top: 18, bottom: 48 },
-      xAxis: xAxis(hours, chartHours, theme),
+      xAxis: xAxis(hours, chartHours, theme, viewport),
       yAxis: yAxis('GWh', undefined, theme),
     };
   return {
