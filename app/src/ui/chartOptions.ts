@@ -160,7 +160,7 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'lig
   data: xAxisLabels(hours, chartHours),
   axisTick: { show: false },
   axisLabel: hourly
-    ? { color: colors.axisText, interval: 'auto' as const, hideOverlap: true, rotate: 45, fontSize: 9, margin: 10 }
+    ? { color: colors.axisText, interval: 0, hideOverlap: true, rotate: 45, fontSize: 9, margin: 10 }
     : { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
   axisLine: { lineStyle: { color: colors.axisLine } },
   };
@@ -362,6 +362,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   // farbige Punkte / Bold / Muted-Zeilen.
   const compactTooltip = isCompactChart(viewport);
   const maxTooltipWidth = tooltipMaxWidth(viewport);
+  const hourlyTooltip = isHourlyResolution(chartHours);
   const dot = (color: string) => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle"></span>`;
   const square = (color: string) => `<span style="display:inline-block;width:8px;height:8px;background:${color};margin-right:4px;vertical-align:middle"></span>`;
   const bold = (text: string) => `<b style="color:${colors.tooltipBold}">${text}</b>`;
@@ -394,7 +395,8 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         const index = params[0]?.dataIndex ?? 0;
         const hour = chartHours[index];
         if (!hour) return '';
-        const lines = [`<div>${bold(shortDateLabel(hour))}</div>`];
+        const headerLabel = hourlyTooltip ? `${shortDateLabel(hour)} ${berlinHourLabel(hour)} Uhr` : shortDateLabel(hour);
+        const lines = [`<div>${bold(headerLabel)}</div>`];
         for (const group of MIX_GROUPS) {
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
