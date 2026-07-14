@@ -172,7 +172,6 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'lig
   const hourly = !isFullYearView(hours, chartHours) && isHourlyResolution(chartHours);
   const plotWidth = Math.max(200, (viewport?.width ?? 900) - 64);
   const step = hourlyLabelStep(chartHours.length, plotWidth);
-  console.log('[xAxis-debug]', JSON.stringify({ hourly, points: chartHours.length, plotWidth, step, viewportWidth: viewport?.width }));
   const showLabel = chartHours.map((hour, index) => {
     if (index === 0 || dateKey(hour) !== dateKey(chartHours[index - 1])) return true;
     return Number(berlinHourLabel(hour).slice(0, 2)) % step === 0;
