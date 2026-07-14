@@ -451,7 +451,9 @@ function simulationViewForPeriod(period: { start: string; end: string }): Simula
   return {
     start: period.start,
     end: period.end,
-    maxPoints: days <= 31 ? days * 6 : days,
+    // Kurze Zeiträume in voller Stundenauflösung (max. 31 × 24 = 744 Punkte,
+    // das Limit von compressHours); längere als Tagesmittel.
+    maxPoints: days <= 31 ? days * 24 : days,
   };
 }
 
