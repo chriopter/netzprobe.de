@@ -170,18 +170,21 @@ const xAxis = (hours: SimHour[], chartHours: SimHour[], theme: ChartTheme = 'lig
   // angewinkelt (Excel-Style) und deterministisch auf glatte Stundenschritte
   // ausdünnen (ECharts' hideOverlap dünnt sonst unnötig aggressiv aus).
   const hourly = !isFullYearView(hours, chartHours) && isHourlyResolution(chartHours);
-  const plotWidth = Math.max(200, (viewport?.width ?? 900) - 64);
-  const step = hourlyLabelStep(chartHours.length, plotWidth);
-  const showLabel = chartHours.map((hour, index) => {
-    if (index === 0 || dateKey(hour) !== dateKey(chartHours[index - 1])) return true;
-    return Number(berlinHourLabel(hour).slice(0, 2)) % step === 0;
-  });
+  const hourlyAxisLabel = () => {
+    const plotWidth = Math.max(200, (viewport?.width ?? 900) - 64);
+    const step = hourlyLabelStep(chartHours.length, plotWidth);
+    const showLabel = chartHours.map((hour, index) => {
+      if (index === 0 || dateKey(hour) !== dateKey(chartHours[index - 1])) return true;
+      return Number(berlinHourLabel(hour).slice(0, 2)) % step === 0;
+    });
+    return { color: colors.axisText, interval: (index: number) => showLabel[index] ?? false, hideOverlap: false, rotate: 45, fontSize: 9, margin: 10 };
+  };
   return {
   type: 'category' as const,
   data: xAxisLabels(hours, chartHours),
   axisTick: { show: false },
   axisLabel: hourly
-    ? { color: colors.axisText, interval: (index: number) => showLabel[index] ?? false, hideOverlap: false, rotate: 45, fontSize: 9, margin: 10 }
+    ? hourlyAxisLabel()
     : { color: colors.axisText, interval: 0, hideOverlap: false, fontSize: 10, margin: 14 },
   axisLine: { lineStyle: { color: colors.axisLine } },
   };
