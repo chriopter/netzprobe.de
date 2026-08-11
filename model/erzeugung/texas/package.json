@@ -1,7 +1,7 @@
 {
   "preset": {
     "id": "texas",
-    "label": "Texas-Mix",
+    "label": "Texas 2025",
     "gruppe": "lastfolgend",
     "rang": 80,
     "beschreibung": "ERCOT-Energiemix 2025 (Gas 41 / Wind 24 / Solar 14 / Kohle 13 / Kern 9 %) lastfolgend auf deutsche Last und deutsches Wetterjahr übertragen; Inselnetz ohne Import/Export",
@@ -12,7 +12,7 @@
   "domain": "erzeugung",
   "kind": "composition",
   "method": {
-    "title": "Texas-Mix (ERCOT 2025)",
+    "title": "Texas 2025 (ERCOT)",
     "short": "ERCOT-Erzeugungsanteile 2025 lastfolgend auf die deutsche Last skaliert; GW-Flotten aus deutschen Einspeisefaktoren rückgerechnet.",
     "source": "EIA-930 Stundendaten (Balancing Authority ERCO, Gesamtjahr 2025, 486 TWh Netto-Erzeugung), kreuzgeprüft mit EIA Today in Energy 02/2026 und Potomac Economics State of the Market Report; ERCOT Monthly / CDR (installierte Leistung); Modo Energy (Batterieflotte).",
     "sourceUrls": [
