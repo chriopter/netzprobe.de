@@ -1,0 +1,84 @@
+{
+  "preset": {
+    "id": "texas",
+    "label": "Texas-Mix",
+    "gruppe": "lastfolgend",
+    "rang": 80,
+    "beschreibung": "ERCOT-Energiemix 2025 (Gas 41 / Wind 24 / Solar 14 / Kohle 13 / Kern 9 %) lastfolgend auf deutsche Last und deutsches Wetterjahr übertragen; Inselnetz ohne Import/Export",
+    "sichtbar": true
+  },
+  "$schema": "../../schemas/composition.schema.json",
+  "id": "texas",
+  "domain": "erzeugung",
+  "kind": "composition",
+  "method": {
+    "title": "Texas-Mix (ERCOT 2025)",
+    "short": "ERCOT-Erzeugungsanteile 2025 lastfolgend auf die deutsche Last skaliert; GW-Flotten aus deutschen Einspeisefaktoren rückgerechnet.",
+    "source": "EIA-930 Stundendaten (Balancing Authority ERCO, Gesamtjahr 2025, 486 TWh Netto-Erzeugung), kreuzgeprüft mit EIA Today in Energy 02/2026 und Potomac Economics State of the Market Report; ERCOT Monthly / CDR (installierte Leistung); Modo Energy (Batterieflotte).",
+    "sourceUrls": [
+      "https://www.eia.gov/electricity/gridmonitor/",
+      "https://www.eia.gov/todayinenergy/detail.php?id=67685",
+      "https://www.eia.gov/todayinenergy/detail.php?id=66464",
+      "https://www.potomaceconomics.com/wp-content/uploads/2026/06/2025-State-of-the-Market-Report-for-ERCOT.pdf",
+      "https://modoenergy.com/research/en/ercot-battery-buildout-2025-annual-report",
+      "https://www.ercot.com/gridinfo/generation"
+    ],
+    "period": "2025 (ERCOT-Mix), laufend (Preset)",
+    "resolution": "stündlich",
+    "unit": "GW, GWh, %",
+    "description": [
+      "**Komposition:** Die Anteile an der ERCOT-Netto-Jahreserzeugung 2025 (486 TWh, EIA-930) — `Gas 40,9 %`, `Wind 23,6 %`, `Solar 13,9 %`, `Kohle 13,0 %`, `Kernkraft 8,6 %` (Summe exakt 100; Hydro 0,11 % und Sonstige 0,06 % vernachlässigt, Batteriespeicher netto ~0) — werden als Energie-Zielanteile auf die eingestellte deutsche Jahreslast übertragen.",
+      "**Auslegung:** Variable EE werden aus den DEUTSCHEN Einspeisefaktoren rückgerechnet (`PV-GW = 0,139 × Last / yieldPV`, `WindOn-GW = 0,236 × Last / yieldWindOn`) — so trifft der Mix die Energieanteile im hiesigen Wetterjahr, obwohl texanische Kapazitätsfaktoren (Solar 22 %, Wind 32 %, Potomac SOM 2024) deutlich über den deutschen liegen. Texanischer Wind ist onshore (Panhandle/Golfküste), daher `Wind offshore = 0`. Kernkraft als Baseload über die Jahresverfügbarkeit (`Kern-GW = 0,086 × Last / (8,76 × 0,90)`) — ERCOT-Kernkraft (STP + Comanche Peak, ~5 GW) läuft real mit CF ~92 %.",
+      "**Dispatch:** Gas und Kohle deckt die Engine lastfolgend; ihre Kapazitäten folgen aus Anteil / (8,76 × Auslastung) mit `Gas 0,34` (ERCOT-Flottenmittel inkl. Peaker ~0,35–0,45) und `Kohle 0,80` (im deutschen Dispatch läuft die kleine Kohleflotte nahe am Cap; ERCOT real ~0,47). Kalibriert im Lasttest 2025: Gas 40,1 %, Kohle 14,2 % — die Restabweichung (±1 pp) kommt aus dem 5-GW-Slider-Raster (Kohle kann nur 5 oder 10 GW sein).",
+      "**Inselnetz:** ERCOT ist elektrisch isoliert — DC-Kuppelstellen gesamt ~1,2 GW (~1,4 % des Peaks 85,5 GW), Netto-Austausch 2025 ~0,3 TWh (<0,1 % der Last, Potomac SOM) — daher `Import = Export = 0`. Kein Pumpspeicher (Texas hat keinen operativen), kein H₂. Flexibilität liefern Gas, Kohle und die Batterieflotte: `0,029 GW/TWh` / `0,047 GWh/TWh` nach ERCOT-Bestand Ende 2025 (14,1 GW / ~23 GWh, mittlere Dauer 1,65 h).",
+      "**Anwendungsfall:** Vergleichsfolie »Was wäre, wenn Deutschland wie Texas erzeugte?« — fossil-dominierter Mix mit moderatem EE-Anteil, ohne Verbund-Puffer. Lasttest 2025: `0 h` Lastabwurf, CO₂ ~373 g/kWh, Abregelung ~1,6 TWh. CO₂ und Versorgungssicherheit direkt gegen die deutschen Pfade (historisch-2025, ee-100, kernkraft-ee) vergleichbar."
+    ],
+    "overview": [
+      {
+        "label": "Mix-Anteile",
+        "value": "**ERCOT 2025 (EIA-930, 486 TWh):** `Gas 40,9 %`, `Wind onshore 23,6 %`, `PV 13,9 %`, `Kohle 13,0 %`, `Kernkraft 8,6 %`. Erreicht im Lasttest (466 TWh, Slider-Raster): 40,1 / 23,7 / 13,5 / 14,2 / 8,5 %."
+      },
+      {
+        "label": "EE-Auslegung",
+        "value": "**Energie-exakt über deutsche Erträge:** GW = Anteil × Jahreslast / Jahresertrag (TWh/GW·a) aus den Einspeisefaktoren 2025. Bei 466 TWh: PV 90 GW, Wind onshore 70 GW — deutlich mehr GW als ERCOT selbst (33 / 40 GW), weil die texanischen Kapazitätsfaktoren (Solar 22 %, Wind 32 %) hier nicht erreichbar sind."
+      },
+      {
+        "label": "Dispatchable",
+        "value": "**Gas** `0,409 / (8,76 × 0,34)` ≈ 0,137 GW/TWh (65 GW bei 466 TWh — trägt zugleich die gesicherte Leistung des Inselnetzes gegen den deutschen Winterabend-Peak ~76 GW), **Kohle** `0,130 / (8,76 × 0,80)` ≈ 0,019 GW/TWh (10 GW, läuft nahe Volllast), **Kernkraft** `0,086 × Last / 7,9 TWh/GW·a` (4,5–5 GW Baseload — zufällig fast exakt die reale ERCOT-Flotte von 5 GW)."
+      },
+      {
+        "label": "Speicher & Handel",
+        "value": "**Batterie** `0,029 GW/TWh` / `0,047 GWh/TWh` (ERCOT Ende 2025: 14,1 GW / ~23 GWh, Dauer 1,65 h). **Kein** Pumpspeicher, **kein** H₂, **kein** Import/Export — ERCOT-Netto-Austausch real <0,1 % der Last."
+      }
+    ],
+    "reasoning": [
+      "Energieanteile = ERCOT-Netto-Jahreserzeugung 2025 aus EIA-930-Tagesdaten (Respondent ERCO, 363/365 Tage, 486,1 TWh); Summe der fünf Träger exakt 1,000. Hydro (0,11 %) und Sonstige (0,06 %) vernachlässigt; Speicher netto ~0 (−5,6/+5,1 TWh).",
+      "yieldPV / yieldWindOn aus den deutschen Einspeisefaktoren 2025 (annual_yield_twh_per_gw) — Auslegung auf Energieanteile im deutschen Wetterjahr, nicht auf texanische Kapazitätsfaktoren.",
+      "PV-GW = 0,139 × Last / yieldPV; WindOn-GW = 0,236 × Last / yieldWindOn; WindOff = 0 (texanischer Wind ist onshore).",
+      "Kern-GW = 0,086 × Last / (8,76 × availability 0,90) — Baseload, curtailbar im Dispatch; ERCOT-Realität ~92 % CF.",
+      "Gas-GW = 0,409 × Last / (8,76 × 0,34); Kohle-GW = 0,130 × Last / (8,76 × 0,80) — Auslastungen am deutschen Dispatch kalibriert (Lasttest 2025: Anteile 40,1 / 14,2 %, 0 h Lastabwurf); die Gas-Auslastung liegt im realen ERCOT-Flottenkorridor, die Kohle läuft im deutschen Residuallast-Profil näher am Cap als in ERCOT (0,47).",
+      "Batterie = 0,029 GW/TWh bzw. 0,047 GWh/TWh (ERCOT Ende 2025: 14,1 GW / ~23 GWh auf 486 TWh).",
+      "Import/Export/Pumpspeicher/H₂ = 0 (ERCOT-Inselnetz: DC-Ties ~1,2 GW, Netto-Austausch ~0,3 TWh/a).",
+      "Werte werden über snap auf das Slider-Raster gequantelt (Gas/Kohle/PV/Wind Schritt 5 GW, Kernkraft 0,5 GW)."
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "unit": "Text",
+        "description": "Technische Kennung (texas)."
+      }
+    ],
+    "caveats": [
+      "Die Anteile sind das ERCOT-VERHÄLTNIS, die Physik ist deutsch: Lastprofil, Wetterjahr und Einspeisefaktoren 2025 aus Deutschland. Ein texanischer Sommer-Peak (Klimaanlagen, PV-korreliert) sieht anders aus als der deutsche Winterabend — das Preset beantwortet »deutsches System mit Texas-Mix«, nicht »ERCOT nachgebaut«.",
+      "Slider-Quantelung begrenzt die Präzision: Kohle kann nur 5 oder 10 GW sein (5-GW-Schritt) → im Lasttest 14,2 statt 13,0 %, Gas entsprechend 40,1 statt 40,9 %, PV 13,5 statt 13,9 %. Wind (23,7/23,6) und Kernkraft (8,5/8,6) treffen fast exakt.",
+      "Gas/Kohle-Split entsteht im Dispatch und ist bei Last 2025 kalibriert. Bei stark abweichender Last (z. B. e100 mit H₂-Sektoren) verschieben sich die realisierten Anteile etwas, weil Residuallast-Profil und Kohle-Cap-Bindung sich ändern.",
+      "Emissionsfaktoren (Gas 494, Kohle ~900+ g/kWh) sind die deutschen Modellwerte, nicht ERCOT-spezifisch; die CO₂-Kennzahl (~373 g/kWh im Lasttest) ist als Ordnung zu lesen, nicht als ERCOT-Nachbildung.",
+      "ERCOT hat real kleine DC-Kuppelstellen (~1,2 GW; Southern Spirit +3 GW in Planung) und minimale Hydro/Biomasse (~0,4 %) — beides hier auf 0 gerundet.",
+      "Die ERCOT-Batterieflotte wächst schnell (2021 ~1 GW → Ende 2025 14,1 GW, Modo-Projektion 40–55 GW bis 2029); der Koeffizient friert den Stand Ende 2025 ein."
+    ],
+    "scripts": [
+      "erzeugung/texas/model.rs"
+    ]
+  },
+  "parameters": {}
+}
