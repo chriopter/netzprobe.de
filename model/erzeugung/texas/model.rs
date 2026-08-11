@@ -1,4 +1,4 @@
-// Preset "Texas-Mix" (texas) — Source-of-Truth.
+// Preset "Texas 2025" (texas) — Source-of-Truth.
 //
 // Idee: den ERCOT-Energiemix 2025 (Anteile an der Jahreserzeugung) lastfolgend
 // auf die deutsche Last und das deutsche Wetterjahr übertragen. Die Anteile
