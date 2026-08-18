@@ -78,7 +78,7 @@ fn main() {
     let mut out = String::new();
     for (_id, path, ident) in &presets {
         out.push_str(&format!(
-            "#[path = \"{}\"]\nmod {};\n",
+            "#[allow(dead_code)]\n#[path = \"{}\"]\nmod {};\n",
             path.display(),
             ident
         ));

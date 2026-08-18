@@ -10,7 +10,7 @@
 // Anwendungsfall: Stresstest-Anker, kein realistischer Pfad. Siehe package.json.
 
 use serde_json::{json, Value};
-use super::data::{comp_number, snap_gen, snap_storage, trade_number};
+use super::data::{comp_number, snap_gen, trade_number};
 use super::error::ModelError;
 use super::StaticModel;
 
