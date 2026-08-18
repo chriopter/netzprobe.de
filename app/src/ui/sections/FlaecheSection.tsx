@@ -493,20 +493,21 @@ function FlaecheMapCard({ anlageKm2, wirkungKm2, offshoreWirkungKm2, vorFlaecheK
     ...(offshoreWirkungKm2 > 0 ? [{ color: '#0284c7', label: 'Wirkfläche Offshore', km2: offshoreWirkungKm2 }] : []),
     ...(vorFlaecheKm2 > 0 ? [{ color: '#f59e0b', label: 'Vorfläche', km2: vorFlaecheKm2 }] : []),
   ];
-  // Rahmenlose Abbildung (analog Periodensystem): kompakte Typen-Legende in der
-  // sonst leeren Karten-Ecke, Details stehen in den Karten rechts daneben.
-  return <div className="relative min-w-0">
-    <div id="flaeche-map" className="h-[540px] w-full"/>
-    <div className="pointer-events-none absolute left-1 top-4 space-y-1.5 text-[11px] leading-4">
+  // Legende im Fluss OBERHALB der Karte statt als Overlay in der Karten-Ecke —
+  // dort kollidierte sie mit dem Offshore-Punkt samt Label (Nordsee liegt
+  // genau unter der linken oberen Ecke).
+  return <div className="min-w-0">
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-1 pt-3 text-[11px] leading-4">
       {legend.map(item => <div key={item.label} className="flex items-baseline gap-1.5">
         <span aria-hidden className="h-2 w-2 shrink-0 self-center rounded-full" style={{ background: item.color }}/>
         <span className="text-zinc-500 dark:text-zinc-400">{item.label}</span>
         <span className="font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{fmtKm2(item.km2)} km²</span>
       </div>)}
-      <div className="pt-0.5 text-zinc-400 dark:text-zinc-500">
+      <div className="text-zinc-400 dark:text-zinc-500">
         Σ {fmtKm2(sumKm2)} km² · {sumPct.toLocaleString('de-DE', { maximumFractionDigits: sumPct < 1 ? 2 : 1 })} % von DE
       </div>
     </div>
+    <div id="flaeche-map" className="h-[540px] w-full"/>
   </div>;
 }
 
