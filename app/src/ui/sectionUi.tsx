@@ -199,9 +199,13 @@ export function FloatingPanel({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const [box, setBox] = useState<{ rect: DOMRect; up: boolean } | null>(null);
+  // Zweiter Layout-Pass: gemessene Panel-Breite in den Viewport klemmen —
+  // sonst rutschen rechtsbuendige Panels auf schmalen Screens links raus
+  // (bzw. linksbuendige rechts) und wirken "verschwunden".
+  const [shiftX, setShiftX] = useState(0);
 
   useLayoutEffect(() => {
-    if (!open) { setBox(null); return; }
+    if (!open) { setBox(null); setShiftX(0); return; }
     const place = () => {
       const a = anchorRef.current;
       if (!a) return;
@@ -228,18 +232,31 @@ export function FloatingPanel({
     };
   }, [open, anchorRef]);
 
+  useLayoutEffect(() => {
+    if (!box) return;
+    const el = panelRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    let dx = 0;
+    if (r.left < 8) dx = 8 - r.left;
+    else if (r.right > window.innerWidth - 8) dx = Math.max(8 - r.left, window.innerWidth - 8 - r.right);
+    if (Math.abs(dx) > 0.5) setShiftX(prev => prev + dx);
+  }, [box]);
+
   if (!open || !box) return null;
   const { rect, up } = box;
   const style: CSSProperties = {
     position: 'fixed',
-    minWidth: rect.width,
+    minWidth: Math.min(rect.width, window.innerWidth - 16),
+    maxWidth: 'calc(100vw - 16px)',
+    transform: shiftX ? `translateX(${shiftX}px)` : undefined,
     ...(align === 'right'
       ? { right: Math.max(8, window.innerWidth - rect.right) }
       : { left: Math.max(8, rect.left) }),
     ...(up ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
   };
   return createPortal(
-    <div ref={panelRef} style={style} className={cx('z-50', className)}>{children}</div>,
+    <div ref={panelRef} style={style} className={cx('z-[60]', className)}>{children}</div>,
     document.body,
   );
 }

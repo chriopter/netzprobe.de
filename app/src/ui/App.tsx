@@ -16,7 +16,6 @@ import type { SimulationResult } from '../types/simulation';
 import { DEFAULT_MIX_VISIBILITY, EXTRA_LEAVES, MIX_GROUPS, type ChartMode, type MixVisibility } from './chartOptions';
 import { MAIN_VIEW_LABELS, type MainViewId } from './sectionUi';
 import MixSection from './sections/MixSection';
-import type { MixContent } from './sections/MixSection';
 import FlaecheSection from './sections/FlaecheSection';
 import RessourcenSection from './sections/RessourcenSection';
 import KostenSection from './sections/KostenSection';
@@ -146,10 +145,11 @@ function chartModeFromUrl(): ChartMode {
 }
 
 // Speicherfüllstand-Darstellung: Polar wie der Energiemix, per Toggle auf Linie.
-const defaultMixContent: MixContent = 'mix';
-function mixContentFromUrl(): MixContent {
+// Ehemals Dropdown 'mix'|'kombi'|'speicher' — jetzt nur noch das
+// Fuellstand-Overlay als Chip; alte 'speicher'-Links mappen auf Overlay an.
+function storageOverlayFromUrl(): boolean {
   const value = queryParams().get('ansicht');
-  return value === 'kombi' || value === 'speicher' ? value : defaultMixContent;
+  return value === 'kombi' || value === 'speicher';
 }
 
 function sidebarCollapsedFromUrl() {
@@ -913,7 +913,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   const hasLiveResultRef = useRef(false);
   const [mixVisibility, setMixVisibility] = useState<MixVisibility>(mixVisibilityFromUrl);
   const [chartMode, setChartMode] = useState<ChartMode>(chartModeFromUrl);
-  const [mixContent, setMixContent] = useState<MixContent>(mixContentFromUrl);
+  const [fillLines, setFillLines] = useState<{ batterie: boolean; h2: boolean }>(() => storageOverlayFromUrl() ? { batterie: true, h2: true } : { batterie: false, h2: false });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(sidebarCollapsedFromUrl);
   const [openSectors, setOpenSectors] = useState<SidebarOpenSectors>(openSectorsFromUrl);
   const [expandedRow, setExpandedRow] = useState<SidebarExpandedRow>(expandedRowFromUrl);
@@ -993,8 +993,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (chartMode === defaultChartMode) url.searchParams.delete('chart');
     else url.searchParams.set('chart', chartMode);
 
-    if (mixContent === defaultMixContent) url.searchParams.delete('ansicht');
-    else url.searchParams.set('ansicht', mixContent);
+    if (!fillLines.batterie && !fillLines.h2) url.searchParams.delete('ansicht');
+    else url.searchParams.set('ansicht', 'kombi');
 
     if (periodYears === defaultPeriodYears) url.searchParams.delete('jahre');
     else url.searchParams.set('jahre', periodYears);
@@ -1013,18 +1013,17 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     if (expandedRow === defaultExpandedRow) url.searchParams.delete('row');
     else url.searchParams.set('row', expandedRow ?? 'none');
 
-    const hiddenLegend = [
+    const hiddenLegend = [...new Set([
       ...MIX_GROUPS.flatMap(group => group.leaves),
       ...EXTRA_LEAVES,
-    ]
-      .filter(leaf => !mixVisibility[leaf.key])
-      .map(leaf => leaf.key)
+    ].map(leaf => leaf.key))]
+      .filter(key => !mixVisibility[key])
       .join(listSeparator);
     if (hiddenLegend) url.searchParams.set('legend', hiddenLegend);
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
     setShareUrl(url.toString());
-  }, [scenarios, activeScenario, periodPreset, customStart, customEnd, periodYears, chartMode, mixContent, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenarios, activeScenario, periodPreset, customStart, customEnd, periodYears, chartMode, fillLines, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1190,8 +1189,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             periodYears={periodYears}
             chartMode={chartMode}
             setChartMode={setChartMode}
-            mixContent={mixContent}
-            setMixContent={setMixContent}
+            fillLines={fillLines}
+            setFillLines={setFillLines}
             mixVisibility={mixVisibility}
             setMixVisibility={setMixVisibility}
             isPending={isPending}

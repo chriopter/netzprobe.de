@@ -2,21 +2,24 @@ import type { EChartsOption } from 'echarts';
 import type { SimHour } from '../types/simulation';
 import { fmt, fmt0 } from './format';
 
-export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'batterieDischargeGW' | 'pumpspeicherDischargeGW' | 'h2DischargeGW' | 'loadGW' | 'loadSheddingGW';
+export type MixLeafKey = 'hydroGW' | 'biomassGW' | 'geothermalGW' | 'nuclearGW' | 'coalGW' | 'oilGW' | 'otherGW' | 'wasteGW' | 'gasGW' | 'windOffGW' | 'windOnGW' | 'solarGW' | 'importGW' | 'batterieDischargeGW' | 'pumpspeicherDischargeGW' | 'h2DischargeGW' | 'h2PoolImportGW' | 'loadGW' | 'loadSheddingGW';
 export type MixVisibility = Record<MixLeafKey, boolean>;
 export type ExtraLeaf = { key: MixLeafKey; label: string; color: string; glyph: '●' | '▨' };
 export const EXTRA_LEAVES: ExtraLeaf[] = [
   { key: 'loadGW', label: 'Last', color: '#111827', glyph: '●' },
-  { key: 'importGW', label: 'Import', color: '#dc2626', glyph: '●' },
   { key: 'loadSheddingGW', label: 'Fehlend', color: '#b91c1c', glyph: '▨' },
 ];
 export type ChartMode = 'sunburst' | 'linie';
-// Zwei Sichten auf die Last:
-//  - 'verbrauch': wann Energie gebraucht wird (Direktlast + Industrie-H₂-Verbrauch).
-//    Kann über dem Strom-Stapel liegen (im Winter aus Sommer-H₂ gedeckt).
-//  - 'erzeugung': wann der Strom gezogen wird (Direktlast + Elektrolyse + Speicher-
-//    Laden). Liegt immer im Erzeugungs-Stapel.
-export type LoadView = 'verbrauch' | 'erzeugung';
+// Zwei Sichten auf die Referenzlinie — der Unterschied ist Energie vs. Strom:
+// Der Stapel ist EINSPEISUNG (was auf die Sammelschiene kommt), nicht Erzeugung
+// — Speicherentladung ist darin enthalten, obwohl der Strom dafuer frueher schon
+// erzeugt wurde. Das Gegenstueck dazu ist die Entnahme.
+//  - 'netzlast': alles, was vom Netz gezogen wird — Endverbrauch + Elektrolyse
+//    + Speicher-Laden. Einspeisung minus Netzlast ist exakt der Export.
+//  - 'endverbrauch': nur was bei Verbrauchern ankommt. Der Abstand nach oben
+//    ist zusaetzlich das, was gerade eingespeichert wird — und davon kommt
+//    spaeter nur ein Bruchteil zurueck (H₂-Roundtrip ~1/3).
+export type LoadView = 'endverbrauch' | 'netzlast';
 export type ChartViewport = { width: number; height: number };
 export type ChartTheme = 'light' | 'dark';
 export type MixGroup = { id: string; label: string; color: string; leaves: Array<{ key: MixLeafKey; label: string; color: string }> };
@@ -31,28 +34,36 @@ export const STACK_ORDER: MixLeafKey[] = [
 ];
 
 export const MIX_GROUPS: MixGroup[] = [
-  { id: 'renewable', label: 'Erneuerbar', color: '#16a34a', leaves: [
-    { key: 'hydroGW', label: 'Laufwasser', color: '#4338ca' },
+  { id: 'renewable', label: 'EE', color: '#15803d', leaves: [
+    { key: 'hydroGW', label: 'Laufwasser', color: '#166534' },
     { key: 'biomassGW', label: 'Biomasse', color: '#16a34a' },
-    { key: 'geothermalGW', label: 'Geothermie', color: '#3730a3' },
-    { key: 'windOffGW', label: 'Wind Offshore', color: '#8aa37f' },
-    { key: 'windOnGW', label: 'Wind Onshore', color: '#c5d8bc' },
+    { key: 'geothermalGW', label: 'Geothermie', color: '#3f6212' },
+    { key: 'windOffGW', label: 'Wind Offshore', color: '#16a34a' },
+    { key: 'windOnGW', label: 'Wind Onshore', color: '#4ade80' },
     { key: 'solarGW', label: 'PV', color: '#facc15' },
   ] },
-  { id: 'fossil', label: 'Fossil', color: '#fb923c', leaves: [
-    { key: 'coalGW', label: 'Kohle', color: '#57534e' },
-    { key: 'oilGW', label: 'Öl', color: '#92400e' },
-    { key: 'gasGW', label: 'Gas', color: '#fb923c' },
-    { key: 'wasteGW', label: 'Müll', color: '#78350f' },
-    { key: 'otherGW', label: 'Sonstige', color: '#8b5cf6' },
+  { id: 'fossil', label: 'Fossil', color: '#ea580c', leaves: [
+    { key: 'coalGW', label: 'Kohle', color: '#7c2d12' },
+    { key: 'oilGW', label: 'Öl', color: '#9a3412' },
+    { key: 'gasGW', label: 'Gas', color: '#f97316' },
+    { key: 'wasteGW', label: 'Müll', color: '#c2410c' },
+    { key: 'otherGW', label: 'Sonstige', color: '#fdba74' },
   ] },
-  { id: 'nuclear', label: 'Kernkraft', color: '#ec4899', leaves: [
-    { key: 'nuclearGW', label: 'Kernkraft', color: '#ec4899' },
+  { id: 'nuclear', label: 'Kern', color: '#a855f7', leaves: [
+    { key: 'nuclearGW', label: 'Kernkraft', color: '#a855f7' },
   ] },
-  { id: 'storage', label: 'Speicher', color: '#14b8a6', leaves: [
-    { key: 'batterieDischargeGW', label: 'Batterie', color: '#14b8a6' },
-    { key: 'pumpspeicherDischargeGW', label: 'Pumpspeicher', color: '#0284c7' },
-    { key: 'h2DischargeGW', label: 'Wasserstoff', color: '#06b6d4' },
+  { id: 'storage', label: 'Speicher', color: '#0ea5e9', leaves: [
+    { key: 'batterieDischargeGW', label: 'Batterie', color: '#38bdf8' },
+    { key: 'pumpspeicherDischargeGW', label: 'Pumpspeicher', color: '#0369a1' },
+    { key: 'h2DischargeGW', label: 'Wasserstoff', color: '#22d3ee' },
+  ] },
+  // Beides ist Import — einmal als Elektron (uebers Netz, stuendlich dispatcht),
+  // einmal als Molekuel (H₂ direkt in die Industrie, Jahresmenge gleichverteilt).
+  // Der H₂-Anteil steht in Stromaequivalent, damit er auf derselben GW-Achse
+  // stapelbar ist; schraffiert, weil er nie durchs Stromnetz laeuft.
+  { id: 'import', label: 'Import', color: '#dc2626', leaves: [
+    { key: 'importGW', label: 'Strom', color: '#ef4444' },
+    { key: 'h2PoolImportGW', label: 'H₂ (Industrie)', color: '#f87171' },
   ] },
 ];
 
@@ -229,9 +240,9 @@ export function mixReferenceScaleMaxGW(peakGW: number, headroom = 1.5) {
 export function mixScalePeakGW(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY) {
   return hours.reduce((currentMax, hour) => {
     const supply = MIX_GROUPS.reduce((sum, group) => sum + group.leaves.reduce((groupSum, leaf) => groupSum + (visibility[leaf.key] ? valueOf(hour, leaf.key) : 0), 0), 0)
-      + (visibility.importGW ? hour.importGW : 0)
       + (visibility.loadSheddingGW ? hour.loadSheddingGW : 0);
-    const load = visibility.loadGW ? hour.loadGW : 0;
+    // Obergrenze ueber beide Sichten; Linie ist vom Legenden-Chip entkoppelt.
+    const load = visibility.loadGW ? hour.loadGW + hour.h2PoolLhvGW : 0;
     return Math.max(currentMax, supply, load);
   }, 0);
 }
@@ -292,6 +303,26 @@ const mixCoordinate = (mode: ChartMode, hours: SimHour[], chartHours: SimHour[],
   };
 };
 
+// Diagonale Schraffur als Canvas-Pattern — ECharts' `decal` greift bei
+// Linien-/Flaechenserien nicht, `areaStyle.color` akzeptiert aber ein Pattern.
+// Ohne DOM (Tests, SSR) faellt es auf die einfarbige Flaeche zurueck.
+const hatchFill = (color: string): string => {
+  if (typeof document === 'undefined') return color;
+  const canvas = document.createElement('canvas');
+  canvas.width = 8;
+  canvas.height = 8;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-2, 10); ctx.lineTo(10, -2);
+  ctx.moveTo(2, 14); ctx.lineTo(14, 2);
+  ctx.moveTo(-6, 6); ctx.lineTo(6, -6);
+  ctx.stroke();
+  return { image: canvas, repeat: 'repeat' } as unknown as string;
+};
+
 const valueOf = (hour: SimHour, key: MixLeafKey) => Number((hour as unknown as Record<string, number>)[key] ?? 0);
 const tooltipMaxWidth = (viewport?: ChartViewport) => {
   const width = viewport?.width ?? 0;
@@ -328,21 +359,106 @@ const areaSeries = (name: string, color: string, data: number[], mode: ChartMode
   data,
 });
 
-export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light', withStorage = false, loadView: LoadView = 'verbrauch'): EChartsOption {
+// ==== Sicht-Semantik (modulweit, damit Chart und Legenden-Werte identisch rechnen) ====
+// H₂ zaehlt in ECHTEN Energie-TWh (LHV): Erzeugung + Import deckeln, was im
+// System sein kann. Netzlast-Sicht: nur der Import-Anteil (heimische
+// Elektrolyse steckt im Ladeband). Bedarf-Sicht: volle Pool-Deckung.
+const h2PoolOf = (h: SimHour, loadView: LoadView) =>
+  loadView === 'netzlast' ? h.h2PoolImportLhvGW : h.h2PoolLhvGW;
+const netzstromOf = (h: SimHour) => Math.max(0, h.loadGW - h.importGW - h.storageDischargeGW - h.loadSheddingGW);
+const supplyTotalOf = (h: SimHour) => STACK_ORDER.reduce((sum, key) => sum + valueOf(h, key), 0);
+// Anteil der Erzeugung, der gerade Last deckt (Rest: Export + Speicher-Laden).
+// Per Bilanz gilt netzstrom <= supply, der Faktor liegt in [0, 1].
+const deckungsFaktorOf = (h: SimHour) => {
+  const total = supplyTotalOf(h);
+  return total > 0 ? Math.min(1, netzstromOf(h) / total) : 0;
+};
+// Wert eines Legenden-Leafs in der jeweiligen Sicht: Technologien werden in
+// der Bedarf-Sicht auf ihren Deckungsanteil skaliert, Entladung/Import nicht.
+const leafValueOf = (h: SimHour, key: MixLeafKey, loadView: LoadView): number => {
+  if (key === 'h2PoolImportGW') return h2PoolOf(h, loadView);
+  const raw = valueOf(h, key);
+  return loadView === 'endverbrauch' && (STACK_ORDER as readonly MixLeafKey[]).includes(key)
+    ? raw * deckungsFaktorOf(h)
+    : raw;
+};
+export const loadValueOf = (h: SimHour, loadView: LoadView) => loadView === 'netzlast'
+  ? h.loadGW + h.storageChargeGW + h2PoolOf(h, loadView)
+  : h.loadGW + h2PoolOf(h, loadView);
+
+// TWh-Summen fuer die Legenden-Chips — punktweise dt-gewichtet (tagesgemittelte
+// Reihen zaehlen 24 h je Punkt). Rechnet mit exakt derselben Sicht-Semantik
+// wie die geplotteten Flaechen und die weisse Linie.
+export type LegendTWh = Partial<Record<MixLeafKey, number>> & {
+  // Komponenten der weissen Linie, fuer den Last-Chip-Tooltip.
+  stromTWh?: number; ladenTWh?: number; h2TWh?: number; h2StromAeqTWh?: number;
+  // Speicher-Umweg: geladen vs. wieder entladen — Differenz = Wandelverlust.
+  ladenGesamtTWh?: number; entladenTWh?: number;
+};
+
+export function mixLegendTWh(hours: SimHour[], loadView: LoadView): LegendTWh {
+  if (hours.length < 2) return {};
+  const t = (h: SimHour) => new Date(h.time).getTime();
+  const dt = (i: number) => Math.max(1, (i + 1 < hours.length ? t(hours[i + 1]) - t(hours[i]) : t(hours[i]) - t(hours[i - 1])) / 3_600_000);
+  const out: LegendTWh = {};
+  const keys = MIX_GROUPS.flatMap(group => group.leaves.map(leaf => leaf.key));
+  for (const key of keys) out[key] = 0;
+  out.loadGW = 0;
+  out.loadSheddingGW = 0;
+  out.stromTWh = 0;
+  out.ladenTWh = 0;
+  out.h2TWh = 0;
+  out.h2StromAeqTWh = 0;
+  out.ladenGesamtTWh = 0;
+  out.entladenTWh = 0;
+  hours.forEach((h, i) => {
+    const w = dt(i) / 1000;
+    for (const key of keys) out[key]! += leafValueOf(h, key, loadView) * w;
+    out.loadGW! += loadValueOf(h, loadView) * w;
+    out.loadSheddingGW! += h.loadSheddingGW * w;
+    out.stromTWh! += h.loadGW * w;
+    if (loadView === 'netzlast') out.ladenTWh! += h.storageChargeGW * w;
+    out.ladenGesamtTWh! += h.storageChargeGW * w;
+    out.entladenTWh! += h.storageDischargeGW * w;
+    out.h2TWh! += h2PoolOf(h, loadView) * w;
+    out.h2StromAeqTWh! += h.h2PoolReductionGW * w;
+  });
+  return out;
+}
+
+export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility = DEFAULT_MIX_VISIBILITY, mode: ChartMode = 'sunburst', viewport?: ChartViewport, scaleMaxGW?: number, theme: ChartTheme = 'light', withStorage: boolean | { batterie: boolean; h2: boolean } = false, loadView: LoadView = 'netzlast', expandedGroup: string | null = null, hoverSeries?: { current: string | null }): EChartsOption {
   const chartHours = compressHours(hours);
   const colors = chartTheme(theme);
-  // Last je Sicht: verbrauchsorientiert (Direktlast + Industrie-H₂-Verbrauch)
-  // oder erzeugungsorientiert (Direktlast + Elektrolyse + Speicher-Laden).
-  const loadValue = (h: SimHour) => loadView === 'erzeugung'
-    ? h.loadGW + h.storageChargeGW
-    : h.loadGW + h.h2PoolReductionGW;
-  const leafMeta = new Map(MIX_GROUPS.flatMap(group => group.leaves).map(leaf => [leaf.key, leaf]));
-  const supplySeries = STACK_ORDER
-    .filter(key => visibility[key] && leafMeta.has(key))
-    .map(key => {
-      const leaf = leafMeta.get(key)!;
-      return areaSeries(leaf.label, leaf.color, chartHours.map(h => valueOf(h, key)), mode);
-    });
+  const isEndverbrauch = loadView === 'endverbrauch';
+  // Tooltip-Highlight: die Serie unter dem Cursor (aus der Pixel->Band-
+  // Erkennung in chartHooks) wird unterstrichen. Per Ref, damit der Chart
+  // beim Hovern nicht neu gebaut werden muss — der Formatter liest live.
+  const mark = (label: string, text: string) =>
+    hoverSeries?.current === label ? `<span style="text-decoration:underline;text-underline-offset:2px;font-weight:600">${text}</span>` : text;
+  // Fuellstand-Overlay je Linie schaltbar (Legenden-Gruppe "Fuellstand").
+  const fill = typeof withStorage === 'boolean' ? { batterie: withStorage, h2: withStorage } : withStorage;
+  const anyFill = fill.batterie || fill.h2;
+  const h2Pool = (h: SimHour) => h2PoolOf(h, loadView);
+  const loadValue = (h: SimHour) => loadValueOf(h, loadView);
+  const deckungsFaktor = deckungsFaktorOf;
+  // Flaechen spiegeln die Legenden-Gruppen: eine Flaeche je Gruppe in
+  // Gruppenfarbe. 'all' (Hover irgendwo ueber dem Graph) expandiert alle
+  // Gruppen in ihre Einzel-Technologien, eine Gruppen-Id (Chip-Hover) nur
+  // diese eine. Der H₂-Leaf bleibt beim Expandieren schraffiert.
+  const groupSeries = MIX_GROUPS.flatMap(group => {
+    const leaves = group.leaves.filter(leaf => visibility[leaf.key]);
+    if (!leaves.length) return [];
+    if (expandedGroup === 'all' || expandedGroup === group.id) {
+      return leaves.map(leaf => leaf.key === 'h2PoolImportGW'
+        ? {
+          ...areaSeries(isEndverbrauch ? 'Industrie-H₂' : 'H₂-Import', leaf.color, chartHours.map(h => leafValueOf(h, leaf.key, loadView)), mode),
+          areaStyle: { color: hatchFill(leaf.color), opacity: .5 },
+          lineStyle: { width: .8, opacity: .9, color: leaf.color },
+        }
+        : areaSeries(leaf.label, leaf.color, chartHours.map(h => leafValueOf(h, leaf.key, loadView)), mode));
+    }
+    return [areaSeries(group.label, group.color, chartHours.map(h => leaves.reduce((sum, leaf) => sum + leafValueOf(h, leaf.key, loadView), 0)), mode)];
+  });
   const baseCoordinate = mixCoordinate(mode, hours, chartHours, viewport, scaleMaxGW, theme);
   // Speicher-Füllstand als Overlay: zweite, unsichtbare 0–100-%-Achse über
   // derselben Winkel- bzw. Zeitachse; Linien normiert auf das jeweilige
@@ -351,7 +467,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
   const h2Data = chartHours.map(h => h.h2GWh);
   const batMax = Math.max(1e-9, ...batData);
   const h2Max = Math.max(1e-9, ...h2Data);
-  const coordinate: EChartsOption = withStorage
+  const coordinate: EChartsOption = anyFill
     ? (mode === 'sunburst'
       ? (() => {
         const c = baseCoordinate as { polar: object; angleAxis: object; radiusAxis: object };
@@ -421,34 +537,64 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         if (!hour) return '';
         const headerLabel = hourlyTooltip ? `${shortDateLabel(hour)} ${berlinHourLabel(hour)} Uhr` : shortDateLabel(hour);
         const lines = [`<div>${bold(headerLabel)}</div>`];
+        if (isEndverbrauch) {
+          const f = deckungsFaktor(hour);
+          for (const group of MIX_GROUPS) {
+            if (group.id === 'storage' || group.id === 'import') continue;
+            const active = group.leaves.filter(leaf => visibility[leaf.key]);
+            if (!active.length) continue;
+            const total = active.reduce((sum, leaf) => sum + valueOf(hour, leaf.key) * f, 0);
+            if (total <= 0.05) continue;
+            const leafDetails = active.map(leaf => `${dot(leaf.color)}${mark(leaf.label, leaf.label)} ${fmt.format(valueOf(hour, leaf.key) * f)}`).join(' · ');
+            lines.push(row(`${dot(group.color)}${mark(group.label, group.label)}: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(leafDetails))}`));
+          }
+          {
+            const parts: string[] = [];
+            if (visibility.batterieDischargeGW && hour.batterieDischargeGW > 0.05) parts.push(`${dot('#38bdf8')}Batterie ${fmt.format(hour.batterieDischargeGW)}`);
+            if (visibility.pumpspeicherDischargeGW && hour.pumpspeicherDischargeGW > 0.05) parts.push(`${dot('#0369a1')}Pumpspeicher ${fmt.format(hour.pumpspeicherDischargeGW)}`);
+            if (visibility.h2DischargeGW && hour.h2DischargeGW > 0.05) parts.push(`${dot('#22d3ee')}Wasserstoff ${fmt.format(hour.h2DischargeGW)}`);
+            if (parts.length) {
+              const total = (visibility.batterieDischargeGW ? hour.batterieDischargeGW : 0)
+                + (visibility.pumpspeicherDischargeGW ? hour.pumpspeicherDischargeGW : 0)
+                + (visibility.h2DischargeGW ? hour.h2DischargeGW : 0);
+              lines.push(row(`${dot('#0ea5e9')}Speicher: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(parts.join(' · ')))}`));
+            }
+          }
+          if (visibility.importGW && hour.importGW > 0.05) lines.push(row(`${dot('#ef4444')}Stromimport: ${bold(`${fmt.format(hour.importGW)} GW`)}`));
+          if (h2Pool(hour) > 0.05) lines.push(row(`${square('#f87171')}${mark(isEndverbrauch ? 'Industrie-H₂' : 'H₂-Import', isEndverbrauch ? 'Industrie-H₂' : 'H₂-Import')}: ${bold(`${fmt.format(h2Pool(hour))} GW`)}`));
+          if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}${mark('Fehlend', 'Fehlend')}: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
+          if (visibility.loadGW) lines.push(row(`${dot(colors.loadDot)}Bedarf: ${bold(`${fmt.format(loadValue(hour))} GW`)}`));
+          return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
+        }
         for (const group of MIX_GROUPS) {
           const active = group.leaves.filter(leaf => visibility[leaf.key]);
           if (!active.length) continue;
-          const total = active.reduce((sum, leaf) => sum + valueOf(hour, leaf.key), 0);
-          const leafDetails = active.map(leaf => `${dot(leaf.color)}${leaf.label} ${fmt.format(valueOf(hour, leaf.key))}`).join(' · ');
-          lines.push(row(`${dot(group.color)}${group.label}: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(leafDetails))}`));
+          const total = active.reduce((sum, leaf) => sum + leafValueOf(hour, leaf.key, loadView), 0);
+          // Leere Gruppen und Null-Leaves verstecken — der Tooltip zeigt nur,
+          // was in dieser Stunde tatsaechlich beitraegt.
+          if (total <= 0.05) continue;
+          const contributing = active.filter(leaf => leafValueOf(hour, leaf.key, loadView) > 0.05);
+          const leafDetails = contributing.map(leaf => `${dot(leaf.color)}${mark(leaf.label, leaf.label)} ${fmt.format(leafValueOf(hour, leaf.key, loadView))}`).join(' · ');
+          // Einzel-Leaf-Gruppen (z. B. Kernkraft) brauchen keine Detail-Zeile.
+          const showDetails = contributing.length > 1 || contributing.length !== active.length;
+          lines.push(row(`${dot(group.color)}${mark(group.label, group.label)}: ${bold(`${fmt.format(total)} GW`)}${showDetails && leafDetails ? detailLine(muted(leafDetails)) : ''}`));
         }
-        {
-          const parts: string[] = [];
-          if (visibility.batterieDischargeGW && hour.batterieDischargeGW > 0) parts.push(`${dot('#14b8a6')}Batterie ${fmt.format(hour.batterieDischargeGW)}`);
-          if (visibility.pumpspeicherDischargeGW && hour.pumpspeicherDischargeGW > 0) parts.push(`${dot('#0284c7')}Pumpspeicher ${fmt.format(hour.pumpspeicherDischargeGW)}`);
-          if (visibility.h2DischargeGW && hour.h2DischargeGW > 0) parts.push(`${dot('#06b6d4')}Wasserstoff ${fmt.format(hour.h2DischargeGW)}`);
-          if (parts.length) {
-            const total = (visibility.batterieDischargeGW ? hour.batterieDischargeGW : 0)
-              + (visibility.pumpspeicherDischargeGW ? hour.pumpspeicherDischargeGW : 0)
-              + (visibility.h2DischargeGW ? hour.h2DischargeGW : 0);
-            lines.push(row(`${dot('#0d9488')}Speicher: ${bold(`${fmt.format(total)} GW`)}${detailLine(muted(parts.join(' · ')))}`));
-          }
-        }
-        if (visibility.importGW) lines.push(row(`${dot('#dc2626')}Import: ${bold(`${fmt.format(hour.importGW)} GW`)}`));
-        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}Fehlend: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
+        if (visibility.loadSheddingGW && hour.loadSheddingGW > 0) lines.push(row(`${square('#b91c1c')}${mark('Fehlend', 'Fehlend')}: ${bold(`${fmt.format(hour.loadSheddingGW)} GW`)}`));
         if (hour.exportGW > 0) lines.push(row(`${dot('#94a3b8')}Export: ${bold(`${fmt.format(hour.exportGW)} GW`)}`));
         if (hour.dataBoundaryResidualGW !== 0) lines.push(row(`${dot('#64748b')}Abgrenzungsrest: ${bold(`${fmt.format(hour.dataBoundaryResidualGW)} GW`)}`));
-        if (withStorage) lines.push(row(`${dot('#10b981')}Füllstand: ${bold(`${fmt0.format(hour.batteryGWh / batMax * 100)} %`)} ${muted('Batterie')} · ${bold(`${fmt0.format(hour.h2GWh / h2Max * 100)} %`)} ${muted('H₂')}`));
+        if (anyFill) {
+          const parts: string[] = [];
+          if (fill.batterie) parts.push(`${bold(`${fmt0.format(hour.batteryGWh / batMax * 100)} %`)} ${muted('Batterie')}`);
+          if (fill.h2) parts.push(`${bold(`${fmt0.format(hour.h2GWh / h2Max * 100)} %`)} ${muted('H₂')}`);
+          lines.push(row(`${dot('#0ea5e9')}Füllstand: ${parts.join(' · ')}`));
+        }
         if (visibility.loadGW) {
-          const extra = loadView === 'erzeugung' ? hour.storageChargeGW : hour.h2PoolReductionGW;
-          const extraLabel = loadView === 'erzeugung' ? 'Elektrolyse/Speicher-Laden' : 'Industrie-H₂';
-          lines.push(row(`${dot(colors.loadDot)}Last: ${bold(`${fmt.format(hour.loadGW + extra)} GW`)}${extra > 0.05 ? detailLine(muted(`Strom ${fmt.format(hour.loadGW)} + ${extraLabel} ${fmt.format(extra)}`)) : ''}`));
+          const isNetzlast = loadView === 'netzlast';
+          const parts = [`Stromlast ${fmt.format(hour.loadGW)}`];
+          if (isNetzlast && hour.storageChargeGW > 0.05) parts.push(`Speicher-Laden ${fmt.format(hour.storageChargeGW)}`);
+          if (h2Pool(hour) > 0.05) parts.push(`${isNetzlast ? 'H₂-Import' : 'Industrie-H₂'} ${fmt.format(h2Pool(hour))}`);
+          const title = isNetzlast ? 'Netzlast' : 'Bedarf';
+          lines.push(row(`${dot(colors.loadDot)}${title}: ${bold(`${fmt.format(loadValue(hour))} GW`)}${parts.length > 1 ? detailLine(muted(parts.join(' + '))) : ''}`));
         }
         return `<div style="box-sizing:border-box;max-width:${maxTooltipWidth}px;max-height:min(360px,calc(100vh - 24px));overflow:auto">${lines.join('')}</div>`;
       },
@@ -456,11 +602,7 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     legend: { show: false },
     ...coordinate,
     series: [
-      ...supplySeries,
-      ...(visibility.batterieDischargeGW ? [areaSeries('Batterie ←', '#14b8a6', chartHours.map((h) => h.batterieDischargeGW), mode)] : []),
-      ...(visibility.pumpspeicherDischargeGW ? [areaSeries('Pumpspeicher ←', '#0284c7', chartHours.map((h) => h.pumpspeicherDischargeGW), mode)] : []),
-      ...(visibility.h2DischargeGW ? [areaSeries('Wasserstoff ←', '#06b6d4', chartHours.map((h) => h.h2DischargeGW), mode)] : []),
-      ...(visibility.importGW ? [areaSeries('Import', '#dc2626', chartHours.map((h) => h.importGW), mode)] : []),
+      ...groupSeries,
       ...(visibility.loadSheddingGW ? [{
         name: 'Fehlend',
         type: 'line' as const,
@@ -487,51 +629,9 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
         lineStyle: { width: 2.2, color: colors.loadColor },
         data: chartHours.map(loadValue),
       }] : []),
-      ...(withStorage ? [
-        storageFillSeries('Batterie-Füllstand', '#10b981', batData, batMax),
-        storageFillSeries('H₂-Füllstand', '#0891b2', h2Data, h2Max),
-      ] : []),
+      ...(fill.batterie ? [storageFillSeries('Batterie-Füllstand', '#3b82f6', batData, batMax)] : []),
+      ...(fill.h2 ? [storageFillSeries('H₂-Füllstand', '#2dd4bf', h2Data, h2Max)] : []),
     ],
   };
 }
 
-export function buildStorageChartOption(hours: SimHour[], theme: ChartTheme = 'light', mode: ChartMode = 'linie', viewport?: ChartViewport): EChartsOption {
-  const chartHours = compressHours(hours);
-  const colors = chartTheme(theme);
-  const line = (name: string, color: string, data: number[]) => ({
-    name,
-    type: 'line' as const,
-    ...(mode === 'sunburst' ? { coordinateSystem: 'polar' as const } : {}),
-    smooth: false,
-    showSymbol: false,
-    itemStyle: { color },
-    data,
-  });
-  // Gleiche Polar-Geometrie wie der Energiemix: Winkel = Jahresverlauf,
-  // Radius = Füllstand. Im Linienmodus klassische Zeitachse.
-  const compact = isCompactChart(viewport);
-  const coordinate = mode === 'sunburst'
-    ? {
-      polar: {
-        center: ['50%', compact ? '50%' : '52%'],
-        radius: compact ? ['3%', compactPolarOuterRadius(viewport)] : ['5%', '77%'],
-      },
-      angleAxis: angleAxis(hours, chartHours, compact, theme),
-      radiusAxis: radiusAxis('GWh', undefined, theme),
-    }
-    : {
-      grid: { left: 46, right: 20, top: 18, bottom: 48 },
-      xAxis: xAxis(hours, chartHours, theme, viewport),
-      yAxis: yAxis('GWh', undefined, theme),
-    };
-  return {
-    backgroundColor: 'transparent',
-    animation: false,
-    tooltip: { trigger: 'axis', backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, textStyle: { color: colors.tooltipText } },
-    ...coordinate,
-    series: [
-      line('Batterie', '#10b981', chartHours.map(h => h.batteryGWh)),
-      line('H₂', '#0891b2', chartHours.map(h => h.h2GWh)),
-    ],
-  };
-}

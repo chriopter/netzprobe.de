@@ -9,6 +9,7 @@ export function useMainThreadChart<TData>(
   data: TData | null,
   buildOption: (data: TData, viewport: ChartViewport) => echarts.EChartsCoreOption,
   roam: boolean = false,
+  onSeriesHover?: (seriesName: string | null) => void,
 ): boolean {
   const chartRef = useRef<echarts.ECharts | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -16,6 +17,9 @@ export function useMainThreadChart<TData>(
   const roamStateRef = useRef<ChartRoamState>({ scale: 1, x: 0, y: 0 });
   const [viewport, setViewport] = useState<ChartViewport>({ width: 0, height: 0 });
   const [pending, setPending] = useState(false);
+  // Immer den aktuellen Handler nutzen, ohne die Events neu zu binden.
+  const hoverRef = useRef(onSeriesHover);
+  hoverRef.current = onSeriesHover;
 
   // Lazy-Init beim ersten Render mit Daten. Pending-Flag wird per double-RAF
   // wieder freigegeben (statt ECharts' 'finished'-Event, das mit
@@ -38,6 +42,41 @@ export function useMainThreadChart<TData>(
     if (!chartRef.current) {
       const chart = echarts.init(el);
       chartRef.current = chart;
+      // Hover ueber einer gestapelten Flaeche an den Aufrufer melden. ECharts
+      // feuert Serien-Events nicht zuverlaessig auf areaStyle-Polygonen, daher
+      // per Pixel->Datenkoordinate selbst nachschlagen, welches Stapel-Band
+      // unter dem Cursor liegt (Linien- und Polar-Modus). rAF-gedrosselt.
+      let hoverRaf = 0;
+      chart.getZr().on('mousemove', (event: { offsetX: number; offsetY: number }) => {
+        if (!hoverRef.current || hoverRaf) return;
+        hoverRaf = requestAnimationFrame(() => {
+          hoverRaf = 0;
+          const pixel: [number, number] = [event.offsetX, event.offsetY];
+          const option = chart.getOption() as { polar?: unknown[]; series?: Array<{ name?: string; stack?: string; data?: number[] }> };
+          const isPolar = Array.isArray(option.polar) && option.polar.length > 0;
+          const finder = (isPolar ? { polarIndex: 0 } : { gridIndex: 0 }) as Parameters<typeof chart.convertFromPixel>[0];
+          const coords = chart.convertFromPixel(finder, pixel) as unknown as number[] | null;
+          // Grid liefert [Kategorie-Index, GW]; Polar [Radius (GW), Winkel (Kategorie-Index)].
+          const index = coords ? Math.round(isPolar ? coords[1] : coords[0]) : NaN;
+          const value = coords ? (isPolar ? coords[0] : coords[1]) : NaN;
+          if (!Number.isFinite(index) || !Number.isFinite(value) || value < 0) {
+            hoverRef.current?.(null);
+            return;
+          }
+          let cumulative = 0;
+          let hit: string | null = null;
+          for (const series of option.series ?? []) {
+            if (series.stack !== 'supply') continue;
+            cumulative += Number(series.data?.[index] ?? 0);
+            if (value <= cumulative) { hit = series.name ?? null; break; }
+          }
+          // '' = Maus liegt ueber dem Graph, aber ueber keinem Stapel-Band
+          // (z. B. oberhalb des Stapels) — der Aufrufer entscheidet, ob das
+          // als "ueber dem Chart" zaehlt.
+          hoverRef.current?.(hit ?? '');
+        });
+      });
+      chart.getZr().on('globalout', () => hoverRef.current?.(null));
       setViewport({ width: el.clientWidth, height: el.clientHeight });
       const ro = new ResizeObserver(([entry]) => {
         const width = Math.round(entry.contentRect.width);

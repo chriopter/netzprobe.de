@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MIX_VISIBILITY, buildMixChartOption, buildStorageChartOption, mixReferenceScaleMaxGW, mixScaleMaxGW, mixScalePeakGW } from '../../app/src/ui/chartOptions';
+import { DEFAULT_MIX_VISIBILITY, buildMixChartOption, mixReferenceScaleMaxGW, mixScaleMaxGW, mixScalePeakGW } from '../../app/src/ui/chartOptions';
 import type { SimHour } from '../../app/src/types/simulation';
 
 const hour = (loadSheddingGW: number): SimHour => ({
@@ -33,6 +33,9 @@ const hour = (loadSheddingGW: number): SimHour => ({
   curtailmentGW: 0,
   loadSheddingGW,
   h2PoolReductionGW: 0,
+  h2PoolImportGW: 0,
+  h2PoolLhvGW: 0,
+  h2PoolImportLhvGW: 0,
   supplyGW: 40,
   balanceGW: 0,
   co2Tph: 0,
@@ -55,42 +58,90 @@ const hour = (loadSheddingGW: number): SimHour => ({
 const hourAt = (date: string, loadGW = 80): SimHour => ({ ...hour(0), time: `${date}T00:00:00Z`, loadGW });
 
 describe('mix chart options', () => {
-  it('orders visible supply leaves like Energy-Charts from firm lower layers to solar top layer', () => {
+  it('aggregates the stack into one area per legend group in chip order', () => {
     const option = buildMixChartOption([hour(0)]);
     const series = option.series as Array<Record<string, unknown>>;
-    expect(series.slice(0, 12).map((s) => s.name)).toEqual([
-      'Laufwasser',
-      'Biomasse',
-      'Geothermie',
-      'Kernkraft',
-      'Kohle',
-      'Öl',
-      'Sonstige',
-      'Müll',
-      'Gas',
-      'Wind Offshore',
-      'Wind Onshore',
-      'PV',
+    expect(series.slice(0, 5).map((s) => s.name)).toEqual([
+      'EE',
+      'Fossil',
+      'Kern',
+      'Speicher',
+      'Import',
     ]);
+  });
+
+  it('expands only the hovered group into its technology areas', () => {
+    const option = buildMixChartOption([hour(0)], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'netzlast', 'renewable');
+    const names = (option.series as Array<Record<string, unknown>>).map((s) => s.name);
+    expect(names).toEqual(expect.arrayContaining(['Laufwasser', 'Biomasse', 'Wind Onshore', 'PV', 'Fossil', 'Import']));
+    expect(names).not.toContain('Erneuerbar');
+    expect(names).not.toContain('Kohle');
+  });
+
+  it('keeps the H2 amount in the reference line even when the legend chip hides the area', () => {
+    const h = { ...hour(0), loadGW: 60, h2PoolLhvGW: 20, h2PoolImportLhvGW: 20 };
+    const on = buildMixChartOption([h], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'netzlast', 'import')
+      .series as Array<Record<string, unknown>>;
+    expect((on.find((s) => s.name === 'H₂-Import')?.data as number[])[0]).toBe(20);
+    expect((on.find((s) => s.name === 'Last')?.data as number[])[0]).toBe(80);
+
+    // Chip aus: Flaeche weg, Linie unveraendert — die Luecke ist sichtbar statt still.
+    const off = buildMixChartOption([h], { ...DEFAULT_MIX_VISIBILITY, h2PoolImportGW: false }, 'linie', undefined, undefined, 'light', false, 'netzlast', 'import')
+      .series as Array<Record<string, unknown>>;
+    expect(off.some((s) => s.name === 'H₂-Import')).toBe(false);
+    expect((off.find((s) => s.name === 'Last')?.data as number[])[0]).toBe(80);
+  });
+
+  it('endverbrauch view scales technologies to direct coverage and closes with the line', () => {
+    const h = { ...hour(0), loadGW: 50, importGW: 5, storageDischargeGW: 10, batterieDischargeGW: 6, h2DischargeGW: 4 };
+    const series = buildMixChartOption([h], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'endverbrauch')
+      .series as Array<Record<string, unknown>>;
+    const names = series.map((s) => s.name);
+    expect(names).toEqual(expect.arrayContaining(['EE', 'Speicher', 'Import']));
+    expect(names).not.toContain('Netzstrom');
+    // Alle Deckungs-Flaechen zusammen ergeben exakt die Last der Stunde:
+    // Technologien skaliert auf netzstrom (50-5-10=35) + Entladung 10 + Import 5.
+    const stacked = series.filter((s) => s.stack === 'supply');
+    const sum = stacked.reduce((acc, s) => acc + (s.data as number[])[0], 0);
+    expect(sum).toBeCloseTo(50, 6);
+  });
+
+  it('uses full pool coverage in the Bedarf line but only the import share in Netzlast', () => {
+    // 20 GW Pool-Deckung, davon 5 importiert; 15 stammen aus Elektrolyse (im Laden enthalten).
+    const h = { ...hour(0), loadGW: 60, storageChargeGW: 30, h2PoolLhvGW: 20, h2PoolImportLhvGW: 5 };
+    const bedarf = buildMixChartOption([h], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'endverbrauch', 'import')
+      .series as Array<Record<string, unknown>>;
+    expect((bedarf.find((s) => s.name === 'Last')?.data as number[])[0]).toBe(80);
+    expect((bedarf.find((s) => s.name === 'Industrie-H₂')?.data as number[])[0]).toBe(20);
+
+    const netzlast = buildMixChartOption([h], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'netzlast', 'import')
+      .series as Array<Record<string, unknown>>;
+    expect((netzlast.find((s) => s.name === 'Last')?.data as number[])[0]).toBe(95);
+    expect((netzlast.find((s) => s.name === 'H₂-Import')?.data as number[])[0]).toBe(5);
   });
 
   it('keeps hidden leaves out of the plotted stack', () => {
     const visibility = { ...DEFAULT_MIX_VISIBILITY, coalGW: false };
-    const option = buildMixChartOption([hour(0)], visibility);
-    const series = option.series as Array<Record<string, unknown>>;
-    expect(series.map((s) => s.name)).not.toContain('Kohle');
-    expect(series.find((s) => s.name === 'Gas')?.data).toEqual([6]);
+    const h = { ...hour(0), coalGW: 30 };
+    const withCoal = buildMixChartOption([h]).series as Array<Record<string, unknown>>;
+    const withoutCoal = buildMixChartOption([h], visibility).series as Array<Record<string, unknown>>;
+    const fossil = (name: string, list: Array<Record<string, unknown>>) => (list.find((s) => s.name === name)?.data as number[])[0];
+    expect(fossil('Fossil', withCoal) - fossil('Fossil', withoutCoal)).toBeCloseTo(30, 6);
+    // Expandiert fehlt das versteckte Leaf auch als Einzel-Flaeche.
+    const expanded = buildMixChartOption([h], visibility, 'linie', undefined, undefined, 'light', false, 'netzlast', 'fossil')
+      .series as Array<Record<string, unknown>>;
+    expect(expanded.map((s) => s.name)).not.toContain('Kohle');
   });
 
   it('plots import as a red fill in the production chart', () => {
     const sample = { ...hour(0), importGW: 2, exportGW: 1, dataBoundaryResidualGW: -0.5 };
-    const option = buildMixChartOption([sample], DEFAULT_MIX_VISIBILITY, 'linie');
+    const option = buildMixChartOption([sample], DEFAULT_MIX_VISIBILITY, 'linie', undefined, undefined, 'light', false, 'netzlast', 'import');
     const series = option.series as Array<Record<string, unknown>>;
-    const imported = series.find((s) => s.name === 'Import');
+    const imported = series.find((s) => s.name === 'Strom');
 
-    expect(series.map((s) => s.name)).toContain('Import');
-    expect(series.map((s) => s.name)).toContain('Kohle');
-    expect(imported?.itemStyle).toMatchObject({ color: '#dc2626' });
+    expect(series.map((s) => s.name)).toContain('Strom');
+    expect(series.map((s) => s.name)).toContain('Fossil');
+    expect(imported?.itemStyle).toMatchObject({ color: '#ef4444' });
   });
 
   it('renders the main mix as a radial polar chart by default and can switch back to line mode', () => {
@@ -105,12 +156,12 @@ describe('mix chart options', () => {
     expect(radial.radiusAxis).toBeDefined();
     expect(radiusAxis.axisLabel.show).toBe(true);
     expect(radial.xAxis).toBeUndefined();
-    expect(radialSeries.find((s) => s.name === 'PV')?.coordinateSystem).toBe('polar');
+    expect(radialSeries.find((s) => s.name === 'EE')?.coordinateSystem).toBe('polar');
     expect(radialSeries.find((s) => s.name === 'Last')?.coordinateSystem).toBe('polar');
     expect(linear.xAxis).toBeDefined();
     expect(linear.yAxis).toBeDefined();
     expect(linear.polar).toBeUndefined();
-    expect(linearSeries.find((s) => s.name === 'PV')?.coordinateSystem).toBeUndefined();
+    expect(linearSeries.find((s) => s.name === 'EE')?.coordinateSystem).toBeUndefined();
   });
 
   it('keeps compact radial charts inset enough for mobile labels', () => {
@@ -167,17 +218,6 @@ describe('mix chart options', () => {
     const xAxis = linear.xAxis as { data: string[] };
     expect(xAxis.data.filter(Boolean)).toContain('Januar');
     expect(xAxis.data.filter(Boolean)).toContain('Dezember');
-  });
-
-  it('always renders storage as a linear chart', () => {
-    const option = buildStorageChartOption([hour(0)]);
-    const series = option.series as Array<Record<string, unknown>>;
-
-    expect(option.polar).toBeUndefined();
-    expect(option.radiusAxis).toBeUndefined();
-    expect(option.xAxis).toBeDefined();
-    expect(option.yAxis).toBeDefined();
-    expect(series.find((s) => s.name === 'Batterie')?.coordinateSystem).toBeUndefined();
   });
 
   it('shows import as the combined balance fill area', () => {
