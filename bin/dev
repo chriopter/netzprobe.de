@@ -75,4 +75,6 @@ trap cleanup EXIT INT TERM
 
 start_api
 watch_loop &
-npm run vite
+# DEP0205 stammt aus Vites ESM-Loader (module.register() unter Node >= 26),
+# nicht aus unserem Code — stummschalten, bis Upstream auf registerHooks() ist.
+NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=DEP0205" npm run vite
