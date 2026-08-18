@@ -31,6 +31,13 @@ export type SimHour = {
   // Sektor-H₂ aus dem Pool (Industrie-H₂, strom-äquiv) — für die
   // verbrauchsorientierte Last-Sicht (wann Energie gebraucht wird).
   h2PoolReductionGW: number;
+  // Import-Anteil davon (strom-äquivalent); Rest = heimische Elektrolyse,
+  // deren Strom bereits in storageChargeGW steckt.
+  h2PoolImportGW: number;
+  // Dieselben Größen in echten Energie-Einheiten (H₂-LHV): Pool-Deckung
+  // gesamt und Import-Anteil. Das Chart rechnet in gelieferter Energie.
+  h2PoolLhvGW: number;
+  h2PoolImportLhvGW: number;
   supplyGW: number;
   balanceGW: number;
   co2Tph: number;
