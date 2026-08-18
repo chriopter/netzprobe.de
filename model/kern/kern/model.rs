@@ -269,6 +269,18 @@ struct SimHour {
     // die ohne Pool-Deckung des Sektor-H₂-Bedarfs zusätzlich anfiele. Geht in
     // die Kosten-Umlage ein (Kosten je gedeckter Nachfrage inkl. H₂-Substitution).
     h2_pool_reduction_gw: f64,
+    // Anteil davon, der aus IMPORTIERTEM H₂ gedeckt ist (strom-äquivalent).
+    // Der Rest stammt aus heimischer Elektrolyse — dessen Strom steckt bereits
+    // in storage_charge_gw und darf im Chart nicht nochmal auftauchen
+    // (sonst Doppelzählung, wie beim ee-100-Preset passiert).
+    h2_pool_import_gw: f64,
+    // Dieselben zwei Groessen in ECHTEN Energie-Einheiten (H₂-LHV, GW):
+    // Pool-Deckung gesamt und ihr Import-Anteil. Das Chart rechnet in
+    // gelieferter Energie — Strom-Aequivalente wuerden dort die Quellen-Bilanz
+    // (Erzeugung + Import >= Verwendung) verletzen, weil sie den im Ausland
+    // angefallenen Elektrolyse-Verlust als Phantom-TWh mitzaehlen.
+    h2_pool_lhv_gw: f64,
+    h2_pool_import_lhv_gw: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -766,6 +778,17 @@ impl StaticModel {
             storage.h2 = h2_energy_cap.min(h2_available_gw - pool_cover_h2_gw);
             let h2_pool_reduction_gw =
                 self.h2_pool_strom_reduction_gw(pool_cover_h2_gw, scenario)?;
+            // Import-Anteil der Pool-Deckung: der frische Import-Zufluss der
+            // Stunde deckt zuerst (beide Groessen sind stundenkonstant — reicht
+            // der Zufluss, kommt nie Elektrolyse-H₂ in die Industrie; reicht er
+            // nicht, stammt der Rest aus dem Speicher, also aus Elektrolyse).
+            let h2_pool_import_gw = if pool_cover_h2_gw > EPS {
+                h2_pool_reduction_gw * (pool_cover_h2_gw.min(h2_import_inflow_gw) / pool_cover_h2_gw)
+            } else {
+                0.0
+            };
+            let h2_pool_lhv_gw = pool_cover_h2_gw;
+            let h2_pool_import_lhv_gw = pool_cover_h2_gw.min(h2_import_inflow_gw);
             let load_gw = self.demand_gw(row, scenario, h2_pool_reduction_gw)?;
             // e100-Zusatzlast = Gesamtlast minus historische Basislast (fuer den fixed-Pfad:
             // die Basislast wurde im Ist-Jahr real gedeckt, die e100-Last nicht).
@@ -991,6 +1014,9 @@ impl StaticModel {
                 balance_gw,
                 co2_tph,
                 h2_pool_reduction_gw,
+                h2_pool_import_gw,
+                h2_pool_lhv_gw,
+                h2_pool_import_lhv_gw,
             });
         }
 
