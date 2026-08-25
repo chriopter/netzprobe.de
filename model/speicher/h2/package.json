@@ -143,12 +143,13 @@
       ]
     },
     "kosten": {
-      "source": "**Wasserstoff (Elektrolyse + Kavernenspeicher + Rueckverstromung).** Leistungskomponenten GETRENNT, weil Elektrolyseur und Rueckverstromungskraftwerk separate Anlagen sind, die beide Capex binden: Elektrolyse 1500 EUR/kW installiert (Grossprojekte 2024/25 ~1500-2500, Lernkurve <1000; PyPSA-Stack ~545-1040 zzgl. BoP/Installation), Rueckverstromung 1100 EUR/kW (H2-ready GuD ~1100-2400, H2-GT 550-1200; Anker am unteren GuD-Rand analog Gas-Capex). Energiekomponente Kavernenspeicher 0,5 EUR/kWh (Salzkaverne; EWI/PyPSA-Korridor ~0,2-0,6). Wirkungsgradkette in parameters: chargeEfficiency 0,62 (Elektrolyse ~0,65 x Verdichtung/Kaverne ~0,95), dischargeEfficiency 0,55 (H2-GuD) — Produkt = roundtripEfficiency ~0,34. Fix-O&M 25 EUR/kW/a Elektrolyse + 22 EUR/kW/a Rueckverstromung. Var-O&M ~1 EUR/MWh. Lebensdauer 30 a (Kaverne/Elektrolyseur; Stacks ~80000 h frueher ersetzt; ISE BZ nur 12 a). WACC real 6,0 % (Agora Energiewende LCOH 2022: 7 % Projekt-WACC für grünen H2 → ~6 % real; höchstes Kapitalkostenrisiko durch First-of-a-Kind, Auslastungs- und Abnahmerisiko über die dreistufige Kette). Quellen: PyPSA technology-data; Fraunhofer ISE 2024; EWI Salzkavernen; Agora Energiewende LCOH 2022. Konfidenz: niedrig (Werte streuen extrem, stark marktreife-/skalierungsabhaengig). [Korrektur 1: Kavernen-Energie-CAPEX auf ~0,5 EUR/kWh gesenkt (6 war ~12x zu hoch). Korrektur 2: max(Lade-, Entlade-Leistung)-Logik durch getrennte Capex ersetzt — vorher bekam die kleinere der beiden Anlagen null Capex.]",
+      "source": "**Wasserstoff (Elektrolyse + Kavernenspeicher + Rueckverstromung).** Leistungskomponenten GETRENNT, weil Elektrolyseur und Rueckverstromungskraftwerk separate Anlagen sind, die beide Capex binden: Elektrolyse 1500 EUR/kW installiert (Grossprojekte 2024/25 ~1500-2500, Lernkurve <1000; PyPSA-Stack ~545-1040 zzgl. BoP/Installation), Rueckverstromung 1100 EUR/kW (H2-ready GuD ~1100-2400, H2-GT 550-1200; Anker am unteren GuD-Rand analog Gas-Capex). Energiekomponente Kavernenspeicher 0,5 EUR/kWh (Salzkaverne; EWI/PyPSA-Korridor ~0,2-0,6). Wirkungsgradkette in parameters: chargeEfficiency 0,62 (Elektrolyse ~0,65 x Verdichtung/Kaverne ~0,95), dischargeEfficiency 0,55 (H2-GuD) — Produkt = roundtripEfficiency ~0,34. Fix-O&M 25 EUR/kW/a Elektrolyse + 22 EUR/kW/a Rueckverstromung. Var-O&M ~1 EUR/MWh. Lebensdauer 30 a (Kaverne/Elektrolyseur; Stacks ~80000 h frueher ersetzt; ISE BZ nur 12 a). WACC real 6,0 % (Agora Energiewende LCOH 2022: 7 % Projekt-WACC für grünen H2 → ~6 % real; höchstes Kapitalkostenrisiko durch First-of-a-Kind, Auslastungs- und Abnahmerisiko über die dreistufige Kette). Quellen: PyPSA technology-data; Fraunhofer ISE 2024; EWI Salzkavernen; Agora Energiewende LCOH 2022. Konfidenz: niedrig (Werte streuen extrem, stark marktreife-/skalierungsabhaengig). [Korrektur 1: Kavernen-Energie-CAPEX auf ~0,5 EUR/kWh gesenkt (6 war ~12x zu hoch). Korrektur 2: max(Lade-, Entlade-Leistung)-Logik durch getrennte Capex ersetzt — vorher bekam die kleinere der beiden Anlagen null Capex.] Bauzeit `constructionYears` 3 a (RWE GET H2 Nukleus 100 MW: FID bis IBN ~3 a; Rueckverstromung wie Gasturbine 2-3 a; IEA: >50 % der Elektrolyse-Pipeline verfehlt Zieltermine) — Bauzeitverzinsung des CAPEX ueber die Bauzeit mit dem WACC.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
         "https://atb.nrel.gov/",
-        "https://www.agora-energiewende.org/fileadmin/Projekte/2022/2022-12-10_Trans4Real/A-EW_301_LCOH_WEB.pdf"
+        "https://www.agora-energiewende.org/fileadmin/Projekte/2022/2022-12-10_Trans4Real/A-EW_301_LCOH_WEB.pdf",
+        "https://www.iea.org/reports/global-hydrogen-review-2025/production-prospects-to-2030-2"
       ]
     }
   },
@@ -230,7 +231,8 @@
       "omFixDischargeEurPerKWa": 22,
       "omVarEurPerMWh": 1,
       "lifetimeYears": 30,
-      "efficiency": 0.34
+      "efficiency": 0.34,
+      "constructionYears": 3
     }
   }
 }

@@ -152,7 +152,7 @@
       ]
     },
     "kosten": {
-      "source": "**Kernkraft (Neubau, 2024/25, real, Overnight — Finanzierung läuft separat über WACC).** CAPEX 8.000 EUR/kW entspricht dem europäischen SERIENBAU-Niveau: EDF beziffert das EPR2-Programm (6 Blöcke, 10 GW) auf 72,8 Mrd EUR_2020 Overnight (≈ 8.600 EUR_2025/kW; Dez 2025, dritte Erhöhung vor Baubeginn); KHNP-Festpreis Dukovany (2×1.063 MW) ~7.650 EUR/kW; Polens AP1000-Programm ~11.200 EUR/kW (inkl. Finanzierungselemente). Europäische FOAK-Projekte realisierten 6.900 (Olkiluoto 3) bis ~15.000 EUR/kW (Hinkley Point C, Stand 2026). Asiatische HEIMATkosten (China Hualong One ~2.200 EUR/kW Overnight, Korea ~2.000-3.000) sind real, aber nicht regionskonsistent ansetzbar: derselbe koreanische Anbieter verlangt in der EU das 2,5-Fache, chinesischer Export nach Pakistan +70 % — und PV/Wind sind im Modell ebenfalls mit europäischen Installationskosten angesetzt. Dokumentierte Spanne 6.500-12.000 EUR/kW (NREL-ATB-NOAK ~6.900 bis Polen ~11.200). KONVENTION: efficiency=1 gesetzt, weil fuelEurPerMWhTh bereits EUR/MWh_el ist -> wird durch eff=1 unveraendert durchgereicht. Wert 11 EUR/MWh_el = marktbasierter Front-End-Brennstoff (Uran + Konversion + Anreicherung + Fabrikation): WNA-Rechenbeispiel (Sept 2021 ~4,6 USD/MWh, ~51% Uran / ~49% Konversion+Anreicherung+Fabrikation) auf 2024/25-Vertragspreise hochgerechnet (Uran ~80 USD/lb, SWU nach dem 2022-Spike ~3x), Front-End-Basis konsistent mit dem Ausschluss von Rueckbau/Endlager. Spot-Peaks 2024 laegen ~15-19. Frueherer Wert 22,9 (ISE 2024: Uran 8,0 EUR/MWh_th / 0,35 Netto-Wirkungsgrad) lag ~2x ueber Markt und brach als einzige Nicht-Markt-Setzung aus den uebrigen Brennstoffpreisen aus. Rueckbau/Endlager NICHT in LCOE. WACC real 7,8 % (ISE). LCOE ~301 EUR/MWh (Korridor 136-490). Quellen: Fraunhofer ISE 2024; WNA; IEA Nuclear 2025. Konfidenz: niedrig (extreme CAPEX-Streuung, reale FOAK bis 16000 EUR/kW).",
+      "source": "**Kernkraft (Neubau, 2024/25, real, Overnight — Finanzierung läuft separat über WACC).** CAPEX 8.000 EUR/kW entspricht dem europäischen SERIENBAU-Niveau: EDF beziffert das EPR2-Programm (6 Blöcke, 10 GW) auf 72,8 Mrd EUR_2020 Overnight (≈ 8.600 EUR_2025/kW; Dez 2025, dritte Erhöhung vor Baubeginn); KHNP-Festpreis Dukovany (2×1.063 MW) ~7.650 EUR/kW; Polens AP1000-Programm ~11.200 EUR/kW (inkl. Finanzierungselemente). Europäische FOAK-Projekte realisierten 6.900 (Olkiluoto 3) bis ~15.000 EUR/kW (Hinkley Point C, Stand 2026). Asiatische HEIMATkosten (China Hualong One ~2.200 EUR/kW Overnight, Korea ~2.000-3.000) sind real, aber nicht regionskonsistent ansetzbar: derselbe koreanische Anbieter verlangt in der EU das 2,5-Fache, chinesischer Export nach Pakistan +70 % — und PV/Wind sind im Modell ebenfalls mit europäischen Installationskosten angesetzt. Dokumentierte Spanne 6.500-12.000 EUR/kW (NREL-ATB-NOAK ~6.900 bis Polen ~11.200). KONVENTION: efficiency=1 gesetzt, weil fuelEurPerMWhTh bereits EUR/MWh_el ist -> wird durch eff=1 unveraendert durchgereicht. Wert 11 EUR/MWh_el = marktbasierter Front-End-Brennstoff (Uran + Konversion + Anreicherung + Fabrikation): WNA-Rechenbeispiel (Sept 2021 ~4,6 USD/MWh, ~51% Uran / ~49% Konversion+Anreicherung+Fabrikation) auf 2024/25-Vertragspreise hochgerechnet (Uran ~80 USD/lb, SWU nach dem 2022-Spike ~3x), Front-End-Basis konsistent mit dem Ausschluss von Rueckbau/Endlager. Spot-Peaks 2024 laegen ~15-19. Frueherer Wert 22,9 (ISE 2024: Uran 8,0 EUR/MWh_th / 0,35 Netto-Wirkungsgrad) lag ~2x ueber Markt und brach als einzige Nicht-Markt-Setzung aus den uebrigen Brennstoffpreisen aus. Rueckbau/Endlager NICHT in LCOE. WACC real 7,8 % (ISE). LCOE ~301 EUR/MWh (Korridor 136-490). Quellen: Fraunhofer ISE 2024; WNA; IEA Nuclear 2025. Konfidenz: niedrig (extreme CAPEX-Streuung, reale FOAK bis 16000 EUR/kW). Bauzeit `constructionYears` 7 a — Bauzeitverzinsung des Overnight-CAPEX ueber die Bauzeit mit dem WACC (Faktor ((1+r)^T-1)/(r*T), bei 7,8 % real und 7 a = 1,27). Gesetzt als Serienbau-Mittel, konsistent zum CAPEX-Ansatz: deutsche Konvoi-Anlagen (Isar 2, Emsland, Neckarwestheim 2: erster Beton bis IBN 5,5-6,1 a), chinesischer Serienmedian 5-6,7 a (IAEA RDS-2/45 Tab. 8), Korea APR1400 heimisch 4,3-5 a, Export Barakah ~8,5 a; EDF-EPR2-Programmziel ~9 a fuer den FOAK; Weltmedian 2021-24 8,5 a, verzerrt durch wieder aufgenommene Bauruinen. FOAK-Worst-Cases (Flamanville 3: 17 a, Olkiluoto 3: 13 a) sind bewusst NICHT der Ansatz — Sensitivitaet 5,5 a (Konvoi/Serie) bis 10 a (FOAK plus Verzug), ueber den Slider einstellbar.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
@@ -162,7 +162,10 @@
         "https://www.world-nuclear-news.org/articles/eu-approves-polish-state-aid-for-nuclear-plant",
         "https://www.newcivilengineer.com/latest/hinkley-point-cs-cost-climbs-to-35bn-with-confirmation-unit-1-will-power-up-in-2030-20-02-2026/",
         "https://anthropoceneinstitute.com/wp-content/uploads/2024/07/2023-Summary-of-Report-on-Chinese-Nuclear-Power-Generation-and-Costs-Analysis-20240424Final.pdf",
-        "https://www.oecd-nea.org/jcms/pl_37787/reducing-the-costs-of-nuclear-power-on-the-path-towards-a-clean-energy-future"
+        "https://www.oecd-nea.org/jcms/pl_37787/reducing-the-costs-of-nuclear-power-on-the-path-towards-a-clean-energy-future",
+        "https://www-pub.iaea.org/MTCD/publications/PDF/RDS-2-45_web.pdf",
+        "https://www.base.bund.de/de/nukleare-sicherheit/atomausstieg/abgeschaltete-akw/2022/die-drei-letzten-akw_inhalt.html",
+        "https://www.world-nuclear-news.org/articles/edf-estimates-epr2-programme-costs-at-eur728-billion"
       ]
     }
   },
@@ -267,7 +270,8 @@
       "omVarEurPerMWh": 7,
       "lifetimeYears": 45,
       "fuelEurPerMWhTh": 11,
-      "efficiency": 1
+      "efficiency": 1,
+      "constructionYears": 7
     },
     "availabilityMonthly": [
       0.95,
