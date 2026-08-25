@@ -1,7 +1,7 @@
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
-import { mergeTechKosten, hasActiveOverrides } from './costLevers';
+import { mergeTechKosten, hasActiveOverrides, shiftWacc } from './costLevers';
 
 export type Kosten = {
   // Realer, technologiespezifischer Kapitalkostensatz (Dezimal). Liegt je Paket
@@ -101,6 +101,8 @@ export type KostenResult = {
   perTech: KostenTech[];
   // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
   params: {
+    // Globaler WACC-Shift (Prozentpunkte) aus der Sidebar, 0 = Paketwerte.
+    waccShiftPp: number;
     netzWacc: number;
     h2ImportTWh: number;
     h2ImportEurPerMWh: number;
@@ -171,7 +173,9 @@ export function computeHaushalt(k: KostenResult, pkwAddTWh: number, heizAddTWh: 
   };
 }
 
-export function computeKosten(scenario: Scenario, result: SimulationResult): KostenResult {
+const withWaccShift = (k: Kosten, shiftPp: number): Kosten => shiftPp ? { ...k, wacc: shiftWacc(k.wacc, shiftPp) } : k;
+
+export function computeKosten(scenario: Scenario, result: SimulationResult, waccShiftPp = 0): KostenResult {
   const P = uiManifest.prices as Record<string, number>;
   const genPkg = uiManifest.generation as Record<string, { kosten?: Kosten }>;
   const stoPkg = uiManifest.storage as Record<string, { kosten?: Kosten }>;
@@ -205,7 +209,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   for (const [key, label, gwField, hf] of GEN) {
     const k0 = genPkg[key]?.kosten;
     if (!k0) continue;
-    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key]);
+    const k = withWaccShift(mergeTechKosten(key, k0, scenario.costOverrides?.[key]), waccShiftPp);
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
     const capexPerKW = effectiveCapexEurPerKW(k, gw);
@@ -230,7 +234,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   for (const [key, label, chargeGW, dischargeGW, energy] of storCaps) {
     const k0 = stoPkg[key]?.kosten;
     if (!k0 || (chargeGW <= 0 && dischargeGW <= 0 && energy <= 0)) continue;
-    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key]);
+    const k = withWaccShift(mergeTechKosten(key, k0, scenario.costOverrides?.[key]), waccShiftPp);
     const split = k.capexChargeEurPerKW != null || k.capexDischargeEurPerKW != null;
     const powerCapexEur = split
       ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
@@ -296,7 +300,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
   // Netzausbau nutzt den regulierten Netz-WACC (BNetzA ARegV), nicht die
   // technologiespezifischen Erzeuger-/Speicher-WACCs — das Netz ist eine
   // regulierte Infrastruktur, kein einzeltechnologisches Asset.
-  const netzWacc = P.netzWacc ?? 0.05;
+  const netzWacc = shiftWacc(P.netzWacc ?? 0.05, waccShiftPp);
   const netzCrfValue = crf(netzWacc, P.netzLifetimeYears ?? 40);
   const netzLumpEur = ((P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW + (P.netzCapexEurPerKwAddedPeakLoad ?? 0) * addedPeakLoadGW) * 1e6;
   investEur += netzLumpEur;
@@ -327,9 +331,10 @@ export function computeKosten(scenario: Scenario, result: SimulationResult): Kos
     addedReGW,
     addedPeakLoadGW,
     exportAtCap,
-    hasCostOverrides: hasActiveOverrides(scenario.costOverrides),
+    hasCostOverrides: hasActiveOverrides(scenario.costOverrides) || waccShiftPp !== 0,
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
+      waccShiftPp,
       netzWacc,
       h2ImportTWh: scenario.import.h2TWh,
       h2ImportEurPerMWh: P.h2ImportEurPerMWh ?? 0,

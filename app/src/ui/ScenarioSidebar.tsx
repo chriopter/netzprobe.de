@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import { FloatingPanel } from './sectionUi';
-import { KOSTEN_LEVERS, FIELD_TO_TECH, type KostenLever } from './costLevers';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, WACC_SHIFT, type KostenLever } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -90,6 +90,7 @@ type ScenarioSidebarProps = {
   customStart: string;
   customEnd: string;
   periodYears: CostPeriod;
+  waccShiftPp: number;
   collapsed: boolean;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
@@ -98,6 +99,7 @@ type ScenarioSidebarProps = {
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
   onPeriodYears: (years: CostPeriod) => void;
+  onWaccShift: (pp: number) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -220,11 +222,13 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   customStart,
   customEnd,
   periodYears,
+  waccShiftPp,
   collapsed,
   openSectors,
   expandedRow,
   actionBar = null,
   onPeriodYears,
+  onWaccShift,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -330,7 +334,9 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           customEnd={customEnd}
           loadYear={scenario.loadYear}
           periodYears={periodYears}
+          waccShiftPp={waccShiftPp}
           onPeriodYears={onPeriodYears}
+          onWaccShift={onWaccShift}
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
@@ -1534,7 +1540,9 @@ function PeriodControl({
   customEnd,
   loadYear,
   periodYears,
+  waccShiftPp,
   onPeriodYears,
+  onWaccShift,
   onPreset,
   onStart,
   onEnd,
@@ -1547,7 +1555,9 @@ function PeriodControl({
   customEnd: string;
   loadYear: 2025 | 2017;
   periodYears: CostPeriod;
+  waccShiftPp: number;
   onPeriodYears: (years: CostPeriod) => void;
+  onWaccShift: (pp: number) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -1588,6 +1598,19 @@ function PeriodControl({
           <PresetPillRow presets={costPeriodPills} activeId={periodYears} onSelect={onPeriodYears}/>
         </div>
         <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Gesamtkosten = Jahresmiete × {periodYears} Jahre (WACC steckt in der Jahresmiete); steuert auch die Material-Erneuerung der Ressourcen</span>
+      </div>
+      <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Kapitalkosten</span>
+        <CapacitySliderRow
+          label="WACC real, alle Technologien"
+          unit="pp"
+          value={waccShiftPp}
+          min={WACC_SHIFT.min}
+          max={WACC_SHIFT.max}
+          step={WACC_SHIFT.step}
+          onValue={onWaccShift}
+        />
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Verschiebt den realen Zins jeder Technologie um {waccShiftPp > 0 ? '+' : ''}{waccShiftPp.toLocaleString('de-DE')} Prozentpunkte (Paketwerte: PV 3,5 %, Wind 3,9–6 %, Gas 6,5 %, Kernkraft 7,8 %, Netz 5 %); die Risikoaufschläge je Technologie bleiben, nur das Zinsumfeld ändert sich. Feinjustierung je Technologie unter »Kosten-Annahmen« beim jeweiligen Regler.</span>
       </div>
   </SidebarCard>;
 }
