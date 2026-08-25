@@ -30,7 +30,7 @@ import { DisclaimerFooter } from './DisclaimerFooter';
 import { UpdateBanner } from './UpdateBanner';
 import { pct, twh } from './format';
 import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
-import { ScenarioSidebar, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
+import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
 import { KOSTEN_LEVERS, WACC_SHIFT } from './costLevers';
 import { captureNodeToPng, FloatingPanel } from './sectionUi';
@@ -1195,6 +1195,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           <MixSection
             result={result}
             resolvedScenario={resolvedScenario}
+            electrifiedPct={electrifiedFraction(resolvedScenario, data)}
             periodYears={periodYears}
             waccShiftPp={waccShiftPp}
             chartMode={chartMode}
