@@ -36,7 +36,7 @@ const OPTIMISM_TECH_ICON: Record<string, ReactNode> = {
 export type TechKosten = ReadonlyArray<{ key: string; total: number }>;
 
 import { FloatingPanel } from './sectionUi';
-import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismEffects, optimismLabel, optimismSummary, type KostenLever, type Optimism } from './costLevers';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismEffects, optimismLabel, optimismMood, optimismSummary, type KostenLever, type Optimism } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -1661,7 +1661,7 @@ function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOpt
             <Smile className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true"/>
           </div>
         </div>
-        <span className="text-xs text-zinc-700 dark:text-zinc-200">{optimismLabel(optimism.main)}</span>
+        <span className="text-xs text-zinc-700 dark:text-zinc-200"><strong className="font-semibold text-zinc-950 dark:text-zinc-50">{optimismMood(optimism.main)}</strong> — {optimismLabel(optimism.main)}</span>
         {rows.length > 0 && <ul className="mt-1 grid gap-0.5 px-1 text-xs">
           {rows.map(r => <li key={r.key} className="min-w-0">
             <button
