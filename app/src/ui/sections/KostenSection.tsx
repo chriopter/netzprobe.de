@@ -6,7 +6,7 @@ import type { SimulationResult } from '../../types/simulation';
 import { HelpDot, HelpPanel, SectionHeading } from '../sectionUi';
 import { cx } from '../ui';
 import { fmt0 } from '../format';
-import { OPTIMISM_DIMS, effectiveOptimism, isOptimismActive, optimismLabel, optimismSummary, type Optimism } from '../costLevers';
+import { OPTIMISM_DIMS, effectiveOptimism, isOptimismActive, optimismLabel, optimismMood, optimismSummary, type Optimism } from '../costLevers';
 import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult, type KostenTech } from '../kosten';
 import { householdElectrificationTWh } from '../ScenarioSidebar';
 import type { DataSet } from '../../types/data';
@@ -385,12 +385,13 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
         const active = isOptimismActive(o);
         const main = OPTIMISM_DIMS.map(d => effectiveOptimism(o, d.key));
         const uniform = main.every(v => v === main[0]);
-        return <p className={cx('mt-2 text-center text-sm font-semibold tracking-tight', active ? (main[0] > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400') : 'text-zinc-700 dark:text-zinc-300')}>
-          Rahmenbedingungen: {optimismSummary(o)}{uniform ? ` — ${optimismLabel(main[0])}` : ` — ${OPTIMISM_DIMS.map(d => `${d.label} ${effectiveOptimism(o, d.key) > 0 ? '+' : ''}${effectiveOptimism(o, d.key)}`).join(' · ')}`}
+        const avg = main.reduce((a, b) => a + b, 0) / main.length;
+        return <p className={cx('mt-2 text-center text-sm font-semibold tracking-tight', active ? (avg > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400') : 'text-zinc-700 dark:text-zinc-300')} title={uniform ? optimismLabel(main[0]) : OPTIMISM_DIMS.map(d => `${d.label}: ${optimismMood(effectiveOptimism(o, d.key))}`).join(' · ')}>
+          Optimismus: {optimismSummary(o)}.
         </p>;
       })()}
       <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
-      {k.hasCostOverrides && <p className="mt-2 text-center"><span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Eigene Kostenannahmen aktiv{isOptimismActive(k.params.optimism) ? ` · ${optimismSummary(k.params.optimism)}` : ''}</span></p>}
+      {k.hasCostOverrides && <p className="mt-2 text-center"><span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Eigene Kostenannahmen aktiv</span></p>}
       {/* Master-Schalter: skaliert den GANZEN Bon (jede Kostenart, jede
           Technologie, SUMME) wahlweise pro Jahr oder über den Kostenzeitraum. */}
       <div className="mt-4 flex justify-center">

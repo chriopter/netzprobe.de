@@ -55,12 +55,21 @@ export function effectiveOptimism(opt: Optimism, dim: OptimismDim): number {
 export function isOptimismActive(opt: Optimism): boolean {
   return OPTIMISM_DIMS.some(d => effectiveOptimism(opt, d.key) !== 0);
 }
-// Kurzlabel fuer Badge/Bon: ein Wert, wenn alle Dimensionen gleich sind, sonst »individuell«.
+// Stimmungswort statt Zahl (Badge, Bon, Sidebar).
+export function optimismMood(value: number): string {
+  if (value >= 80) return 'Euphorisch';
+  if (value >= 40) return 'Sehr gute Laune';
+  if (value > 0) return 'Gut gelaunt';
+  if (value === 0) return 'Nüchtern';
+  if (value > -40) return 'Leicht verstimmt';
+  if (value > -80) return 'Miese Laune';
+  return 'Weltuntergangsstimmung';
+}
+// Kurzlabel fuer Badge/Bon: Stimmungswort, wenn alle Dimensionen gleich sind, sonst »Gemischte Gefühle«.
 export function optimismSummary(opt: Optimism): string {
   const vals = OPTIMISM_DIMS.map(d => effectiveOptimism(opt, d.key));
-  if (vals.every(v => v === 0)) return 'Paketwerte';
-  if (vals.every(v => v === vals[0])) return `Optimismus ${vals[0] > 0 ? '+' : ''}${vals[0]}`;
-  return 'Optimismus individuell';
+  if (vals.every(v => v === vals[0])) return optimismMood(vals[0]);
+  return 'Gemischte Gefühle';
 }
 
 export function leverValueAtOptimism(lever: KostenLever, optimism: number): number {
