@@ -116,6 +116,18 @@ export function optimismEffects(opt: Optimism): OptimismEffect[] {
   });
 }
 
+// Ankerwerte je Dimension (statt einer abstrakten Zahl am Sub-Regler):
+// resultierende Werte an zwei Referenztechnologien.
+export function optimismAnchors(dim: OptimismDim, value: number): string {
+  const num = (v: number, digits: number) => v.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const at = (tech: string, key: string) => { const l = KOSTEN_LEVERS[tech]?.find(x => x.key === key); return l ? leverValueAtOptimism(l, value) : null; };
+  const kk = (key: string) => at('kernkraft', key);
+  if (dim === 'zins') return `Kernkraft ${num(kk('wacc') ?? 0, 1)} % · PV ${num(at('pv', 'wacc') ?? 0, 1)} %`;
+  if (dim === 'preise') return `Kernkraft ${num(kk('capex') ?? 0, 0)} · PV ${num(at('pv', 'capexZubau') ?? 0, 0)} €/kW`;
+  if (dim === 'bauzeit') return `Kernkraft ${num(kk('bauzeit') ?? 0, 1)} a · Wind off ${num(at('windoff', 'bauzeit') ?? 0, 1)} a`;
+  return `Kernkraft ${num(kk('lifetime') ?? 0, 0)} a · PV ${num(at('pv', 'lifetime') ?? 0, 0)} a`;
+}
+
 // Text-Stufen unter dem Regler.
 export function optimismLabel(optimism: number): string {
   if (optimism >= 70) return 'Niedrige Zinsen, günstige Anlagen, kurze Bauzeiten, lange Laufzeiten.';
