@@ -594,10 +594,10 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
           </span>
         </summary>
         <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert mit technologiespezifischem realem WACC — z. B. PV 3,5 %, Kernkraft 7,8 % —, plus Betrieb; beides je Technologie in der Seitenleiste unter »Kosten-Annahmen« änderbar); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. Gerechnet wird die <strong>fertige Zielflotte im Dauerbetrieb</strong> — Hochlauf, Brückenbrennstoff und CO₂ der Übergangsjahre sind nicht enthalten. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je kWh/MWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Overnight-Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung und ohne Bauzeitverzinsung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
-      </details>
-      {k.netzExtrapolated && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+      {k.netzExtrapolated && <p className="mt-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
         ⚠ Netzausbau extrapoliert: {netzTrigger} liegt über dem geeichten Bereich der Netzkosten-Heuristik — der Posten ({fmtBig(k.breakdown.netz * mult)}) ist nur ein Richtungssignal.
       </p>}
+      </details>
       {sheddingTWh > 1 && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
         ⚠ {n0(sheddingTWh)} TWh/a ({n1(sheddingPct)} % der Nachfrage) bleiben unversorgt — bepreist ist nur die gelieferte Energie; der Wert entgangener Last ist nicht bilanziert.
       </p>}
