@@ -18,6 +18,17 @@ export type KostenLever = {
 
 export type CostOverrides = Record<string, Record<string, number>>;
 
+// Globaler Kapitalkosten-Regler (Sidebar, unter dem Kostenzeitraum): verschiebt
+// den realen WACC ALLER Technologien und des Netzes um n Prozentpunkte. Die
+// technologiespezifischen Aufschläge (Kernkraft 7,8 % vs. PV 3,5 %) bleiben
+// erhalten — der Regler bildet das Zinsumfeld ab, nicht die Risikoprämie.
+export const WACC_SHIFT = { def: 0, min: -3, max: 3, step: 0.5, floorWacc: 0.005 } as const;
+
+export function shiftWacc(wacc: number, shiftPp: number): number {
+  if (!shiftPp) return wacc;
+  return Math.max(WACC_SHIFT.floorWacc, wacc + shiftPp / 100);
+}
+
 export const KOSTEN_LEVERS: Record<string, KostenLever[]> = {
   pv: [
     { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 850, min: 500, max: 1600, step: 25, param: 'capexEurPerKW' },

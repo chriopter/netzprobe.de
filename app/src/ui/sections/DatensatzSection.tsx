@@ -96,8 +96,8 @@ function countLeaves(value: unknown): number {
   return 1;
 }
 
-export default function DatensatzSection({ resolvedScenario, result, periodYears, data, shareUrl }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; data: DataSet | null; shareUrl: string }) {
-  const kosten = useMemo(() => computeKosten(resolvedScenario, result), [resolvedScenario, result]);
+export default function DatensatzSection({ resolvedScenario, result, periodYears, waccShiftPp, data, shareUrl }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; waccShiftPp: number; data: DataSet | null; shareUrl: string }) {
+  const kosten = useMemo(() => computeKosten(resolvedScenario, result, waccShiftPp), [resolvedScenario, result, waccShiftPp]);
   const ressourcen = useMemo(() => {
     const fuelTWh = fuelTWhFromResult(result);
     const annual = annualByMaterial(resolvedScenario, Math.max(1, Number(periodYears)), e100ElectricTWh(resolvedScenario, data), fuelTWh);
