@@ -135,11 +135,12 @@
       ]
     },
     "kosten": {
-      "source": "**Wind onshore (Turbinen 2-5 MW, 2024, real).** CAPEX 1700 EUR/kW = Vollkosten Richtung Deutsche WindGuard 2024 (Haupt inkl. Fundament 1238 + Investitionsnebenkosten 506 = 1744 EUR/kW Gesamt bei 5,3-MW-Referenzanlage); innerhalb ISE-Spanne 1300-1900 (Mittel ~1600). IRENA 2024 Welt 1041 USD/kW ~960 EUR liegt niedriger (Welt vs. DE; PyPSA/DEA ~1439 EUR/kW). Fix-O&M 32 EUR/kW/a (ISE Tab. 2), Var-O&M 7 EUR/MWh (=0,007 EUR/kWh). Kein Brennstoff. Lebensdauer 25 a (ISE; DEA/PyPSA bis 28-30 a). WACC real 3,9 % (ISE). LCOE-Quercheck ~67 EUR/MWh (Korridor 43-92). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: hoch.",
+      "source": "**Wind onshore (Turbinen 2-5 MW, 2024, real).** CAPEX 1700 EUR/kW = Vollkosten Richtung Deutsche WindGuard 2024 (Haupt inkl. Fundament 1238 + Investitionsnebenkosten 506 = 1744 EUR/kW Gesamt bei 5,3-MW-Referenzanlage); innerhalb ISE-Spanne 1300-1900 (Mittel ~1600). IRENA 2024 Welt 1041 USD/kW ~960 EUR liegt niedriger (Welt vs. DE; PyPSA/DEA ~1439 EUR/kW). Fix-O&M 32 EUR/kW/a (ISE Tab. 2), Var-O&M 7 EUR/MWh (=0,007 EUR/kWh). Kein Brennstoff. Lebensdauer 25 a (ISE; DEA/PyPSA bis 28-30 a). WACC real 3,9 % (ISE). LCOE-Quercheck ~67 EUR/MWh (Korridor 43-92). Quellen: Fraunhofer ISE 2024; IRENA RPGC 2024. Konfidenz: hoch. Bauzeit `constructionYears` 2 a (DEA Technology Catalogue: Errichtung 1-1,5 a, IBN ~3,5 a nach FID inkl. Beschaffung) — Bauzeitverzinsung des CAPEX ueber die Bauzeit mit dem WACC.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
-        "https://atb.nrel.gov/"
+        "https://atb.nrel.gov/",
+        "https://ens.dk/en/analyses-and-statistics/technology-catalogues"
       ]
     }
   },
@@ -267,7 +268,8 @@
       "capexEurPerKW": 1700,
       "omFixEurPerKWa": 32,
       "omVarEurPerMWh": 7,
-      "lifetimeYears": 25
+      "lifetimeYears": 25,
+      "constructionYears": 2
     }
   }
 }

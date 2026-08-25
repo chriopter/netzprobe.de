@@ -31,7 +31,11 @@ export function shiftWacc(wacc: number, shiftPp: number): number {
 
 export const KOSTEN_LEVERS: Record<string, KostenLever[]> = {
   pv: [
-    { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 850, min: 500, max: 1600, step: 25, param: 'capexEurPerKW' },
+    // PV rechnet CAPEX als Blend (Bestand 1.000 €/kW bis 102,5 GW, Zubau zum
+    // Freiflaeche-Grenzwert). Der Hebel steuert den ZUBAU-Wert — der Bestand ist
+    // gebaut und bleibt fix; frueher zeigte der Slider 850, ein Wert, mit dem nie
+    // gerechnet wurde, und ueberschrieb beim Anfassen nur den Bestandsast.
+    { key: 'capexZubau', label: 'CAPEX Zubau (Freifläche)', unit: '€/kW', def: 560, min: 350, max: 1200, step: 10, param: 'capexMarginalEurPerKW' },
     { key: 'wacc', label: 'WACC real', unit: '%', def: 3.5, min: 2, max: 7, step: 0.1, param: 'wacc', scale: 0.01 },
   ],
   windon: [
@@ -43,6 +47,7 @@ export const KOSTEN_LEVERS: Record<string, KostenLever[]> = {
     { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 2800, min: 2200, max: 4000, step: 50, param: 'capexEurPerKW' },
     { key: 'wacc', label: 'WACC real', unit: '%', def: 6.0, min: 3, max: 9, step: 0.1, param: 'wacc', scale: 0.01 },
     { key: 'omfix', label: 'Fix-O&M', unit: '€/kW/a', def: 39, min: 25, max: 60, step: 1, param: 'omFixEurPerKWa' },
+    { key: 'bauzeit', label: 'Bauzeit', unit: 'a', def: 4, min: 2, max: 8, step: 0.5, param: 'constructionYears' },
   ],
   biomasse: [
     { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 4600, min: 3000, max: 6000, step: 50, param: 'capexEurPerKW' },
@@ -57,6 +62,7 @@ export const KOSTEN_LEVERS: Record<string, KostenLever[]> = {
     { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 8000, min: 6500, max: 12000, step: 100, param: 'capexEurPerKW' },
     { key: 'wacc', label: 'WACC real', unit: '%', def: 7.8, min: 4, max: 9, step: 0.1, param: 'wacc', scale: 0.01 },
     { key: 'fuel', label: 'Brennstoff', unit: '€/MWh', def: 11, min: 9, max: 19, step: 0.5, param: 'fuelEurPerMWhTh' },
+    { key: 'bauzeit', label: 'Bauzeit', unit: 'a', def: 7, min: 4, max: 17, step: 0.5, param: 'constructionYears' },
   ],
   gas: [
     { key: 'capex', label: 'CAPEX', unit: '€/kW', def: 1100, min: 700, max: 1500, step: 25, param: 'capexEurPerKW' },
@@ -76,6 +82,7 @@ export const KOSTEN_LEVERS: Record<string, KostenLever[]> = {
   pumpspeicher: [
     { key: 'capexPower', label: 'CAPEX Leistung', unit: '€/kW', def: 1140, min: 600, max: 2000, step: 20, param: 'capexEurPerKW' },
     { key: 'wacc', label: 'WACC real', unit: '%', def: 4.5, min: 3, max: 7, step: 0.1, param: 'wacc', scale: 0.01 },
+    { key: 'bauzeit', label: 'Bauzeit', unit: 'a', def: 7, min: 4, max: 12, step: 0.5, param: 'constructionYears' },
   ],
   h2: [
     { key: 'capexCharge', label: 'CAPEX Elektrolyse', unit: '€/kW', def: 1500, min: 800, max: 2500, step: 50, param: 'capexChargeEurPerKW' },

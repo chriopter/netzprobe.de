@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeHaushalt, computeKosten, crf } from '../../app/src/ui/kosten';
+import { computeHaushalt, computeKosten, crf, idcFactor } from '../../app/src/ui/kosten';
 import { defaultScenario, normalizeScenario } from '../../app/src/ui/scenarioPresets';
 import type { Scenario } from '../../app/src/types/scenario';
 import type { SimulationResult, SimHour } from '../../app/src/types/simulation';
@@ -230,21 +230,40 @@ describe('Kosten · B Invarianten', () => {
   it('18b Kosten-Override: eigene CAPEX/WACC wirken, Default = no-op', () => {
     const hours = [hour({ loadGW: 50, pvGW: 50 })];
     const summary = { totalDemandTWh: 0.438 };
-    const baseScen = scen({ pvInstalledGW: 100 });
+    // 300 GW PV: Blend aktiv (Bestand 102,5 GW fix, Zubau zum Freiflaeche-Grenzwert),
+    // der PV-Hebel steuert den ZUBAU-Wert.
+    const baseScen = scen({ pvInstalledGW: 300 });
     const base = computeKosten(baseScen, result(hours, summary));
     expect(base.hasCostOverrides).toBe(false);
-    // PV-CAPEX 850 → 1600: PV-Posten und Summe steigen, Flag gesetzt
-    const capUp = computeKosten({ ...baseScen, costOverrides: { pv: { capex: 1600 } } }, result(hours, summary));
+    // PV-Zubau-CAPEX 560 → 1100: PV-Posten und Summe steigen, Flag gesetzt
+    const capUp = computeKosten({ ...baseScen, costOverrides: { pv: { capexZubau: 1100 } } }, result(hours, summary));
     expect(capUp.hasCostOverrides).toBe(true);
     expect(capUp.perTech.find(t => t.key === 'pv')!.total).toBeGreaterThan(base.perTech.find(t => t.key === 'pv')!.total);
     expect(capUp.total).toBeGreaterThan(base.total);
     // Override == Default ist kein Override (Flag bleibt false, Summe unverändert)
-    const noop = computeKosten({ ...baseScen, costOverrides: { pv: { capex: 850 } } }, result(hours, summary));
+    const noop = computeKosten({ ...baseScen, costOverrides: { pv: { capexZubau: 560 } } }, result(hours, summary));
     expect(noop.hasCostOverrides).toBe(false);
     expect(noop.total).toBeCloseTo(base.total, -2);
     // WACC-Hebel: Slider-% → Dezimal (scale 0.01), höhere WACC ⇒ höhere Annuität
     const waccUp = computeKosten({ ...baseScen, costOverrides: { pv: { wacc: 7 } } }, result(hours, summary));
     expect(waccUp.total).toBeGreaterThan(base.total);
+  });
+
+  it('18c Bauzeitverzinsung: idcFactor = ((1+r)^T−1)/(rT), wirkt auf CAPEX, T≤1 neutral', () => {
+    expect(idcFactor(0.078, 1)).toBe(1);
+    expect(idcFactor(0.078, 0)).toBe(1);
+    expect(idcFactor(0.078, 7)).toBeCloseTo(1.270, 2);
+    expect(idcFactor(0.02, 7)).toBeCloseTo(1.062, 2);
+    const hours = [hour({ loadGW: 50, kernkraftGW: 50 })];
+    const summary = { totalDemandTWh: 0.438 };
+    const scenK = scen({ kernkraftInstalledGW: 60 });
+    const base = computeKosten(scenK, result(hours, summary));
+    const kk = base.perTech.find(t => t.key === 'kernkraft')!;
+    expect(kk.detail!.idcFactor).toBeCloseTo(idcFactor(kostenOf('kernkraft')!.wacc, kostenOf('kernkraft')!.constructionYears), 6);
+    // Bauzeit 7 → 1 a: Kapitalkosten sinken um genau den IDC-Faktor
+    const fast = computeKosten({ ...scenK, costOverrides: { kernkraft: { bauzeit: 1 } } }, result(hours, summary));
+    const kkFast = fast.perTech.find(t => t.key === 'kernkraft')!;
+    expect(kkFast.capex * kk.detail!.idcFactor!).toBeCloseTo(kk.capex, -3);
   });
 
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {
@@ -279,7 +298,7 @@ describe('Kosten · B Invarianten', () => {
 describe('Kosten · C Netzausbau', () => {
   const netz = { capex: prices.netzCapexEurPerKwAddedRE, life: prices.netzLifetimeYears, base: prices.netzBaselineReCapacityGW };
   const netzAnnual = (pv: number, won: number, woff: number) =>
-    netz.capex * Math.max(0, pv + won + woff - netz.base) * 1e6 * crf(prices.netzWacc, netz.life);
+    netz.capex * Math.max(0, pv + won + woff - netz.base) * 1e6 * idcFactor(prices.netzWacc, prices.netzConstructionYears) * crf(prices.netzWacc, netz.life);
 
   it('C.0 Netz-Parameter vorhanden, dokumentiert & plausibel', () => {
     expect(netz.capex).toBeGreaterThan(0);
@@ -334,7 +353,7 @@ describe('Kosten · C Netzausbau', () => {
   // Lastgetriebener Term (AP03): Verteilnetz für E-Mobilität/WP/Industrie folgt
   // dem Zuwachs der Stromlast-Spitze über die 2025-Basis — technologieneutral.
   const lastAnnual = (peakGW: number) =>
-    prices.netzCapexEurPerKwAddedPeakLoad * Math.max(0, peakGW - prices.netzBaselinePeakLoadGW) * 1e6 * crf(prices.netzWacc, netz.life);
+    prices.netzCapexEurPerKwAddedPeakLoad * Math.max(0, peakGW - prices.netzBaselinePeakLoadGW) * 1e6 * idcFactor(prices.netzWacc, prices.netzConstructionYears) * crf(prices.netzWacc, netz.life);
 
   it('C.7 Last-Term: Peak ≤ 2025-Basis ⇒ 0; darüber Formel & Monotonie', () => {
     expect(prices.netzBaselinePeakLoadGW).toBeGreaterThan(70);
@@ -375,7 +394,7 @@ describe('Kosten · C Netzausbau', () => {
     expect(total2050).toBeGreaterThan(0.65e12);
     expect(total2050).toBeLessThan(0.95e12);
     // Invest-Summe zwischen NEP (~320 Mrd, nur ÜN) und IMK (651 Mrd ÜN+VN).
-    const invest = k.breakdown.netz / crf(prices.netzWacc, netz.life);
+    const invest = k.breakdown.netz / (idcFactor(prices.netzWacc, prices.netzConstructionYears) * crf(prices.netzWacc, netz.life));
     expect(invest).toBeGreaterThan(0.32e12);
     expect(invest).toBeLessThan(0.651e12);
   });

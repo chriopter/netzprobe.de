@@ -133,11 +133,12 @@
       ]
     },
     "kosten": {
-      "source": "**Feste Biomasse / Holz-HKW (>=500 kWel, KWK, 2024, real).** CAPEX 4600 EUR/kW = Mittel der ISE-Spanne feste Biomasse 3473-5788. Fix-O&M 185 EUR/kW/a (ISE-Methode 4 % von CAPEX/a; Spanne 139-232). Var-O&M ~6 EUR/MWh (ISE 4 EUR/MWh + PyPSA solid-biomass-CHP 6,1). Brennstoff frei Kraftwerk 60 EUR/MWh_th als FLOTTEN-Blend (siehe Caveat: ~2/3 Biogas-Substrat 87,5, ~20 % Hackschnitzel 24-37, ~13 % biogener Abfall ~0 EUR/MWh_th; erzeugungsgewichtet und eta-korrigiert 52-62). El. Wirkungsgrad 0,35 (ISE nicht explizit; PyPSA biomass 0,468 / solid-biomass-CHP 0,27 el bei KWK) -> Brennstoffkostenanteil ~171 EUR/MWh_el (Bon-Zeile ~245 EUR/MWh, ISE-Biogas-Band 202-325). Lebensdauer 25 a. WACC real 4,2 % (Fraunhofer ISE 2024 Tab. 2 Biogas/feste Biomasse: nominal 6,0 %, real bei 1,8 % Inflation). Quellen: Fraunhofer ISE 2024; PyPSA technology-data. Konfidenz: mittel.",
+      "source": "**Feste Biomasse / Holz-HKW (>=500 kWel, KWK, 2024, real).** CAPEX 4600 EUR/kW = Mittel der ISE-Spanne feste Biomasse 3473-5788. Fix-O&M 185 EUR/kW/a (ISE-Methode 4 % von CAPEX/a; Spanne 139-232). Var-O&M ~6 EUR/MWh (ISE 4 EUR/MWh + PyPSA solid-biomass-CHP 6,1). Brennstoff frei Kraftwerk 60 EUR/MWh_th als FLOTTEN-Blend (siehe Caveat: ~2/3 Biogas-Substrat 87,5, ~20 % Hackschnitzel 24-37, ~13 % biogener Abfall ~0 EUR/MWh_th; erzeugungsgewichtet und eta-korrigiert 52-62). El. Wirkungsgrad 0,35 (ISE nicht explizit; PyPSA biomass 0,468 / solid-biomass-CHP 0,27 el bei KWK) -> Brennstoffkostenanteil ~171 EUR/MWh_el (Bon-Zeile ~245 EUR/MWh, ISE-Biogas-Band 202-325). Lebensdauer 25 a. WACC real 4,2 % (Fraunhofer ISE 2024 Tab. 2 Biogas/feste Biomasse: nominal 6,0 %, real bei 1,8 % Inflation). Quellen: Fraunhofer ISE 2024; PyPSA technology-data. Konfidenz: mittel. Bauzeit `constructionYears` 2 a (DEA Technology Catalogue: 2,2-2,7 a fuer thermische Anlagen mittlerer Groesse) — Bauzeitverzinsung des CAPEX ueber die Bauzeit mit dem WACC.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
-        "https://atb.nrel.gov/"
+        "https://atb.nrel.gov/",
+        "https://ens.dk/en/analyses-and-statistics/technology-catalogues"
       ]
     }
   },
@@ -209,7 +210,8 @@
       "omVarEurPerMWh": 6,
       "lifetimeYears": 25,
       "fuelEurPerMWhTh": 60,
-      "efficiency": 0.35
+      "efficiency": 0.35,
+      "constructionYears": 2
     }
   }
 }

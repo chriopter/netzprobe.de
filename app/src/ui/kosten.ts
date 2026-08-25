@@ -20,6 +20,8 @@ export type Kosten = {
   omEnergyEurPerKWhA?: number;
   omVarEurPerMWh?: number;
   lifetimeYears: number;
+  // Bauzeit (a) fuer die Bauzeitverzinsung: CAPEX-Lump × idcFactor(wacc, T).
+  constructionYears?: number;
   fuelEurPerMWhTh?: number;
   efficiency?: number;
   // Grenzkosten-CAPEX für Zubau über capexBaselineGW hinaus (EUR/kW). Wenn
@@ -30,6 +32,15 @@ export type Kosten = {
   // (billig, ~Floor). Asymptotisch nähert sich der Mittelwert dem Marginalwert.
   capexMarginalEurPerKW?: number;
   capexBaselineGW?: number;
+};
+
+// Bauzeitverzinsung (interest during construction): Overnight-CAPEX wird bei
+// gleichmaessiger Auszahlung ueber T Baujahre mit r aufgezinst —
+// ((1+r)^T − 1)/(r·T) (DEA LCoE-Methodik, NREL ATB ConFinFactor). T ≤ 1 → 1.
+export const idcFactor = (wacc: number, years: number | undefined): number => {
+  const t = years ?? 0;
+  if (t <= 1 || wacc <= 0) return 1;
+  return (Math.pow(1 + wacc, t) - 1) / (wacc * t);
 };
 
 // Kapitalwiedergewinnungsfaktor (annuisiert das CAPEX über die Lebensdauer).
@@ -70,6 +81,8 @@ export type KostenTechDetail = {
   dischargeTWh?: number;
   genTWh?: number;
   crfValue?: number;
+  // Bauzeitverzinsung: Faktor auf den Overnight-CAPEX (1 = keine Bauzeit).
+  idcFactor?: number;
   // Effektive Flotten-CAPEX nach Grenzkosten-Blend (EUR/kW); weicht von
   // kosten.capexEurPerKW ab, sobald capexMarginalEurPerKW greift.
   capexEffectiveEurPerKW?: number;
@@ -117,6 +130,8 @@ export type KostenResult = {
     netzEurPerKW: number;
     netzLastEurPerKW: number;
     netzLifetimeYears: number;
+    netzConstructionYears: number;
+    netzIdc: number;
     netzCrf: number;
     netzBaselineGW: number;
     netzBaselinePeakGW: number;
@@ -215,12 +230,13 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
     const capexPerKW = effectiveCapexEurPerKW(k, gw);
     const capexLump = capexPerKW * gw * 1e6;
     investEur += capexLump; investErzeugung += capexLump;
-    const capex = capexLump * crf(k.wacc, k.lifetimeYears);
+    const idc = idcFactor(k.wacc, k.constructionYears);
+    const capex = capexLump * idc * crf(k.wacc, k.lifetimeYears);
     const om = (k.omFixEurPerKWa ?? 0) * gw * 1e6 + (k.omVarEurPerMWh ?? 0) * genMWh;
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
     capexSum += capex; omSum += om; fuelSum += fuel;
     const total = capex + om + fuel;
-    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), capexEffectiveEurPerKW: capexPerKW, kosten: k } });
+    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, capexEffectiveEurPerKW: capexPerKW, kosten: k } });
   }
 
   // [key, label, Lade-GW, Entlade-GW, Energie-GWh]. Batterie/PSW haben EINE
@@ -241,7 +257,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
       : (k.capexEurPerKW ?? 0) * Math.max(chargeGW, dischargeGW) * 1e6;
     const capexLump = powerCapexEur + (k.capexEurPerKWh ?? 0) * energy * 1e6;
     investEur += capexLump; investSpeicher += capexLump;
-    const capex = capexLump * crf(k.wacc, k.lifetimeYears);
+    const idc = idcFactor(k.wacc, k.constructionYears);
+    const capex = capexLump * idc * crf(k.wacc, k.lifetimeYears);
     // Variable O&M auf die tatsächlich entladene Energie (aus der Stundenreihe,
     // jahres-skaliert) — die Speicher-Pakete dokumentieren omVarEurPerMWh.
     // omEnergyEurPerKWhA: Energie-O&M je installierter kWh (NREL-ATB-Konvention
@@ -253,7 +270,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
       + (k.omEnergyEurPerKWhA ?? 0) * energy * 1e6
       + (k.omVarEurPerMWh ?? 0) * dischargeMWh;
     capexSum += capex; omSum += om;
-    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, dischargeTWh: dischargeMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), kosten: k } });
+    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, dischargeTWh: dischargeMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, kosten: k } });
   }
 
   // Wasserstoff-Import: importierte H2-Menge × Importpreis (LHV). Eigene Zeile,
@@ -304,7 +321,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
   const netzCrfValue = crf(netzWacc, P.netzLifetimeYears ?? 40);
   const netzLumpEur = ((P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW + (P.netzCapexEurPerKwAddedPeakLoad ?? 0) * addedPeakLoadGW) * 1e6;
   investEur += netzLumpEur;
-  const netz = netzLumpEur * netzCrfValue;
+  const netzIdc = idcFactor(netzWacc, P.netzConstructionYears);
+  const netz = netzLumpEur * netzIdc * netzCrfValue;
   const netzExtrapolated = addedReGW > (P.netzCalibratedMaxAddedReGW ?? 700)
     || addedPeakLoadGW > (P.netzCalibratedMaxAddedPeakLoadGW ?? 100);
 
@@ -347,6 +365,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
       netzEurPerKW: P.netzCapexEurPerKwAddedRE ?? 0,
       netzLastEurPerKW: P.netzCapexEurPerKwAddedPeakLoad ?? 0,
       netzLifetimeYears: P.netzLifetimeYears ?? 40,
+      netzConstructionYears: P.netzConstructionYears ?? 0,
+      netzIdc,
       netzCrf: netzCrfValue,
       netzBaselineGW: P.netzBaselineReCapacityGW ?? 0,
       netzBaselinePeakGW: P.netzBaselinePeakLoadGW ?? 0,

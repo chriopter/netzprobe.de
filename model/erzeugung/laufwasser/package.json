@@ -123,11 +123,12 @@
       ]
     },
     "kosten": {
-      "source": "**Laufwasser (run-of-river).** WICHTIG: Fraunhofer ISE 2024 betrachtet Wasserkraft NICHT (zu standortspezifisch, geringes DE-Neubaupotenzial), daher keine DE-Primaerquelle. Werte aus PyPSA technology-data (ror): CAPEX ~4000 EUR/kW (PyPSA 4333, DIW DataDoc), Fix-O&M 2 %/a ~80 EUR/kW/a, Wirkungsgrad 0,9, Lebensdauer 60 a oekonomisch (baulich 80-100 a, PyPSA 80). Var-O&M vernachlaessigbar. IRENA 2023 Welt-Wasserkraft gesamt ~2800-3050 USD/kW liegt niedriger; reale CAPEX-Spanne ca. 2000-7000 EUR/kW je Standort/Fallhoehe. WACC real 3,5 % (nicht bei ISE — Wasserkraft dort nicht betrachtet; IRENA/IEA ordnen Wasserkraft risikoarm bei oder unter Wind onshore ein, daher analog 3,5 %). Quellen: PyPSA technology-data costs_2025; NREL ATB 2024 hydropower; IRENA 2023. Konfidenz: niedrig (extreme Standortstreuung, keine DE-Primaerquelle).",
+      "source": "**Laufwasser (run-of-river).** WICHTIG: Fraunhofer ISE 2024 betrachtet Wasserkraft NICHT (zu standortspezifisch, geringes DE-Neubaupotenzial), daher keine DE-Primaerquelle. Werte aus PyPSA technology-data (ror): CAPEX ~4000 EUR/kW (PyPSA 4333, DIW DataDoc), Fix-O&M 2 %/a ~80 EUR/kW/a, Wirkungsgrad 0,9, Lebensdauer 60 a oekonomisch (baulich 80-100 a, PyPSA 80). Var-O&M vernachlaessigbar. IRENA 2023 Welt-Wasserkraft gesamt ~2800-3050 USD/kW liegt niedriger; reale CAPEX-Spanne ca. 2000-7000 EUR/kW je Standort/Fallhoehe. WACC real 3,5 % (nicht bei ISE — Wasserkraft dort nicht betrachtet; IRENA/IEA ordnen Wasserkraft risikoarm bei oder unter Wind onshore ein, daher analog 3,5 %). Quellen: PyPSA technology-data costs_2025; NREL ATB 2024 hydropower; IRENA 2023. Konfidenz: niedrig (extreme Standortstreuung, keine DE-Primaerquelle). Bauzeit `constructionYears` 6 a (Neubau Rheinfelden 100 MW: Bau 2003-2011; Modernisierung deutlich kuerzer) — Bauzeitverzinsung des CAPEX ueber die Bauzeit mit dem WACC.",
       "sourceUrls": [
         "https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html",
         "https://ens.dk/en/our-services/technology-catalogues",
-        "https://atb.nrel.gov/"
+        "https://atb.nrel.gov/",
+        "https://de.wikipedia.org/wiki/Neues_Wasserkraftwerk_Rheinfelden"
       ]
     }
   },
@@ -192,7 +193,8 @@
       "capexEurPerKW": 4000,
       "omFixEurPerKWa": 80,
       "lifetimeYears": 60,
-      "efficiency": 0.9
+      "efficiency": 0.9,
+      "constructionYears": 6
     }
   }
 }

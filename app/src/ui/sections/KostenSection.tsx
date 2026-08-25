@@ -124,6 +124,7 @@ const netzFacts = (k: KostenResult): Facts => ({
     ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW`],
     ['davon lastgetrieben', `${n1(k.params.netzLastEurPerKW * k.addedPeakLoadGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
+    ['Bauzeit', `${n0(k.params.netzConstructionYears)} a → Bauzins-Faktor ${k.params.netzIdc.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
     [`Annuität (Netz-WACC ${n0(k.params.netzWacc * 100)} %)`, `${n1(k.params.netzCrf * 100)} %/a`],
   ],
 });
@@ -135,6 +136,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
   const ko = d.kosten;
   if (!ko) return null;
   const waccRow: [string, string] = ['WACC real', `${n1((ko.wacc ?? 0) * 100)} %${k.params.waccShiftPp ? ` (Paket ${n1((ko.wacc ?? 0) * 100 - k.params.waccShiftPp)} %, Regler ${k.params.waccShiftPp > 0 ? '+' : ''}${n1(k.params.waccShiftPp)} pp)` : ''}`];
+  const bau: [string, string] = ['Bauzeit', `${n0(ko.constructionYears ?? 0)} a → Bauzins-Faktor ${(d.idcFactor ?? 1).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`];
   const ann: [string, string] = ['Annuität', `${n1((d.crfValue ?? 0) * 100)} %/a`];
   const wikiId = TECH_WIKI[t.key];
   if (comp === 'capex') {
@@ -146,7 +148,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
       return {
         note: blended
           ? 'Neubauwert der Flotte × Annuitätsfaktor. CAPEX als mengengewichtetes Mittel: Bestand zum Bestandswert, Zubau zum Freifläche-Grenzwert.'
-          : 'Neubauwert der Flotte × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive laufendem Ersatz.',
+          : 'Neubauwert der Flotte × Bauzins-Faktor × Annuitätsfaktor — Kapitalkosten des Anlagenbestands inklusive Bauzeitverzinsung und laufendem Ersatz.',
         wikiId,
         source: kostenSource(wikiId),
         facts: [
@@ -159,6 +161,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
             ] as Array<[string, string]>
             : [['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`]] as Array<[string, string]>),
           ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+          bau,
           waccRow,
           ann,
         ],
@@ -179,6 +182,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
         ...power,
         ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${nK(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
         ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+        bau,
         waccRow,
         ann,
       ],
@@ -278,7 +282,7 @@ const PAPER_CRUMPLE = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns=
 // der Umlage auf einen Durchschnittshaushalt (Verbrauch × Ø Systemkosten).
 type HaushaltView = HaushaltResult & { kmPerYear: number; kwhPer100Km: number; heatKwhPerYear: number; cop: number };
 
-function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, sheddingTWh, sheddingPct, co2Mt }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string; sheddingTWh: number; sheddingPct: number; co2Mt: number }) {
+function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, sheddingTWh, sheddingPct }: { k: ReturnType<typeof computeKosten>; hh: HaushaltView; horizon: number; supplyLabel: string; loadLabel: string; shareUrl: string; sheddingTWh: number; sheddingPct: number }) {
   // Master-Schalter pro Jahr / Gesamt: skaliert ALLE Bon-Posten (Kostenart,
   // Technologie, SUMME) — »pro Jahr« zeigt die levelized Jahresmiete (CAPEX über
   // die Anlagenlebensdauer annuisiert, inkl. WACC), »Gesamt« multipliziert mit
@@ -304,7 +308,7 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
     k.addedReGW > 700 ? `EE-Zubau ${Math.round(k.addedReGW).toLocaleString('de-DE')} GW (geeicht bis ~700 GW)` : null,
     k.addedPeakLoadGW > 100 ? `Peak-Zuwachs ${Math.round(k.addedPeakLoadGW).toLocaleString('de-DE')} GW (geeicht bis ~100 GW)` : null,
   ].filter(Boolean).join(' und ');
-  const netzHint = k.netzExtrapolated ? `Extrapoliert: ${netzTrigger} liegt über dem geeichten Bereich der Netzkosten-Heuristik — implizit ${(k.breakdown.netz / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
+  const netzHint = k.netzExtrapolated ? `Extrapoliert: ${netzTrigger} liegt über dem geeichten Bereich der Netzkosten-Heuristik — implizit ${(k.breakdown.netz / k.params.netzIdc / k.params.netzCrf / 1e12).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Bio. € Netz-Investition, nur Richtungssignal.` : undefined;
   const exportHint = k.exportAtCap ? `Export läuft praktisch dauerhaft am Cap (~${n0(k.params.exportTWh)} TWh/a, ≥95 % der Cap-Energie) — die Erlösgutschrift ist eine Obergrenze; ob die Nachbarn den Dauerexport abnehmen, modelliert die Kupferplatte nicht.` : undefined;
   // Kapazitätsunabhängige Posten gehören in beide Gruppierungen — nur so summieren
   // sich beide Knoten auf dieselbe SUMME.
@@ -589,9 +593,11 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
             Wie wird gerechnet?
           </span>
         </summary>
-        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert mit technologiespezifischem realem WACC — z. B. PV 3,5 %, Kernkraft 7,8 % —, plus Betrieb; beides je Technologie in der Seitenleiste unter »Kosten-Annahmen« änderbar); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je kWh/MWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
-        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500"><strong>CO₂ unbepreist (Konvention):</strong> {n0(co2Mt)} Mt/a — bei 80 €/t ETS wären das +{n1(co2Mt * 80 / 1000)} Mrd €/a. CO₂ ist ein politisch gesetzter Transfer, kein Ressourcenaufwand des Systems, und daher bewusst nicht in der Summe.</p>
+        <p className="mt-1.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">Der Schalter »pro Jahr / Gesamt« oben skaliert jeden Posten: <strong>pro Jahr</strong> ist die levelized Jahresmiete (CAPEX über die <em>Anlagenlebensdauer</em> annuisiert mit technologiespezifischem realem WACC — z. B. PV 3,5 %, Kernkraft 7,8 % —, plus Betrieb; beides je Technologie in der Seitenleiste unter »Kosten-Annahmen« änderbar); <strong>Gesamt</strong> multipliziert mit dem Kostenzeitraum (Jahresmiete × {horizon} Jahre). Weil die Annuität die Baukosten über die Lebensdauer streckt, zählt »× Jahre« den Ersatz kurzlebiger Anlagen automatisch mit — eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut. Das Ergebnis sind die Vollkosten des Stromsystems (undiskontiert), <em>nicht</em> die »Mehrinvestitionen« gegenüber einem Referenzpfad. Gerechnet wird die <strong>fertige Zielflotte im Dauerbetrieb</strong> — Hochlauf, Brückenbrennstoff und CO₂ der Übergangsjahre sind nicht enthalten. <em>Nicht</em> mitskaliert: die <strong>Ø Preise je kWh/MWh</strong> (Intensität, zeitraumunabhängig) und die <strong>einmalige Bauinvestition</strong> — der reine Overnight-Neubauwert der Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung und ohne Bauzeitverzinsung), die Größenordnung des Anschubs, nicht die Gesamtkosten.</p>
       </details>
+      {k.netzExtrapolated && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+        ⚠ Netzausbau extrapoliert: {netzTrigger} liegt über dem geeichten Bereich der Netzkosten-Heuristik — der Posten ({fmtBig(k.breakdown.netz * mult)}) ist nur ein Richtungssignal.
+      </p>}
       {sheddingTWh > 1 && <p className="mt-3 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
         ⚠ {n0(sheddingTWh)} TWh/a ({n1(sheddingPct)} % der Nachfrage) bleiben unversorgt — bepreist ist nur die gelieferte Energie; der Wert entgangener Last ist nicht bilanziert.
       </p>}
@@ -747,9 +753,9 @@ export default function KostenSection({ scenario, result, periodYears, waccShift
       <HelpDot open={helpOpen} onToggle={() => setHelpOpen(open => !open)} label="Wie werden die Kosten berechnet?"/>
     </div>
     {helpOpen && <HelpPanel>
-      <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> — nicht die Gestehungskosten einzelner Anlagen. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. In der Sicht <strong>pro Jahr</strong> ist diese Zahl horizont-unabhängig und der faire Vergleich zwischen Szenarien; der Schalter oben am Bon stellt wahlweise auf <strong>Gesamt</strong> um und multipliziert dann jeden Posten mit dem Kostenzeitraum.</p>
+      <p>Berechnet werden die <strong>Gesamtsystemkosten</strong> der <strong>fertigen Zielflotte im Dauerbetrieb</strong> — nicht die Gestehungskosten einzelner Anlagen und nicht der Übergangspfad: Hochlaufphase, fossiler Brückenbrennstoff und CO₂ der Bauzeit-Jahre sind nicht modelliert. Integrationskosten (Speicher, Backup, Überbau) stecken so automatisch in der Summe; einer Einzelbetrachtung „Was kostet eine kWh Wind?" fehlen dagegen Redispatch und Reserve. Die <strong>SUMME</strong> ist die levelized Jahresmiete: die Baukosten sind über die <em>Anlagenlebensdauer</em> annuisiert (CAPEX × Annuitätsfaktor), plus Betrieb und Brennstoff. In der Sicht <strong>pro Jahr</strong> ist diese Zahl horizont-unabhängig und der faire Vergleich zwischen Szenarien; der Schalter oben am Bon stellt wahlweise auf <strong>Gesamt</strong> um und multipliziert dann jeden Posten mit dem Kostenzeitraum.</p>
       <ul>
-        <li><strong>Kapitalkosten (annuisiert)</strong> — Baukosten der <em>gesamten</em> Flotte, mit dem Kapitalwiedergewinnungsfaktor über die Lebensdauer umgelegt (technologiespezifischer realer WACC: PV 3,5 %, Wind onshore 3,9 %, Batterie 5 %, Gas 6,5 %, Kernkraft 7,8 %; Netz reguliert 5 %): die jährlichen Kapitalkosten des Anlagenbestands inklusive Ersatz auslaufender Anlagen, nicht die Mehrinvestition gegenüber heute — auch das heutige System bindet so dauerhaft Kapital.</li>
+        <li><strong>Kapitalkosten (annuisiert)</strong> — Overnight-Baukosten der <em>gesamten</em> Flotte, über die Bauzeit mit dem WACC aufgezinst (Bauzeitverzinsung, Faktor ((1+r)^T−1)/(r·T): PV 1 a → 1,00, Gas 3 a → 1,07, Kernkraft 7 a → 1,27 bei 7,8 %) und mit dem Kapitalwiedergewinnungsfaktor über die Lebensdauer umgelegt (technologiespezifischer realer WACC: PV 3,5 %, Wind onshore 3,9 %, Batterie 5 %, Gas 6,5 %, Kernkraft 7,8 %; Netz reguliert 5 %): die jährlichen Kapitalkosten des Anlagenbestands inklusive Ersatz auslaufender Anlagen, nicht die Mehrinvestition gegenüber heute — auch das heutige System bindet so dauerhaft Kapital.</li>
         <li><strong>Betrieb &amp; Wartung</strong> — feste (€/kW·a) plus variable (€/MWh) Kosten.</li>
         <li><strong>Brennstoff</strong> — Brennstoffpreis ÷ Wirkungsgrad × erzeugte Energie aus der Stundensimulation (Gas, Kohle, Biomasse, Kernkraft).</li>
         <li><strong>Wasserstoff-Import</strong> — importierte H₂-Menge × Importpreis (frei Grenze, LHV).</li>
@@ -759,11 +765,11 @@ export default function KostenSection({ scenario, result, periodYears, waccShift
       <p>Die <strong>Ø Stromkosten</strong> sind Jahres-Gesamtkosten ÷ gedeckte Jahresnachfrage. Dazu zählt neben der Stromlast auch die strom-äquivalent vom H₂-Pool gedeckte Sektor-Nachfrage (Stahl/Chemie/Schiff/Flug): H₂-Produktion bzw. -Import senkt die Stromlast, wird aber vom selben System bezahlt. Ein Systemdurchschnitt, kein Endkunden-Strompreis (ohne Netzentgelte, Steuern, Marge).</p>
       <p>Der <strong>Musterhaushalt</strong> unten folgt den Last-Reglern: 3.000 kWh Grundbedarf plus PKW- und Wärmepumpen-Strom des Szenarios je Haushalt. Sein Preis ist eine geschätzte Endkunden-Stromrechnung — Systemkosten ab Werk plus Netzentgelte, Steuern, Umlagen, Vertrieb und MwSt auf 2025-Niveau (BDEW); aufklappbar bis auf die Bestandteile, Methodik im Datenhandbuch (»preise«). Weil der Energieanteil kostenbasiert ab Werk gerechnet wird (statt Marktpreis + Marge), liegt das absolute Niveau ~10 % unter der realen BDEW-Rechnung — die Szenario-Vergleiche untereinander bleiben gültig.</p>
       <p>In der <strong>Gesamt</strong>-Sicht (Schalter oben) zeigt jeder Posten die levelized Jahresmiete × <strong>Kostenzeitraum</strong> (Regler in der Seitenleiste, 20/30/40 Jahre). Weil die Jahresmiete die Baukosten über die Anlagenlebensdauer annuisiert — inklusive technologiespezifischem realem WACC (PV 3,5 %, Wind 3,9–6 %, Gas 6,5 %, Kernkraft 7,8 %; je Technologie in der Seitenleiste änderbar) und dem Ersatz kurzlebiger Anlagen (eine Batterie mit ~15 a Lebensdauer wird über 30 Jahre zweimal gebaut, was die Annuität automatisch abbildet) —, ist die Summe über den Zeitraum die ehrlichen Vollkosten inklusive Finanzierung und Ersatz. Nachrichtlich steht die <strong>einmalige Bauinvestition</strong> daneben: der reine Neubauwert der gesamten Zielflotte (Erzeugung + Speicher + Netz, ohne Annuisierung) — die Größenordnung des Anschubs, nicht die Gesamtkosten. Es sind Vollkosten des Stromsystems, nicht die »Mehrinvestitionen« aus Energiewende-Studien (Differenz zu einem Referenzpfad); die Referenz 2025 enthält zudem keine fossilen Endenergiekosten der nicht-elektrifizierten Sektoren (~70–90 Mrd €/a).</p>
-      <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (politisch gesetzter Transfer, kein Ressourcenaufwand — die Rechnung weist die Auslassung je Szenario im Kleingedruckten aus, bewertet zu 80 €/t ETS) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
+      <p><strong>Nicht enthalten:</strong> CO₂-Bepreisung (staatlich festgesetzter Transfer, kein Ressourcenaufwand des Systems) und nachfrageseitige Kosten (E-Fahrzeuge, Wärmepumpen). Kostenparameter und Preisannahmen mit Quellen im Datenhandbuch (Fraunhofer ISE, DEA, NREL ATB, IRENA).</p>
     </HelpPanel>}
 
     <div className="mx-auto mt-2 w-full max-w-[700px]">
-      <Stromrechnung k={k} hh={hh} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl} sheddingTWh={result.summary.loadSheddingTWh} sheddingPct={100 * result.summary.loadSheddingTWh / Math.max(1, result.summary.totalDemandTWh + (result.summary.h2PoolStromReductionTWh ?? 0))} co2Mt={result.summary.co2MtPerYear}/>
+      <Stromrechnung k={k} hh={hh} horizon={horizon} supplyLabel={supplyLabel} loadLabel={loadLabel} shareUrl={shareUrl} sheddingTWh={result.summary.loadSheddingTWh} sheddingPct={100 * result.summary.loadSheddingTWh / Math.max(1, result.summary.totalDemandTWh + (result.summary.h2PoolStromReductionTWh ?? 0))}/>
     </div>
   </section>;
 }
