@@ -32,7 +32,8 @@ import { pct, twh } from './format';
 import { supplyPillLabels, supplyPresetIds } from './supplyPresets';
 import { ScenarioSidebar, electrifiedFraction, loadPillLabels, matchingLoadPreset, type CostPeriod, type PeriodPreset, type SidebarExpandedRow, type SidebarOpenSectors } from './ScenarioSidebar';
 import { defaultScenario, normalizeScenario } from './scenarioPresets';
-import { KOSTEN_LEVERS, WACC_SHIFT } from './costLevers';
+import { KOSTEN_LEVERS, OPTIMISM, OPTIMISM_DIMS, type Optimism } from './costLevers';
+import { computeKosten } from './kosten';
 import { captureNodeToPng, FloatingPanel } from './sectionUi';
 import { cx, iconButton, shell, sidebarOffsetClass } from './ui';
 
@@ -130,11 +131,21 @@ function periodPresetFromUrl(): PeriodPreset {
   return value === '21d' || value === '90d' || value === 'custom' || value === 'year' ? value : defaultPeriodPreset;
 }
 
-// Globaler WACC-Regler (Prozentpunkte) — URL-Param `wacc`, Default 0.
-function waccShiftFromUrl(): number {
-  const value = Number(queryParams().get('wacc'));
-  if (!Number.isFinite(value)) return WACC_SHIFT.def;
-  return Math.min(WACC_SHIFT.max, Math.max(WACC_SHIFT.min, value));
+// Optimismus-Regler — URL-Params `opt` (Hauptregler) und `opt.<dim>` (Sub-Regler,
+// nur wenn sie vom Hauptregler abweichen). Default 0 = Paketwerte.
+const clampOpt = (raw: string | null): number | null => {
+  if (raw === null) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? Math.min(OPTIMISM.max, Math.max(OPTIMISM.min, value)) : null;
+};
+function optimismFromUrl(): Optimism {
+  const q = queryParams();
+  const out: Optimism = { main: clampOpt(q.get('opt')) ?? OPTIMISM.def };
+  for (const d of OPTIMISM_DIMS) {
+    const v = clampOpt(q.get(`opt.${d.key}`));
+    if (v !== null) out[d.key] = v;
+  }
+  return out;
 }
 
 function periodYearsFromUrl(): CostPeriod {
@@ -914,7 +925,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   const [customStart, setCustomStart] = useState(() => dateFromUrl('start', defaultCustomStart));
   const [customEnd, setCustomEnd] = useState(() => dateFromUrl('end', defaultCustomEnd));
   const [periodYears, setPeriodYears] = useState<CostPeriod>(periodYearsFromUrl);
-  const [waccShiftPp, setWaccShiftPp] = useState<number>(waccShiftFromUrl);
+  const [optimism, setOptimism] = useState<Optimism>(optimismFromUrl);
   const [chartResult, setChartResult] = useState<SimulationResult | null>(null);
   // Build-Time pre-computed default als sofortiger Erst-Render. Wird beim ersten
   // Worker-Ergebnis (Slider-Drag) durch live-Rechnung ersetzt.
@@ -1006,8 +1017,13 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
 
     if (periodYears === defaultPeriodYears) url.searchParams.delete('jahre');
     else url.searchParams.set('jahre', periodYears);
-    if (waccShiftPp === WACC_SHIFT.def) url.searchParams.delete('wacc');
-    else url.searchParams.set('wacc', String(waccShiftPp));
+    if (optimism.main === OPTIMISM.def) url.searchParams.delete('opt');
+    else url.searchParams.set('opt', String(optimism.main));
+    for (const d of OPTIMISM_DIMS) {
+      const v = optimism[d.key];
+      if (v == null || v === optimism.main) url.searchParams.delete(`opt.${d.key}`);
+      else url.searchParams.set(`opt.${d.key}`, String(v));
+    }
 
     url.searchParams.delete('view');
     if (mainViewFromPath(appPath(url))) url.pathname = pathForMainView(mainView);
@@ -1033,7 +1049,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
     else url.searchParams.delete('legend');
     window.history.replaceState(null, '', url);
     setShareUrl(url.toString());
-  }, [scenarios, activeScenario, periodPreset, customStart, customEnd, periodYears, waccShiftPp, chartMode, fillLines, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
+  }, [scenarios, activeScenario, periodPreset, customStart, customEnd, periodYears, optimism, chartMode, fillLines, mainView, sidebarCollapsed, openSectors, expandedRow, mixVisibility]);
 
   const resolvedScenario = useRustResolvedScenario(data, scenario);
   const selectedPeriod = periodDates(periodPreset, customStart, customEnd, scenario.loadYear);
@@ -1106,6 +1122,8 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
   // Defer chart-source updates: Slider-Tick triggert sofortige KPI-Updates, der
   // Chart läuft hinterher und blockiert Input nicht.
   const deferredChartSource = useDeferredValue<SimulationResult | null>(chartResult ?? result);
+  // Jahreskosten je Technologie fuer die Sidebar-Karte »Kosten« (live mit dem Optimismus-Regler).
+  const techKosten = useMemo(() => result ? computeKosten(resolvedScenario, result, optimism).perTech.map(t => ({ key: t.key, total: t.total })) : null, [resolvedScenario, result, optimism]);
   useEffect(() => {
     if (!deferredChartSource) return;
     const currentMax = mixScalePeakGW(deferredChartSource.hours, DEFAULT_MIX_VISIBILITY);
@@ -1197,7 +1215,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
             resolvedScenario={resolvedScenario}
             electrifiedPct={electrifiedFraction(resolvedScenario, data)}
             periodYears={periodYears}
-            waccShiftPp={waccShiftPp}
+            optimism={optimism}
             chartMode={chartMode}
             setChartMode={setChartMode}
             fillLines={fillLines}
@@ -1217,9 +1235,9 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           />
           <FlaecheSection scenario={resolvedScenario} theme={theme}/>
           <RessourcenSection scenario={resolvedScenario} result={result} periodYears={periodYears} data={data}/>
-          <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} waccShiftPp={waccShiftPp} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
+          <KostenSection scenario={resolvedScenario} result={result} periodYears={periodYears} optimism={optimism} supplyLabel={supplyPillLabels[scenario.supplyPreset]} loadLabel={loadPillLabels[matchingLoadPreset(scenario)]} data={data} shareUrl={shareUrl}/>
           {/* Eigene Sektion, bewusst NICHT in MAIN_VIEW_LABELS/den MainViewTabs verlinkt. */}
-          <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} waccShiftPp={waccShiftPp} data={data} shareUrl={shareUrl}/>
+          <DatensatzSection resolvedScenario={resolvedScenario} result={result} periodYears={periodYears} optimism={optimism} data={data} shareUrl={shareUrl}/>
           </div>
           <DisclaimerFooter className="mt-auto pt-10 text-xs leading-5 text-zinc-500"/>
         </>}
@@ -1254,8 +1272,9 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
         onOpenSectorsChange={setOpenSectors}
         onExpandedRowChange={setExpandedRow}
         onPeriodYears={setPeriodYears}
-        waccShiftPp={waccShiftPp}
-        onWaccShift={setWaccShiftPp}
+        optimism={optimism}
+        techKosten={techKosten}
+        onOptimism={setOptimism}
         onPreset={setPeriodPreset}
         onStart={setQuickStart}
         onEnd={setQuickEnd}

@@ -17,6 +17,7 @@ import type { SimulationResult, SimHour } from '../../types/simulation';
 import { fmt, fmt0, pct, twh } from '../format';
 import { cx } from '../ui';
 import { ChartModeToggle, SegmentPill, ChartPanel, HelpDot, HelpPanel, SectionHeading, statToneClass, type Stat } from '../sectionUi';
+import type { Optimism } from '../costLevers';
 import { computeKosten } from '../kosten';
 
 // Inhalt der Hauptblume: nur Energiemix, Mix mit Speicher-Füllstand-Overlay
@@ -186,7 +187,7 @@ export type MixSectionProps = {
   resolvedScenario: Scenario;
   electrifiedPct: number | null;
   periodYears: string;
-  waccShiftPp: number;
+  optimism: Optimism;
   chartMode: ChartMode;
   setChartMode: (mode: ChartMode) => void;
   // Speicher-Fuellstaende als Overlay-Linien, je Linie schaltbar.
@@ -212,7 +213,7 @@ export default function MixSection(props: MixSectionProps) {
     resolvedScenario,
     electrifiedPct,
     periodYears,
-    waccShiftPp,
+    optimism,
     chartMode,
     setChartMode,
     fillLines,
@@ -260,7 +261,7 @@ export default function MixSection(props: MixSectionProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   // Kennzahlen-Kacheln hinter einem Sub-Satz verstecken (Disclosure wie überall).
   const [kpisOpen, setKpisOpen] = useState(false);
-  const kosten = useMemo(() => computeKosten(resolvedScenario, result, waccShiftPp), [resolvedScenario, result, waccShiftPp]);
+  const kosten = useMemo(() => computeKosten(resolvedScenario, result, optimism), [resolvedScenario, result, optimism]);
   const kostenHorizon = Math.max(1, Number(periodYears));
   const kostenGesamt = kosten.total * kostenHorizon;
   const kostenStr = Math.abs(kostenGesamt) >= 1e12

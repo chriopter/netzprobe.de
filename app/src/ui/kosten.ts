@@ -1,7 +1,7 @@
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
-import { mergeTechKosten, hasActiveOverrides, shiftWacc } from './costLevers';
+import { mergeTechKosten, hasActiveOverrides, netzAtOptimism, isOptimismActive, OPTIMISM_DEFAULT, type Optimism } from './costLevers';
 
 export type Kosten = {
   // Realer, technologiespezifischer Kapitalkostensatz (Dezimal). Liegt je Paket
@@ -87,6 +87,8 @@ export type KostenTechDetail = {
   // kosten.capexEurPerKW ab, sobald capexMarginalEurPerKW greift.
   capexEffectiveEurPerKW?: number;
   kosten?: Kosten;
+  // Unveraenderte Paketwerte (fuer »Paket: …«-Hinweise, wenn Regler/Override greifen).
+  paket?: Kosten;
 };
 export type KostenTech = { key: string; label: string; capex: number; om: number; fuel: number; total: number; eurPerMWh: number | null; detail?: KostenTechDetail };
 export type KostenResult = {
@@ -114,8 +116,9 @@ export type KostenResult = {
   perTech: KostenTech[];
   // Eingangsgrößen der Systemposten für die Detail-Ebene der Stromrechnung.
   params: {
-    // Globaler WACC-Shift (Prozentpunkte) aus der Sidebar, 0 = Paketwerte.
-    waccShiftPp: number;
+    // Globaler Optimismus-Regler (−100 … +100 je Dimension) aus der Sidebar.
+    optimism: Optimism;
+    netzCapexFactor: number;
     netzWacc: number;
     h2ImportTWh: number;
     h2ImportEurPerMWh: number;
@@ -188,9 +191,7 @@ export function computeHaushalt(k: KostenResult, pkwAddTWh: number, heizAddTWh: 
   };
 }
 
-const withWaccShift = (k: Kosten, shiftPp: number): Kosten => shiftPp ? { ...k, wacc: shiftWacc(k.wacc, shiftPp) } : k;
-
-export function computeKosten(scenario: Scenario, result: SimulationResult, waccShiftPp = 0): KostenResult {
+export function computeKosten(scenario: Scenario, result: SimulationResult, optimism: Optimism = OPTIMISM_DEFAULT): KostenResult {
   const P = uiManifest.prices as Record<string, number>;
   const genPkg = uiManifest.generation as Record<string, { kosten?: Kosten }>;
   const stoPkg = uiManifest.storage as Record<string, { kosten?: Kosten }>;
@@ -224,7 +225,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
   for (const [key, label, gwField, hf] of GEN) {
     const k0 = genPkg[key]?.kosten;
     if (!k0) continue;
-    const k = withWaccShift(mergeTechKosten(key, k0, scenario.costOverrides?.[key]), waccShiftPp);
+    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key], optimism);
     const gw = scenario.generation[gwField];
     const genMWh = (genSum[hf] ?? 0) * annualScale * 1000;
     const capexPerKW = effectiveCapexEurPerKW(k, gw);
@@ -236,7 +237,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
     const fuel = k.fuelEurPerMWhTh ? k.fuelEurPerMWhTh / (k.efficiency ?? 1) * genMWh : 0;
     capexSum += capex; omSum += om; fuelSum += fuel;
     const total = capex + om + fuel;
-    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, capexEffectiveEurPerKW: capexPerKW, kosten: k } });
+    perTech.push({ key, label, capex, om, fuel, total, eurPerMWh: genMWh > 0 ? total / genMWh : null, detail: { kind: 'gen', gw, genTWh: genMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, capexEffectiveEurPerKW: capexPerKW, kosten: k, paket: k0 } });
   }
 
   // [key, label, Lade-GW, Entlade-GW, Energie-GWh]. Batterie/PSW haben EINE
@@ -250,7 +251,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
   for (const [key, label, chargeGW, dischargeGW, energy] of storCaps) {
     const k0 = stoPkg[key]?.kosten;
     if (!k0 || (chargeGW <= 0 && dischargeGW <= 0 && energy <= 0)) continue;
-    const k = withWaccShift(mergeTechKosten(key, k0, scenario.costOverrides?.[key]), waccShiftPp);
+    const k = mergeTechKosten(key, k0, scenario.costOverrides?.[key], optimism);
     const split = k.capexChargeEurPerKW != null || k.capexDischargeEurPerKW != null;
     const powerCapexEur = split
       ? (k.capexChargeEurPerKW ?? 0) * chargeGW * 1e6 + (k.capexDischargeEurPerKW ?? 0) * dischargeGW * 1e6
@@ -270,7 +271,7 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
       + (k.omEnergyEurPerKWhA ?? 0) * energy * 1e6
       + (k.omVarEurPerMWh ?? 0) * dischargeMWh;
     capexSum += capex; omSum += om;
-    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, dischargeTWh: dischargeMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, kosten: k } });
+    perTech.push({ key, label, capex, om, fuel: 0, total: capex + om, eurPerMWh: null, detail: { kind: 'storage', chargeGW, dischargeGW, energyGWh: energy, dischargeTWh: dischargeMWh / 1e6, crfValue: crf(k.wacc, k.lifetimeYears), idcFactor: idc, kosten: k, paket: k0 } });
   }
 
   // Wasserstoff-Import: importierte H2-Menge × Importpreis (LHV). Eigene Zeile,
@@ -317,9 +318,10 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
   // Netzausbau nutzt den regulierten Netz-WACC (BNetzA ARegV), nicht die
   // technologiespezifischen Erzeuger-/Speicher-WACCs — das Netz ist eine
   // regulierte Infrastruktur, kein einzeltechnologisches Asset.
-  const netzWacc = shiftWacc(P.netzWacc ?? 0.05, waccShiftPp);
+  const netzOpt = netzAtOptimism(P.netzWacc ?? 0.05, optimism);
+  const netzWacc = netzOpt.wacc;
   const netzCrfValue = crf(netzWacc, P.netzLifetimeYears ?? 40);
-  const netzLumpEur = ((P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW + (P.netzCapexEurPerKwAddedPeakLoad ?? 0) * addedPeakLoadGW) * 1e6;
+  const netzLumpEur = ((P.netzCapexEurPerKwAddedRE ?? 0) * addedReGW + (P.netzCapexEurPerKwAddedPeakLoad ?? 0) * addedPeakLoadGW) * 1e6 * netzOpt.capexFactor;
   investEur += netzLumpEur;
   const netzIdc = idcFactor(netzWacc, P.netzConstructionYears);
   const netz = netzLumpEur * netzIdc * netzCrfValue;
@@ -349,10 +351,11 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, wacc
     addedReGW,
     addedPeakLoadGW,
     exportAtCap,
-    hasCostOverrides: hasActiveOverrides(scenario.costOverrides) || waccShiftPp !== 0,
+    hasCostOverrides: hasActiveOverrides(scenario.costOverrides) || isOptimismActive(optimism),
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
-      waccShiftPp,
+      optimism,
+      netzCapexFactor: netzOpt.capexFactor,
       netzWacc,
       h2ImportTWh: scenario.import.h2TWh,
       h2ImportEurPerMWh: P.h2ImportEurPerMWh ?? 0,

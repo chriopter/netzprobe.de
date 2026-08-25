@@ -6,6 +6,7 @@ import type { SimulationResult } from '../../types/simulation';
 import { HelpDot, HelpPanel, SectionHeading } from '../sectionUi';
 import { cx } from '../ui';
 import { fmt0 } from '../format';
+import { OPTIMISM_DIMS, effectiveOptimism, isOptimismActive, optimismLabel, optimismSummary, type Optimism } from '../costLevers';
 import { computeHaushalt, computeKosten, type HaushaltResult, type KostenResult, type KostenTech } from '../kosten';
 import { householdElectrificationTWh } from '../ScenarioSidebar';
 import type { DataSet } from '../../types/data';
@@ -118,10 +119,10 @@ const netzFacts = (k: KostenResult): Facts => ({
   source: [preiseField('netzCapexEurPerKwAddedRE'), preiseField('netzCapexEurPerKwAddedPeakLoad')].filter(Boolean).join(' — '),
   facts: [
     ['EE-Zubau über Bestand', `${n0(k.addedReGW)} GW (Basis ${n1(k.params.netzBaselineGW)} GW)`],
-    ['Pauschale EE', `${n0(k.params.netzEurPerKW)} €/kW`],
+    ['Pauschale EE', `${n0(k.params.netzEurPerKW)} €/kW${k.params.netzCapexFactor !== 1 ? ` × ${k.params.netzCapexFactor.toLocaleString('de-DE', { maximumFractionDigits: 2 })} (Optimismus)` : ''}`],
     ['davon EE-getrieben', `${n1(k.params.netzEurPerKW * k.addedReGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Peak-Zuwachs über Bestand', `${n0(k.addedPeakLoadGW)} GW (Basis ${n1(k.params.netzBaselinePeakGW)} GW)`],
-    ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW`],
+    ['Pauschale Last', `${n0(k.params.netzLastEurPerKW)} €/kW${k.params.netzCapexFactor !== 1 ? ` × ${k.params.netzCapexFactor.toLocaleString('de-DE', { maximumFractionDigits: 2 })} (Optimismus)` : ''}`],
     ['davon lastgetrieben', `${n1(k.params.netzLastEurPerKW * k.addedPeakLoadGW * 1e6 * k.params.netzCrf / 1e9)} Mrd €/a`],
     ['Lebensdauer', `${n0(k.params.netzLifetimeYears)} a`],
     ['Bauzeit', `${n0(k.params.netzConstructionYears)} a → Bauzins-Faktor ${k.params.netzIdc.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
@@ -135,8 +136,12 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
   if (d.kind === 'h2import') return h2ImportFacts(k);
   const ko = d.kosten;
   if (!ko) return null;
-  const waccRow: [string, string] = ['WACC real', `${n1((ko.wacc ?? 0) * 100)} %${k.params.waccShiftPp ? ` (Paket ${n1((ko.wacc ?? 0) * 100 - k.params.waccShiftPp)} %, Regler ${k.params.waccShiftPp > 0 ? '+' : ''}${n1(k.params.waccShiftPp)} pp)` : ''}`];
-  const bau: [string, string] = ['Bauzeit', `${n0(ko.constructionYears ?? 0)} a → Bauzins-Faktor ${(d.idcFactor ?? 1).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`];
+  const pk = d.paket;
+  const diff = (a: number | undefined, b: number | undefined) => a != null && b != null && Math.abs(a - b) > 1e-9;
+  const paket = (cur: number | undefined, base: number | undefined, fmt: (v: number) => string) => diff(cur, base) ? ` (Paket ${fmt(base as number)})` : '';
+  const waccRow: [string, string] = ['WACC real', `${n1((ko.wacc ?? 0) * 100)} %${paket(ko.wacc, pk?.wacc, v => `${n1(v * 100)} %`)}`];
+  const lifeRow: [string, string] = ['Lebensdauer', `${n0(ko.lifetimeYears)} a${paket(ko.lifetimeYears, pk?.lifetimeYears, v => `${n0(v)} a`)}`];
+  const bau: [string, string] = ['Bauzeit', `${n1(ko.constructionYears ?? 0)} a${paket(ko.constructionYears, pk?.constructionYears, v => `${n1(v)} a`)} → Bauzins-Faktor ${(d.idcFactor ?? 1).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`];
   const ann: [string, string] = ['Annuität', `${n1((d.crfValue ?? 0) * 100)} %/a`];
   const wikiId = TECH_WIKI[t.key];
   if (comp === 'capex') {
@@ -160,7 +165,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
               ['Investition (Flotten-Mittel)', `${n0(d.capexEffectiveEurPerKW ?? 0)} €/kW`],
             ] as Array<[string, string]>
             : [['Investition', `${n0(ko.capexEurPerKW ?? 0)} €/kW`]] as Array<[string, string]>),
-          ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+          lifeRow,
           bau,
           waccRow,
           ann,
@@ -181,7 +186,7 @@ function compFacts(t: KostenTech, comp: 'capex' | 'om' | 'fuel', k: KostenResult
       facts: [
         ...power,
         ...(ko.capexEurPerKWh ? [['Speichervolumen', `${n0(d.energyGWh ?? 0)} GWh × ${nK(ko.capexEurPerKWh)} €/kWh`]] as Array<[string, string]> : []),
-        ['Lebensdauer', `${n0(ko.lifetimeYears)} a`],
+        lifeRow,
         bau,
         waccRow,
         ann,
@@ -375,8 +380,17 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
       {/* Preisstand-Hinweis in der Kopfzeile: der Bon rechnet bewusst Heute-
           Preise — er ordnet Verhältnisse ein, prognostiziert nicht 2045. */}
       <p className="mt-1.5 text-center text-xs uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">Kostenzeitraum {horizon} Jahre · Heutige Preise ohne Lernkurven</p>
+      {(() => {
+        const o = k.params.optimism;
+        const active = isOptimismActive(o);
+        const main = OPTIMISM_DIMS.map(d => effectiveOptimism(o, d.key));
+        const uniform = main.every(v => v === main[0]);
+        return <p className={cx('mt-2 text-center text-sm font-semibold tracking-tight', active ? (main[0] > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400') : 'text-zinc-700 dark:text-zinc-300')}>
+          Rahmenbedingungen: {optimismSummary(o)}{uniform ? ` — ${optimismLabel(main[0])}` : ` — ${OPTIMISM_DIMS.map(d => `${d.label} ${effectiveOptimism(o, d.key) > 0 ? '+' : ''}${effectiveOptimism(o, d.key)}`).join(' · ')}`}
+        </p>;
+      })()}
       <p className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">Erzeugung: {supplyLabel} · Last: {loadLabel}</p>
-      {k.hasCostOverrides && <p className="mt-2 text-center"><span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Eigene Kostenannahmen aktiv{k.params.waccShiftPp ? ` · WACC ${k.params.waccShiftPp > 0 ? '+' : ''}${n1(k.params.waccShiftPp)} pp` : ''}</span></p>}
+      {k.hasCostOverrides && <p className="mt-2 text-center"><span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Eigene Kostenannahmen aktiv{isOptimismActive(k.params.optimism) ? ` · ${optimismSummary(k.params.optimism)}` : ''}</span></p>}
       {/* Master-Schalter: skaliert den GANZEN Bon (jede Kostenart, jede
           Technologie, SUMME) wahlweise pro Jahr oder über den Kostenzeitraum. */}
       <div className="mt-4 flex justify-center">
@@ -729,8 +743,8 @@ function Stromrechnung({ k, hh, horizon, supplyLabel, loadLabel, shareUrl, shedd
   </div>;
 }
 
-export default function KostenSection({ scenario, result, periodYears, waccShiftPp, supplyLabel, loadLabel, data, shareUrl }: { scenario: Scenario; result: SimulationResult; periodYears: string; waccShiftPp: number; supplyLabel: string; loadLabel: string; data: DataSet | null; shareUrl: string }) {
-  const k = useMemo(() => computeKosten(scenario, result, waccShiftPp), [scenario, result, waccShiftPp]);
+export default function KostenSection({ scenario, result, periodYears, optimism, supplyLabel, loadLabel, data, shareUrl }: { scenario: Scenario; result: SimulationResult; periodYears: string; optimism: Optimism; supplyLabel: string; loadLabel: string; data: DataSet | null; shareUrl: string }) {
+  const k = useMemo(() => computeKosten(scenario, result, optimism), [scenario, result, optimism]);
   // Musterhaushalt: kWh-Anteile aus den haushaltsrelevanten Last-Reglern,
   // Anzeige-Fakten (km, JAZ) direkt aus den e100-Paketen.
   const hh = useMemo<HaushaltView>(() => {
