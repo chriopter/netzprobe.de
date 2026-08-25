@@ -184,6 +184,7 @@ function MixLegend({ visibility, onToggleLeaf, onToggleGroup, values, loadView, 
 export type MixSectionProps = {
   result: SimulationResult;
   resolvedScenario: Scenario;
+  electrifiedPct: number | null;
   periodYears: string;
   waccShiftPp: number;
   chartMode: ChartMode;
@@ -209,6 +210,7 @@ export default function MixSection(props: MixSectionProps) {
   const {
     result,
     resolvedScenario,
+    electrifiedPct,
     periodYears,
     waccShiftPp,
     chartMode,
@@ -247,6 +249,13 @@ export default function MixSection(props: MixSectionProps) {
   const legendTWh = useMemo(() => mixLegendTWh(sliced, loadView), [sliced, loadView]);
   const isPending = parentPending || mixPending;
   const blackout = result.summary.hoursWithLoadShedding;
+  // Nur der ANTEIL der elektrifizierten Last, der auch versorgt wird: bei
+  // Unterdeckung (Lastabwurf) liegt die effektiv gedeckte Elektrifizierung unter
+  // dem Ziel — »100 % elektrifiziert« bei 8.760 h ohne Strom wäre irreführend.
+  const servedFraction = result.summary.totalDemandTWh > 0
+    ? Math.max(0, 1 - result.summary.loadSheddingTWh / result.summary.totalDemandTWh)
+    : 1;
+  const electrifiedDelivered = electrifiedPct == null ? null : electrifiedPct * servedFraction;
   // Methodik-Text hinter dem Fragezeichen am Chart (wie in den anderen Sektionen).
   const [helpOpen, setHelpOpen] = useState(false);
   // Kennzahlen-Kacheln hinter einem Sub-Satz verstecken (Disclosure wie überall).
@@ -263,6 +272,7 @@ export default function MixSection(props: MixSectionProps) {
   const bad = 'text-red-600 dark:text-red-400';
   const neutral = 'text-zinc-950 dark:text-white';
   const blackoutTone = blackout === 0 ? good : blackout <= 100 ? warn : bad;
+  const elecTone = electrifiedDelivered == null ? neutral : electrifiedDelivered >= 0.8 ? good : electrifiedDelivered >= 0.4 ? warn : bad;
 
   const s = result.summary;
   const statGroups: Array<{ title: string; stats: Stat[] }> = [
@@ -295,7 +305,7 @@ export default function MixSection(props: MixSectionProps) {
 
   return <section id="section-mix" className="flex flex-col gap-3 scroll-mt-14 pt-8">
       <p className="mx-auto max-w-4xl text-balance text-center text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
-        <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span>, <span className="whitespace-nowrap text-zinc-950 dark:text-white">{fmt0.format(result.summary.co2GperKWh)} g/kWh CO₂</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> über {periodYears} Jahre.
+        <span className={cx('whitespace-nowrap', elecTone)}>{electrifiedDelivered != null ? `${fmt0.format(electrifiedDelivered * 100)} %` : 'X %'}</span> elektrifiziert, <span className={cx('whitespace-nowrap', blackoutTone)}>{fmt0.format(blackout)} h ohne Strom</span>, <span className="whitespace-nowrap text-zinc-950 dark:text-white">{fmt0.format(result.summary.co2GperKWh)} g/kWh CO₂</span> — für <span className="whitespace-nowrap text-zinc-950 dark:text-white">{kostenStr}</span> über {periodYears} Jahre.
       </p>
       <button
         type="button"
