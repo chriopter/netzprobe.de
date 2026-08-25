@@ -36,7 +36,7 @@ const OPTIMISM_TECH_ICON: Record<string, ReactNode> = {
 export type TechKosten = ReadonlyArray<{ key: string; total: number }>;
 
 import { FloatingPanel } from './sectionUi';
-import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismAnchors, optimismEffects, optimismLabel, optimismMood, optimismSummary, type KostenLever, type Optimism } from './costLevers';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismDimValues, optimismEffects, optimismLabel, optimismMood, optimismSummary, type KostenLever, type Optimism } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -1694,10 +1694,7 @@ function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOpt
             const v = effectiveOptimism(optimism, d.key);
             const pct = ((v - OPTIMISM.min) / (OPTIMISM.max - OPTIMISM.min)) * 100;
             return <div key={d.key} className="grid gap-1 px-1 py-1.5">
-              <div className="flex items-baseline justify-between gap-2 text-xs">
-                <span className="font-medium text-zinc-950 dark:text-zinc-50" title={d.hint}>{d.label}</span>
-                <span className="min-w-0 truncate tabular-nums text-zinc-500">{optimismAnchors(d.key, v)}</span>
-              </div>
+              <div className="text-xs font-medium text-zinc-950 dark:text-zinc-50" title={d.hint}>{d.label}</div>
               <div className="relative">
                 <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-zinc-400 dark:bg-zinc-500"/>
                 <input
@@ -1711,6 +1708,11 @@ function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOpt
                   value={v}
                   onChange={event => setDim(d.key, Number(event.target.value))}
                 />
+              </div>
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                {optimismDimValues(d.key, v).map(t => <span key={t.key} className="inline-flex items-center gap-0.5 whitespace-nowrap" title={t.label}>
+                  <span className="text-zinc-500 dark:text-zinc-400 [&>svg]:h-3 [&>svg]:w-3">{OPTIMISM_TECH_ICON[t.key]}</span>{t.text}
+                </span>)}
               </div>
             </div>;
           })}

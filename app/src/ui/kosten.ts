@@ -1,7 +1,7 @@
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult, SimHour } from '../types/simulation';
 import { uiManifest } from './uiManifest';
-import { mergeTechKosten, hasActiveOverrides, netzAtOptimism, isOptimismActive, OPTIMISM_DEFAULT, type Optimism } from './costLevers';
+import { mergeTechKosten, hasActiveOverrides, netzAtOptimism, OPTIMISM_DEFAULT, type Optimism } from './costLevers';
 
 export type Kosten = {
   // Realer, technologiespezifischer Kapitalkostensatz (Dezimal). Liegt je Paket
@@ -351,7 +351,8 @@ export function computeKosten(scenario: Scenario, result: SimulationResult, opti
     addedReGW,
     addedPeakLoadGW,
     exportAtCap,
-    hasCostOverrides: hasActiveOverrides(scenario.costOverrides) || isOptimismActive(optimism),
+    // Nur explizite Einzel-Overrides — der Optimismus-Regler steht separat im Bon-Kopf.
+    hasCostOverrides: hasActiveOverrides(scenario.costOverrides),
     perTech: perTech.sort((a, b) => b.total - a.total),
     params: {
       optimism,
