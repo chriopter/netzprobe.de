@@ -36,7 +36,7 @@ const OPTIMISM_TECH_ICON: Record<string, ReactNode> = {
 export type TechKosten = ReadonlyArray<{ key: string; total: number }>;
 
 import { FloatingPanel } from './sectionUi';
-import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismEffects, optimismLabel, optimismMood, optimismSummary, type KostenLever, type Optimism } from './costLevers';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismAnchors, optimismEffects, optimismLabel, optimismMood, optimismSummary, type KostenLever, type Optimism } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -1690,16 +1690,30 @@ function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOpt
           {anySub && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">individuell</span>}
         </button>
         {subOpen && <div className="grid gap-1 pl-1">
-          {OPTIMISM_DIMS.map(d => <CapacitySliderRow
-            key={d.key}
-            label={d.label}
-            unit=""
-            value={effectiveOptimism(optimism, d.key)}
-            min={OPTIMISM.min}
-            max={OPTIMISM.max}
-            step={OPTIMISM.step}
-            onValue={v => setDim(d.key, v)}
-          />)}
+          {OPTIMISM_DIMS.map(d => {
+            const v = effectiveOptimism(optimism, d.key);
+            const pct = ((v - OPTIMISM.min) / (OPTIMISM.max - OPTIMISM.min)) * 100;
+            return <div key={d.key} className="grid gap-1 px-1 py-1.5">
+              <div className="flex items-baseline justify-between gap-2 text-xs">
+                <span className="font-medium text-zinc-950 dark:text-zinc-50" title={d.hint}>{d.label}</span>
+                <span className="min-w-0 truncate tabular-nums text-zinc-500">{optimismAnchors(d.key, v)}</span>
+              </div>
+              <div className="relative">
+                <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-zinc-400 dark:bg-zinc-500"/>
+                <input
+                  aria-label={d.label}
+                  className="range-bipolar relative z-10 w-full"
+                  style={{ ['--range-lo' as string]: `${Math.min(50, pct)}%`, ['--range-hi' as string]: `${Math.max(50, pct)}%` }}
+                  type="range"
+                  min={OPTIMISM.min}
+                  max={OPTIMISM.max}
+                  step={OPTIMISM.step}
+                  value={v}
+                  onChange={event => setDim(d.key, Number(event.target.value))}
+                />
+              </div>
+            </div>;
+          })}
           <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Sub-Regler folgen dem Hauptregler, bis man sie anfasst; Hauptregler bewegen setzt sie zurück.</span>
         </div>}
       </div>
