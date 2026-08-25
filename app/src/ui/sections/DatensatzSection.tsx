@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import { datasetDocs, getPackage } from '../dataCatalog';
+import type { Optimism } from '../costLevers';
 import { computeKosten } from '../kosten';
 import { annualByMaterial, groupSums, fuelTWhFromResult } from '../ressourcen';
 import { e100ElectricTWh } from '../ScenarioSidebar';
@@ -96,8 +97,8 @@ function countLeaves(value: unknown): number {
   return 1;
 }
 
-export default function DatensatzSection({ resolvedScenario, result, periodYears, waccShiftPp, data, shareUrl }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; waccShiftPp: number; data: DataSet | null; shareUrl: string }) {
-  const kosten = useMemo(() => computeKosten(resolvedScenario, result, waccShiftPp), [resolvedScenario, result, waccShiftPp]);
+export default function DatensatzSection({ resolvedScenario, result, periodYears, optimism, data, shareUrl }: { resolvedScenario: Scenario; result: SimulationResult; periodYears: string; optimism: Optimism; data: DataSet | null; shareUrl: string }) {
+  const kosten = useMemo(() => computeKosten(resolvedScenario, result, optimism), [resolvedScenario, result, optimism]);
   const ressourcen = useMemo(() => {
     const fuelTWh = fuelTWhFromResult(result);
     const annual = annualByMaterial(resolvedScenario, Math.max(1, Number(periodYears)), e100ElectricTWh(resolvedScenario, data), fuelTWh);

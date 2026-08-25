@@ -266,6 +266,35 @@ describe('Kosten · B Invarianten', () => {
     expect(kkFast.capex * kk.detail!.idcFactor!).toBeCloseTo(kk.capex, -3);
   });
 
+  it('18d Optimismus: +100 verbilligt, −100 verteuert, Sub-Regler und Einzel-Override haben Vorrang', () => {
+    const hours = [hour({ loadGW: 50, pvGW: 30, kernkraftGW: 20 })];
+    const summary = { totalDemandTWh: 0.438 };
+    const s0 = scen({ pvInstalledGW: 300, kernkraftInstalledGW: 30 });
+    const base = computeKosten(s0, result(hours, summary));
+    const opt = computeKosten(s0, result(hours, summary), { main: 100 });
+    const pes = computeKosten(s0, result(hours, summary), { main: -100 });
+    expect(opt.total).toBeLessThan(base.total);
+    expect(pes.total).toBeGreaterThan(base.total);
+    expect(opt.hasCostOverrides).toBe(true);
+    expect(base.hasCostOverrides).toBe(false);
+    // +100: WACC am Hebel-Minimum, Lebensdauer am Maximum, Bauzeit am Minimum
+    const kk = opt.perTech.find(t => t.key === 'kernkraft')!.detail!.kosten!;
+    expect(kk.wacc).toBeCloseTo(0.04, 6);
+    expect(kk.lifetimeYears).toBe(60);
+    expect(kk.constructionYears).toBe(4);
+    // Sub-Regler: nur Zins optimistisch, Rest Paket
+    const zins = computeKosten(s0, result(hours, summary), { main: 0, zins: 100 });
+    const kz = zins.perTech.find(t => t.key === 'kernkraft')!.detail!.kosten!;
+    expect(kz.wacc).toBeCloseTo(0.04, 6);
+    expect(kz.lifetimeYears).toBe(45);
+    // Einzel-Override schlaegt Regler
+    const ov = computeKosten({ ...s0, costOverrides: { kernkraft: { wacc: 6 } } }, result(hours, summary), { main: 100 });
+    expect(ov.perTech.find(t => t.key === 'kernkraft')!.detail!.kosten!.wacc).toBeCloseTo(0.06, 6);
+    // Netz folgt mit
+    expect(opt.params.netzWacc).toBeCloseTo(0.03, 6);
+    expect(opt.params.netzCapexFactor).toBeCloseTo(0.7, 6);
+  });
+
   it('19/20 annualScale + Brennstoff: 365-Tagesreihe ⇒ Jahresenergie korrekt hochskaliert', () => {
     // 10 GW Gas konstant, loadGW 10 → annualScale = 24, Jahres-Erzeugung = 10·8760 = 87,6 GWh·... = 87,6 TWh
     const hours = Array.from({ length: 365 }, () => hour({ loadGW: 10, gasGW: 10 }));

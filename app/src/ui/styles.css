@@ -39,6 +39,20 @@
   html.dark input[type='range']::-webkit-slider-runnable-track{
     background:linear-gradient(to right, #fafafa 0 var(--range-pct,0%), #3f3f46 var(--range-pct,0%) 100%);
   }
+  /* Bipolare Regler (z. B. Optimismus): Fuellung laeuft von der Nullmarke (--range-lo … --range-hi) statt von links. */
+  input[type='range'].range-bipolar::-webkit-slider-runnable-track{
+    background:linear-gradient(to right, #e4e4e7 0 var(--range-lo,50%), #18181b var(--range-lo,50%) var(--range-hi,50%), #e4e4e7 var(--range-hi,50%) 100%);
+  }
+  html.dark input[type='range'].range-bipolar::-webkit-slider-runnable-track{
+    background:linear-gradient(to right, #3f3f46 0 var(--range-lo,50%), #fafafa var(--range-lo,50%) var(--range-hi,50%), #3f3f46 var(--range-hi,50%) 100%);
+  }
+  input[type='range'].range-bipolar::-moz-range-track{
+    background:linear-gradient(to right, #e4e4e7 0 var(--range-lo,50%), #18181b var(--range-lo,50%) var(--range-hi,50%), #e4e4e7 var(--range-hi,50%) 100%);
+  }
+  html.dark input[type='range'].range-bipolar::-moz-range-track{
+    background:linear-gradient(to right, #3f3f46 0 var(--range-lo,50%), #fafafa var(--range-lo,50%) var(--range-hi,50%), #3f3f46 var(--range-hi,50%) 100%);
+  }
+  input[type='range'].range-bipolar::-moz-range-progress{ background:transparent; }
   input[type='range']::-moz-range-track{
     height:4px;
     border-radius:999px;

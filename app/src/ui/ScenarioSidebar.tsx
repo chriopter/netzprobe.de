@@ -2,19 +2,41 @@ import { Fragment, memo, useEffect, useRef, useState, type KeyboardEvent as Reac
 import {
   Activity,
   ArrowRightLeft,
+  Atom,
+  Battery,
   CalendarDays,
   ChevronDown,
+  Coins,
+  Droplets,
+  Factory,
+  Flame,
+  Frown,
+  Leaf,
   ChevronUp,
   Edit3,
   Info,
   Menu,
+  Mountain,
   RotateCcw,
+  Sailboat,
   SlidersHorizontal,
+  Smile,
+  Sun,
+  Waves,
+  Wind,
   Zap,
 } from 'lucide-react';
 
+const OPTIMISM_TECH_ICON: Record<string, ReactNode> = {
+  pv: <Sun className="h-3.5 w-3.5"/>, windon: <Wind className="h-3.5 w-3.5"/>, windoff: <Sailboat className="h-3.5 w-3.5"/>,
+  biomasse: <Leaf className="h-3.5 w-3.5"/>, laufwasser: <Waves className="h-3.5 w-3.5"/>, kernkraft: <Atom className="h-3.5 w-3.5"/>,
+  gas: <Flame className="h-3.5 w-3.5"/>, kohle: <Factory className="h-3.5 w-3.5"/>, batterie: <Battery className="h-3.5 w-3.5"/>,
+  pumpspeicher: <Mountain className="h-3.5 w-3.5"/>, h2: <Droplets className="h-3.5 w-3.5"/>,
+};
+export type TechKosten = ReadonlyArray<{ key: string; total: number }>;
+
 import { FloatingPanel } from './sectionUi';
-import { KOSTEN_LEVERS, FIELD_TO_TECH, WACC_SHIFT, type KostenLever } from './costLevers';
+import { KOSTEN_LEVERS, FIELD_TO_TECH, OPTIMISM, OPTIMISM_DIMS, effectiveOptimism, optimismEffects, optimismLabel, optimismSummary, type KostenLever, type Optimism } from './costLevers';
 import { supplyPillLabels, supplyPillDescriptions, supplyPillWikiIds, type SupplyPillId } from './supplyPresets';
 import { ApiStatusDot } from './ApiStatusDot';
 import { dataWikiUrl, datasetIds } from './dataLinks';
@@ -90,7 +112,8 @@ type ScenarioSidebarProps = {
   customStart: string;
   customEnd: string;
   periodYears: CostPeriod;
-  waccShiftPp: number;
+  optimism: Optimism;
+  techKosten: TechKosten | null;
   collapsed: boolean;
   openSectors: SidebarOpenSectors;
   expandedRow: SidebarExpandedRow;
@@ -99,7 +122,7 @@ type ScenarioSidebarProps = {
   onOpenSectorsChange: (openSectors: SidebarOpenSectors) => void;
   onExpandedRowChange: (row: SidebarExpandedRow) => void;
   onPeriodYears: (years: CostPeriod) => void;
-  onWaccShift: (pp: number) => void;
+  onOptimism: (opt: Optimism) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -222,13 +245,14 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
   customStart,
   customEnd,
   periodYears,
-  waccShiftPp,
+  optimism,
+  techKosten,
   collapsed,
   openSectors,
   expandedRow,
   actionBar = null,
   onPeriodYears,
-  onWaccShift,
+  onOptimism,
   onCollapsedChange,
   onOpenSectorsChange,
   onExpandedRowChange,
@@ -302,7 +326,7 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
     <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-zinc-100/40 [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin] dark:bg-zinc-950 dark:[scrollbar-color:#3f3f46_transparent] lg:border-r lg:border-zinc-200 lg:dark:border-zinc-800">
       <section className={cx(panelHeader, sidebarInset, 'sticky top-0 z-30 py-3 backdrop-blur')}>
         <div className="flex min-w-0 items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-nowrap items-center gap-3">
             <button
               type="button"
               aria-label="Sidebar einklappen"
@@ -314,11 +338,11 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
               <Menu className="h-4 w-4" aria-hidden="true"/>
             </button>
             <div className="flex min-w-0 items-center gap-3">
-              <h1 className="min-w-0 text-2xl font-semibold leading-none text-zinc-950 dark:text-zinc-50">netzprobe.de</h1>
-              <ApiStatusDot/>
+              <h1 className="min-w-0 truncate text-2xl font-semibold leading-none text-zinc-950 dark:text-zinc-50">netzprobe.de</h1>
+              <span className="shrink-0"><ApiStatusDot/></span>
             </div>
           </div>
-          <MainTabs active="simulation"/>
+          <div className="shrink-0"><MainTabs active="simulation"/></div>
         </div>
         <div className="mt-[7px] border-t border-zinc-200 px-1.5 pt-[7px] dark:border-zinc-800">
           {actionBar}
@@ -333,15 +357,12 @@ export const ScenarioSidebar = memo(function ScenarioSidebar({
           customStart={customStart}
           customEnd={customEnd}
           loadYear={scenario.loadYear}
-          periodYears={periodYears}
-          waccShiftPp={waccShiftPp}
-          onPeriodYears={onPeriodYears}
-          onWaccShift={onWaccShift}
           onPreset={onPreset}
           onStart={onStart}
           onEnd={onEnd}
           onRange={onRange}
         />
+        <KostenControl periodYears={periodYears} optimism={optimism} techKosten={techKosten} onPeriodYears={onPeriodYears} onOptimism={onOptimism}/>
 
         <LoadConfiguration
           data={data}
@@ -1539,10 +1560,6 @@ function PeriodControl({
   customStart,
   customEnd,
   loadYear,
-  periodYears,
-  waccShiftPp,
-  onPeriodYears,
-  onWaccShift,
   onPreset,
   onStart,
   onEnd,
@@ -1554,10 +1571,6 @@ function PeriodControl({
   customStart: string;
   customEnd: string;
   loadYear: 2025 | 2017;
-  periodYears: CostPeriod;
-  waccShiftPp: number;
-  onPeriodYears: (years: CostPeriod) => void;
-  onWaccShift: (pp: number) => void;
   onPreset: (preset: PeriodPreset) => void;
   onStart: (date: string) => void;
   onEnd: (date: string) => void;
@@ -1592,25 +1605,103 @@ function PeriodControl({
           <input aria-label="Enddatum" className={cx(field, 'px-2 text-xs')} type="date" min={yearMin} max={yearMax} value={customEnd} onChange={event => onEnd(event.target.value)}/>
         </div>}
       </div>
-      <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+  </SidebarCard>;
+}
+
+// Eigene Karte für die Kostenparameter, die nicht das Chart-Fenster betreffen:
+// Kostenzeitraum (Bon-Gesamtsicht, Ressourcen-Erneuerung) und globaler WACC.
+function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOptimism }: {
+  periodYears: CostPeriod;
+  optimism: Optimism;
+  techKosten: TechKosten | null;
+  onPeriodYears: (years: CostPeriod) => void;
+  onOptimism: (opt: Optimism) => void;
+}) {
+  const [subOpen, setSubOpen] = useState(false);
+  const [openTech, setOpenTech] = useState<string | null>(null);
+  // Zeile je Technologie mit Jahreskosten des Szenarios (levelized), nach Kosten sortiert.
+  const effects = optimismEffects(optimism);
+  const rows = (techKosten ?? []).filter(t => t.total > 5e7).sort((a, b) => b.total - a.total)
+    .map(t => ({ ...t, effect: effects.find(e => e.key === t.key) })).filter(r => r.effect);
+  const anySub = OPTIMISM_DIMS.some(d => optimism[d.key] != null && optimism[d.key] !== optimism.main);
+  // Hauptregler: setzt alle Dimensionen (loest explizite Sub-Werte).
+  const setMain = (v: number) => onOptimism({ main: v });
+  const setDim = (key: typeof OPTIMISM_DIMS[number]['key'], v: number) => onOptimism({ ...optimism, [key]: v === optimism.main ? null : v });
+  return <SidebarCard title="Kosten" icon={<Coins className="h-4 w-4"/>} badge={`${periodYears} J`} meta={optimismSummary(optimism)} collapsible>
+      <div className="grid gap-1.5">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Kostenzeitraum</span>
         <div className="flex flex-wrap gap-1.5">
           <PresetPillRow presets={costPeriodPills} activeId={periodYears} onSelect={onPeriodYears}/>
         </div>
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Gesamtkosten = Jahresmiete × {periodYears} Jahre (WACC steckt in der Jahresmiete); steuert auch die Material-Erneuerung der Ressourcen</span>
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Gesamtkosten = Jahresmiete × {periodYears} Jahre; gilt auch für die Material-Erneuerung.</span>
       </div>
       <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Kapitalkosten</span>
-        <CapacitySliderRow
-          label="WACC real, alle Technologien"
-          unit="pp"
-          value={waccShiftPp}
-          min={WACC_SHIFT.min}
-          max={WACC_SHIFT.max}
-          step={WACC_SHIFT.step}
-          onValue={onWaccShift}
-        />
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Verschiebt den realen Zins jeder Technologie um {waccShiftPp > 0 ? '+' : ''}{waccShiftPp.toLocaleString('de-DE')} Prozentpunkte (Paketwerte: PV 3,5 %, Wind 3,9–6 %, Gas 6,5 %, Kernkraft 7,8 %, Netz 5 %); die Risikoaufschläge je Technologie bleiben, nur das Zinsumfeld ändert sich. Feinjustierung je Technologie unter »Kosten-Annahmen« beim jeweiligen Regler.</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400" title="Verschiebt Zins, Anlagenpreise, Bauzeit und Lebensdauer aller Technologien und des Netzes innerhalb der Quellen-Spannen; Einzelwerte unter »Kosten-Annahmen« schlagen den Regler.">Optimismus Rahmenbedingungen</span>
+        <div className="grid gap-1 px-1 py-1.5">
+          <div className="flex items-center gap-2">
+            <Frown className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true"/>
+            <div className="relative min-w-0 flex-1">
+              {/* Nullmarke: Paketwerte */}
+              <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-zinc-400 dark:bg-zinc-500"/>
+              <input
+                aria-label="Rahmenbedingungen: pessimistisch bis optimistisch"
+                className="range-bipolar relative z-10 w-full"
+                style={{
+                  ['--range-lo' as string]: `${Math.min(50, ((optimism.main - OPTIMISM.min) / (OPTIMISM.max - OPTIMISM.min)) * 100)}%`,
+                  ['--range-hi' as string]: `${Math.max(50, ((optimism.main - OPTIMISM.min) / (OPTIMISM.max - OPTIMISM.min)) * 100)}%`,
+                }}
+                type="range"
+                min={OPTIMISM.min}
+                max={OPTIMISM.max}
+                step={OPTIMISM.step}
+                value={optimism.main}
+                onChange={event => setMain(Number(event.target.value))}
+              />
+            </div>
+            <Smile className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true"/>
+          </div>
+        </div>
+        <span className="text-xs text-zinc-700 dark:text-zinc-200">{optimismLabel(optimism.main)}</span>
+        {rows.length > 0 && <ul className="mt-1 grid gap-0.5 px-1 text-xs">
+          {rows.map(r => <li key={r.key} className="min-w-0">
+            <button
+              type="button"
+              onClick={() => setOpenTech(t => t === r.key ? null : r.key)}
+              aria-expanded={openTech === r.key}
+              className="flex w-full items-center gap-1.5 py-0.5 text-left"
+            >
+              <span className="shrink-0 text-zinc-600 dark:text-zinc-300">{OPTIMISM_TECH_ICON[r.key]}</span>
+              <span className="min-w-0 flex-1 truncate font-medium text-zinc-950 dark:text-zinc-50">{r.effect!.tech}</span>
+              <span className="shrink-0 tabular-nums text-zinc-500">{fmt.format(r.total / 1e9)} Mrd €/a</span>
+              <ChevronDown className={cx('h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform', openTech === r.key && 'rotate-180')} aria-hidden="true"/>
+            </button>
+            {openTech === r.key && <div className="grid gap-0.5 pb-1 pl-5 text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+              {r.effect!.parts.map(part => <div key={part} className="truncate">{part}</div>)}
+            </div>}
+          </li>)}
+        </ul>}
+        <button
+          type="button"
+          onClick={() => setSubOpen(o => !o)}
+          className="mt-1 flex items-center gap-1 text-left text-[11px] font-medium text-zinc-600 dark:text-zinc-300"
+        >
+          <ChevronDown className={cx('h-3.5 w-3.5 text-zinc-400 transition-transform', subOpen && 'rotate-180')} aria-hidden="true"/>
+          Einzeln verschieben
+          {anySub && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">individuell</span>}
+        </button>
+        {subOpen && <div className="grid gap-1 pl-1">
+          {OPTIMISM_DIMS.map(d => <CapacitySliderRow
+            key={d.key}
+            label={d.label}
+            unit=""
+            value={effectiveOptimism(optimism, d.key)}
+            min={OPTIMISM.min}
+            max={OPTIMISM.max}
+            step={OPTIMISM.step}
+            onValue={v => setDim(d.key, v)}
+          />)}
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Sub-Regler folgen dem Hauptregler, bis man sie anfasst; Hauptregler bewegen setzt sie zurück.</span>
+        </div>}
       </div>
   </SidebarCard>;
 }
