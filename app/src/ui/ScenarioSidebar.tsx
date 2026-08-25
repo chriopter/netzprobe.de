@@ -1636,7 +1636,7 @@ function KostenControl({ periodYears, optimism, techKosten, onPeriodYears, onOpt
         <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Gesamtkosten = Jahresmiete × {periodYears} Jahre; gilt auch für die Material-Erneuerung.</span>
       </div>
       <div className="mt-3 grid gap-1.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400" title="Verschiebt Zins, Anlagenpreise, Bauzeit und Lebensdauer aller Technologien und des Netzes innerhalb der Quellen-Spannen; Einzelwerte unter »Kosten-Annahmen« schlagen den Regler.">Optimismus Rahmenbedingungen</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400" title="Verschiebt Zins, Anlagenpreise, Bauzeit und Lebensdauer aller Technologien und des Netzes innerhalb der Quellen-Spannen; Einzelwerte unter »Kosten-Annahmen« schlagen den Regler.">Optimismus</span>
         <div className="grid gap-1 px-1 py-1.5">
           <div className="flex items-center gap-2">
             <Frown className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true"/>
