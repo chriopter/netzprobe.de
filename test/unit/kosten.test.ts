@@ -275,7 +275,8 @@ describe('Kosten · B Invarianten', () => {
     const pes = computeKosten(s0, result(hours, summary), { main: -100 });
     expect(opt.total).toBeLessThan(base.total);
     expect(pes.total).toBeGreaterThan(base.total);
-    expect(opt.hasCostOverrides).toBe(true);
+    // Regler ist kein »eigener Override« (steht separat im Bon-Kopf)
+    expect(opt.hasCostOverrides).toBe(false);
     expect(base.hasCostOverrides).toBe(false);
     // +100: WACC am Hebel-Minimum, Lebensdauer am Maximum, Bauzeit am Minimum
     const kk = opt.perTech.find(t => t.key === 'kernkraft')!.detail!.kosten!;

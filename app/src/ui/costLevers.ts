@@ -116,16 +116,24 @@ export function optimismEffects(opt: Optimism): OptimismEffect[] {
   });
 }
 
-// Ankerwerte je Dimension (statt einer abstrakten Zahl am Sub-Regler):
-// resultierende Werte an zwei Referenztechnologien.
-export function optimismAnchors(dim: OptimismDim, value: number): string {
+// Resultierende Werte einer Dimension fuer ALLE Technologien (Anzeige unter
+// dem jeweiligen Sub-Regler).
+export function optimismDimValues(dim: OptimismDim, value: number): Array<{ key: string; label: string; text: string }> {
   const num = (v: number, digits: number) => v.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  const at = (tech: string, key: string) => { const l = KOSTEN_LEVERS[tech]?.find(x => x.key === key); return l ? leverValueAtOptimism(l, value) : null; };
-  const kk = (key: string) => at('kernkraft', key);
-  if (dim === 'zins') return `Kernkraft ${num(kk('wacc') ?? 0, 1)} % · PV ${num(at('pv', 'wacc') ?? 0, 1)} %`;
-  if (dim === 'preise') return `Kernkraft ${num(kk('capex') ?? 0, 0)} · PV ${num(at('pv', 'capexZubau') ?? 0, 0)} €/kW`;
-  if (dim === 'bauzeit') return `Kernkraft ${num(kk('bauzeit') ?? 0, 1)} a · Wind off ${num(at('windoff', 'bauzeit') ?? 0, 1)} a`;
-  return `Kernkraft ${num(kk('lifetime') ?? 0, 0)} a · PV ${num(at('pv', 'lifetime') ?? 0, 0)} a`;
+  const out: Array<{ key: string; label: string; text: string }> = [];
+  for (const [tech, label] of EFFECT_TECHS) {
+    const levers = KOSTEN_LEVERS[tech] ?? [];
+    const pick = (keys: string[]) => { for (const k of keys) { const l = levers.find(x => x.key === k); if (l) return l; } return undefined; };
+    const l = dim === 'zins' ? pick(['wacc'])
+      : dim === 'bauzeit' ? pick(['bauzeit'])
+      : dim === 'laufzeit' ? pick(['lifetime'])
+      : pick(['capex', 'capexZubau', 'capexEnergy', 'capexCharge', 'capexPower']);
+    if (!l) continue;
+    const v = leverValueAtOptimism(l, value);
+    const text = dim === 'zins' ? `${num(v, 1)} %` : dim === 'preise' ? `${num(v, 0)} ${l.unit}` : dim === 'bauzeit' ? `${num(v, 1)} a` : `${num(v, 0)} a`;
+    out.push({ key: tech, label, text });
+  }
+  return out;
 }
 
 // Text-Stufen unter dem Regler.
