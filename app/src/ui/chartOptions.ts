@@ -514,7 +514,10 @@ export function buildMixChartOption(hours: SimHour[], visibility: MixVisibility 
     animation: false,
     tooltip: {
       trigger: 'axis',
-      triggerOn: 'mousemove|click',
+      // ECharts >= 6.1 typisiert nur noch 'mousemove|click|mousewheel'; zur
+      // Laufzeit wird per indexOf gematcht, 'mousemove|click' (ohne Mausrad)
+      // bleibt gültig und dokumentiert. Cast statt Verhaltensänderung.
+      triggerOn: 'mousemove|click' as 'mousemove|click|mousewheel',
       confine: true,
       appendToBody: false,
       enterable: false,
