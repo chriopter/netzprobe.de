@@ -17,22 +17,65 @@ import { cx, muted } from './ui';
 // Geothermie 0,0. Hausmuell bleibt draussen, damit die Abgrenzung dieselbe ist
 // wie beim 2025-Wert unten (dort zaehlt wasteTWh ebenfalls nicht als EE).
 const KERNKRAFT_2000_TWH = 160.8;
-const EE_2000_TWH = 35.4;
+const EE_2000_TEILE = [
+  { label: 'Wasserkraft', twh: 24.6 },
+  { label: 'Wind onshore', twh: 9.3 },
+  { label: 'Biomasse', twh: 1.5 },
+];
+const EE_2000_TWH = EE_2000_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
 const QUELLE_2000 = 'https://ag-energiebilanzen.de/wp-content/uploads/2024/04/STRERZ_Abg_02_2024_korr.pdf';
 
 // 2025: beobachtete Erzeugung aus model/erzeugung/2025 (Energy-Charts).
 // Kernkraft ist seit dem Ausstieg 2023 null, CO2-frei ist also reine EE.
 const EE_TEILE_2025 = ['pvTWh', 'windOnTWh', 'windOffTWh', 'hydroTWh', 'biomassTWh', 'geothermalTWh'] as const;
 
-const EE_2025_TWH = (() => {
+const EE_2025_TEILE = (() => {
   const teile = uiManifest.generation2025.sumPartsTWh as Record<string, number> | undefined;
-  if (!teile) return 0;
-  return EE_TEILE_2025.reduce((summe, key) => summe + (teile[key] ?? 0), 0);
+  const labels: Record<(typeof EE_TEILE_2025)[number], string> = {
+    windOnTWh: 'Wind onshore', pvTWh: 'PV', biomassTWh: 'Biomasse',
+    hydroTWh: 'Wasserkraft', windOffTWh: 'Wind offshore', geothermalTWh: 'Geothermie',
+  };
+  return EE_TEILE_2025
+    .map(key => ({ label: labels[key], twh: teile?.[key] ?? 0 }))
+    .filter(teil => teil.twh > 0)
+    .sort((a, b) => b.twh - a.twh);
 })();
+const EE_2025_TWH = EE_2025_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
 const twh0 = (n: number) => `${fmt0.format(n)} TWh`;
 // Alles, was aus dem e100-Szenario faellt, ist geschaetzt — die gemessene
 // Historie (196/264/68 TWh) nicht. Nur Ersteres bekommt ein ≈.
 const caTwh0 = (n: number) => `≈ ${fmt0.format(n)} TWh`;
+// Wie viel des e100-Bedarfs nicht direkt elektrisch ist, sondern ueber
+// Wasserstoff oder strombasierte Kraftstoffe laeuft. Alle Werte sind bereits
+// Strom (nicht Brennstoff-Energie) — nachgerechnet aus den Sektor-Parametern,
+// damit sich der Split mitzieht, wenn die Modelle sich aendern.
+const H2_SEKTOREN = (() => {
+  const zahl = (quelle: Record<string, unknown>, key: string) => {
+    const wert = quelle[key];
+    return typeof wert === 'number' ? wert : 0;
+  };
+  const flug = uiManifest.e100.flug as Record<string, unknown>;
+  const schiff = uiManifest.e100.schiff as Record<string, unknown>;
+  const stahl = uiManifest.e100.stahl as Record<string, unknown>;
+  const chemie = uiManifest.e100.chemie as Record<string, unknown>;
+  const ptlWirkungsgrad = zahl(flug, 'ptlEfficiency');
+  return [
+    // Kerosin per Power-to-Liquid: Brennstoffenergie durch PtL-Wirkungsgrad.
+    { label: 'Flug', twh: ptlWirkungsgrad > 0 ? zahl(flug, 'kerosineEnergyTWh') / ptlWirkungsgrad : 0 },
+    // Chemie: Ammoniak, Methanol und Olefine ueber H2 — der direkt elektrische
+    // Teil (Prozesswaerme, Sockel) steckt nicht in diesen drei Posten.
+    { label: 'Chemie', twh: zahl(chemie, 'hydrogenAmmoniaTWh') + zahl(chemie, 'hydrogenMethanolTWh') + zahl(chemie, 'eOlefinsViaH2TWh') },
+    // Stahl: Direktreduktion, Strom für die Elektrolyse (ohne den Lichtbogenofen).
+    { label: 'Stahl', twh: zahl(stahl, 'defaultTargetMioTon') * zahl(stahl, 'hydrogenKgPerTonSteel') * zahl(stahl, 'electrolyzerKwhPerKgH2') / 1000 },
+    // Seeschifffahrt: PtL-Bunkerung, ohne die direkt elektrische Binnenschifffahrt.
+    { label: 'Schiff', twh: zahl(schiff, 'eFuelSynthesisTWh') },
+  ].sort((a, b) => b.twh - a.twh);
+})();
+const H2_TWH = H2_SEKTOREN.reduce((summe, sektor) => summe + sektor.twh, 0);
+
+const posten = (teile: Array<{ label: string; twh: number }>) =>
+  teile.map(teil => `${teil.label} ${fmt.format(teil.twh)}`).join(', ');
+
 const CO2FREI_2000_TWH = KERNKRAFT_2000_TWH + EE_2000_TWH;
 // Kernkraft ist seit 2023 null, CO2-frei ist heute also reine EE.
 const CO2FREI_2025_TWH = EE_2025_TWH;
@@ -115,6 +158,31 @@ function Einblendung({ titel, wert, text, className, style }: {
       </span>
       <span className="mt-1 block text-xs leading-5 text-zinc-300 dark:text-zinc-600">{text}</span>
     </span>
+  </span>;
+}
+
+// Haengt eine Einblendung an einen Wert im Fliesstext.
+function MitEinblendung({ titel, wert, text, rechts, children }: {
+  titel: string;
+  wert: string;
+  text: ReactNode;
+  // Werte am Zeilenende richten die Karte nach rechts aus, sonst laeuft sie raus.
+  rechts?: boolean;
+  children: ReactNode;
+}) {
+  const [zeigen, setZeigen] = useState(false);
+  return <span
+    className="relative inline-block cursor-help"
+    onMouseEnter={() => setZeigen(true)}
+    onMouseLeave={() => setZeigen(false)}
+  >
+    {children}
+    {zeigen && <Einblendung
+      className={cx('top-full mt-1', rechts ? 'right-0' : 'left-0')}
+      titel={titel}
+      wert={wert}
+      text={text}
+    />}
   </span>;
 }
 
@@ -215,19 +283,68 @@ export function FortschrittPage() {
           Reihenfolge Rahmen — Stand — Rest. */}
       <p className="mt-2 text-sm leading-7 text-zinc-600 dark:text-zinc-400">
         Für die Dekarbonisierung aller Sektoren braucht Deutschland{' '}
-        <SzenarioLink query="?e=e100" titel="Szenario e100 im Rechner öffnen">
-          <Zahl>{bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}</Zahl>
-        </SzenarioLink>
+        <MitEinblendung
+          titel={`Bedarf ${JAHR_ZIEL}`}
+          wert={bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}
+          text={<>
+            {bedarfZielTWh != null ? caTwh0(bedarfZielTWh - H2_TWH) : '…'} direkt elektrisch,
+            {' '}{caTwh0(H2_TWH)} über Wasserstoff und E-Fuels
+            {' '}({posten(H2_SEKTOREN)}).
+          </>}
+        >
+          <SzenarioLink query="?e=e100" titel="Szenario e100 im Rechner öffnen">
+            <Zahl>{bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}</Zahl>
+          </SzenarioLink>
+        </MitEinblendung>
         {' '}jährlich.<br/>
-        {JAHR_BASIS} waren <Zahl>{twh0(co2frei2000)}</Zahl> des Stroms CO₂-frei, heute sind es{' '}
-        <SzenarioLink query="" titel="Szenario 2025 im Rechner öffnen">
-          <Zahl>{twh0(co2frei2025)}</Zahl>
-        </SzenarioLink>
-        {' '}(+ {twh0(zubau)}).<br/>
-        Von den bis {JAHR_ZIEL} nötigen <Zahl>{aufgabe != null ? caTwh0(aufgabe) : '…'}</Zahl> an sauberer Energie
-        {' '}sind damit seit {JAHR_BASIS}
-        {' '}<Zahl>{anteilPct != null ? `≈ ${fmt.format(anteilPct)} %` : '…'}</Zahl> hinzugekommen –{' '}
-        <Zahl>{rest != null ? caTwh0(rest) : '…'}</Zahl> fehlen.
+        {JAHR_BASIS} waren{' '}
+        <MitEinblendung
+          titel={`CO₂-frei ${JAHR_BASIS}`}
+          wert={twh0(co2frei2000)}
+          text={<>Kernkraft {fmt.format(KERNKRAFT_2000_TWH)}, {posten(EE_2000_TEILE)}. PV und Offshore lagen bei null.</>}
+        ><Zahl>{twh0(co2frei2000)}</Zahl></MitEinblendung>
+        {' '}des Stroms CO₂-frei, heute sind es{' '}
+        <MitEinblendung
+          titel={`CO₂-frei ${JAHR_HEUTE}`}
+          wert={twh0(co2frei2025)}
+          text={<>{posten(EE_2025_TEILE)}. Kernkraft null seit dem Ausstieg 2023.</>}
+        >
+          <SzenarioLink query="" titel="Szenario 2025 im Rechner öffnen">
+            <Zahl>{twh0(co2frei2025)}</Zahl>
+          </SzenarioLink>
+        </MitEinblendung>
+        {' '}(
+        <MitEinblendung
+          rechts
+          titel={`Zuwachs seit ${JAHR_BASIS}`}
+          wert={`+ ${twh0(zubau)}`}
+          text={<>Ein Saldo: gebaut wurden {twh0(EE_ZUBAU_BRUTTO_TWH)} EE, {fmt.format(KERNKRAFT_2000_TWH)} davon
+            {' '}haben die abgeschaltete Kernkraft ersetzt. Bleiben {fmt.format(proJahr)} TWh pro Jahr.</>}
+        >+ {twh0(zubau)}</MitEinblendung>
+        ).<br/>
+        Von den bis {JAHR_ZIEL} nötigen{' '}
+        <MitEinblendung
+          titel={`Aufgabe ${JAHR_BASIS}–${JAHR_ZIEL}`}
+          wert={aufgabe != null ? caTwh0(aufgabe) : '…'}
+          text={<>Bedarf {JAHR_ZIEL} {bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'} minus die {twh0(co2frei2000)},
+            {' '}die {JAHR_BASIS} schon CO₂-frei am Netz standen.</>}
+        ><Zahl>{aufgabe != null ? caTwh0(aufgabe) : '…'}</Zahl></MitEinblendung>
+        {' '}an sauberer Energie sind damit seit {JAHR_BASIS}{' '}
+        <MitEinblendung
+          titel="Anteil des Zuwachses"
+          wert={anteilPct != null ? `≈ ${fmt.format(anteilPct)} %` : '…'}
+          text={<>{twh0(zubau)} ÷ {aufgabe != null ? fmt0.format(aufgabe) : '…'} TWh, gerechnet über {jahre} Jahre.</>}
+        ><Zahl>{anteilPct != null ? `≈ ${fmt.format(anteilPct)} %` : '…'}</Zahl></MitEinblendung>
+        {' '}hinzugekommen –{' '}
+        <MitEinblendung
+          rechts
+          titel={`Fehlt bis ${JAHR_ZIEL}`}
+          wert={rest != null ? caTwh0(rest) : '…'}
+          text={<>Bedarf {JAHR_ZIEL} minus die {twh0(co2frei2025)} von heute. Verteilt auf die {JAHR_ZIEL - JAHR_HEUTE} Jahre
+            {' '}bis {JAHR_ZIEL} sind das {rest != null ? fmt0.format(rest / (JAHR_ZIEL - JAHR_HEUTE)) : '…'} TWh pro Jahr —
+            {' '}bisher waren es {fmt.format(proJahr)}.</>}
+        ><Zahl>{rest != null ? caTwh0(rest) : '…'}</Zahl></MitEinblendung>
+        {' '}fehlen.
       </p>
     </header>
 
@@ -316,9 +433,7 @@ export function FortschrittQuellen() {
       {' '}{JAHR_ZIEL}: Jahreslast des e100-Szenarios, live aus der Rust-API — darin laufen Flug und Seeschifffahrt
       über e-Kerosin/PtL, die Primärstahlerzeugung über grünen Wasserstoff und die Chemie inklusive H₂-Feedstock,
       deren Strombedarf samt Umwandlungsverlusten also mitgezählt ist. CO₂-frei = Kernkraft + Wind + PV +
-      Wasserkraft + Biomasse + Geothermie; Hausmüll zählt in beiden Jahren nicht mit. Die {twh0(ZUBAU_TWH)} sind ein
-      Saldo: brutto kamen {twh0(EE_ZUBAU_BRUTTO_TWH)} EE dazu, {fmt.format(KERNKRAFT_2000_TWH)} davon haben die
-      abgeschaltete Kernkraft ersetzt. Die Aufgabe ist reine Strommenge — Netz, Speicher und Gleichzeitigkeit
+      Wasserkraft + Biomasse + Geothermie; Hausmüll zählt in beiden Jahren nicht mit. Die Aufgabe ist reine Strommenge — Netz, Speicher und Gleichzeitigkeit
       stecken nicht darin.
     </p>}
   </div>;
