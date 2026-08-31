@@ -23,6 +23,11 @@ const EE_2000_TEILE = [
   { label: 'Biomasse', twh: 1.5 },
 ];
 const EE_2000_TWH = EE_2000_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
+// Heutiger Primaerenergieverbrauch als Gegenpunkt zu den 1.808 TWh — ohne ihn
+// lesen viele die 1.808 als Primaerenergie statt als Strom.
+// AGEB-Jahresschaetzung 2025: 10.553 PJ = 2.931 TWh (Datenlage bis 10.12.2025).
+const PRIMAERENERGIE_TWH = 2931;
+const QUELLE_PRIMAERENERGIE = 'https://ag-energiebilanzen.de/wp-content/uploads/quartalsbericht_q4_2025.pdf';
 const QUELLE_2000 = 'https://ag-energiebilanzen.de/wp-content/uploads/2024/04/STRERZ_Abg_02_2024_korr.pdf';
 
 // 2025: beobachtete Erzeugung aus model/erzeugung/2025 (Energy-Charts).
@@ -296,7 +301,16 @@ export function FortschrittPage() {
             <Zahl>{bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}</Zahl>
           </SzenarioLink>
         </MitEinblendung>
-        {' '}jährlich.<br/>
+        {' '}jährlich (heute{' '}
+        <MitEinblendung
+          rechts
+          titel={`Primärenergie ${JAHR_HEUTE}`}
+          wert={caTwh0(PRIMAERENERGIE_TWH)}
+          text={<>AGEB-Jahresschätzung: 10.553 PJ. Darin stecken die Verbrennungsverluste von Kraftwerken,
+            {' '}Motoren und Heizungen — die fallen bei der Elektrifizierung weg, deshalb liegt der Bedarf
+            {' '}danach deutlich darunter.</>}
+        ><Zahl>{caTwh0(PRIMAERENERGIE_TWH)}</Zahl></MitEinblendung>
+        {' '}Primärenergie).<br/>
         {JAHR_BASIS} waren{' '}
         <MitEinblendung
           titel={`CO₂-frei ${JAHR_BASIS}`}
@@ -427,7 +441,9 @@ export function FortschrittQuellen() {
       Quellen &amp; Abgrenzung
     </button>
     {quellenOffen && <p className={cx('max-w-3xl text-xs leading-6', muted)}>
-      {JAHR_BASIS}: Nettostromerzeugung nach{' '}
+      {JAHR_HEUTE}: Primärenergieverbrauch nach{' '}
+      <a href={QUELLE_PRIMAERENERGIE} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">AG Energiebilanzen</a>
+      {' '}(Jahresschätzung, vorläufig). {JAHR_BASIS}: Nettostromerzeugung nach{' '}
       <a href={QUELLE_2000} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">AG Energiebilanzen</a>
       {' '}(Datenstand 15.02.2024). {JAHR_HEUTE}: beobachtete Erzeugung aus <code>model/erzeugung/2025</code> (Energy-Charts).
       {' '}{JAHR_ZIEL}: Jahreslast des e100-Szenarios, live aus der Rust-API — darin laufen Flug und Seeschifffahrt
