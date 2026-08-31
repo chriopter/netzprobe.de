@@ -774,7 +774,7 @@ function DataHandbookRoute() {
 // Fortschritt: eigene Vollseite mit dem CO2-frei-Dreisatz seit 2000.
 function FortschrittRoute() {
   return <main className={shell}>
-    <FortschrittToggle variant="floating"/>
+    <FortschrittZurueck/>
     <FortschrittPage/>
     {/* Alles unterhalb des Trennstrichs: erst die Quellen der Seite, dann der
         allgemeine Disclaimer — beide teilen sich denselben Strich. */}
@@ -886,23 +886,38 @@ function ScenarioTabs({ count, active, onSelect, onAdd, onRemove }: {
       title="Szenario hinzufügen"
       className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
     ><Plus className="h-4 w-4"/></button>
-    <FortschrittToggle variant="tab"/>
   </div>;
 }
 
-// Fortschritt-Umschalter: im Dashboard als »tab«-Variante neben dem »+« der
-// Szenario-Reiter, auf der Fortschritt-Seite als »floating«-Variante links neben
-// dem Theme-Knopf — gleiche Größe und Optik wie dieser, führt zurück.
-function FortschrittToggle({ variant }: { variant: 'tab' | 'floating' }) {
-  const zurueck = variant === 'floating';
+// Banner in der Kopfleiste des Dashboards, zwischen den Ansichts-Reitern und den
+// Szenario-Reitern: Einstieg in die Fortschritt-Seite. Unter sm ausgeblendet,
+// dort ist die Leiste schon mit vier Reitern und dem Theme-Knopf voll.
+function FortschrittBanner() {
+  // Gleicher Kasten wie die Ansichts-Reiter (p-0.5 aussen, px-2.5/py-1.5 innen,
+  // leading-none), damit beide exakt gleich hoch sind. Icon bewusst 12px, sonst
+  // dehnt es die Zeilenbox ueber die 13px der Reiter hinaus.
   return <a
-    href={zurueck ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}fortschritt`}
-    aria-label={zurueck ? 'Zurück zur Simulation' : 'Fortschritt'}
-    aria-current={zurueck ? 'page' : undefined}
-    title={zurueck ? 'Zurück zur Simulation' : 'Fortschritt'}
-    className={zurueck
-      ? cx(floatingRoundButton, 'fixed right-[52px] top-3 z-[60] sm:right-14')
-      : 'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'}
+    href={`${import.meta.env.BASE_URL}fortschritt`}
+    title="Fortschritt: sauberer Zubau seit 2000"
+    className="group hidden shrink-0 rounded-full border border-zinc-200 bg-white p-0.5 text-[12px] font-medium leading-none shadow-sm transition hover:border-zinc-300 sm:inline-block sm:text-[13px] dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600"
+  >
+    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 transition-colors group-hover:bg-zinc-50 sm:px-3 dark:group-hover:bg-zinc-800">
+      <TrendingUp className="h-3 w-3 shrink-0 text-zinc-400 dark:text-zinc-500" aria-hidden="true"/>
+      <span className="text-zinc-500 dark:text-zinc-400">Jetzt neu:</span>
+      <span className="text-zinc-950 dark:text-zinc-50">Fortschritt</span>
+    </span>
+  </a>;
+}
+
+// Rueckweg von der Fortschritt-Seite, fixiert links neben dem Theme-Knopf und in
+// dessen Optik.
+function FortschrittZurueck() {
+  return <a
+    href={import.meta.env.BASE_URL}
+    aria-label="Zurück zur Simulation"
+    aria-current="page"
+    title="Zurück zur Simulation"
+    className={cx(floatingRoundButton, 'fixed right-[52px] top-3 z-[60] sm:right-14')}
   ><TrendingUp className="h-4 w-4" aria-hidden="true"/></a>;
 }
 
@@ -1243,7 +1258,7 @@ function Dashboard({ theme }: { theme: ThemeMode }) {
           {sidebarCollapsed && <div className="absolute left-3 top-3"><SidebarOpenButton onClick={openSidebar}/></div>}
           Lade Daten …
         </div> : <>
-          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} rightSlot={<ScenarioTabs count={scenarios.length} active={activeScenario} onSelect={setActiveScenario} onAdd={addScenario} onRemove={removeScenario}/>}/>
+          <MainViewTabs active={mainView} onChange={setMainView} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={openSidebar} centerSlot={<FortschrittBanner/>} rightSlot={<ScenarioTabs count={scenarios.length} active={activeScenario} onSelect={setActiveScenario} onAdd={addScenario} onRemove={removeScenario}/>}/>
           <div id="dashboard-sections" className="flex flex-col gap-3">
           <MixSection
             result={result}
@@ -1558,7 +1573,7 @@ function scrollToSection(id: MainViewId) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, rightSlot }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; rightSlot?: ReactNode }) {
+function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, centerSlot, rightSlot }: { active: MainViewId; onChange: (id: MainViewId) => void; sidebarCollapsed: boolean; onOpenSidebar: () => void; centerSlot?: ReactNode; rightSlot?: ReactNode }) {
   const tabs = (Object.entries(MAIN_VIEW_LABELS) as Array<[MainViewId, string]>).map(([id, label]) => ({ id, label }));
   // Kurzlabels nur auf Mobile, damit die vier Tabs neben dem fixierten Theme-Knopf passen.
   const shortLabel: Record<MainViewId, string> = { mix: 'Mix', flaeche: 'Fläche', ressourcen: 'Stoffe', kosten: 'Kosten' };
@@ -1587,6 +1602,7 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, right
         ><span className="sm:hidden">{shortLabel[tab.id]}</span><span className="hidden sm:inline">{tab.label}</span></button>;
       })}
     </nav>
+    {centerSlot && <div className="pointer-events-auto">{centerSlot}</div>}
     {rightSlot && <div className="pointer-events-auto ml-auto">{rightSlot}</div>}
   </div>;
 }
