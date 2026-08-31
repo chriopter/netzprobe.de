@@ -23,6 +23,14 @@ const EE_2000_TEILE = [
   { label: 'Biomasse', twh: 1.5 },
 ];
 const EE_2000_TWH = EE_2000_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
+// Gegenszenario zum eigenen e100: Fraunhofer ISE, »Wege zu einem klimaneutralen
+// Energiesystem — Bundeslaender im Transformationsprozess« (2024). Die Studie
+// nennt 1.150 bis 1.650 TWh Stromverbrauch 2045 je nach Szenario. Gerechnet wird
+// mit dem unteren Ende, damit die Gegenposition in ihrer staerksten Form dasteht.
+const ISE_BEDARF_TWH = 1150;
+const ISE_BEREICH = '1.150 bis 1.650 TWh';
+const QUELLE_ISE = 'https://www.ise.fraunhofer.de/de/presse-und-medien/presseinformationen/2024/klimaneutrales-deutschland-studie-des-fraunhofer-ise-zeigt-transformationspfade-fuer-das-deutsche-energiesystem-in-regionaler-aufloesung.html';
+
 // Heutiger Primaerenergieverbrauch als Gegenpunkt zu den 1.808 TWh — ohne ihn
 // lesen viele die 1.808 als Primaerenergie statt als Strom.
 // AGEB-Jahresschaetzung 2025: 10.553 PJ = 2.931 TWh (Datenlage bis 10.12.2025).
@@ -166,6 +174,31 @@ function Einblendung({ titel, wert, text, className, style }: {
   </span>;
 }
 
+type Ziel = 'e100' | 'ise';
+
+// Welcher 2045er Bedarf als Nenner gilt. Die Wahl aendert die Prozente deutlich,
+// deshalb steht sie sichtbar auf der Seite statt versteckt in den Annahmen.
+function ZielUmschalter({ ziel, onZiel }: { ziel: Ziel; onZiel: (ziel: Ziel) => void }) {
+  const optionen: Array<{ id: Ziel; label: string }> = [
+    { id: 'e100', label: 'Netzprobe e100' },
+    { id: 'ise', label: 'Fraunhofer ISE' },
+  ];
+  return <div className="inline-flex w-fit items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+    {optionen.map(option => <button
+      key={option.id}
+      type="button"
+      aria-pressed={ziel === option.id}
+      onClick={() => onZiel(option.id)}
+      className={cx(
+        'rounded-full px-2.5 py-1 transition-colors',
+        ziel === option.id
+          ? 'bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950'
+          : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50',
+      )}
+    >{ziel === option.id ? `nach ${option.label}` : option.label}</button>)}
+  </div>;
+}
+
 // Haengt eine Einblendung an einen Wert im Fliesstext.
 function MitEinblendung({ titel, wert, text, rechts, children }: {
   titel: string;
@@ -207,7 +240,11 @@ const Zahl = ({ children }: { children: ReactNode }) =>
   <strong className="font-semibold text-zinc-950 dark:text-zinc-50">{children}</strong>;
 
 export function FortschrittPage() {
-  const { twh: bedarfZielTWh, failed } = useE100BedarfTWh();
+  const { twh: e100TWh, failed: e100Fehlt } = useE100BedarfTWh();
+  const [ziel, setZiel] = useState<Ziel>('e100');
+  // Der ISE-Wert ist eine Konstante, nur e100 kommt aus der Rust-API.
+  const bedarfZielTWh = ziel === 'e100' ? e100TWh : ISE_BEDARF_TWH;
+  const failed = ziel === 'e100' && e100Fehlt;
   const [hover, setHover] = useState<number | null>(null);
 
   const co2frei2000 = CO2FREI_2000_TWH;
@@ -249,7 +286,7 @@ export function FortschrittPage() {
       wert: rest ?? 0,
       farbe: 'bg-red-200 dark:bg-red-900',
       kurz: `fehlt bis ${JAHR_ZIEL}`,
-      detail: 'Bedarf laut Szenario e100.',
+      detail: ziel === 'e100' ? 'Bedarf laut Szenario e100.' : 'Bedarf laut Fraunhofer ISE.',
     },
   ];
   // Tooltip sitzt ueber der Mitte des gehoverten Segments.
@@ -263,15 +300,17 @@ export function FortschrittPage() {
   // bei 3xl (~730 px Inhalt) um, obwohl der Bildschirm breit genug ist.
   return <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-4 pb-16 pt-16 sm:pt-24">
     <header className="flex flex-col gap-3">
-      {/* Die Seite hat keine Sidebar — dieser Knopf verankert sie und fuehrt
-          zurueck zum Rechner. */}
-      <a
-        href={import.meta.env.BASE_URL}
-        className="inline-flex h-8 w-fit items-center gap-1.5 rounded-full border border-zinc-200 bg-white pl-2 pr-3 text-sm font-medium tracking-tight text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
-      >
-        <ArrowLeft aria-hidden="true" className="h-4 w-4"/>
-        netzprobe.de
-      </a>
+      {/* Kopfzeile: links zurueck zum Rechner, rechts die Wahl des Nenners. */}
+      <div className="flex items-center justify-between gap-4">
+        <a
+          href={import.meta.env.BASE_URL}
+          className="inline-flex h-8 w-fit items-center gap-1.5 rounded-full border border-zinc-200 bg-white pl-2 pr-3 text-sm font-medium tracking-tight text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4"/>
+          netzprobe.de
+        </a>
+        <ZielUmschalter ziel={ziel} onZiel={setZiel}/>
+      </div>
       {/* So knapp, dass jedes Wort traegt — deshalb durchgehend in voller Tinte
           statt einzelne Zahlen hervorzuheben. */}
       <h1 className="text-2xl font-semibold leading-snug tracking-tight text-zinc-950 sm:text-3xl dark:text-zinc-50">
@@ -291,15 +330,24 @@ export function FortschrittPage() {
         <MitEinblendung
           titel={`Bedarf ${JAHR_ZIEL}`}
           wert={bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}
-          text={<>
-            {bedarfZielTWh != null ? caTwh0(bedarfZielTWh - H2_TWH) : '…'} direkt elektrisch,
-            {' '}{caTwh0(H2_TWH)} über Wasserstoff und E-Fuels
-            {' '}({posten(H2_SEKTOREN)}).
-          </>}
+          text={ziel === 'e100'
+            ? <>Eigenes Szenario: alle Sektoren umgestellt, ohne Effizienzgewinne.
+              {' '}{bedarfZielTWh != null ? caTwh0(bedarfZielTWh - H2_TWH) : '…'} direkt elektrisch,
+              {' '}{caTwh0(H2_TWH)} über Wasserstoff und E-Fuels ({posten(H2_SEKTOREN)}).</>
+            : <>Fraunhofer ISE (2024) nennt {ISE_BEREICH} Stromverbrauch {JAHR_ZIEL} je nach Szenario.
+              {' '}Gerechnet wird hier mit dem unteren Ende.</>}
         >
-          <SzenarioLink query="?e=e100" titel="Szenario e100 im Rechner öffnen">
-            <Zahl>{bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}</Zahl>
-          </SzenarioLink>
+          {ziel === 'e100'
+            ? <SzenarioLink query="?e=e100" titel="Szenario e100 im Rechner öffnen">
+                <Zahl>{bedarfZielTWh != null ? caTwh0(bedarfZielTWh) : '…'}</Zahl>
+              </SzenarioLink>
+            : <a
+                href={QUELLE_ISE}
+                target="_blank"
+                rel="noreferrer"
+                title="Studie beim Fraunhofer ISE öffnen"
+                className="underline decoration-zinc-300 decoration-dotted underline-offset-4 transition-colors hover:text-zinc-950 hover:decoration-zinc-500 dark:decoration-zinc-600 dark:hover:text-zinc-50 dark:hover:decoration-zinc-400"
+              ><Zahl>{caTwh0(ISE_BEDARF_TWH)}</Zahl></a>}
         </MitEinblendung>
         {' '}jährlich (heute{' '}
         <MitEinblendung
@@ -443,7 +491,10 @@ export function FortschrittQuellen() {
     {quellenOffen && <p className={cx('max-w-3xl text-xs leading-6', muted)}>
       {JAHR_HEUTE}: Primärenergieverbrauch nach{' '}
       <a href={QUELLE_PRIMAERENERGIE} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">AG Energiebilanzen</a>
-      {' '}(Jahresschätzung, vorläufig). {JAHR_BASIS}: Nettostromerzeugung nach{' '}
+      {' '}(Jahresschätzung, vorläufig). Gegenszenario:{' '}
+      <a href={QUELLE_ISE} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">Fraunhofer ISE</a>
+      {' '}(2024), {ISE_BEREICH} Stromverbrauch {JAHR_ZIEL} je nach Szenario; gerechnet mit dem unteren Ende.
+      {' '}{JAHR_BASIS}: Nettostromerzeugung nach{' '}
       <a href={QUELLE_2000} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">AG Energiebilanzen</a>
       {' '}(Datenstand 15.02.2024). {JAHR_HEUTE}: beobachtete Erzeugung aus <code>model/erzeugung/2025</code> (Energy-Charts).
       {' '}{JAHR_ZIEL}: Jahreslast des e100-Szenarios, live aus der Rust-API — darin laufen Flug und Seeschifffahrt
