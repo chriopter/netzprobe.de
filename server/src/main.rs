@@ -1,6 +1,7 @@
 use axum::{
     Json, Router,
-    http::StatusCode,
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
     routing::{get, post},
 };
 use netzprobe_api::simulation::{ApiView, SimulationHarness};
@@ -8,9 +9,10 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
+    collections::HashMap,
     env, fs,
     net::SocketAddr,
-    sync::OnceLock,
+    sync::{Mutex, OnceLock},
     time::{Duration, Instant},
 };
 use tokio::net::TcpListener;
@@ -97,13 +99,40 @@ struct SimulateRequest {
     view: Option<ApiView>,
 }
 
+/// Ergebnis-Cache: dieselbe Anfrage liefert dasselbe Ergebnis, die Rechnung ist
+/// rein deterministisch. Fertig serialisiert abgelegt, damit ein Treffer nur noch
+/// Bytes kopiert statt einen Value neu zu bauen. Schlüssel ist die kanonische
+/// JSON-Form von Szenario + View (serde_json ordnet Objekt-Keys sortiert).
+const SIMULATE_CACHE_MAX: usize = 64;
+static SIMULATE_CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+
+fn simulate_cache() -> &'static Mutex<HashMap<String, String>> {
+    SIMULATE_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn json_response(body: String) -> Response {
+    ([(header::CONTENT_TYPE, "application/json")], body).into_response()
+}
+
 async fn simulate(
     Json(payload): Json<SimulateRequest>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+) -> Result<Response, (StatusCode, Json<Value>)> {
+    let key = serde_json::to_string(&json!({
+        "scenario": payload.scenario,
+        "view": payload.view,
+    }))
+    .ok();
+
+    if let Some(key) = key.as_deref()
+        && let Ok(cache) = simulate_cache().lock()
+        && let Some(hit) = cache.get(key)
+    {
+        return Ok(json_response(hit.clone()));
+    }
+
     let harness = SimulationHarness::new();
-    harness
+    let value = harness
         .run_api_result_with_view(&payload.scenario, payload.view)
-        .map(Json)
         .map_err(|err| {
             (
                 StatusCode::BAD_REQUEST,
@@ -112,7 +141,27 @@ async fn simulate(
                     "error": err.to_string(),
                 })),
             )
-        })
+        })?;
+
+    let body = serde_json::to_string(&value).map_err(|err| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "ok": false, "error": err.to_string() })),
+        )
+    })?;
+
+    if let Some(key) = key
+        && let Ok(mut cache) = simulate_cache().lock()
+    {
+        // Simpler Deckel wie im Frontend-Cache: bei Überlauf komplett leeren,
+        // statt eine Verdrängungsreihenfolge zu pflegen.
+        if cache.len() >= SIMULATE_CACHE_MAX {
+            cache.clear();
+        }
+        cache.insert(key, body.clone());
+    }
+
+    Ok(json_response(body))
 }
 
 async fn resolve_scenario(

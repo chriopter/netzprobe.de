@@ -11,6 +11,12 @@
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/* Einblendungen (Tooltips) steigen kurz auf, statt hart zu erscheinen. */
+@keyframes einblenden{
+  from{opacity:0;transform:translateY(2px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
 @keyframes indeterminate{
   0%{transform:translateX(-100%)}
   100%{transform:translateX(400%)}

@@ -1,7 +1,8 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChangelogPage } from './ChangelogPage';
+import { FortschrittPage, FortschrittQuellen } from './FortschrittPage';
 import { DataHandbookContent, DataHandbookSidebar } from './DataHandbook';
-import { Camera, Link, Menu, Moon, Pause, Play, Plus, RotateCcw, Sun, X } from 'lucide-react';
+import { Camera, Link, Menu, Moon, Pause, Play, Plus, RotateCcw, Sun, TrendingUp, X } from 'lucide-react';
 import * as echarts from 'echarts/core';
 import { LineChart, MapChart, ScatterChart } from 'echarts/charts';
 import { GeoComponent, GridComponent, LegendComponent, PolarComponent, TooltipComponent } from 'echarts/components';
@@ -641,6 +642,7 @@ function urlView() {
     const params = url.searchParams;
     const path = appPath(url);
     if (path === 'changelog' || path === 'changelog/') return { view: 'changelog' as const, path: null };
+    if (path === 'fortschritt' || path === 'fortschritt/') return { view: 'fortschritt' as const, path: null };
     if (path === 'wiki' || path.startsWith('wiki/')) return { view: 'daten' as const, path: null };
     return { view: params.get('view'), path: params.get('path') };
   } catch {
@@ -676,7 +678,7 @@ const RouteFallback = () => <div className="flex h-screen items-center justify-c
 export function App() {
   const { theme, toggleTheme } = useThemeMode();
   const [route, setRoute] = useState(urlView);
-  const routeIsDashboard = route.view !== 'datei' && route.view !== 'daten' && route.view !== 'changelog';
+  const routeIsDashboard = route.view !== 'datei' && route.view !== 'daten' && route.view !== 'changelog' && route.view !== 'fortschritt';
   const [dashboardMounted, setDashboardMounted] = useState(routeIsDashboard);
 
   useEffect(() => {
@@ -713,7 +715,9 @@ export function App() {
       ? <DataHandbookRoute/>
       : route.view === 'changelog'
         ? <ChangelogRoute/>
-        : null;
+        : route.view === 'fortschritt'
+          ? <FortschrittRoute/>
+          : null;
 
   return <>
     <UpdateBanner/>
@@ -763,6 +767,20 @@ function DataHandbookRoute() {
         />}
       />
       <DataHandbookContent docs={datasetDocs} sidebarCollapsed={sidebarCollapsed} onOpenSidebar={() => setSidebarCollapsed(false)}/>
+    </div>
+  </main>;
+}
+
+// Fortschritt: eigene Vollseite mit dem CO2-frei-Dreisatz seit 2000.
+function FortschrittRoute() {
+  return <main className={shell}>
+    <FortschrittToggle variant="floating"/>
+    <FortschrittPage/>
+    {/* Alles unterhalb des Trennstrichs: erst die Quellen der Seite, dann der
+        allgemeine Disclaimer — beide teilen sich denselben Strich. */}
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 border-t border-zinc-200 px-4 pb-10 pt-4 dark:border-zinc-800">
+      <FortschrittQuellen/>
+      <DisclaimerFooter className="text-xs leading-5 text-zinc-500 dark:text-zinc-400"/>
     </div>
   </main>;
 }
@@ -868,7 +886,24 @@ function ScenarioTabs({ count, active, onSelect, onAdd, onRemove }: {
       title="Szenario hinzufügen"
       className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
     ><Plus className="h-4 w-4"/></button>
+    <FortschrittToggle variant="tab"/>
   </div>;
+}
+
+// Fortschritt-Umschalter: im Dashboard als »tab«-Variante neben dem »+« der
+// Szenario-Reiter, auf der Fortschritt-Seite als »floating«-Variante links neben
+// dem Theme-Knopf — gleiche Größe und Optik wie dieser, führt zurück.
+function FortschrittToggle({ variant }: { variant: 'tab' | 'floating' }) {
+  const zurueck = variant === 'floating';
+  return <a
+    href={zurueck ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}fortschritt`}
+    aria-label={zurueck ? 'Zurück zur Simulation' : 'Fortschritt'}
+    aria-current={zurueck ? 'page' : undefined}
+    title={zurueck ? 'Zurück zur Simulation' : 'Fortschritt'}
+    className={zurueck
+      ? cx(floatingRoundButton, 'fixed right-[52px] top-3 z-[60] sm:right-14')
+      : 'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'}
+  ><TrendingUp className="h-4 w-4" aria-hidden="true"/></a>;
 }
 
 function Dashboard({ theme }: { theme: ThemeMode }) {
@@ -1556,13 +1591,16 @@ function MainViewTabs({ active, onChange, sidebarCollapsed, onOpenSidebar, right
   </div>;
 }
 
+// Optik der fixierten Rund-Knoepfe oben rechts (Theme, Fortschritt-Rueckweg).
+const floatingRoundButton = 'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20';
+
 function ThemeToggle({ theme, onToggleTheme }: { theme: ThemeMode; onToggleTheme: () => void }) {
   const themeLabel = theme === 'dark' ? 'Helles Design' : 'Dunkles Design';
   return <button
     type="button"
     aria-label={themeLabel}
     title={themeLabel}
-    className="fixed right-3 top-3 z-[60] inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus-visible:ring-zinc-50/20 sm:right-4"
+    className={cx(floatingRoundButton, 'fixed right-3 top-3 z-[60] sm:right-4')}
     onClick={onToggleTheme}
   >
     {theme === 'dark' ? <Sun className="h-4 w-4" aria-hidden="true"/> : <Moon className="h-4 w-4" aria-hidden="true"/>}
