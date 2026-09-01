@@ -1114,7 +1114,9 @@ function formatMultiplier(value: number, baseline: number | undefined): string |
 
 function formatReferenceScale(value: number, referenceScale: ReferenceScale | undefined): string | null {
   if (!referenceScale || value <= 0 || referenceScale.value <= 0) return null;
-  return `≈ ${fmt.format(value / referenceScale.value)} ${referenceScale.label}`;
+  // sliderFactor bringt den Sliderwert in die Einheit des Ankers (z. B. TWh Strom → TWh thermisch).
+  const inScaleUnit = value * (referenceScale.sliderFactor ?? 1);
+  return `≈ ${fmt.format(inScaleUnit / referenceScale.value)} ${referenceScale.label}`;
 }
 
 function formatEmissionFactor(co2eGperKWh: number | undefined): string | null {

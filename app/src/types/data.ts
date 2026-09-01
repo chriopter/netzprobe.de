@@ -61,6 +61,10 @@ export type ReferenceScale = {
   value: number;
   unit: string;
   label: string;
+  /** Umrechnung Sliderwert → Ankereinheit, falls beide nicht dieselbe Größe messen.
+   *  PtL-Sektoren fahren den Slider in TWh Strom, der Anker misst TWh Brennstoff
+   *  thermisch — Faktor ist dort der System-Wirkungsgrad. Default 1 (gleiche Einheit). */
+  sliderFactor?: number;
 };
 
 /** Size anchors per physical dimension: power in GW (capacity slider),

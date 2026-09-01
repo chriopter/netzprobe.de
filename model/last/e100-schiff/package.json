@@ -120,7 +120,7 @@
       {
         "name": "referenceScales",
         "unit": "Objekt",
-        "description": "Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa DE-Hafen-Bunkermenge 2023 (AGEB)."
+        "description": "Größenanker zur Einordnung: der Sliderwert wird mit sliderFactor = eFuelSystemEfficiency 0,50 von TWh Strom in TWh thermisch umgerechnet und gegen die deutsche Hafen-Bunkermenge 2023 gestellt (20 TWh thermisch, Mittelwert der realen Bunkermenge 1-3 Mio. t/a nach BAFA/AGEB). Default 80 TWh Strom entspricht damit rund dem Zweifachen der DE-Bunkermenge - der Überhang ist der anteilige PtL-Beitrag zur internationalen IMO-Pflichtmenge."
       },
       {
         "name": "note",
@@ -151,9 +151,10 @@
   "parameters": {
     "referenceScales": {
       "activity": {
-        "value": 3,
-        "unit": "TWh",
-        "label": "DE-Hafen-Bunkermenge 2023 (AGEB)"
+        "value": 20,
+        "unit": "TWh thermisch",
+        "label": "DE-Hafen-Bunkermenge 2023 (BAFA/AGEB)",
+        "sliderFactor": 0.5
       }
     },
     "referenceYear": 2023,
