@@ -125,7 +125,7 @@
       {
         "name": "referenceScales",
         "unit": "Objekt",
-        "description": "Größenanker zur Einordnung: 1 Slider-Einheit entspricht etwa DE-Kerosin-Inlandsbedarf 2022."
+        "description": "Größenanker zur Einordnung: der Sliderwert wird mit sliderFactor = ptlEfficiency 0,38 von TWh Strom in TWh Kerosin thermisch umgerechnet und gegen den DE-Kerosin-Inlandsbedarf 2022 (114 TWh) gestellt. Default 300 TWh Strom entspricht damit genau 1,0 Inlandsbedarf."
       },
       {
         "name": "note",
@@ -157,8 +157,9 @@
     "referenceScales": {
       "activity": {
         "value": 114,
-        "unit": "TWh",
-        "label": "DE-Kerosin-Inlandsbedarf 2022"
+        "unit": "TWh thermisch",
+        "label": "DE-Kerosin-Inlandsbedarf 2022",
+        "sliderFactor": 0.38
       }
     },
     "referenceYear": 2023,
