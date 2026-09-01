@@ -107,12 +107,17 @@ const H2_TWH = H2_SEKTOREN.reduce((summe, sektor) => summe + sektor.twh, 0);
 const posten = (teile: Array<{ label: string; twh: number }>) =>
   teile.map(teil => `${teil.label} ${fmt.format(teil.twh)}`).join(', ');
 
-const CO2FREI_2000_TWH = KERNKRAFT_2000_TWH + EE_2000_TWH;
+// Einmal runden, dann nur noch mit den gerundeten Werten rechnen. Sonst runden
+// die Enden gegenlaeufig (196,2 -> 196 ab, 279,6 -> 280 auf) und die angezeigte
+// Differenz stimmt nicht mit dem angezeigten Zuwachs ueberein.
+const KERNKRAFT_2000_ANZEIGE = Math.round(KERNKRAFT_2000_TWH);
+const EE_2000_ANZEIGE = Math.round(EE_2000_TWH);
+const CO2FREI_2000_TWH = KERNKRAFT_2000_ANZEIGE + EE_2000_ANZEIGE;
 // Kernkraft ist seit 2023 null, CO2-frei ist heute also reine EE.
-const CO2FREI_2025_TWH = EE_2025_TWH;
+const CO2FREI_2025_TWH = Math.round(EE_2025_TWH);
 const ZUBAU_TWH = CO2FREI_2025_TWH - CO2FREI_2000_TWH;
 // Brutto-EE-Zubau: der Saldo oben verschweigt, dass ein Teil nur Kernkraft ersetzt hat.
-const EE_ZUBAU_BRUTTO_TWH = EE_2025_TWH - EE_2000_TWH;
+const EE_ZUBAU_BRUTTO_TWH = CO2FREI_2025_TWH - EE_2000_ANZEIGE;
 
 // Ab dieser Segmentbreite (Prozent der Aufgabe) passt »x TWh« ins Segment.
 const PLATZ_FUER_LABEL = 12;
@@ -259,7 +264,7 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
       wert: twh0(p.twh),
       text: p.jahr === jahrVon
         ? <>Ausgangspunkt der Rechnung.</>
-        : <>{fmt.format(p.twh - start.twh)} TWh mehr als {jahrVon}
+        : <>{fmt0.format(Math.round(p.twh) - Math.round(start.twh))} TWh mehr als {jahrVon}
           {p.jahr === hoch.jahr ? ' — der bisher höchste Wert.' : '.'}</>,
     })),
     {
@@ -387,7 +392,8 @@ export function FortschrittPage() {
   const { twh: e100TWh, failed: e100Fehlt } = useE100BedarfTWh();
   const [ziel, setZiel] = useState<Ziel>('e100');
   // Der ISE-Wert ist eine Konstante, nur e100 kommt aus der Rust-API.
-  const bedarfZielTWh = ziel === 'e100' ? e100TWh : ISE_BEDARF_TWH;
+  const bedarfRoh = ziel === 'e100' ? e100TWh : ISE_BEDARF_TWH;
+  const bedarfZielTWh = bedarfRoh != null ? Math.round(bedarfRoh) : null;
   const failed = ziel === 'e100' && e100Fehlt;
   const [hover, setHover] = useState<number | null>(null);
 
@@ -531,7 +537,7 @@ export function FortschrittPage() {
           rechts
           titel={`Zuwachs seit ${JAHR_BASIS}`}
           wert={`+ ${twh0(zubau)}`}
-          text={<>Ein Saldo: gebaut wurden {twh0(EE_ZUBAU_BRUTTO_TWH)} EE, {fmt.format(KERNKRAFT_2000_TWH)} davon
+          text={<>Ein Saldo: gebaut wurden {twh0(EE_ZUBAU_BRUTTO_TWH)} EE, {fmt0.format(KERNKRAFT_2000_ANZEIGE)} davon
             {' '}haben die abgeschaltete Kernkraft ersetzt. Bleiben {fmt.format(proJahr)} TWh pro Jahr.</>}
         >+ {twh0(zubau)}</MitEinblendung>
         ).<br/>
