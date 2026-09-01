@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import type { Scenario } from '../types/scenario';
 import type { SimulationResult } from '../types/simulation';
@@ -11,11 +11,39 @@ import { cx, muted } from './ui';
 // Netz ist, was Vollelektrifizierung braucht — und welcher Anteil der Luecke
 // damit gebaut ist.
 
-// 2000: Nettostromerzeugung Deutschland, AG Energiebilanzen (Datenstand
-// 15.02.2024). Kernenergie 160,8 TWh; erneuerbar ohne Hausmuell = Wind onshore
-// 9,3 + Wind offshore 0,0 + Wasserkraft 24,6 + Biomasse 1,5 + PV 0,0 +
-// Geothermie 0,0. Hausmuell bleibt draussen, damit die Abgrenzung dieselbe ist
-// wie beim 2025-Wert unten (dort zaehlt wasteTWh ebenfalls nicht als EE).
+// Gegenszenario zum eigenen e100: Fraunhofer ISE, »Wege zu einem klimaneutralen
+// Energiesystem — Bundeslaender im Transformationsprozess« (2024). Die Studie
+// nennt 1.150 bis 1.650 TWh Stromverbrauch 2045 je nach Szenario. Gerechnet wird
+// mit dem unteren Ende, damit die Gegenposition in ihrer staerksten Form dasteht.
+const ISE_BEDARF_TWH = 1150;
+const ISE_BEREICH = '1.150 bis 1.650 TWh';
+// Jahresreihe CO2-frei netto, gleiche Abgrenzung und Quelle wie die Eckwerte
+// oben (AGEB, Datenstand Juni 2026). 2001-2004 und 2006-2009 fehlen, weil die
+// Tabelle dort nur Fuenfjahresschritte fuehrt — die Kurve wird zwischen den
+// Stuetzstellen linear verbunden.
+const CO2FREI_HISTORIE: Array<{ jahr: number; twh: number }> = [
+  { jahr: 2000, twh: 196.2 }, { jahr: 2005, twh: 213.1 }, { jahr: 2010, twh: 231.6 },
+  { jahr: 2011, twh: 219.5 }, { jahr: 2012, twh: 230.1 }, { jahr: 2013, twh: 236.3 },
+  { jahr: 2014, twh: 245.2 }, { jahr: 2015, twh: 266.2 }, { jahr: 2016, twh: 260.3 },
+  { jahr: 2017, twh: 278.8 }, { jahr: 2018, twh: 285.6 }, { jahr: 2019, twh: 303.1 },
+  { jahr: 2020, twh: 302.6 }, { jahr: 2021, twh: 293.8 }, { jahr: 2022, twh: 276.9 },
+  { jahr: 2023, twh: 269.9 }, { jahr: 2024, twh: 276.1 }, { jahr: 2025, twh: 279.6 },
+];
+
+const QUELLE_ISE = 'https://www.ise.fraunhofer.de/de/presse-und-medien/presseinformationen/2024/klimaneutrales-deutschland-studie-des-fraunhofer-ise-zeigt-transformationspfade-fuer-das-deutsche-energiesystem-in-regionaler-aufloesung.html';
+
+// Heutiger Primaerenergieverbrauch als Gegenpunkt zu den 1.808 TWh — ohne ihn
+// lesen viele die 1.808 als Primaerenergie statt als Strombedarf.
+// AGEB-Jahresschaetzung 2025: 10.553 PJ = 2.931 TWh (Datenlage bis 10.12.2025).
+const PRIMAERENERGIE_TWH = 2931;
+const QUELLE_PRIMAERENERGIE = 'https://ag-energiebilanzen.de/wp-content/uploads/quartalsbericht_q4_2025.pdf';
+
+// Alle historischen Werte aus einer Quelle: AG Energiebilanzen, Nettostrom-
+// erzeugung nach Energietraegern, Datenstand Juni 2026. Energy-charts — woher
+// die Modelldaten des Rechners stammen — beginnt erst 2015 und zaehlt nur die
+// oeffentliche Versorgung; fuer eine Reihe ab 2000 gibt es keine Alternative.
+// CO2-frei = Kernkraft + Wind + PV + Wasserkraft + Biomasse + Geothermie.
+// Hausmuell bleibt in allen Jahren draussen.
 const KERNKRAFT_2000_TWH = 160.8;
 const EE_2000_TEILE = [
   { label: 'Wasserkraft', twh: 24.6 },
@@ -23,37 +51,27 @@ const EE_2000_TEILE = [
   { label: 'Biomasse', twh: 1.5 },
 ];
 const EE_2000_TWH = EE_2000_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
-// Gegenszenario zum eigenen e100: Fraunhofer ISE, »Wege zu einem klimaneutralen
-// Energiesystem — Bundeslaender im Transformationsprozess« (2024). Die Studie
-// nennt 1.150 bis 1.650 TWh Stromverbrauch 2045 je nach Szenario. Gerechnet wird
-// mit dem unteren Ende, damit die Gegenposition in ihrer staerksten Form dasteht.
-const ISE_BEDARF_TWH = 1150;
-const ISE_BEREICH = '1.150 bis 1.650 TWh';
-const QUELLE_ISE = 'https://www.ise.fraunhofer.de/de/presse-und-medien/presseinformationen/2024/klimaneutrales-deutschland-studie-des-fraunhofer-ise-zeigt-transformationspfade-fuer-das-deutsche-energiesystem-in-regionaler-aufloesung.html';
 
-// Heutiger Primaerenergieverbrauch als Gegenpunkt zu den 1.808 TWh — ohne ihn
-// lesen viele die 1.808 als Primaerenergie statt als Strom.
-// AGEB-Jahresschaetzung 2025: 10.553 PJ = 2.931 TWh (Datenlage bis 10.12.2025).
-const PRIMAERENERGIE_TWH = 2931;
-const QUELLE_PRIMAERENERGIE = 'https://ag-energiebilanzen.de/wp-content/uploads/quartalsbericht_q4_2025.pdf';
-const QUELLE_2000 = 'https://ag-energiebilanzen.de/wp-content/uploads/2024/04/STRERZ_Abg_02_2024_korr.pdf';
+const EE_2025_TEILE = [
+  { label: 'Wind onshore', twh: 105.5 },
+  { label: 'PV', twh: 90.4 },
+  { label: 'Biomasse', twh: 40.4 },
+  { label: 'Wind offshore', twh: 26.2 },
+  { label: 'Wasserkraft', twh: 16.9 },
+  { label: 'Geothermie', twh: 0.2 },
+];
 
-// 2025: beobachtete Erzeugung aus model/erzeugung/2025 (Energy-Charts).
-// Kernkraft ist seit dem Ausstieg 2023 null, CO2-frei ist also reine EE.
-const EE_TEILE_2025 = ['pvTWh', 'windOnTWh', 'windOffTWh', 'hydroTWh', 'biomassTWh', 'geothermalTWh'] as const;
+const QUELLE_2000 = 'https://ag-energiebilanzen.de/wp-content/uploads/STRERZ_20260618.pdf';
 
-const EE_2025_TEILE = (() => {
-  const teile = uiManifest.generation2025.sumPartsTWh as Record<string, number> | undefined;
-  const labels: Record<(typeof EE_TEILE_2025)[number], string> = {
-    windOnTWh: 'Wind onshore', pvTWh: 'PV', biomassTWh: 'Biomasse',
-    hydroTWh: 'Wasserkraft', windOffTWh: 'Wind offshore', geothermalTWh: 'Geothermie',
-  };
-  return EE_TEILE_2025
-    .map(key => ({ label: labels[key], twh: teile?.[key] ?? 0 }))
-    .filter(teil => teil.twh > 0)
-    .sort((a, b) => b.twh - a.twh);
-})();
 const EE_2025_TWH = EE_2025_TEILE.reduce((summe, teil) => summe + teil.twh, 0);
+// Derselbe Posten in der Abgrenzung des Rechners (Energy-Charts, nur oeffentliche
+// Versorgung). Steht in den Quellen als Vergleich, damit die Differenz zum
+// Dashboard nicht unerklaert bleibt.
+const EE_OEFFENTLICH_2025_TWH = (() => {
+  const teile = uiManifest.generation2025.sumPartsTWh as Record<string, number> | undefined;
+  const keys = ['pvTWh', 'windOnTWh', 'windOffTWh', 'hydroTWh', 'biomassTWh', 'geothermalTWh'] as const;
+  return keys.reduce((summe, key) => summe + (teile?.[key] ?? 0), 0);
+})();
 const twh0 = (n: number) => `${fmt0.format(n)} TWh`;
 // Alles, was aus dem e100-Szenario faellt, ist geschaetzt — die gemessene
 // Historie (196/264/68 TWh) nicht. Nur Ersteres bekommt ein ≈.
@@ -95,6 +113,9 @@ const CO2FREI_2025_TWH = EE_2025_TWH;
 const ZUBAU_TWH = CO2FREI_2025_TWH - CO2FREI_2000_TWH;
 // Brutto-EE-Zubau: der Saldo oben verschweigt, dass ein Teil nur Kernkraft ersetzt hat.
 const EE_ZUBAU_BRUTTO_TWH = EE_2025_TWH - EE_2000_TWH;
+
+// Ab dieser Segmentbreite (Prozent der Aufgabe) passt »x TWh« ins Segment.
+const PLATZ_FUER_LABEL = 12;
 
 const JAHR_BASIS = 2000;
 const JAHR_HEUTE = 2025;
@@ -199,6 +220,129 @@ function ZielUmschalter({ ziel, onZiel }: { ziel: Ziel; onZiel: (ziel: Ziel) => 
   </div>;
 }
 
+// Verlaufsgrafik: was seit 2000 tatsaechlich dazukam, was bei diesem Tempo bis
+// 2045 daraus wuerde, und welche Kurve noetig waere. Bewusst als SVG von Hand
+// statt ECharts — drei Linien und eine Achse brauchen keine Chart-Engine, und so
+// laesst sich die Optik der Seite exakt treffen.
+function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
+  bedarf: number;
+  tempoProJahr: number;
+  quelle: string;
+}) {
+  const B = 720, H = 252;                       // viewBox
+  // Zeichenflaeche 162 statt 270 hoch — zwei Fuenftel weniger. Der Rand unten
+  // (64) bleibt, dort stehen die Jahreszahlen.
+  // L/R auf die viewBox-Kanten, damit die Kurve exakt so breit laeuft wie der
+  // Balken darueber. Der Zielpunkt ragt dadurch um seinen Radius hinaus — dafuer
+  // steht die SVG auf overflow-visible.
+  const L = 0, R = B, O = 26, U = 188;          // Plotflaeche
+  const jahrVon = CO2FREI_HISTORIE[0].jahr;
+  const heute = CO2FREI_HISTORIE[CO2FREI_HISTORIE.length - 1];
+  const start = CO2FREI_HISTORIE[0];
+  const yMax = Math.ceil((bedarf * 1.1) / 250) * 250;
+  const [aktiv, setAktiv] = useState<number | null>(null);
+
+  const sx = (jahr: number) => L + ((jahr - jahrVon) / (JAHR_ZIEL - jahrVon)) * (R - L);
+  const sy = (twh: number) => U - (twh / yMax) * (U - O);
+
+  const istPfad = CO2FREI_HISTORIE.map(p => `${sx(p.jahr)},${sy(p.twh)}`).join(' ');
+  const jahreRest = JAHR_ZIEL - heute.jahr;
+  const hoch = CO2FREI_HISTORIE.reduce((a, b) => (b.twh > a.twh ? b : a));
+  const luecke = bedarf - heute.twh;
+
+  // Historie plus Zielpunkt als eine Liste — der Zeiger rastet auf den naechsten ein.
+  const punkte = [
+    ...CO2FREI_HISTORIE.map(p => ({
+      jahr: p.jahr,
+      twh: p.twh,
+      titel: String(p.jahr),
+      wert: twh0(p.twh),
+      text: p.jahr === jahrVon
+        ? <>Ausgangspunkt der Rechnung.</>
+        : <>{fmt.format(p.twh - start.twh)} TWh mehr als {jahrVon}
+          {p.jahr === hoch.jahr ? ' — der bisher höchste Wert.' : '.'}</>,
+    })),
+    {
+      jahr: JAHR_ZIEL,
+      twh: bedarf,
+      titel: `Ziel ${JAHR_ZIEL}`,
+      wert: caTwh0(bedarf),
+      text: <>{quelle}. Von heute aus {fmt0.format(luecke / jahreRest)} TWh pro Jahr —
+        bisher waren es {fmt.format(tempoProJahr)}.</>,
+    },
+  ];
+
+  // Zeigerposition in Jahre umrechnen und auf den naechsten Punkt runden, damit
+  // ueberall auf der Flaeche etwas passiert, nicht nur genau auf der Linie.
+  const beiBewegung = (event: ReactMouseEvent<SVGSVGElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (box.width === 0) return;
+    const x = ((event.clientX - box.left) / box.width) * B;
+    const jahr = jahrVon + ((x - L) / (R - L)) * (JAHR_ZIEL - jahrVon);
+    let naechster = 0;
+    punkte.forEach((p, i) => {
+      if (Math.abs(p.jahr - jahr) < Math.abs(punkte[naechster].jahr - jahr)) naechster = i;
+    });
+    setAktiv(naechster);
+  };
+
+  const punkt = aktiv != null ? punkte[aktiv] : null;
+  const jahrAnker = (jahr: number) => (jahr === jahrVon ? 'start' : jahr === JAHR_ZIEL ? 'end' : 'middle');
+
+  // Die Seite setzt gap-12 (48px) zwischen ihre Bloecke; zum Balken darueber
+  // sollen es 8px sein, beide gehoeren zusammen. 48 - 40 = 8.
+  return <figure className="-mt-10">
+    <div className="relative">
+      <svg
+        viewBox={`0 0 ${B} ${H}`}
+        className="w-full overflow-visible"
+        role="img"
+        aria-label={`CO₂-freie Erzeugung ${jahrVon} bis ${heute.jahr} und das Ziel ${JAHR_ZIEL}`}
+        onMouseMove={beiBewegung}
+        onMouseLeave={() => setAktiv(null)}
+      >
+        <line x1={L} x2={R} y1={U} y2={U} className="stroke-zinc-200 dark:stroke-zinc-800" strokeWidth={1}/>
+
+        {/* Die Luecke als Strecke, nicht als leere Flaeche: vom heutigen Stand
+            senkrecht hinauf zum Ziel. Beschriftet ist sie nicht — die Zahl steht
+            im Text ueber der Grafik. */}
+        <line x1={sx(JAHR_ZIEL)} x2={sx(JAHR_ZIEL)} y1={sy(heute.twh)} y2={sy(bedarf)} strokeDasharray="4 4"
+          className="stroke-zinc-300 dark:stroke-zinc-600" strokeWidth={1}/>
+
+        {punkt && <line x1={sx(punkt.jahr)} x2={sx(punkt.jahr)} y1={O} y2={U}
+          className="stroke-zinc-300 dark:stroke-zinc-600" strokeWidth={1}/>}
+
+        <polyline points={istPfad} fill="none" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"
+          className="stroke-green-600 dark:stroke-green-400"/>
+        {/* Nur das Kurvenende ist beschriftet; der Startwert steht im Text darueber. */}
+        <text x={sx(heute.jahr) + 10} y={sy(heute.twh) - 8} textAnchor="start"
+          className="fill-green-700 text-[11px] dark:fill-green-400">CO₂-frei</text>
+        <text x={sx(heute.jahr) + 10} y={sy(heute.twh) + 8} textAnchor="start"
+          className="fill-green-700 text-[12px] font-medium tabular-nums dark:fill-green-400">{twh0(heute.twh)}</text>
+
+        <circle cx={sx(JAHR_ZIEL)} cy={sy(bedarf)} r={4.5} className="fill-red-500 dark:fill-red-400"/>
+        <text x={sx(JAHR_ZIEL) - 12} y={sy(bedarf) - 6} textAnchor="end"
+          className="fill-red-600 text-[11px] dark:fill-red-400">Ziel {JAHR_ZIEL}</text>
+        <text x={sx(JAHR_ZIEL) - 12} y={sy(bedarf) + 10} textAnchor="end"
+          className="fill-red-600 text-[12px] font-medium tabular-nums dark:fill-red-400">{caTwh0(bedarf)}</text>
+
+        {punkt && <circle cx={sx(punkt.jahr)} cy={sy(punkt.twh)} r={4} className="fill-zinc-950 dark:fill-zinc-50"/>}
+
+        {[jahrVon, heute.jahr, JAHR_ZIEL].map(jahr => <text key={jahr}
+          x={sx(jahr)} y={U + 20} textAnchor={jahrAnker(jahr)}
+          className="fill-zinc-400 text-[12px] tabular-nums dark:fill-zinc-500">{jahr}</text>)}
+      </svg>
+      {punkt && <Einblendung
+        className={cx('-translate-y-full', sx(punkt.jahr) / B > 0.8 ? '-translate-x-full' : '-translate-x-1/2')}
+        style={{ left: `${(sx(punkt.jahr) / B) * 100}%`, top: `${(sy(punkt.twh) / H) * 100 - 2}%` }}
+        titel={punkt.titel}
+        wert={punkt.wert}
+        text={punkt.text}
+      />}
+    </div>
+  </figure>;
+}
+
 // Haengt eine Einblendung an einen Wert im Fliesstext.
 function MitEinblendung({ titel, wert, text, rechts, children }: {
   titel: string;
@@ -269,7 +413,7 @@ export function FortschrittPage() {
       label: `${JAHR_BASIS} schon am Netz`,
       wert: co2frei2000,
       farbe: 'bg-green-200 dark:bg-green-900',
-      kurz: `${JAHR_BASIS} am Netz`,
+      tinte: 'text-green-950 dark:text-green-100',
       detail: `Kernkraft ${fmt.format(KERNKRAFT_2000_TWH)} + EE ${fmt.format(EE_2000_TWH)}.`,
     },
     {
@@ -277,7 +421,7 @@ export function FortschrittPage() {
       label: `Zuwachs seit ${JAHR_BASIS}`,
       wert: zubau,
       farbe: 'bg-green-600 dark:bg-green-400',
-      kurz: `Zuwachs seit ${JAHR_BASIS}`,
+      tinte: 'text-white dark:text-green-950',
       detail: `Im Schnitt ${fmt.format(proJahr)} TWh pro Jahr.`,
     },
     {
@@ -285,15 +429,22 @@ export function FortschrittPage() {
       label: `Fehlt bis ${JAHR_ZIEL}`,
       wert: rest ?? 0,
       farbe: 'bg-red-200 dark:bg-red-900',
-      kurz: `fehlt bis ${JAHR_ZIEL}`,
+      tinte: 'text-red-950 dark:text-red-100',
       detail: ziel === 'e100' ? 'Bedarf laut Szenario e100.' : 'Bedarf laut Fraunhofer ISE.',
     },
   ];
   // Tooltip sitzt ueber der Mitte des gehoverten Segments.
+  // Der 2000er Sockel steht ausserhalb der Messung: gemessen wird nur, was seit
+  // 2000 dazukommen muss. Deshalb rechnen die beiden rechten Segmente gegen die
+  // Aufgabe, nicht gegen den Bedarf — sonst waere der gruene Streifen 3,8 % breit,
+  // waehrend daneben 4,2 % steht.
+  const [sockel, ...messbar] = segmente;
+  const aufgabeSumme = messbar.reduce((summe, seg) => summe + seg.wert, 0);
+  const anteilInAufgabe = (n: number) => (aufgabeSumme > 0 ? (n / aufgabeSumme) * 100 : 0);
   const mitteVon = (index: number) =>
     segmente.slice(0, index).reduce((sum, seg) => sum + anteilVon(seg.wert), 0) + anteilVon(segmente[index].wert) / 2;
   const balkenLabel = bedarfZielTWh != null
-    ? `Bedarf ${JAHR_ZIEL}: ${twh0(bedarfZielTWh)}. Davon ${JAHR_BASIS} schon am Netz ${twh0(co2frei2000)}, seit ${JAHR_BASIS} gebaut ${twh0(zubau)}, offen ${rest != null ? twh0(rest) : '–'}.`
+    ? `Aufgabe ${JAHR_BASIS} bis ${JAHR_ZIEL}: ${aufgabe != null ? twh0(aufgabe) : '–'}. Davon seit ${JAHR_BASIS} dazugekommen ${twh0(zubau)}, offen ${rest != null ? twh0(rest) : '–'}.`
     : 'Balken lädt';
 
   // max-w-4xl statt 3xl: die Ueberschrift ist eine Zeile Fliesstext und brach
@@ -313,7 +464,7 @@ export function FortschrittPage() {
       </div>
       {/* So knapp, dass jedes Wort traegt — deshalb durchgehend in voller Tinte
           statt einzelne Zahlen hervorzuheben. */}
-      <h1 className="text-2xl font-semibold leading-snug tracking-tight text-zinc-950 sm:text-3xl dark:text-zinc-50">
+      <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight text-zinc-950 sm:text-3xl dark:text-zinc-50">
         {anteilPct != null && restPct != null
           ? <>
               Saubere Energie: {fmt.format(anteilPct)} % in {jahre} Jahren geschafft –
@@ -414,49 +565,88 @@ export function FortschrittPage() {
         Netz war, den Zubau seit 2000 und die Fehlmenge. Zwei Stufen derselben
         Gruenskala fuer »CO2-frei«, Rot fuer das, was fehlt. */}
     <div className="relative">
-      {/* Ein durchgehender Balken: aussen eine gerundete Form, innen nur 2px
-          Trennfugen in Flaechenfarbe — nicht drei einzelne Pillen. Beschriftet
-          wird ueber die Achse darunter. */}
-      <div
-        className="flex h-14 w-full overflow-hidden rounded-xl ring-1 ring-inset ring-zinc-950/5 dark:ring-zinc-50/10"
-        role="img"
-        aria-label={balkenLabel}
-      >
-        {segmente.map((seg, i) => <div
-          key={seg.key}
-          onMouseEnter={() => setHover(i)}
-          onMouseLeave={() => setHover(h => (h === i ? null : h))}
+      {/* Links der Sockel, der 2000 schon stand — durch eine Luecke abgetrennt,
+          weil er nicht mitgemessen wird. Rechts der Messbalken: er ist die
+          Aufgabe und damit die 100 %, auf die sich alle Prozente beziehen.
+          Beide im selben Massstab, der Sockel behaelt also seine echte Groesse. */}
+      <div className="flex items-stretch gap-3">
+        <div
+          onMouseEnter={() => setHover(0)}
+          onMouseLeave={() => setHover(h => (h === 0 ? null : h))}
+          role="img"
+          aria-label={`${sockel.label}: ${twh0(sockel.wert)}`}
           className={cx(
-            'h-full transition duration-150',
-            seg.farbe,
-            i > 0 && 'border-l-2 border-white dark:border-zinc-950',
-            hover === i && 'ring-2 ring-inset ring-zinc-950/25 dark:ring-zinc-50/40',
+            'h-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-inset ring-zinc-950/5 transition duration-150 dark:ring-zinc-50/10',
+            sockel.farbe,
+            hover === 0 && 'ring-2 ring-zinc-950/25 dark:ring-zinc-50/40',
           )}
-          style={{ width: `${anteilVon(seg.wert)}%` }}
-        />)}
-      </div>
-      {/* Achse unter dem Balken: ein Strich aus der Mitte jedes Abschnitts, das
-          Label linksbuendig daran. Der Zubau-Abschnitt ist mit ~4 % zu schmal
-          fuer ein Label im Balken, und seine Mitte liegt dicht an der des ersten
-          Abschnitts — deshalb steht der erste eine Zeile tiefer, sonst
-          ueberlappen die beiden Labels. */}
-      <div className="relative mt-3 h-14 text-xs leading-4">
-        {segmente.map((seg, i) => {
-          const tief = seg.key === 'basis';
-          return <div
+          style={{ width: `${anteilVon(sockel.wert)}%` }}
+        >
+          <span className={cx('flex h-full flex-col items-center justify-center leading-none', sockel.tinte)}>
+            <span className="text-[11px] font-medium tabular-nums">{fmt0.format(sockel.wert)}</span>
+            <span className="mt-0.5 text-[9px]">TWh</span>
+          </span>
+        </div>
+        <div
+          className="flex h-14 min-w-0 flex-1 overflow-hidden rounded-xl ring-1 ring-inset ring-zinc-950/5 dark:ring-zinc-50/10"
+          role="img"
+          aria-label={balkenLabel}
+        >
+          {messbar.map((seg, i) => <div
             key={seg.key}
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(h => (h === i ? null : h))}
-            className="absolute top-0 flex flex-col items-start"
-            style={{ left: `${mitteVon(i)}%` }}
+            onMouseEnter={() => setHover(i + 1)}
+            onMouseLeave={() => setHover(h => (h === i + 1 ? null : h))}
+            className={cx(
+              'relative h-full transition duration-150',
+              seg.farbe,
+              i > 0 && 'border-l-2 border-white dark:border-zinc-950',
+              hover === i + 1 && 'ring-2 ring-inset ring-zinc-950/25 dark:ring-zinc-50/40',
+            )}
+            style={{ width: `${anteilInAufgabe(seg.wert)}%` }}
           >
-            <span aria-hidden="true" className={cx('w-px bg-zinc-300 dark:bg-zinc-700', tief ? 'h-8' : 'h-2.5')}/>
-            <span className={cx(
-              'mt-1 whitespace-nowrap tabular-nums transition-colors duration-150',
-              hover === i ? 'text-zinc-950 dark:text-zinc-50' : muted,
-            )}>{seg.kurz} · {seg.key === 'rest' ? caTwh0(seg.wert) : twh0(seg.wert)}</span>
-          </div>;
-        })}
+            {anteilInAufgabe(seg.wert) >= PLATZ_FUER_LABEL
+              ? <span className={cx('flex h-full flex-col items-center justify-center leading-none', seg.tinte)}>
+                  <span className="text-[11px] font-medium tabular-nums">{fmt0.format(seg.wert)}</span>
+                  <span className="mt-0.5 text-[9px]">TWh</span>
+                </span>
+              // Zu schmal fuer »68 TWh« in einer Zeile: gestapelt. Unter sm reicht
+              // auch das nicht, dort steht die Fahne ueber dem Balken.
+              : <span className={cx('hidden h-full flex-col items-center justify-center gap-0 leading-none sm:flex', seg.tinte)}>
+                  <span className="text-[11px] font-medium tabular-nums">{fmt0.format(seg.wert)}</span>
+                  <span className="mt-0.5 text-[9px]">TWh</span>
+                </span>}
+          </div>)}
+        </div>
+      </div>
+      {messbar
+        .map((seg, i) => ({ seg, index: i + 1 }))
+        .filter(({ seg }) => anteilInAufgabe(seg.wert) < PLATZ_FUER_LABEL)
+        .map(({ seg, index }) => <span
+          key={seg.key}
+          className="pointer-events-none absolute bottom-full z-10 flex -translate-x-1/2 flex-col items-center sm:hidden"
+          style={{ left: `${mitteVon(index)}%` }}
+        >
+          <span className="whitespace-nowrap text-[11px] font-medium leading-4 tabular-nums text-zinc-700 dark:text-zinc-300">
+            {twh0(seg.wert)}
+          </span>
+          <span aria-hidden="true" className="h-2 w-px bg-zinc-300 dark:bg-zinc-600"/>
+        </span>)}
+
+      {/* Achse: eine Klammer je Bereich. Die rechte grenzt ab, worauf sich die
+          Prozente beziehen — genau das war am durchgehenden Balken unklar. */}
+      <div className="mt-2 flex items-start gap-3 text-xs">
+        <div className="shrink-0" style={{ width: `${anteilVon(sockel.wert)}%` }}>
+          <span aria-hidden="true" className="block h-2 border-x border-t border-zinc-300 dark:border-zinc-700"/>
+          <span className={cx('mt-1 block leading-4', hover === 0 ? 'text-zinc-950 dark:text-zinc-50' : muted)}>
+            {JAHR_BASIS} · Bestand
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <span aria-hidden="true" className="block h-2 border-x border-t border-zinc-300 dark:border-zinc-700"/>
+          <span className={cx('mt-1 block text-balance text-center leading-4', muted)}>
+            Aufgabe {JAHR_BASIS}–{JAHR_ZIEL} · {aufgabe != null ? caTwh0(aufgabe) : '…'}
+          </span>
+        </div>
       </div>
 
       {hover != null && segmente[hover] && <Einblendung
@@ -468,10 +658,17 @@ export function FortschrittPage() {
         style={{ left: `${Math.max(0, Math.min(100, mitteVon(hover)))}%` }}
         titel={segmente[hover].label}
         wert={segmente[hover].key === 'rest' ? caTwh0(segmente[hover].wert) : twh0(segmente[hover].wert)}
-        text={<>{fmt.format(anteilVon(segmente[hover].wert))} % vom Bedarf {JAHR_ZIEL}. {segmente[hover].detail}</>}
+        text={hover === 0
+          ? <>Stand {JAHR_BASIS} schon, zählt bei der Aufgabe nicht mit. {segmente[hover].detail}</>
+          : <>{fmt.format(anteilInAufgabe(segmente[hover].wert))} % der Aufgabe. {segmente[hover].detail}</>}
       />}
     </div>
 
+    {bedarfZielTWh != null && <VerlaufsGrafik
+      bedarf={bedarfZielTWh}
+      tempoProJahr={proJahr}
+      quelle={ziel === 'e100' ? 'Eigenes Szenario e100' : 'Fraunhofer ISE, unteres Szenario'}
+    />}
   </div>;
 }
 
@@ -494,9 +691,12 @@ export function FortschrittQuellen() {
       {' '}(Jahresschätzung, vorläufig). Gegenszenario:{' '}
       <a href={QUELLE_ISE} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">Fraunhofer ISE</a>
       {' '}(2024), {ISE_BEREICH} Stromverbrauch {JAHR_ZIEL} je nach Szenario; gerechnet mit dem unteren Ende.
-      {' '}{JAHR_BASIS}: Nettostromerzeugung nach{' '}
+      {' '}{JAHR_BASIS} und {JAHR_HEUTE}: Nettostromerzeugung nach{' '}
       <a href={QUELLE_2000} target="_blank" rel="noreferrer" className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:decoration-zinc-600 dark:hover:text-zinc-50">AG Energiebilanzen</a>
-      {' '}(Datenstand 15.02.2024). {JAHR_HEUTE}: beobachtete Erzeugung aus <code>model/erzeugung/2025</code> (Energy-Charts).
+      {' '}(Datenstand Juni 2026), beide Jahre aus derselben Tabelle — sonst wäre die Differenz keine Zeitreihe.
+      {' '}Der Rechner zeigt für {JAHR_HEUTE} {twh0(EE_OEFFENTLICH_2025_TWH)}, weil sein Modell auf Energy-Charts läuft und
+      {' '}dort nur die öffentliche Versorgung zählt; die Differenz von {twh0(EE_2025_TWH - EE_OEFFENTLICH_2025_TWH)} ist
+      {' '}im Wesentlichen erneuerbare Eigenerzeugung der Industrie.
       {' '}{JAHR_ZIEL}: Jahreslast des e100-Szenarios, live aus der Rust-API — darin laufen Flug und Seeschifffahrt
       über e-Kerosin/PtL, die Primärstahlerzeugung über grünen Wasserstoff und die Chemie inklusive H₂-Feedstock,
       deren Strombedarf samt Umwandlungsverlusten also mitgezählt ist. CO₂-frei = Kernkraft + Wind + PV +
