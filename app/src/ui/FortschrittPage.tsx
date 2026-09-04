@@ -243,7 +243,6 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
   const L = 0, R = B, O = 26, U = 188;          // Plotflaeche
   const jahrVon = CO2FREI_HISTORIE[0].jahr;
   const heute = CO2FREI_HISTORIE[CO2FREI_HISTORIE.length - 1];
-  const start = CO2FREI_HISTORIE[0];
   const yMax = Math.ceil((bedarf * 1.1) / 250) * 250;
   const [aktiv, setAktiv] = useState<number | null>(null);
 
@@ -255,21 +254,50 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
   const hoch = CO2FREI_HISTORIE.reduce((a, b) => (b.twh > a.twh ? b : a));
   const luecke = bedarf - heute.twh;
 
+  // Fortschreibung ab einem beliebigen Jahr: das Tempo zwischen diesem Jahr und
+  // heute, linear bis 2045 weitergezogen. Die Gerade laeuft durch beide Enden,
+  // ist also genau der Trend, den das gewaehlte Fenster aufspannt — kein Fit
+  // ueber die Zwischenjahre. Je spaeter das Startjahr, desto mehr misst sie den
+  // Kernkraftausstieg statt den Zubau; das steht so auch in der Einblendung.
+  const prognoseAb = (jahr: number, twh: number) => {
+    const spanne = heute.jahr - jahr;
+    if (spanne <= 0) return null;
+    const tempo = (heute.twh - twh) / spanne;
+    const stand2045 = twh + tempo * (JAHR_ZIEL - jahr);
+    return {
+      tempo,
+      stand2045,
+      anteilPct: (stand2045 / bedarf) * 100,
+      // Nur bei echtem Zuwachs gibt es ein Zieljahr; sonst entfernt sich die Kurve.
+      zieljahr: tempo > 0 ? heute.jahr + luecke / tempo : null,
+    };
+  };
+
   // Historie plus Zielpunkt als eine Liste — der Zeiger rastet auf den naechsten ein.
   const punkte = [
-    ...CO2FREI_HISTORIE.map(p => ({
-      jahr: p.jahr,
-      twh: p.twh,
-      titel: String(p.jahr),
-      wert: twh0(p.twh),
-      text: p.jahr === jahrVon
-        ? <>Ausgangspunkt der Rechnung.</>
-        : <>{fmt0.format(Math.round(p.twh) - Math.round(start.twh))} TWh mehr als {jahrVon}
-          {p.jahr === hoch.jahr ? ' — der bisher höchste Wert.' : '.'}</>,
-    })),
+    ...CO2FREI_HISTORIE.map(p => {
+      const prognose = prognoseAb(p.jahr, p.twh);
+      return {
+        jahr: p.jahr,
+        twh: p.twh,
+        prognose,
+        titel: String(p.jahr),
+        wert: twh0(p.twh),
+        text: prognose
+          ? <>{p.jahr}–{heute.jahr}: {prognose.tempo >= 0 ? '+' : '−'}{fmt.format(Math.abs(prognose.tempo))} TWh pro Jahr
+            {p.jahr === hoch.jahr ? ', vom bisher höchsten Wert aus' : ''}. So weiter wären es {JAHR_ZIEL}
+            {' '}{caTwh0(prognose.stand2045)} — {fmt0.format(prognose.anteilPct)} % des Bedarfs.
+            {' '}{prognose.zieljahr != null
+              ? <>Erreicht wäre das Ziel im Jahr {String(Math.round(prognose.zieljahr))}.</>
+              : <>In diesem Tempo rückt das Ziel weiter weg.</>}</>
+          : <>Der heutige Stand — hier endet jede Fortschreibung. Zeig auf ein früheres Jahr,
+            {' '}um von dort aus zu rechnen.</>,
+      };
+    }),
     {
       jahr: JAHR_ZIEL,
       twh: bedarf,
+      prognose: null,
       titel: `Ziel ${JAHR_ZIEL}`,
       wert: caTwh0(bedarf),
       text: <>{quelle}. Von heute aus {fmt0.format(luecke / jahreRest)} TWh pro Jahr —
@@ -292,7 +320,10 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
   };
 
   const punkt = aktiv != null ? punkte[aktiv] : null;
+  const prognose = punkt?.prognose ?? null;
   const jahrAnker = (jahr: number) => (jahr === jahrVon ? 'start' : jahr === JAHR_ZIEL ? 'end' : 'middle');
+  // Eine steile Fortschreibung darf nicht aus der Plotflaeche laufen.
+  const syGeklemmt = (twh: number) => sy(Math.max(0, Math.min(yMax, twh)));
 
   // Die Seite setzt gap-12 (48px) zwischen ihre Bloecke; zum Balken darueber
   // sollen es 8px sein, beide gehoeren zusammen. 48 - 40 = 8.
@@ -319,11 +350,35 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
 
         <polyline points={istPfad} fill="none" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"
           className="stroke-green-600 dark:stroke-green-400"/>
-        {/* Nur das Kurvenende ist beschriftet; der Startwert steht im Text darueber. */}
-        <text x={sx(heute.jahr) + 10} y={sy(heute.twh) - 8} textAnchor="start"
-          className="fill-green-700 text-[11px] dark:fill-green-400">CO₂-frei</text>
-        <text x={sx(heute.jahr) + 10} y={sy(heute.twh) + 8} textAnchor="start"
-          className="fill-green-700 text-[12px] font-medium tabular-nums dark:fill-green-400">{twh0(heute.twh)}</text>
+        {/* Nur das Kurvenende ist beschriftet; der Startwert steht im Text darueber.
+            Waehrend einer Fortschreibung weicht die Beschriftung — dort laeuft die
+            gestrichelte Gerade durch und beide Zahlen lagen uebereinander. */}
+        {!prognose && <>
+          <text x={sx(heute.jahr) + 10} y={sy(heute.twh) - 8} textAnchor="start"
+            className="fill-green-700 text-[11px] dark:fill-green-400">CO₂-frei</text>
+          <text x={sx(heute.jahr) + 10} y={sy(heute.twh) + 8} textAnchor="start"
+            className="fill-green-700 text-[12px] font-medium tabular-nums dark:fill-green-400">{twh0(heute.twh)}</text>
+        </>}
+
+        {/* Fortschreibung: dieselbe gruene Linie, gestrichelt weitergezogen — vom
+            gehoverten Jahr durch den heutigen Stand bis 2045. Der Abschnitt bis
+            heute liegt bewusst ueber der Ist-Kurve: er zeigt, welche Steigung
+            gemessen wurde. Gestrichelt heisst gerechnet, durchgezogen gemessen. */}
+        {punkt && prognose && <>
+          <line
+            x1={sx(punkt.jahr)} y1={sy(punkt.twh)}
+            x2={sx(JAHR_ZIEL)} y2={syGeklemmt(prognose.stand2045)}
+            strokeDasharray="5 5" strokeWidth={2.5} strokeLinecap="round"
+            className="stroke-green-600 dark:stroke-green-400"/>
+          <circle cx={sx(JAHR_ZIEL)} cy={syGeklemmt(prognose.stand2045)} r={4}
+            className="fill-green-600 dark:fill-green-400"/>
+          {/* Ueber die Linie, nicht auf sie — bei flachem Trend liefe die
+              Strichelung sonst quer durch die Zahl. */}
+          <text x={sx(JAHR_ZIEL) - 12} y={syGeklemmt(prognose.stand2045) - 10} textAnchor="end"
+            className="fill-green-700 text-[12px] font-medium tabular-nums dark:fill-green-400">
+            {caTwh0(prognose.stand2045)}
+          </text>
+        </>}
 
         <circle cx={sx(JAHR_ZIEL)} cy={sy(bedarf)} r={4.5} className="fill-red-500 dark:fill-red-400"/>
         <text x={sx(JAHR_ZIEL) - 12} y={sy(bedarf) - 6} textAnchor="end"
@@ -345,6 +400,9 @@ function VerlaufsGrafik({ bedarf, tempoProJahr, quelle }: {
         text={punkt.text}
       />}
     </div>
+    <figcaption className={cx('mt-3 text-xs leading-5', muted)}>
+      Auf ein Jahr zeigen: von dort bis heute wird das Tempo gemessen und bis {JAHR_ZIEL} fortgeschrieben.
+    </figcaption>
   </figure>;
 }
 
