@@ -29,7 +29,6 @@ server/   Rust-API
 model/    Modelle und Datensätze
 test/     Vitest, Golden-Fälle, Szenario-Runner
 bin/      lokale Kommandos
-deploy/   Server-Deploy bleibt stabil
 ```
 
 ## Stack
@@ -42,3 +41,34 @@ deploy/   Server-Deploy bleibt stabil
 | Vite | Dev-Server, Build, `/api`-Proxy, Build-Commit, Kopieren von `model/` nach `dist/`. Läuft nicht in Produktion. |
 
 Produktion: statische JS/CSS-Dateien im Browser und Rust-API.
+
+## Webserver und Git
+
+Arbeitskopie: `/home/web/netzprobe` auf dem Ubuntu-Webserver `192.168.42.10`, Branch `main`.
+Änderungen entstehen auf dem Webserver und werden manuell zu GitHub gepusht:
+
+```bash
+cd /home/web/netzprobe
+git status
+git add <geänderte-dateien>
+git commit
+git push origin main
+```
+
+Vor einem Commit `npm test` und `npm run build` ausführen. Ohne lokale Node-/Rust-
+Installation kann ein temporärer Docker-Builder verwendet werden. Zum bewussten
+Bauen und Veröffentlichen lokaler Änderungen:
+
+```bash
+cd /home/web
+./docker build-netzprobe
+```
+
+Dieser Befehl startet einen temporären Builder, führt Tests und Frontend-/Rust-Build
+aus und startet die API neu. Er zieht oder pusht keine Git-Änderungen. Die
+laufenden Webcontainer enthalten keine Build-Werkzeuge, Git-Schlüssel oder
+Deployment-Worker. Jeder Git-Schlüssel liegt ausschließlich auf dem Host und hat
+Schreibzugriff auf genau ein Repository.
+
+Docker-Stack und Betriebsbefehle: `/home/web/compose.yaml` und `/home/web/docker`.
+Die GitHub-CI prüft Tests und Builds; sie veröffentlicht nichts auf dem Webserver.
