@@ -14,11 +14,8 @@ concurrency:
 
 jobs:
   build:
-    name: Build check + Deploy
+    name: Tests und Build
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://netzprobe.de/
     steps:
       - name: Auschecken
         uses: actions/checkout@v4
@@ -29,34 +26,11 @@ jobs:
           cache: npm
       - name: Abhängigkeiten installieren
         run: npm ci
-      - name: Tests + Typecheck
-        # Parallel: vitest und tsc teilen sich die Runner-Cores. Den
-        # vite-Produktionsbuild macht der Server selbst (dort wäre tsc mit
-        # ~10 s auf dem 2-Core-VPS der teuerste Einzelposten).
+      - name: Frontend-Tests und Produktionsbuild
         run: |
-          npx tsc -b &
-          TSC_PID=$!
           npm test
-          wait "$TSC_PID"
+          npm run build
       - name: Rust-Cache
         uses: Swatinem/rust-cache@v2
       - name: Rust-Tests
-        # Einziges Rust-Gate der Pipeline — bewusst hier statt im Server-Deploy,
-        # damit das Testurteil sichtbar ist und ein roter Commit den Webhook nie erreicht.
-        # --release: Golden-Test (50 Jahres-Simulationen) läuft optimiert ~10× schneller;
-        # Toolchain ist auf ubuntu-latest vorinstalliert, kein Setup-Step nötig.
-        # Bewusst OHNE NETZPROBE_BUILD_COMMIT: der Stempel zwingt die api-Crate
-        # sonst jede CI zur Neukompilierung — er zählt nur fürs Server-Binary.
         run: cargo test --release --workspace
-      - name: Deploy-Webhook aufrufen
-        # Im selben Job statt separatem Deploy-Job: spart Runner-Spin-up (~10 s).
-        # Der Webhook blockiert bis zum Server-Restart — grün heißt: neue Version läuft.
-        env:
-          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
-        run: |
-          PAYLOAD='{"ref":"refs/heads/main","repository":"chriopter/netzprobe","sha":"${{ github.sha }}"}'
-          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$DEPLOY_SECRET" | awk '{print $2}')"
-          curl --fail --silent --show-error --request POST https://deploy.netzprobe.de/ \
-            --header "Content-Type: application/json" \
-            --header "X-Hub-Signature-256: $SIG" \
-            --data "$PAYLOAD"
