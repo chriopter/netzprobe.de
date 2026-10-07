@@ -44,11 +44,11 @@ Produktion: statische JS/CSS-Dateien im Browser und Rust-API.
 
 ## Webserver und Git
 
-Arbeitskopie: `/home/web/sites/chriopter/netzprobe.de`, Branch `main`.
+Arbeitskopie: `/home/web/repos/netzprobe.de`, Branch `main`.
 Änderungen entstehen auf dem Webserver und werden manuell zu GitHub gepusht:
 
 ```bash
-cd /home/web/sites/chriopter/netzprobe.de
+cd /home/web/repos/netzprobe.de
 git status
 git add <geänderte-dateien>
 git commit
