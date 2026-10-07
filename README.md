@@ -42,33 +42,11 @@ bin/      lokale Kommandos
 
 Produktion: statische JS/CSS-Dateien im Browser und Rust-API.
 
-## Webserver und Git
-
-Arbeitskopie: `/home/web/repos/netzprobe.de`, Branch `main`.
-Änderungen entstehen auf dem Webserver und werden manuell zu GitHub gepusht:
+## Entwicklung
 
 ```bash
-cd /home/web/repos/netzprobe.de
-git status
-git add <geänderte-dateien>
-git commit
-git push origin main
+bin/dev    # API (Auto-Restart) und Vite-Dev-Server
+bin/test   # TypeScript-, Rust-Tests und Produktionsbuild
 ```
 
-Vor einem Commit `npm test` und `npm run build` ausführen. Ohne lokale Node-/Rust-
-Installation kann ein temporärer Docker-Builder verwendet werden. Zum bewussten
-Bauen und Veröffentlichen lokaler Änderungen:
-
-```bash
-cd /home/web
-./docker.sh build-netzprobe
-```
-
-Dieser Befehl baut das Netzprobe-Image mehrstufig mit Tests und Frontend-/Rust-Build
-und ersetzt den Container. Frontend und API liegen zusammen im Image. Er zieht oder pusht keine Git-Änderungen. Die
-laufenden Webcontainer enthalten keine Build-Werkzeuge, Git-Schlüssel oder
-Deployment-Worker. Jeder Git-Schlüssel liegt ausschließlich auf dem Host und hat
-Schreibzugriff auf genau ein Repository.
-
-Docker-Stack und Betriebsbefehle: `/home/web/container/compose.yaml` und `/home/web/docker.sh`.
-Die GitHub-CI prüft Tests und Builds; sie veröffentlicht nichts auf dem Webserver.
+Hosting-Konfiguration liegt nicht in diesem Repository.
