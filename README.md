@@ -61,14 +61,14 @@ Bauen und Veröffentlichen lokaler Änderungen:
 
 ```bash
 cd /home/web
-./docker build-netzprobe
+./docker.sh build-netzprobe
 ```
 
-Dieser Befehl startet einen temporären Builder, führt Tests und Frontend-/Rust-Build
-aus und startet die API neu. Er zieht oder pusht keine Git-Änderungen. Die
+Dieser Befehl baut das Netzprobe-Image mehrstufig mit Tests und Frontend-/Rust-Build
+und ersetzt den Container. Frontend und API liegen zusammen im Image. Er zieht oder pusht keine Git-Änderungen. Die
 laufenden Webcontainer enthalten keine Build-Werkzeuge, Git-Schlüssel oder
 Deployment-Worker. Jeder Git-Schlüssel liegt ausschließlich auf dem Host und hat
 Schreibzugriff auf genau ein Repository.
 
-Docker-Stack und Betriebsbefehle: `/home/web/compose.yaml` und `/home/web/docker`.
+Docker-Stack und Betriebsbefehle: `/home/web/container/compose.yaml` und `/home/web/docker.sh`.
 Die GitHub-CI prüft Tests und Builds; sie veröffentlicht nichts auf dem Webserver.
